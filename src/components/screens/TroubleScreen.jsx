@@ -1,9 +1,10 @@
-import React from 'react';
-import { motion } from 'framer-motion';
+import React, { useState } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import FramerButton from '../FramerButton';
 import FramerSection from '../FramerSection';
 import FramerPageTransition from '../FramerPageTransition';
 import BackButton from '../BackButton';
+import AudioPlayer from '../AudioPlayer';
 
 const TroubleScreen = ({
   onNavigateToScreen,
@@ -11,13 +12,29 @@ const TroubleScreen = ({
   onTouchMove,
   onTouchEnd
 }) => {
+  const [activeAudio, setActiveAudio] = useState(null);
+
   const troubleItems = [
-    { title: 'úzkosť', duration: '12 min' },
+    {
+      title: 'úzkosť',
+      duration: '12 min',
+      audioSrc: '/media/zbav sa strachu z osamelosti.mp3'
+    },
     { title: 'bolesť', duration: '15 min' },
     { title: 'smútok', duration: '18 min' },
     { title: 'hnev', duration: '10 min' },
     { title: 'nespavosť', duration: '25 min' }
   ];
+
+  const handleItemClick = (item) => {
+    if (item.audioSrc) {
+      setActiveAudio(item);
+    }
+  };
+
+  const handleCloseAudio = () => {
+    setActiveAudio(null);
+  };
 
   return (
     <FramerPageTransition screenKey="trouble">
@@ -53,14 +70,20 @@ const TroubleScreen = ({
                 <FramerButton
                   variant="ghost"
                   className="w-full p-6 text-left bg-white/50 backdrop-blur rounded-none border border-black/10"
+                  onClick={() => handleItemClick(item)}
                 >
                   <div className="flex items-center justify-between">
                     <h3 className="text-2xl font-light" style={{fontFamily: 'Playfair Display'}}>
                       {item.title}
                     </h3>
-                    <span className="text-gray-500" style={{fontFamily: 'Playfair Display'}}>
-                      {item.duration}
-                    </span>
+                    <div className="flex items-center space-x-3">
+                      <span className="text-gray-500" style={{fontFamily: 'Playfair Display'}}>
+                        {item.duration}
+                      </span>
+                      {item.audioSrc && (
+                        <span className="text-black text-lg">♪</span>
+                      )}
+                    </div>
                   </div>
                 </FramerButton>
               </FramerSection>
@@ -68,6 +91,18 @@ const TroubleScreen = ({
           </div>
 
         </div>
+
+        {/* Audio Player Modal */}
+        <AnimatePresence>
+          {activeAudio && (
+            <AudioPlayer
+              key="audio-player"
+              audioSrc={activeAudio.audioSrc}
+              title={activeAudio.title}
+              onClose={handleCloseAudio}
+            />
+          )}
+        </AnimatePresence>
       </div>
     </FramerPageTransition>
   );
