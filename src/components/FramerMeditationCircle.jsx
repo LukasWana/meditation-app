@@ -13,7 +13,7 @@ const FramerMeditationCircle = ({
   const [progress, setProgress] = useState(0);
 
   useEffect(() => {
-    const newProgress = totalTime > 0 ? (totalTime - time) / totalTime : 0;
+    const newProgress = totalTime > 0 ? Math.max(0, Math.min(1, (totalTime - time) / totalTime)) : 0;
     setProgress(newProgress);
   }, [time, totalTime]);
 
@@ -91,12 +91,12 @@ const FramerMeditationCircle = ({
         animate={innerCircleControls}
       >
         <motion.div
-          className="w-32 h-32 rounded-full bg-black/5 flex items-center justify-center"
+          className="w-40 h-40 rounded-full bg-black/5 flex items-center justify-center p-4"
           whileHover={{ scale: 1.05 }}
           transition={{ type: "spring", stiffness: 300, damping: 20 }}
         >
           <motion.span
-            className="text-6xl font-light"
+            className="text-6xl font-light leading-tight"
             style={{fontFamily: 'Playfair Display'}}
             animate={isPlaying ? {
               scale: [1, 1.05, 1],

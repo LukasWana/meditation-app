@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { motion } from 'framer-motion';
 
 const FramerSection = ({
@@ -9,7 +9,7 @@ const FramerSection = ({
   delay = 0,
   ...props
 }) => {
-  const getAnimationVariants = () => {
+  const variants = useMemo(() => {
     switch (animationType) {
       case 'fadeIn':
         return {
@@ -35,6 +35,24 @@ const FramerSection = ({
           animate: { opacity: 1, scale: 1 },
           exit: { opacity: 0, scale: 0.8 }
         };
+      case 'slideInTop':
+        return {
+          initial: { opacity: 0, y: -250, scale: 0.7, rotateX: -20 },
+          animate: {
+            opacity: 1,
+            y: 0,
+            scale: 1,
+            rotateX: 0,
+            transition: {
+              type: "spring",
+              stiffness: 160,
+              damping: 10,
+              mass: 1.0,
+              bounce: 0.6
+            }
+          },
+          exit: { opacity: 0, y: -250, scale: 0.7, rotateX: -20 }
+        };
       default:
         return {
           initial: { opacity: 0, y: 30 },
@@ -42,9 +60,29 @@ const FramerSection = ({
           exit: { opacity: 0, y: -30 }
         };
     }
-  };
+  }, [animationType]);
 
-  const variants = getAnimationVariants();
+  const transition = useMemo(() => {
+    if (animationType === 'slideInTop') {
+      return {
+        delay: delay,
+        type: "spring",
+        stiffness: 160,
+        damping: 10,
+        mass: 1.0,
+        bounce: 0.6
+      };
+    }
+
+    return {
+      duration: 0.6,
+      delay: delay,
+      ease: [0.4, 0, 0.2, 1],
+      type: "spring",
+      stiffness: 100,
+      damping: 20
+    };
+  }, [delay, animationType]);
 
   return (
     <motion.div
@@ -54,21 +92,16 @@ const FramerSection = ({
       animate="animate"
       exit="exit"
       variants={variants}
-      transition={{
-        duration: 0.6,
-        delay: delay,
-        ease: [0.4, 0, 0.2, 1],
-        type: "spring",
-        stiffness: 100,
-        damping: 20
-      }}
+      transition={transition}
       whileHover={onClick ? {
-        scale: 1.02,
-        transition: { type: "spring", stiffness: 300, damping: 20 }
+        scale: 1.03,
+        y: -5,
+        transition: { type: "spring", stiffness: 400, damping: 25 }
       } : {}}
       whileTap={onClick ? {
-        scale: 0.98,
-        transition: { type: "spring", stiffness: 400, damping: 25 }
+        scale: 0.97,
+        y: 2,
+        transition: { type: "spring", stiffness: 500, damping: 30 }
       } : {}}
       {...props}
     >
