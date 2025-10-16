@@ -24,6 +24,13 @@ Zde je struktura aplikace a názvy, jak jsou vidět v UI:
    - Naviguje na: `TroubleScreen`
    - Původně: "trable" → přejmenováno na "Mluvené slovo"
 
+vychytávky
+mluvené slovo
+bez slov
+meditácia
+dýchanie
+
+
 ---
 
 ### 🎵 **Sekce "bez slov" (JourneyScreen)**

@@ -2,42 +2,42 @@ import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { FramerButton, FramerSection, FramerPageTransition, BackButton } from '@components';
 import { AudioPlayer } from '@features/audio';
-import { useFirebaseAudioFilter } from '@features/audio/hooks/useFirebaseAudioFilter';
+import { useFirebaseHudbaFilter } from '@features/audio/hooks/useFirebaseHudbaFilter';
 
-const SlovaScreen = ({
+const BezSlovScreen = ({
   onNavigateToScreen,
   onTouchStart,
   onTouchMove,
   onTouchEnd,
-  gender = 'none', // Přidáme gender prop pro filtrování
-  onPlayerStateChange // Callback pro předání stavu přehrávače
+  gender = 'none',
+  onPlayerStateChange
 }) => {
   const [activeAudio, setActiveAudio] = useState(null);
 
-  // Použij nový filtrovací systém
-  const { troubleItems: slovaItems, isLoading, error, userStats } = useFirebaseAudioFilter(gender);
+  // Použij hudební filtrovací systém
+  const { hudbaItems: bezSlovItems, isLoading, error, stats } = useFirebaseHudbaFilter();
 
   const handleItemClick = (item) => {
     if (item.audioSrc) {
       setActiveAudio(item);
-      onPlayerStateChange?.(true); // Informuj o aktivním přehrávači
+      onPlayerStateChange?.(true);
     }
   };
 
   const handleCloseAudio = () => {
     setActiveAudio(null);
-    onPlayerStateChange?.(false); // Informuj o zavřeném přehrávači
+    onPlayerStateChange?.(false);
   };
 
   // Loading state
   if (isLoading) {
     return (
-      <FramerPageTransition screenKey="slova">
+      <FramerPageTransition screenKey="bez-slov">
         <div className="min-h-screen w-full max-w-full bg-[#f4ddc4] flex flex-col items-center justify-center p-8 pb-20 overflow-x-hidden relative">
           <BackButton onClick={() => onNavigateToScreen('home')} />
           <div className="text-center">
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-gray-700 mx-auto mb-4"></div>
-            <p className="text-xl text-gray-700">Načítám meditácie...</p>
+            <p className="text-xl text-gray-700">Načítám hudbu...</p>
           </div>
         </div>
       </FramerPageTransition>
@@ -47,7 +47,7 @@ const SlovaScreen = ({
   // Error state
   if (error) {
     return (
-      <FramerPageTransition screenKey="slova">
+      <FramerPageTransition screenKey="bez-slov">
         <div className="min-h-screen w-full max-w-full bg-[#f4ddc4] flex flex-col items-center justify-center p-8 pb-20 overflow-x-hidden relative">
           <BackButton onClick={() => onNavigateToScreen('home')} />
           <div className="text-center">
@@ -60,7 +60,7 @@ const SlovaScreen = ({
   }
 
   return (
-    <FramerPageTransition screenKey="slova">
+    <FramerPageTransition screenKey="bez-slov">
       <div
         className={`min-h-screen w-full max-w-full bg-[#f4ddc4] flex flex-col items-center justify-center p-8 pb-20 overflow-x-hidden relative ${
           activeAudio ? 'pointer-events-none' : ''
@@ -81,26 +81,24 @@ const SlovaScreen = ({
             delay={0.1}
           >
             <h1 className="text-6xl font-light" style={{fontFamily: 'Playfair Display'}}>
-              slova
+              bez slov
             </h1>
             <p className="text-xl text-center text-gray-700 mb-8" style={{fontFamily: 'Playfair Display'}}>
-              mluvené slovo a audio meditácie
+              hudobné meditácie a relaxačné zvuky
             </p>
 
-            {/* Zobraz statistiky pro uživatele */}
-            {userStats && (
+            {/* Zobraz statistiky */}
+            {stats && (
               <div className="text-center mb-8 p-4 bg-white/30 rounded-lg">
                 <p className="text-sm text-gray-600 mb-2">
-                  Dostupné meditácie: {userStats.filteredForUser} z {userStats.totalAvailable}
+                  Dostupné skladby: {stats.availableFiles} z {stats.totalFiles}
                 </p>
                 <p className="text-xs text-gray-500 mb-1">
-                  {gender === 'none' ? 'Obecný obsah' :
-                   gender === 'female' ? 'Personalizované pro ženy' :
-                   'Personalizované pro muže'}
+                  Hudební meditace a relaxační zvuky
                 </p>
-                {userStats.lastUpdated && (
+                {stats.lastUpdated && (
                   <p className="text-xs text-gray-400">
-                    Aktualizováno: {new Date(userStats.lastUpdated).toLocaleTimeString('sk-SK')}
+                    Aktualizováno: {new Date(stats.lastUpdated).toLocaleTimeString('sk-SK')}
                   </p>
                 )}
               </div>
@@ -108,13 +106,13 @@ const SlovaScreen = ({
           </FramerSection>
 
           <div className="space-y-4">
-            {slovaItems.length === 0 ? (
+            {bezSlovItems.length === 0 ? (
               <div className="text-center py-8">
-                <p className="text-gray-600 text-lg">Žiadne meditácie nie sú dostupné</p>
+                <p className="text-gray-600 text-lg">Žiadne skladby nie sú dostupné</p>
                 <p className="text-gray-500 text-sm mt-2">Skúste zmeniť nastavenia v menu</p>
               </div>
             ) : (
-              slovaItems.map((item, idx) => (
+              bezSlovItems.map((item, idx) => (
                 <FramerSection
                   key={item.key || idx}
                   animationType="slideInUp"
@@ -173,4 +171,4 @@ const SlovaScreen = ({
   );
 };
 
-export default SlovaScreen;
+export default BezSlovScreen;
