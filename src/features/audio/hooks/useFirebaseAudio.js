@@ -39,10 +39,40 @@ export const useFirebaseAudio = (audioFileName) => {
 };
 
 // Předdefinované audio soubory z vašeho Firebase Storage
+// Formát: "hlas4kód-téma.mp3"
+// hlas: muzsky/zensky
+// kód: F=female, M=male, N=none/general + SK/CZ/EN=jazyk
 export const AUDIO_FILES = {
-  MALE_FSK: 'muzsky4FSK-uzkost-osamelost.mp3',
-  MALE_MSK: 'muzsky4MSK-uzkost-osamelost.mp3',
-  FEMALE_FSK: 'zensky4FSK-uzkost-osamelost.mp3',
-  FEMALE_MSK: 'zensky4MSK-uzkost-osamelost.mp3',
-  FEAR_LONELINESS: 'zbav sa strachu z osamelosti.mp3'
+  // Úzkosť a osamelosť
+  ANXIETY_FEMALE_VOICE: 'muzsky4FSK-uzkost-osamelost.mp3', // Mužský hlas pro ženy
+  ANXIETY_MALE_VOICE: 'zensky4MSK-uzkost-osamelost.mp3',   // Ženský hlas pro muže
+  ANXIETY_GENERAL: 'muzsky4NSK-uzkost-osamelost.mp3',      // Obecný obsah
+
+  // Strach z osamelosti
+  FEAR_LONELINESS_FEMALE: 'zensky4FSK-strach-osamelost.mp3',
+  FEAR_LONELINESS_MALE: 'muzsky4MSK-strach-osamelost.mp3',
+  FEAR_LONELINESS_GENERAL: 'zensky4NSK-strach-osamelost.mp3',
+
+  // Stres z práce
+  STRESS_WORK_FEMALE: 'zensky4FSK-stres-praca.mp3',
+  STRESS_WORK_MALE: 'muzsky4MSK-stres-praca.mp3',
+  STRESS_WORK_GENERAL: 'muzsky4NSK-stres-praca.mp3',
+
+  // Problémy se spánkem
+  SLEEP_FEMALE: 'zensky4FSK-spank.mp3',
+  SLEEP_MALE: 'muzsky4MSK-spank.mp3',
+  SLEEP_GENERAL: 'zensky4NSK-spank.mp3',
+
+  // Deprese
+  DEPRESSION_FEMALE: 'muzsky4FSK-depresia.mp3',
+  DEPRESSION_MALE: 'zensky4MSK-depresia.mp3',
+  DEPRESSION_GENERAL: 'muzsky4NSK-depresia.mp3',
+
+  // Relaxace
+  RELAXATION_FEMALE: 'zensky4FSK-relaxacia.mp3',
+  RELAXATION_MALE: 'muzsky4MSK-relaxacia.mp3',
+  RELAXATION_GENERAL: 'zensky4NSK-relaxacia.mp3'
 };
+
+// Seznam všech audio souborů pro filtrování
+export const ALL_AUDIO_FILES = Object.values(AUDIO_FILES);

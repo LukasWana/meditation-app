@@ -247,6 +247,7 @@ export default function MeditationApp() {
           onTouchStart={onTouchStart}
           onTouchMove={onTouchMove}
           onTouchEnd={onTouchEnd}
+          gender={gender}
         />
       </Layout>
     );

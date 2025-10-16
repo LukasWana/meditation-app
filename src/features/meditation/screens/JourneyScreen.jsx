@@ -9,10 +9,10 @@ const JourneyScreen = ({
   onTouchEnd
 }) => {
   const journeyItems = [
-    { time: '3 min', title: 'ranné prebudenie', icon: '☀️' },
-    { time: '5 min', title: 'prestávka v práci', icon: '☕' },
-    { time: '7 min', title: 'večerné uvoľnenie', icon: '🌙' },
-    { time: '10 min', title: 'pred spánkom', icon: '✨' }
+    { time: '3 min', title: 'ranné prebudenie' },
+    { time: '5 min', title: 'prestávka v práci' },
+    { time: '7 min', title: 'večerné uvoľnenie' },
+    { time: '10 min', title: 'pred spánkom' }
   ];
 
   return (
@@ -59,7 +59,6 @@ const JourneyScreen = ({
                         {item.title}
                       </h3>
                     </div>
-                    <span className="text-3xl">{item.icon}</span>
                   </div>
                 </FramerButton>
               </FramerSection>
