@@ -140,8 +140,6 @@ export default function MeditationApp() {
   if (screen === 'home') {
     return (
       <Layout
-        currentScreen={screen}
-        onNavigateToScreen={navigateToScreen}
         gender={gender}
         onGenderChange={handleGenderChange}
         voicePreference={voicePreference}
@@ -160,8 +158,6 @@ export default function MeditationApp() {
   if (screen === 'meditation') {
     return (
       <Layout
-        currentScreen={screen}
-        onNavigateToScreen={navigateToScreen}
         gender={gender}
         onGenderChange={handleGenderChange}
         voicePreference={voicePreference}
@@ -186,8 +182,6 @@ export default function MeditationApp() {
   if (screen === 'breath') {
     return (
       <Layout
-        currentScreen={screen}
-        onNavigateToScreen={navigateToScreen}
         gender={gender}
         onGenderChange={handleGenderChange}
         voicePreference={voicePreference}
@@ -207,8 +201,6 @@ export default function MeditationApp() {
   if (screen === 'help') {
     return (
       <Layout
-        currentScreen={screen}
-        onNavigateToScreen={navigateToScreen}
         gender={gender}
         onGenderChange={handleGenderChange}
         voicePreference={voicePreference}
@@ -227,8 +219,6 @@ export default function MeditationApp() {
   if (screen === 'journey') {
     return (
       <Layout
-        currentScreen={screen}
-        onNavigateToScreen={navigateToScreen}
         gender={gender}
         onGenderChange={handleGenderChange}
         voicePreference={voicePreference}
@@ -247,8 +237,6 @@ export default function MeditationApp() {
   if (screen === 'trouble') {
     return (
       <Layout
-        currentScreen={screen}
-        onNavigateToScreen={navigateToScreen}
         gender={gender}
         onGenderChange={handleGenderChange}
         voicePreference={voicePreference}

@@ -1,10 +1,8 @@
 import React, { useState } from 'react';
-import { Menu, X, Home, Heart, Wind, Map, HelpCircle, User, Settings, BarChart3, LogOut } from 'lucide-react';
+import { Menu, X } from 'lucide-react';
 
 const Layout = ({
   children,
-  currentScreen,
-  onNavigateToScreen,
   gender,
   onGenderChange,
   voicePreference,
@@ -17,10 +15,6 @@ const Layout = ({
     setIsMenuOpen(!isMenuOpen);
   };
 
-  const handleNavigation = (screenName) => {
-    onNavigateToScreen(screenName);
-    setIsMenuOpen(false);
-  };
 
   const handleGenderSelect = (selectedGender) => {
     onGenderChange(selectedGender);
@@ -32,13 +26,6 @@ const Layout = ({
     setIsMenuOpen(false);
   };
 
-  const menuItems = [
-    { id: 'home', label: 'Domov', icon: Home, screen: 'home' },
-    { id: 'meditation', label: 'Meditácia', icon: Heart, screen: 'meditation' },
-    { id: 'breath', label: 'Dýchanie', icon: Wind, screen: 'breath' },
-    { id: 'journey', label: 'Na cesty', icon: Map, screen: 'journey' },
-    { id: 'trouble', label: 'Trouble', icon: HelpCircle, screen: 'trouble' },
-  ];
 
   return (
     <div className={`relative min-h-screen ${className}`}>
@@ -65,125 +52,57 @@ const Layout = ({
 
       {/* Dropdown Menu */}
       {isMenuOpen && (
-        <div className="fixed top-16 right-4 w-72 bg-white/95 backdrop-blur-sm border border-gray-200 rounded-lg shadow-xl z-50">
-          <div className="py-2">
-            {/* Navigační menu */}
-            <div className="px-4 py-2 text-sm text-gray-600 border-b border-gray-200">
-              Navigace
+        <div className="fixed top-16 right-4 w-80 bg-white/95 backdrop-blur-sm border border-gray-200 rounded-lg shadow-xl z-50">
+          <div className="py-4">
+            {/* Profil sekce */}
+            <div className="px-6 py-3">
+              <h3 className="text-lg font-medium text-gray-800 mb-4">Profil</h3>
+
+              <button
+                onClick={() => handleGenderSelect('female')}
+                className={`w-full text-left px-4 py-4 text-lg hover:bg-gray-100 rounded-lg transition-colors duration-200 mb-2 ${
+                  gender === 'female' ? 'bg-pink-50 text-pink-600 border-2 border-pink-200' : 'text-gray-700'
+                }`}
+              >
+                Jsem žena
+              </button>
+
+              <button
+                onClick={() => handleGenderSelect('male')}
+                className={`w-full text-left px-4 py-4 text-lg hover:bg-gray-100 rounded-lg transition-colors duration-200 mb-2 ${
+                  gender === 'male' ? 'bg-blue-50 text-blue-600 border-2 border-blue-200' : 'text-gray-700'
+                }`}
+              >
+                Jsem muž
+              </button>
+
+              <button
+                onClick={() => handleGenderSelect('none')}
+                className={`w-full text-left px-4 py-4 text-lg hover:bg-gray-100 rounded-lg transition-colors duration-200 ${
+                  gender === 'none' ? 'bg-gray-50 text-gray-600 border-2 border-gray-200' : 'text-gray-700'
+                }`}
+              >
+                Nechci být osobní
+              </button>
             </div>
 
-            {menuItems.map((item) => {
-              const Icon = item.icon;
-              const isActive = currentScreen === item.screen;
 
-              return (
-                <button
-                  key={item.id}
-                  onClick={() => handleNavigation(item.screen)}
-                  className={`w-full text-left px-4 py-3 text-sm hover:bg-gray-100 flex items-center transition-colors duration-200 ${
-                    isActive ? 'bg-blue-50 text-blue-600 border-r-2 border-blue-600' : 'text-gray-700'
-                  }`}
-                >
-                  <Icon size={16} className="mr-3" />
-                  {item.label}
-                </button>
-              );
-            })}
+            {/* Nastavení a účet */}
+            <div className="px-6 py-3 border-t border-gray-200">
+              <h3 className="text-lg font-medium text-gray-800 mb-4">Účet</h3>
 
-            {/* Osobní nastavení */}
-            <div className="px-4 py-2 text-sm text-gray-600 border-b border-gray-200 mt-2">
-              Osobní nastavení
+              <button className="w-full text-left px-4 py-4 text-lg hover:bg-gray-100 rounded-lg transition-colors duration-200 mb-2 text-gray-700">
+                Nastavení
+              </button>
+
+              <button className="w-full text-left px-4 py-4 text-lg hover:bg-gray-100 rounded-lg transition-colors duration-200 mb-2 text-gray-700">
+                Statistiky
+              </button>
+
+              <button className="w-full text-left px-4 py-4 text-lg hover:bg-gray-100 rounded-lg transition-colors duration-200 text-gray-700">
+                Odhlásit se
+              </button>
             </div>
-
-            <button
-              onClick={() => handleGenderSelect('male')}
-              className={`w-full text-left px-4 py-3 text-sm hover:bg-gray-100 flex items-center transition-colors duration-200 ${
-                gender === 'male' ? 'bg-blue-50 text-blue-600' : 'text-gray-700'
-              }`}
-            >
-              <span className="mr-3">👨</span>
-              Jsem muž
-            </button>
-
-            <button
-              onClick={() => handleGenderSelect('female')}
-              className={`w-full text-left px-4 py-3 text-sm hover:bg-gray-100 flex items-center transition-colors duration-200 ${
-                gender === 'female' ? 'bg-pink-50 text-pink-600' : 'text-gray-700'
-              }`}
-            >
-              <span className="mr-3">👩</span>
-              Jsem žena
-            </button>
-
-            <button
-              onClick={() => handleGenderSelect('none')}
-              className={`w-full text-left px-4 py-3 text-sm hover:bg-gray-100 flex items-center transition-colors duration-200 ${
-                gender === 'none' ? 'bg-gray-50 text-gray-600' : 'text-gray-700'
-              }`}
-            >
-              <span className="mr-3">🚫</span>
-              Nechci být osobní
-            </button>
-
-            {/* Nastavení hlasu */}
-            <div className="px-4 py-2 text-sm text-gray-600 border-b border-gray-200 mt-2">
-              Preferovaný hlas
-            </div>
-
-            <button
-              onClick={() => handleVoiceSelect('female')}
-              className={`w-full text-left px-4 py-3 text-sm hover:bg-gray-100 flex items-center transition-colors duration-200 ${
-                voicePreference === 'female' ? 'bg-purple-50 text-purple-600' : 'text-gray-700'
-              }`}
-            >
-              <span className="mr-3">🎵👩</span>
-              Ženský hlas
-            </button>
-
-            <button
-              onClick={() => handleVoiceSelect('male')}
-              className={`w-full text-left px-4 py-3 text-sm hover:bg-gray-100 flex items-center transition-colors duration-200 ${
-                voicePreference === 'male' ? 'bg-purple-50 text-purple-600' : 'text-gray-700'
-              }`}
-            >
-              <span className="mr-3">🎵👨</span>
-              Mužský hlas
-            </button>
-
-            <button
-              onClick={() => handleVoiceSelect('auto')}
-              className={`w-full text-left px-4 py-3 text-sm hover:bg-gray-100 flex items-center transition-colors duration-200 ${
-                voicePreference === 'auto' ? 'bg-purple-50 text-purple-600' : 'text-gray-700'
-              }`}
-            >
-              <span className="mr-3">🎵🔄</span>
-              Automaticky
-            </button>
-
-            {/* Účet */}
-            <div className="px-4 py-2 text-sm text-gray-600 border-b border-gray-200 mt-2">
-              Účet
-            </div>
-
-            <button className="w-full text-left px-4 py-3 text-sm hover:bg-gray-100 flex items-center text-gray-700 transition-colors duration-200">
-              <User size={16} className="mr-3" />
-              Profil
-            </button>
-
-            <button className="w-full text-left px-4 py-3 text-sm hover:bg-gray-100 flex items-center text-gray-700 transition-colors duration-200">
-              <Settings size={16} className="mr-3" />
-              Nastavení
-            </button>
-
-            <button className="w-full text-left px-4 py-3 text-sm hover:bg-gray-100 flex items-center text-gray-700 transition-colors duration-200">
-              <BarChart3 size={16} className="mr-3" />
-              Statistiky
-            </button>
-
-            <button className="w-full text-left px-4 py-3 text-sm hover:bg-gray-100 flex items-center text-gray-700 transition-colors duration-200">
-              <LogOut size={16} className="mr-3" />
-              Odhlásit se
-            </button>
           </div>
         </div>
       )}
