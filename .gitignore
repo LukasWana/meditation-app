@@ -1,3 +1,7 @@
 node_modules
 android
 dist
+*.apk
+
+# Firebase config (obsahuje citlivé údaje)
+src/firebase/config.js

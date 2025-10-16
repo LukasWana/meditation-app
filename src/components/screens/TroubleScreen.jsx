@@ -5,6 +5,7 @@ import FramerSection from '../FramerSection';
 import FramerPageTransition from '../FramerPageTransition';
 import BackButton from '../BackButton';
 import AudioPlayer from '../AudioPlayer';
+import { AUDIO_FILES } from '../../hooks/useFirebaseAudio';
 
 const TroubleScreen = ({
   onNavigateToScreen,
@@ -16,14 +17,30 @@ const TroubleScreen = ({
 
   const troubleItems = [
     {
-      title: 'úzkosť',
-      duration: '12 min',
-      audioSrc: '/media/zbav sa strachu z osamelosti.mp3'
+      title: 'úzkosť - ženský hlas',
+      duration: '4:25',
+      audioSrc: AUDIO_FILES.FEMALE_MSK
     },
-    { title: 'bolesť', duration: '15 min' },
-    { title: 'smútok', duration: '18 min' },
-    { title: 'hnev', duration: '10 min' },
-    { title: 'nespavosť', duration: '25 min' }
+    {
+      title: 'úzkosť - mužský hlas',
+      duration: '4:25',
+      audioSrc: AUDIO_FILES.MALE_MSK
+    },
+    {
+      title: 'úzkosť - ženský hlas FSK',
+      duration: '4:25',
+      audioSrc: AUDIO_FILES.FEMALE_FSK
+    },
+    {
+      title: 'úzkosť - mužský hlas FSK',
+      duration: '4:25',
+      audioSrc: AUDIO_FILES.MALE_FSK
+    },
+    {
+      title: 'zbav sa strachu z osamelosti',
+      duration: '6:25',
+      audioSrc: AUDIO_FILES.FEAR_LONELINESS
+    }
   ];
 
   const handleItemClick = (item) => {

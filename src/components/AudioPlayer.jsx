@@ -1,6 +1,7 @@
 import React from 'react';
 import { motion } from 'framer-motion';
 import { useAudioPlayer } from '../hooks/useAudioPlayer';
+import { useFirebaseAudio } from '../hooks/useFirebaseAudio';
 import {
   AudioControls,
   CloseButton,
@@ -13,6 +14,9 @@ const AudioPlayer = ({
   onClose,
   className = ""
 }) => {
+  // Načtení URL z Firebase Storage
+  const { audioUrl, loading: firebaseLoading, error: firebaseError } = useFirebaseAudio(audioSrc);
+
   const {
     audioRef,
     isPlaying,
@@ -25,7 +29,7 @@ const AudioPlayer = ({
     skipForward,
     handleSeek,
     formatTime
-  } = useAudioPlayer(audioSrc);
+  } = useAudioPlayer(audioUrl);
 
   return (
     <motion.div
@@ -56,7 +60,7 @@ const AudioPlayer = ({
         {/* Audio Element */}
         <audio
           ref={audioRef}
-          src={audioSrc}
+          src={audioUrl}
           preload="metadata"
         />
 
@@ -75,7 +79,17 @@ const AudioPlayer = ({
         />
 
         {/* Loading Indicator */}
-        <LoadingIndicator isLoading={isLoading} />
+        <LoadingIndicator isLoading={isLoading || firebaseLoading} />
+
+        {/* Firebase Error */}
+        {firebaseError && (
+          <div className="absolute inset-0 flex items-center justify-center bg-red-100 rounded-full">
+            <div className="text-center p-4">
+              <p className="text-red-600 font-medium">Chyba při načítání audio</p>
+              <p className="text-red-500 text-sm">{firebaseError}</p>
+            </div>
+          </div>
+        )}
       </motion.div>
 
       {/* Close Button - Touching Main Circle

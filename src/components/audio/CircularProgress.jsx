@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { motion } from 'framer-motion';
 
 const CircularProgress = ({
@@ -9,6 +9,8 @@ const CircularProgress = ({
   const radius = 160;
   const circumference = 2 * Math.PI * radius;
   const [isDragging, setIsDragging] = useState(false);
+  const [lastClickTime, setLastClickTime] = useState(0);
+  const [isTouchDevice, setIsTouchDevice] = useState(false);
   const svgRef = useRef(null);
 
   const handleMouseDown = (e) => {
@@ -24,25 +26,79 @@ const CircularProgress = ({
   };
 
   const handleMouseUp = () => {
-    setIsDragging(false);
+    // Přidáme malé zpoždění pro resetování dragging stavu
+    setTimeout(() => {
+      setIsDragging(false);
+    }, 100);
   };
 
-  const handleTouchStart = (e) => {
-    e.preventDefault();
-    setIsDragging(true);
-    handleSeek(e);
-  };
+  // Handler pro kliknutí s ochranou proti dvojitému tapu
+  const handleClick = (e) => {
+    // Na touch zařízeních ignorujeme onClick úplně
+    if (isTouchDevice) {
+      return;
+    }
 
-  const handleTouchMove = (e) => {
+    const now = Date.now();
+    const timeDiff = now - lastClickTime;
+
+    // Pokud je to dvojitý tap (méně než 300ms), ignorujeme
+    if (timeDiff < 300) {
+      setLastClickTime(now);
+      return;
+    }
+
+    setLastClickTime(now);
+
+    // Pokud jsme právě dokončili dragging, nechceme spustit onClick
     if (isDragging) {
-      e.preventDefault();
-      handleSeek(e);
+      return;
+    }
+
+    // Spustíme onSeek pouze pokud není dragging
+    if (onSeek) {
+      onSeek(e);
     }
   };
 
-  const handleTouchEnd = () => {
-    setIsDragging(false);
-  };
+
+  // Přidáme event listenery s passive: false pro touch události
+  useEffect(() => {
+    const svgElement = svgRef.current;
+    if (!svgElement) return;
+
+    const handleTouchMovePassive = (e) => {
+      if (isDragging) {
+        e.preventDefault();
+        handleSeek(e);
+      }
+    };
+
+    const handleTouchStartPassive = (e) => {
+      e.preventDefault();
+      setIsTouchDevice(true);
+      setIsDragging(true);
+      handleSeek(e);
+    };
+
+    const handleTouchEndPassive = () => {
+      // Přidáme malé zpoždění pro resetování dragging stavu
+      setTimeout(() => {
+        setIsDragging(false);
+      }, 100);
+    };
+
+    // Přidáme event listenery s passive: false
+    svgElement.addEventListener('touchstart', handleTouchStartPassive, { passive: false });
+    svgElement.addEventListener('touchmove', handleTouchMovePassive, { passive: false });
+    svgElement.addEventListener('touchend', handleTouchEndPassive, { passive: false });
+
+    return () => {
+      svgElement.removeEventListener('touchstart', handleTouchStartPassive);
+      svgElement.removeEventListener('touchmove', handleTouchMovePassive);
+      svgElement.removeEventListener('touchend', handleTouchEndPassive);
+    };
+  }, [isDragging, onSeek]);
 
   const handleSeek = (e) => {
     if (!svgRef.current || !onSeek) return;
@@ -77,14 +133,11 @@ const CircularProgress = ({
     <svg
       ref={svgRef}
       className={`${className} transform -rotate-90 cursor-pointer select-none`}
-      onClick={!isDragging ? onSeek : undefined}
+      onClick={handleClick}
       onMouseDown={handleMouseDown}
       onMouseMove={handleMouseMove}
       onMouseUp={handleMouseUp}
       onMouseLeave={handleMouseUp}
-      onTouchStart={handleTouchStart}
-      onTouchMove={handleTouchMove}
-      onTouchEnd={handleTouchEnd}
       viewBox="0 0 340 340"
       style={{ aspectRatio: '1/1', userSelect: 'none' }}
     >
