@@ -21,7 +21,7 @@ export const useDirectAudio = (audioKey) => {
     if (audioUrl) {
       setLoading(true);
       setError(null);
-      
+
       // Otestujeme, zda URL funguje
       fetch(audioUrl, { method: 'HEAD' })
         .then(response => {
