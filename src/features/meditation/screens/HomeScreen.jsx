@@ -1,6 +1,6 @@
 import React from 'react';
 import { motion } from 'framer-motion';
-import FramerPageTransition from '../FramerPageTransition';
+import { FramerPageTransition } from '@components';
 
 const HomeScreen = ({
   onNavigateToScreen,

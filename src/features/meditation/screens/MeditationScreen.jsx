@@ -1,11 +1,7 @@
 import React from 'react';
 import { motion } from 'framer-motion';
 import { Play, Pause, RotateCcw } from 'lucide-react';
-import FramerButton from '../FramerButton';
-import FramerSection from '../FramerSection';
-import FramerMeditationCircle from '../FramerMeditationCircle';
-import FramerPageTransition from '../FramerPageTransition';
-import BackButton from '../BackButton';
+import { FramerButton, FramerSection, FramerMeditationCircle, FramerPageTransition, BackButton } from '@components';
 
 const MeditationScreen = ({
   time,

@@ -1,12 +1,11 @@
 import React from 'react';
 import { motion } from 'framer-motion';
-import { useAudioPlayer } from '../hooks/useAudioPlayer';
-import { useFirebaseAudio } from '../hooks/useFirebaseAudio';
+import { useAudioPlayer, useFirebaseAudio } from './hooks';
 import {
   AudioControls,
   CloseButton,
   LoadingIndicator
-} from './audio';
+} from './components';
 
 const AudioPlayer = ({
   audioSrc,

@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { ref, getDownloadURL } from 'firebase/storage';
-import { storage } from '../firebase/config';
+import { storage } from '@services/firebase';
 
 export const useFirebaseAudio = (audioFileName) => {
   const [audioUrl, setAudioUrl] = useState(null);

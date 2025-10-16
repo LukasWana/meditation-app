@@ -1,11 +1,8 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import FramerButton from '../FramerButton';
-import FramerSection from '../FramerSection';
-import FramerPageTransition from '../FramerPageTransition';
-import BackButton from '../BackButton';
-import AudioPlayer from '../AudioPlayer';
-import { AUDIO_FILES } from '../../hooks/useFirebaseAudio';
+import { FramerButton, FramerSection, FramerPageTransition, BackButton } from '@components';
+import { AudioPlayer } from '@features/audio';
+import { AUDIO_FILES } from '@features/audio/hooks/useFirebaseAudio';
 
 const TroubleScreen = ({
   onNavigateToScreen,

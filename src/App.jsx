@@ -1,12 +1,14 @@
 import React, { useState, useEffect } from 'react';
-import IntroScreen from './components/screens/IntroScreen';
-import HomeScreen from './components/screens/HomeScreen';
-import MeditationScreen from './components/screens/MeditationScreen';
-import BreathScreen from './components/screens/BreathScreen';
-import HelpScreen from './components/screens/HelpScreen';
-import JourneyScreen from './components/screens/JourneyScreen';
-import TroubleScreen from './components/screens/TroubleScreen';
-import Layout from './components/Layout';
+import IntroScreen from '@features/meditation/screens/IntroScreen';
+import {
+  HomeScreen,
+  MeditationScreen,
+  BreathScreen,
+  HelpScreen,
+  JourneyScreen,
+  TroubleScreen
+} from '@features/meditation';
+import { Layout } from '@features/navigation';
 
 export default function MeditationApp() {
   const [screen, setScreen] = useState('intro');

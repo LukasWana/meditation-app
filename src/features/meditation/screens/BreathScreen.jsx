@@ -1,10 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Play, Pause } from 'lucide-react';
-import FramerSection from '../FramerSection';
-import FramerPageTransition from '../FramerPageTransition';
-import BackButton from '../BackButton';
-import FramerButton from '../FramerButton';
+import { FramerSection, FramerPageTransition, BackButton, FramerButton } from '@components';
 
 const BreathScreen = ({
   breathPhase,
