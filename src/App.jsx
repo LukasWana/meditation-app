@@ -6,6 +6,7 @@ import BreathScreen from './components/screens/BreathScreen';
 import HelpScreen from './components/screens/HelpScreen';
 import JourneyScreen from './components/screens/JourneyScreen';
 import TroubleScreen from './components/screens/TroubleScreen';
+import Layout from './components/Layout';
 
 export default function MeditationApp() {
   const [screen, setScreen] = useState('intro');
@@ -15,11 +16,21 @@ export default function MeditationApp() {
   const [breathPhase, setBreathPhase] = useState('in');
   const [touchStart, setTouchStart] = useState(null);
   const [touchEnd, setTouchEnd] = useState(null);
+  const [gender, setGender] = useState('none'); // 'male', 'female', 'none'
+  const [voicePreference, setVoicePreference] = useState('auto'); // 'male', 'female', 'auto'
 
   const minSwipeDistance = 30; // Znížené pre ľahšie swipe
 
   const handleIntroComplete = () => {
     setScreen('home');
+  };
+
+  const handleGenderChange = (selectedGender) => {
+    setGender(selectedGender);
+  };
+
+  const handleVoicePreferenceChange = (selectedVoice) => {
+    setVoicePreference(selectedVoice);
   };
 
   // Timer effect with proper cleanup
@@ -126,74 +137,128 @@ export default function MeditationApp() {
 
   if (screen === 'home') {
     return (
-      <HomeScreen
+      <Layout
+        currentScreen={screen}
         onNavigateToScreen={navigateToScreen}
-        onTouchStart={onTouchStart}
-        onTouchMove={onTouchMove}
-        onTouchEnd={onTouchEnd}
-      />
+        gender={gender}
+        onGenderChange={handleGenderChange}
+        voicePreference={voicePreference}
+        onVoicePreferenceChange={handleVoicePreferenceChange}
+      >
+        <HomeScreen
+          onNavigateToScreen={navigateToScreen}
+          onTouchStart={onTouchStart}
+          onTouchMove={onTouchMove}
+          onTouchEnd={onTouchEnd}
+        />
+      </Layout>
     );
   }
 
   if (screen === 'meditation') {
     return (
-      <MeditationScreen
-        time={time}
-        selectedDuration={selectedDuration}
-        isPlaying={isPlaying}
-        onDurationChange={handleDurationChange}
-        onPlayPause={handlePlayPause}
-        onReset={handleReset}
+      <Layout
+        currentScreen={screen}
         onNavigateToScreen={navigateToScreen}
-        onTouchStart={onTouchStart}
-        onTouchMove={onTouchMove}
-        onTouchEnd={onTouchEnd}
-      />
+        gender={gender}
+        onGenderChange={handleGenderChange}
+        voicePreference={voicePreference}
+        onVoicePreferenceChange={handleVoicePreferenceChange}
+      >
+        <MeditationScreen
+          time={time}
+          selectedDuration={selectedDuration}
+          isPlaying={isPlaying}
+          onDurationChange={handleDurationChange}
+          onPlayPause={handlePlayPause}
+          onReset={handleReset}
+          onNavigateToScreen={navigateToScreen}
+          onTouchStart={onTouchStart}
+          onTouchMove={onTouchMove}
+          onTouchEnd={onTouchEnd}
+        />
+      </Layout>
     );
   }
 
   if (screen === 'breath') {
     return (
-      <BreathScreen
-        breathPhase={breathPhase}
+      <Layout
+        currentScreen={screen}
         onNavigateToScreen={navigateToScreen}
-        onTouchStart={onTouchStart}
-        onTouchMove={onTouchMove}
-        onTouchEnd={onTouchEnd}
-      />
+        gender={gender}
+        onGenderChange={handleGenderChange}
+        voicePreference={voicePreference}
+        onVoicePreferenceChange={handleVoicePreferenceChange}
+      >
+        <BreathScreen
+          breathPhase={breathPhase}
+          onNavigateToScreen={navigateToScreen}
+          onTouchStart={onTouchStart}
+          onTouchMove={onTouchMove}
+          onTouchEnd={onTouchEnd}
+        />
+      </Layout>
     );
   }
 
   if (screen === 'help') {
     return (
-      <HelpScreen
+      <Layout
+        currentScreen={screen}
         onNavigateToScreen={navigateToScreen}
-        onTouchStart={onTouchStart}
-        onTouchMove={onTouchMove}
-        onTouchEnd={onTouchEnd}
-      />
+        gender={gender}
+        onGenderChange={handleGenderChange}
+        voicePreference={voicePreference}
+        onVoicePreferenceChange={handleVoicePreferenceChange}
+      >
+        <HelpScreen
+          onNavigateToScreen={navigateToScreen}
+          onTouchStart={onTouchStart}
+          onTouchMove={onTouchMove}
+          onTouchEnd={onTouchEnd}
+        />
+      </Layout>
     );
   }
 
   if (screen === 'journey') {
     return (
-      <JourneyScreen
+      <Layout
+        currentScreen={screen}
         onNavigateToScreen={navigateToScreen}
-        onTouchStart={onTouchStart}
-        onTouchMove={onTouchMove}
-        onTouchEnd={onTouchEnd}
-      />
+        gender={gender}
+        onGenderChange={handleGenderChange}
+        voicePreference={voicePreference}
+        onVoicePreferenceChange={handleVoicePreferenceChange}
+      >
+        <JourneyScreen
+          onNavigateToScreen={navigateToScreen}
+          onTouchStart={onTouchStart}
+          onTouchMove={onTouchMove}
+          onTouchEnd={onTouchEnd}
+        />
+      </Layout>
     );
   }
 
   if (screen === 'trouble') {
     return (
-      <TroubleScreen
+      <Layout
+        currentScreen={screen}
         onNavigateToScreen={navigateToScreen}
-        onTouchStart={onTouchStart}
-        onTouchMove={onTouchMove}
-        onTouchEnd={onTouchEnd}
-      />
+        gender={gender}
+        onGenderChange={handleGenderChange}
+        voicePreference={voicePreference}
+        onVoicePreferenceChange={handleVoicePreferenceChange}
+      >
+        <TroubleScreen
+          onNavigateToScreen={navigateToScreen}
+          onTouchStart={onTouchStart}
+          onTouchMove={onTouchMove}
+          onTouchEnd={onTouchEnd}
+        />
+      </Layout>
     );
   }
 
