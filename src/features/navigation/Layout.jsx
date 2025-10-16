@@ -7,6 +7,7 @@ const Layout = ({
   onGenderChange,
   voicePreference,
   onVoicePreferenceChange,
+  isPlayerActive = false,
   className = ""
 }) => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -32,15 +33,17 @@ const Layout = ({
       {/* Hlavní obsah */}
       {children}
 
-      {/* Hamburger Menu Button */}
-      <div className="fixed top-4 right-4 z-50">
-        <button
-          onClick={toggleMenu}
-          className="w-12 h-12 rounded-full bg-red-500 border-2 border-red-600 flex items-center justify-center shadow-lg hover:bg-red-600 transition-colors duration-200"
-        >
-          {isMenuOpen ? <X size={18} className="text-white" /> : <Menu size={18} className="text-white" />}
-        </button>
-      </div>
+      {/* Hamburger Menu Button - Hidden when player is active */}
+      {!isPlayerActive && (
+        <div className="fixed top-4 right-4 z-50">
+          <button
+            onClick={toggleMenu}
+            className="w-12 h-12 rounded-full bg-red-500 border-2 border-red-600 flex items-center justify-center shadow-lg hover:bg-red-600 transition-colors duration-200"
+          >
+            {isMenuOpen ? <X size={18} className="text-white" /> : <Menu size={18} className="text-white" />}
+          </button>
+        </div>
+      )}
 
       {/* Overlay pro zavření menu při kliknutí mimo */}
       {isMenuOpen && (

@@ -19,10 +19,10 @@ export const useFirebaseCDNScanner = () => {
 
       // Získej referenci na root složku v Firebase Storage
       const listRef = ref(storage, '');
-      
+
       // Načti všechny soubory
       const result = await listAll(listRef);
-      
+
       // Filtruj pouze MP3 soubory
       const mp3Files = result.items
         .filter(item => item.name.toLowerCase().endsWith('.mp3'))
@@ -30,15 +30,15 @@ export const useFirebaseCDNScanner = () => {
 
       // Ověř, že soubory skutečně existují (získej download URL)
       const verifiedFiles = [];
-      
+
       for (const fileName of mp3Files) {
         try {
           const fileRef = ref(storage, fileName);
           const downloadURL = await getDownloadURL(fileRef);
-          
+
           // Parsuj název souboru pro získání metadat
           const parsed = parseAudioFileName(fileName);
-          
+
           verifiedFiles.push({
             fileName,
             downloadURL,
@@ -60,14 +60,14 @@ export const useFirebaseCDNScanner = () => {
 
       setAudioFiles(verifiedFiles);
       setLastUpdated(new Date());
-      
+
       console.log(`Načteno ${verifiedFiles.filter(f => f.isAvailable).length} dostupných audio souborů z CDN`);
-      
+
       // Debug: vypiš všechny načtené soubory
       verifiedFiles.filter(f => f.isAvailable).forEach(file => {
         console.log(`Soubor: ${file.fileName}, parsed:`, file.parsed);
       });
-      
+
     } catch (err) {
       console.error('Chyba při načítání obsahu z CDN:', err);
       setError(err.message);
@@ -83,17 +83,17 @@ export const useFirebaseCDNScanner = () => {
 
   // Získej pouze dostupné soubory
   const availableFiles = audioFiles.filter(file => file.isAvailable);
-  
+
   // Získej soubory seskupené podle témat
   const filesByTopic = availableFiles.reduce((acc, file) => {
     if (!file.parsed) return acc;
-    
+
     const topic = file.parsed.topic;
     if (!acc[topic]) {
       acc[topic] = [];
     }
     acc[topic].push(file);
-    
+
     return acc;
   }, {});
 
@@ -116,15 +116,15 @@ export const useFirebaseCDNScanner = () => {
     filesByTopic,
     availableTopics,
     stats,
-    
+
     // State
     isLoading,
     error,
     lastUpdated,
-    
+
     // Actions
     refreshCDN: scanCDN,
-    
+
     // Getters
     getFilesForTopic: (topic) => filesByTopic[topic] || [],
     getFileByName: (fileName) => availableFiles.find(f => f.fileName === fileName),

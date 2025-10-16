@@ -20,6 +20,7 @@ export default function MeditationApp() {
   const [touchEnd, setTouchEnd] = useState(null);
   const [gender, setGender] = useState('none'); // 'male', 'female', 'none'
   const [voicePreference, setVoicePreference] = useState('auto'); // 'male', 'female', 'auto'
+  const [isPlayerActive, setIsPlayerActive] = useState(false); // Stav přehrávače
 
   const minSwipeDistance = 30; // Znížené pre ľahšie swipe
 
@@ -33,6 +34,10 @@ export default function MeditationApp() {
 
   const handleVoicePreferenceChange = (selectedVoice) => {
     setVoicePreference(selectedVoice);
+  };
+
+  const handlePlayerStateChange = (isActive) => {
+    setIsPlayerActive(isActive);
   };
 
   // Timer effect with proper cleanup
@@ -241,6 +246,7 @@ export default function MeditationApp() {
         onGenderChange={handleGenderChange}
         voicePreference={voicePreference}
         onVoicePreferenceChange={handleVoicePreferenceChange}
+        isPlayerActive={isPlayerActive}
       >
         <TroubleScreen
           onNavigateToScreen={navigateToScreen}
@@ -248,6 +254,7 @@ export default function MeditationApp() {
           onTouchMove={onTouchMove}
           onTouchEnd={onTouchEnd}
           gender={gender}
+          onPlayerStateChange={handlePlayerStateChange}
         />
       </Layout>
     );

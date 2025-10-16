@@ -20,7 +20,7 @@ const AudioControls = ({
   return (
     <div className={className}>
       {/* Title - Responsive Above Progress Circle */}
-      <div className="absolute top-[28%] left-1/2 transform -translate-x-1/2 pointer-events-none z-10 w-full px-4">
+      <div className="absolute top-[15%] md:top-[10%] left-1/2 transform -translate-x-1/2 pointer-events-none z-10 w-full px-4">
         <div
           className="font-light text-center text-black"
           style={{fontFamily: 'Playfair Display', fontSize: 'clamp(18px, 4vw, 28px)'}}
@@ -47,7 +47,7 @@ const AudioControls = ({
 
         {/* Skip Backward Button - Left of Play Button */}
         <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-          <div className="ml-[40vw] sm:ml-[260px] pointer-events-auto">
+          <div className="ml-[50vw] sm:ml-[260px] pointer-events-auto">
             <SkipButton
               direction="backward"
               onClick={onSkipBackward}
@@ -58,7 +58,7 @@ const AudioControls = ({
 
         {/* Skip Forward Button - Right of Play Button */}
         <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-          <div className="mr-[40vw] sm:mr-[260px] pointer-events-auto">
+          <div className="mr-[50vw] sm:mr-[260px] pointer-events-auto">
             <SkipButton
               direction="forward"
               onClick={onSkipForward}
@@ -69,7 +69,7 @@ const AudioControls = ({
       </div>
 
       {/* Time Display - Responsive Below Progress Circle */}
-      <div className="absolute bottom-[22%] left-1/2 transform -translate-x-1/2 pointer-events-none z-10 w-full px-4 flex flex-col items-center space-y-2">
+      <div className="absolute bottom-[15%] md:bottom-[10%] left-1/2 transform -translate-x-1/2 pointer-events-none z-10 w-full px-4 flex flex-col items-center space-y-1 md:space-y-4">
         {/* Duration - Total Time */}
         <div
           className="text-gray-500 text-center"

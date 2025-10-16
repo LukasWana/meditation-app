@@ -32,15 +32,24 @@ const AudioPlayer = ({
 
   return (
     <motion.div
-      className={`fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 ${className}`}
+      className={`fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 pointer-events-auto ${className}`}
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
       transition={{ duration: 0.3, ease: "easeOut" }}
       onClick={onClose}
+      style={{
+        position: 'fixed',
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+        zIndex: 9999
+      }}
     >
+      {/* Mobile Fullscreen Player */}
       <motion.div
-        className="bg-[#f4ddc4] rounded-full shadow-2xl w-[90vw] h-[90vw] max-w-[600px] max-h-[600px] min-w-[320px] min-h-[320px] mx-4 flex flex-col items-center justify-center relative overflow-hidden"
+        className="bg-[#f4ddc4] w-full h-full sm:w-[90vw] sm:h-[90vw] sm:max-w-[600px] sm:max-h-[600px] sm:min-w-[320px] sm:min-h-[320px] sm:mx-4 sm:rounded-full shadow-2xl flex flex-col items-center justify-center relative overflow-hidden"
         initial={{ scale: 0.8, opacity: 0 }}
         animate={{ scale: 1, opacity: 1 }}
         exit={{ scale: 0.8, opacity: 0 }}
@@ -62,6 +71,14 @@ const AudioPlayer = ({
           src={audioUrl}
           preload="metadata"
         />
+
+        {/* Close Button - Top Right for All Devices */}
+        <div className="absolute top-4 right-4 z-10">
+          <CloseButton
+            onClose={onClose}
+            className="w-10 h-10 bg-white/20 hover:bg-white/30 rounded-full flex items-center justify-center"
+          />
+        </div>
 
         {/* Audio Controls */}
         <AudioControls

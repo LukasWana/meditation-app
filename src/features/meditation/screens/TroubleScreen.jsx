@@ -9,7 +9,8 @@ const TroubleScreen = ({
   onTouchStart,
   onTouchMove,
   onTouchEnd,
-  gender = 'none' // Přidáme gender prop pro filtrování
+  gender = 'none', // Přidáme gender prop pro filtrování
+  onPlayerStateChange // Callback pro předání stavu přehrávače
 }) => {
   const [activeAudio, setActiveAudio] = useState(null);
 
@@ -19,11 +20,13 @@ const TroubleScreen = ({
   const handleItemClick = (item) => {
     if (item.audioSrc) {
       setActiveAudio(item);
+      onPlayerStateChange?.(true); // Informuj o aktivním přehrávači
     }
   };
 
   const handleCloseAudio = () => {
     setActiveAudio(null);
+    onPlayerStateChange?.(false); // Informuj o zavřeném přehrávači
   };
 
   // Loading state
@@ -59,12 +62,17 @@ const TroubleScreen = ({
   return (
     <FramerPageTransition screenKey="trouble">
       <div
-        className="min-h-screen w-full max-w-full bg-[#f4ddc4] flex flex-col items-center justify-center p-8 pb-20 overflow-x-hidden relative"
-        onTouchStart={onTouchStart}
-        onTouchMove={onTouchMove}
-        onTouchEnd={onTouchEnd}
+        className={`min-h-screen w-full max-w-full bg-[#f4ddc4] flex flex-col items-center justify-center p-8 pb-20 overflow-x-hidden relative ${
+          activeAudio ? 'pointer-events-none' : ''
+        }`}
+        onTouchStart={activeAudio ? undefined : onTouchStart}
+        onTouchMove={activeAudio ? undefined : onTouchMove}
+        onTouchEnd={activeAudio ? undefined : onTouchEnd}
       >
-        <BackButton onClick={() => onNavigateToScreen('home')} />
+        <BackButton
+          onClick={() => onNavigateToScreen('home')}
+          className={activeAudio ? 'pointer-events-none opacity-50' : ''}
+        />
 
         <div className="max-w-md w-full mt-16">
           <FramerSection
@@ -114,8 +122,10 @@ const TroubleScreen = ({
                 >
                   <FramerButton
                     variant="ghost"
-                    className="w-full p-6 text-left bg-white/50 backdrop-blur rounded-none border border-black/10"
-                    onClick={() => handleItemClick(item)}
+                    className={`w-full p-6 text-left bg-white/50 backdrop-blur rounded-none border border-black/10 ${
+                      activeAudio ? 'pointer-events-none opacity-50' : ''
+                    }`}
+                    onClick={activeAudio ? undefined : () => handleItemClick(item)}
                   >
                     <div className="flex items-center justify-between">
                       <div className="flex items-center space-x-3">
