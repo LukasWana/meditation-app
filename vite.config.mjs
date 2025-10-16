@@ -16,6 +16,21 @@ export default defineConfig({
       '@assets': path.resolve(__dirname, './src/assets'),
     },
   },
+  build: {
+    outDir: 'dist',
+    assetsDir: 'assets',
+    sourcemap: false,
+    minify: 'esbuild',
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          vendor: ['react', 'react-dom'],
+          framer: ['framer-motion'],
+          firebase: ['firebase/app', 'firebase/storage']
+        }
+      }
+    }
+  },
   server: {
     port: 3000,
     open: true,
