@@ -56,28 +56,26 @@ const AudioControls = ({
             className="w-[20vw] h-[20vw] max-w-[140px] max-h-[140px] min-w-[100px] min-h-[100px]"
           />
         </div>
+      </div>
 
-        {/* Skip Backward Button - Far Left of Play Button */}
-        <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-          <div className="ml-[50vw] pointer-events-auto">
-            <SkipButton
-              direction="backward"
-              onClick={onSkipBackward}
-              className="w-[12vw] h-[12vw] max-w-[70px] max-h-[70px] min-w-[50px] min-h-[50px]"
-            />
-          </div>
-        </div>
+      {/* Skip Buttons - Outside Circular Progress */}
+      <div className="flex items-center justify-between w-full max-w-[80vw] px-4 mt-4 pointer-events-auto">
+        {/* Skip Backward Button - Left */}
+        <SkipButton
+          direction="backward"
+          onClick={onSkipBackward}
+          className="w-[12vw] h-[12vw] max-w-[70px] max-h-[70px] min-w-[50px] min-h-[50px]"
+        />
 
-        {/* Skip Forward Button - Far Right of Play Button */}
-        <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-          <div className="mr-[50vw] pointer-events-auto">
-            <SkipButton
-              direction="forward"
-              onClick={onSkipForward}
-              className="w-[12vw] h-[12vw] max-w-[70px] max-h-[70px] min-w-[50px] min-h-[50px]"
-            />
-          </div>
-        </div>
+        {/* Spacer */}
+        <div className="flex-1"></div>
+
+        {/* Skip Forward Button - Right */}
+        <SkipButton
+          direction="forward"
+          onClick={onSkipForward}
+          className="w-[12vw] h-[12vw] max-w-[70px] max-h-[70px] min-w-[50px] min-h-[50px]"
+        />
       </div>
 
       {/* Current Time Display - Below Circular Progress */}

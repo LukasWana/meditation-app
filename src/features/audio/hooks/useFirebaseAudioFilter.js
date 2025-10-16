@@ -57,22 +57,23 @@ export const useFirebaseAudioFilter = (userGender, userLanguage = 'sk') => {
       const topicFiles = filesByTopic[topicKey];
       const config = topicConfig[topicKey] || { icon: '🎵' };
 
-      // Zobraz všechny soubory pro toto téma
-      topicFiles.forEach((file, index) => {
+      // Zobraz pouze první soubor pro toto téma (varianty se přepínají v playeru)
+      const file = topicFiles[0]; // Vezmi první soubor
+      if (file) {
         const voiceGender = file.parsed?.voice === 'zensky' ? 'žena' : 'muž';
         const targetGender = file.parsed?.targetGender === 'female' ? 'ženy' :
                            file.parsed?.targetGender === 'male' ? 'muže' : 'všechny';
 
         result.push({
-          key: `${topicKey}-${file.parsed?.voice}-${file.parsed?.targetGender}-${index}`,
+          key: `${topicKey}-${file.parsed?.voice}-${file.parsed?.targetGender}`,
           title: file.parsed?.readableTopic || topicKey.replace('-', ' '),
           audioSrc: file.fileName,
           duration: '4:25',
-          voiceInfo: `${file.parsed?.voice} hlas pro ${targetGender}`,
+          voiceInfo: `${voiceGender} hlas (přepínání v playeru)`,
           isAvailable: true,
-          allFiles: [file]
+          allFiles: topicFiles // Zachovej všechny soubory pro přepínání v playeru
         });
-      });
+      }
 
       console.log(`Téma ${topicKey}: ${topicFiles.length} souborů zobrazeno`);
     });
