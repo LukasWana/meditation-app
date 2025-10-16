@@ -59,7 +59,7 @@ const AudioControls = ({
       </div>
 
       {/* Skip Buttons - Outside Circular Progress */}
-      <div className="flex items-center justify-between w-full max-w-[80vw] px-4 mt-4 pointer-events-auto">
+      <div className="flex items-center justify-between w-full max-w-[80vw] px-4 mt-4 pointer-events-auto pl-40 pr-40">
         {/* Skip Backward Button - Left */}
         <SkipButton
           direction="backward"
