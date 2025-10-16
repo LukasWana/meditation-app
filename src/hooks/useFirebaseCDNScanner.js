@@ -23,9 +23,17 @@ export const useFirebaseCDNScanner = () => {
       // Načti všechny soubory
       const result = await listAll(listRef);
 
-      // Filtruj pouze MP3 soubory
+      // Filtruj pouze MP3 soubory pro mluvené slovo (ne hudební soubory)
       const mp3Files = result.items
-        .filter(item => item.name.toLowerCase().endsWith('.mp3'))
+        .filter(item => {
+          const name = item.name;
+          const isMp3 = name.toLowerCase().endsWith('.mp3');
+          // Pouze soubory začínající "muzsky" nebo "zensky" (ne "00--00--00--")
+          const isSpokenWord = /^(muzsky|zensky)/.test(name);
+          const isNotMusic = !name.startsWith('00--00--00--');
+          console.log(`Filtering ${name}: isMp3=${isMp3}, isSpokenWord=${isSpokenWord}, isNotMusic=${isNotMusic}`);
+          return isMp3 && isSpokenWord && isNotMusic;
+        })
         .map(item => item.name);
 
       // Ověř, že soubory skutečně existují (získej download URL)

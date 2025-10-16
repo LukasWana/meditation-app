@@ -16,9 +16,9 @@ const HomeScreen = ({
         onTouchStart={onTouchStart}
         onTouchMove={onTouchMove}
         onTouchEnd={onTouchEnd}
-        initial={{ opacity: 0, scale: 1.2 }}
+        initial={{ opacity: 0, scale: 1 }}
         animate={{ opacity: 1, scale: 1 }}
-        transition={{ duration: 3, ease: "easeOut" }}
+        transition={{ duration: 1, ease: "easeOut" }}
         style={{ height: '100vh' }}
       >
         <div

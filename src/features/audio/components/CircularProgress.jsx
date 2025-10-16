@@ -4,7 +4,7 @@ import { motion } from 'framer-motion';
 const CircularProgress = ({
   progress,
   onSeek,
-  className = "w-[70vw] h-[70vw] max-w-[600px] max-h-[600px] min-w-[300px] min-h-[300px]"
+  className = "w-[50vw] h-[50vw] max-w-[400px] max-h-[400px] min-w-[200px] min-h-[200px]"
 }) => {
   const radius = 200;
   const circumference = 2 * Math.PI * radius;

@@ -3,6 +3,7 @@ import CircularProgress from './CircularProgress';
 import PlayPauseButton from './PlayPauseButton';
 import SkipButton from './SkipButton';
 import CurrentTimeDisplay from './CurrentTimeDisplay';
+import VoiceSwitcher from './VoiceSwitcher';
 
 const AudioControls = ({
   progress,
@@ -15,6 +16,10 @@ const AudioControls = ({
   onSkipBackward,
   onSkipForward,
   formatTime,
+  // Voice switcher props
+  hasVariants,
+  selectedVoice,
+  onVoiceChange,
   className = "absolute inset-0 flex items-center justify-center"
 }) => {
   return (
@@ -84,6 +89,16 @@ const AudioControls = ({
           style={{fontSize: 'clamp(28px, 4vw, 40px)'}}
         />
       </div>
+
+      {/* Voice Switcher - Bottom */}
+      <div className="mt-6 pointer-events-auto z-10">
+        {console.log('AudioControls hasVariants:', hasVariants)}
+        <VoiceSwitcher
+          selectedVoice={selectedVoice}
+          onVoiceChange={onVoiceChange}
+        />
+      </div>
+
     </div>
   );
 };

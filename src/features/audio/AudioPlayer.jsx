@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { useAudioPlayer, useFirebaseAudio } from './hooks';
 import {
@@ -6,6 +6,7 @@ import {
   CloseButton,
   LoadingIndicator
 } from './components';
+import { parseAudioFileName } from '@utils/audioParser';
 
 const AudioPlayer = ({
   audioSrc,
@@ -13,8 +14,61 @@ const AudioPlayer = ({
   onClose,
   className = ""
 }) => {
+  const [selectedVoice, setSelectedVoice] = useState('male'); // 'male', 'female'
+  const [currentAudioFile, setCurrentAudioFile] = useState(audioSrc); // Aktuální soubor
+
+  // Získej informace o aktuálním souboru
+  const currentFileInfo = parseAudioFileName(currentAudioFile);
+  const currentVoice = currentFileInfo?.voice; // 'muzsky' nebo 'zensky'
+
+  // Získej téma pro hledání variant
+  const currentTopic = currentFileInfo?.topic;
+
+  // Aktualizuj currentAudioFile když se změní audioSrc
+  useEffect(() => {
+    setCurrentAudioFile(audioSrc);
+  }, [audioSrc]);
+
+  // Zobraz přepínač pro všechny soubory s mužským nebo ženským hlasem
+  const hasVariants = currentAudioFile && (
+    currentAudioFile.includes('muzsky') || currentAudioFile.includes('zensky')
+  );
+
+  console.log('AudioPlayer debug:', {
+    audioSrc,
+    currentAudioFile,
+    hasVariants,
+    currentVoice,
+    selectedVoice
+  });
+
+  // Funkce pro přepínání hlasů
+  const handleVoiceChange = (voice) => {
+    setSelectedVoice(voice);
+    console.log('Voice changed to:', voice);
+
+    // Najdi alternativní soubor s opačným hlasem
+    if (currentFileInfo && currentTopic) {
+      const targetVoice = voice === 'male' ? 'muzsky' : 'zensky';
+      const currentVoiceType = currentFileInfo.voice;
+
+      // Pokud už je vybraný správný hlas, nic nedělej
+      if (currentVoiceType === targetVoice) {
+        console.log('Already playing correct voice');
+        return;
+      }
+
+      // Sestav název souboru s opačným hlasem
+      const newFileName = `${targetVoice}${currentFileInfo.number}${currentFileInfo.codes}-${currentTopic}.mp3`;
+      console.log('Switching to file:', newFileName);
+
+      // Přepni na nový soubor
+      setCurrentAudioFile(newFileName);
+    }
+  };
+
   // Načtení URL z Firebase Storage
-  const { audioUrl, loading: firebaseLoading, error: firebaseError } = useFirebaseAudio(audioSrc);
+  const { audioUrl, loading: firebaseLoading, error: firebaseError } = useFirebaseAudio(currentAudioFile);
 
   const {
     audioRef,
@@ -94,6 +148,10 @@ const AudioPlayer = ({
           onSkipBackward={skipBackward}
           onSkipForward={skipForward}
           formatTime={formatTime}
+          // Voice switcher props
+          hasVariants={hasVariants}
+          selectedVoice={selectedVoice}
+          onVoiceChange={handleVoiceChange}
         />
 
         {/* Firebase Error */}

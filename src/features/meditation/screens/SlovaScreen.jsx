@@ -165,6 +165,7 @@ const SlovaScreen = ({
               audioSrc={activeAudio.audioSrc}
               title={activeAudio.title}
               onClose={handleCloseAudio}
+              gender={gender}
             />
           )}
         </AnimatePresence>

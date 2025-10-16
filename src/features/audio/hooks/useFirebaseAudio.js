@@ -3,6 +3,7 @@ import { ref, getDownloadURL } from 'firebase/storage';
 import { storage } from '@services/firebase';
 
 export const useFirebaseAudio = (audioFileName) => {
+  console.log('useFirebaseAudio called with audioFileName:', audioFileName);
   const [audioUrl, setAudioUrl] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -15,6 +16,7 @@ export const useFirebaseAudio = (audioFileName) => {
 
     const loadAudioUrl = async () => {
       try {
+        console.log('loadAudioUrl - Loading:', audioFileName);
         setLoading(true);
         setError(null);
 
@@ -23,6 +25,7 @@ export const useFirebaseAudio = (audioFileName) => {
 
         // Získání download URL
         const url = await getDownloadURL(audioRef);
+        console.log('loadAudioUrl - Success, URL:', url);
         setAudioUrl(url);
       } catch (err) {
         console.error('Chyba při načítání audio URL:', err);

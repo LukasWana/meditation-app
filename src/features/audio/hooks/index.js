@@ -4,3 +4,4 @@ export { useFirebaseAudio, AUDIO_FILES, ALL_AUDIO_FILES } from './useFirebaseAud
 export { useDirectAudio, DIRECT_AUDIO_URLS } from './useDirectAudio';
 export { useFirebaseAudioFilter } from './useFirebaseAudioFilter';
 export { useFirebaseHudbaFilter } from './useFirebaseHudbaFilter';
+export { useVoiceSwitcher } from './useVoiceSwitcher';

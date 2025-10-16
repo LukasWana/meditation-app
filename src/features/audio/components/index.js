@@ -6,3 +6,4 @@ export { default as CurrentTimeDisplay } from './CurrentTimeDisplay';
 export { default as CloseButton } from './CloseButton';
 export { default as LoadingIndicator } from './LoadingIndicator';
 export { default as AudioControls } from './AudioControls';
+export { default as VoiceSwitcher } from './VoiceSwitcher';
