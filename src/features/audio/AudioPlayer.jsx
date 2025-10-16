@@ -47,23 +47,20 @@ const AudioPlayer = ({
         zIndex: 9999
       }}
     >
-      {/* Mobile Fullscreen Player */}
+      {/* Full Screen Player - Always Full Screen */}
       <motion.div
-        className="bg-[#f4ddc4] w-full h-full sm:w-[90vw] sm:h-[90vw] sm:max-w-[600px] sm:max-h-[600px] sm:min-w-[320px] sm:min-h-[320px] sm:mx-4 sm:rounded-full shadow-2xl flex flex-col items-center justify-center relative overflow-hidden"
-        initial={{ scale: 0.8, opacity: 0 }}
+        className="bg-[#f4ddc4] w-full h-full flex flex-col items-center justify-center relative overflow-hidden"
+        initial={{ scale: 0.95, opacity: 0 }}
         animate={{ scale: 1, opacity: 1 }}
-        exit={{ scale: 0.8, opacity: 0 }}
+        exit={{ scale: 0.95, opacity: 0 }}
         transition={{
-          duration: 0.3,
+          duration: 0.4,
           ease: "easeOut",
           type: "spring",
-          stiffness: 300,
-          damping: 30
+          stiffness: 200,
+          damping: 25
         }}
         onClick={(e) => e.stopPropagation()}
-        style={{
-          aspectRatio: '1/1'
-        }}
       >
         {/* Audio Element */}
         <audio
@@ -72,12 +69,17 @@ const AudioPlayer = ({
           preload="metadata"
         />
 
-        {/* Close Button - Top Right for All Devices */}
-        <div className="absolute top-4 right-4 z-10">
+        {/* Close Button - Top Right for All Devices - Larger for Full Screen */}
+        <div className="absolute top-6 right-6 z-10">
           <CloseButton
             onClose={onClose}
-            className="w-10 h-10 bg-white/20 hover:bg-white/30 rounded-full flex items-center justify-center"
+            className="w-14 h-14"
           />
+        </div>
+
+        {/* Loading Indicator - Top Left */}
+        <div className="absolute top-6 left-6 z-10">
+          <LoadingIndicator isLoading={isLoading || firebaseLoading} />
         </div>
 
         {/* Audio Controls */}
@@ -93,9 +95,6 @@ const AudioPlayer = ({
           onSkipForward={skipForward}
           formatTime={formatTime}
         />
-
-        {/* Loading Indicator */}
-        <LoadingIndicator isLoading={isLoading || firebaseLoading} />
 
         {/* Firebase Error */}
         {firebaseError && (

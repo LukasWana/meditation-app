@@ -7,17 +7,16 @@ const CurrentTimeDisplay = ({
   style = {}
 }) => {
   return (
-    <span
+    <div
       className={className}
       style={{
         fontFamily: 'Playfair Display',
-        verticalAlign: 'baseline',
         fontSize: '22px',
         ...style
       }}
     >
       {formatTime(currentTime)}
-    </span>
+    </div>
   );
 };
 

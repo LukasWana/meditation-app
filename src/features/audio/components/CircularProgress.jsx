@@ -4,9 +4,9 @@ import { motion } from 'framer-motion';
 const CircularProgress = ({
   progress,
   onSeek,
-  className = "w-[80vw] h-[80vw] max-w-[480px] max-h-[480px] min-w-[240px] min-h-[240px]"
+  className = "w-[70vw] h-[70vw] max-w-[600px] max-h-[600px] min-w-[300px] min-h-[300px]"
 }) => {
-  const radius = 160;
+  const radius = 200;
   const circumference = 2 * Math.PI * radius;
   const [isDragging, setIsDragging] = useState(false);
   const [lastClickTime, setLastClickTime] = useState(0);
@@ -138,13 +138,13 @@ const CircularProgress = ({
       onMouseMove={handleMouseMove}
       onMouseUp={handleMouseUp}
       onMouseLeave={handleMouseUp}
-      viewBox="0 0 340 340"
+      viewBox="0 0 420 420"
       style={{ aspectRatio: '1/1', userSelect: 'none' }}
     >
       {/* Background Circle */}
       <circle
-        cx="170"
-        cy="170"
+        cx="210"
+        cy="210"
         r={radius}
         stroke="rgba(255,255,255,0.3)"
         strokeWidth="12"
@@ -152,8 +152,8 @@ const CircularProgress = ({
       />
       {/* Background Progress Circle - Duplicate with 50% opacity and 50% thicker */}
       <motion.circle
-        cx="170"
-        cy="170"
+        cx="210"
+        cy="210"
         r={radius}
         stroke="white"
         strokeWidth="50"
@@ -166,8 +166,8 @@ const CircularProgress = ({
       />
       {/* Main Progress Circle */}
       <motion.circle
-        cx="170"
-        cy="170"
+        cx="210"
+        cy="210"
         r={radius}
         stroke="limegreen"
         strokeWidth="20"
