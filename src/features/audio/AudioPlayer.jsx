@@ -159,7 +159,7 @@ const AudioPlayer = ({
       <motion.div
         className="w-full h-full flex flex-col items-center justify-center relative overflow-hidden"
         style={{
-          backgroundColor: albumCover ? 'rgba(244, 221, 196, 0.9)' : '#f4ddc4'
+          backgroundColor: albumCover ? 'rgba(244, 221, 196, 0.7)' : '#f4ddc4'
         }}
         initial={{ scale: 0.95, opacity: 0 }}
         animate={{ scale: 1, opacity: 1 }}
@@ -176,18 +176,19 @@ const AudioPlayer = ({
         {/* Album cover background */}
         {albumCover && (
           <div
-            className="absolute inset-0 bg-cover bg-center bg-no-repeat opacity-30"
+            className="absolute inset-0 bg-cover bg-center bg-no-repeat"
             style={{
               backgroundImage: `url(${albumCover})`,
-              filter: 'blur(30px) brightness(0.7)'
+              filter: 'blur(5px) brightness(0.8)',
+              opacity: 1
             }}
           />
         )}
 
         {/* Side bars for wide screens */}
         <div className="hidden lg:block absolute inset-0 pointer-events-none z-5">
-          <div className="absolute left-0 top-0 w-[calc((100vw-600px)/2)] h-full bg-gradient-to-r from-[#f4ddc4]/90 to-transparent"></div>
-          <div className="absolute right-0 top-0 w-[calc((100vw-600px)/2)] h-full bg-gradient-to-l from-[#f4ddc4]/90 to-transparent"></div>
+          <div className="absolute left-0 top-0 w-[calc((100vw-600px)/2)] h-full bg-gradient-to-r from-[#f4ddc4]/70 to-transparent"></div>
+          <div className="absolute right-0 top-0 w-[calc((100vw-600px)/2)] h-full bg-gradient-to-l from-[#f4ddc4]/70 to-transparent"></div>
         </div>
 
         {/* Content overlay */}
