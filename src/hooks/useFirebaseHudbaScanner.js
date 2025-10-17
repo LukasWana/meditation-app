@@ -34,19 +34,17 @@ export const useFirebaseHudbaScanner = () => {
   const [error, setError] = useState(null);
   const [lastUpdated, setLastUpdated] = useState(null);
 
-  // Funkce pro zpracování cached výsledků
+  // Funkce pro zpracování cached výsledků - optimalizováno pro rychlost
   const processCachedResult = async (cachedResult) => {
     setAudioFiles(cachedResult.audioFiles);
     setCoverImages(new Map(Object.entries(cachedResult.coverImages || {})));
     setLastUpdated(cachedResult.lastUpdated);
     setIsLoading(false);
 
-    // Použij nový metadata-only preloading systém
-    const availableFiles = cachedResult.audioFiles.filter(f => f.isAvailable);
-    if (availableFiles.length > 0) {
-      console.log('Starting metadata preload for cached files');
-      await cacheService.fastPreloadMetadata(availableFiles, 3); // Pouze první 3 soubory
-    }
+    console.log('✅ Using cached hudba data - no Firebase loading needed');
+
+    // Metadata jsou už načtené z preloadingu, jen optimalizuj cache
+    cacheService.optimizeCache();
   };
 
   const scanCDN = async () => {
@@ -101,7 +99,7 @@ export const useFirebaseHudbaScanner = () => {
       const mp3Files = audioFiles.filter(name => name.toLowerCase().endsWith('.mp3'));
       const imageFiles = audioFiles.filter(name => /\.(jpg|jpeg|png|gif|webp)$/i.test(name));
 
-      // Ověř, že soubory skutečně existují (získej download URL)
+      // Použij metadata z cache místo načítání ze Firebase
       const verifiedFiles = [];
 
       for (const fileName of mp3Files) {
@@ -114,31 +112,42 @@ export const useFirebaseHudbaScanner = () => {
             continue;
           }
 
-          // Zkontroluj cache pro download URL
+          // Použij metadata z cache (už načtené z preloadingu)
+          const cachedMetadata = cacheService.getMetadata(fileNameOnly);
+          if (!cachedMetadata) {
+            console.log(`No cached metadata for ${fileNameOnly}, loading from Firebase`);
+            // Pokud není v cache, načti normálně ze Firebase
+            const fileRef = ref(storage, fileName);
+            const downloadURL = await getDownloadURL(fileRef);
+            cacheService.setAudioUrl(fileName, downloadURL);
+
+            const parsed = parseAudioFileName(fileNameOnly);
+            verifiedFiles.push({
+              fileName,
+              downloadURL,
+              parsed,
+              duration: 'N/A', // Bez cache metadata
+              isAvailable: true
+            });
+            continue;
+          }
+
+          // Zkontroluj cache pro download URL (může být už načtené)
           let downloadURL = cacheService.getAudioUrl(fileName);
           if (!downloadURL) {
+            // Pouze pokud není v cache, načti ze Firebase
             const fileRef = ref(storage, fileName);
             downloadURL = await getDownloadURL(fileRef);
-            // Ulož do cache
             cacheService.setAudioUrl(fileName, downloadURL);
           }
 
-          // Zkontroluj cache pro metadata
-          const metadataKey = `metadata_${fileNameOnly}`;
-          let parsed = cacheService.getMetadata(metadataKey);
-          if (!parsed) {
-            parsed = parseAudioFileName(fileNameOnly);
-            cacheService.setMetadata(metadataKey, parsed);
-          }
+          // Použij duration z cache metadata
+          const duration = cachedMetadata.estimatedDuration
+            ? `${Math.floor(cachedMetadata.estimatedDuration / 60)}:${(cachedMetadata.estimatedDuration % 60).toString().padStart(2, '0')}`
+            : 'N/A';
 
-          // Zkontroluj cache pro duration
-          let duration = cacheService.getDuration(downloadURL);
-          if (!duration) {
-            duration = await getAudioDuration(downloadURL);
-            if (duration) {
-              cacheService.setDuration(downloadURL, duration);
-            }
-          }
+          // Parse metadata z cache
+          const parsed = parseAudioFileName(fileNameOnly);
 
           verifiedFiles.push({
             fileName,
@@ -148,10 +157,7 @@ export const useFirebaseHudbaScanner = () => {
             isAvailable: true
           });
 
-          // Agresivnější preloading pro hudbu
-          cacheService.preloadAudio(downloadURL, fileName).catch(err => {
-            console.warn('Preload failed:', err);
-          });
+          console.log(`✅ Loaded ${fileNameOnly} from cache (no Firebase loading needed)`);
 
         } catch (err) {
           console.warn(`Hudební soubor ${fileName} není dostupný:`, err.message);

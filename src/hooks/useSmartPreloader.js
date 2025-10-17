@@ -98,11 +98,11 @@ export const useHoverPreloader = () => {
     hoverTimeoutRef.current = setTimeout(async () => {
       try {
         // Pro slova screen - použij audioSrc z variant
-        if (item.variants && item.variants.length > 0) {
+        if (item.variants && item.variants.length > 0 && item.variants[0].audioSrc) {
           await cacheService.preloadAudio(item.variants[0].audioSrc, item.title || item.fileName);
         }
         // Pro hudba screen - použij downloadURL
-        else if (item.downloadURL) {
+        else if (item.downloadURL && item.fileName) {
           await cacheService.preloadAudio(item.downloadURL, item.fileName);
         }
       } catch (error) {

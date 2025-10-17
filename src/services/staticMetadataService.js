@@ -13,7 +13,7 @@ class StaticMetadataService {
   }
 
   /**
-   * Načte metadata ze localStorage (offline cache)
+   * Načte metadata ze localStorage (offline cache) - optimalizováno pro rychlost
    */
   loadFromLocalCache() {
     try {
@@ -22,9 +22,9 @@ class StaticMetadataService {
         const { data, timestamp } = JSON.parse(cached);
         const now = Date.now();
 
-        // Zkontroluj, jestli cache není starší než 24 hodin
-        if (now - timestamp < this.cacheExpiry) {
-          console.log('Loading metadata from local cache');
+        // Zkontroluj, jestli cache není starší než 48 hodin (prodlouženo)
+        if (now - timestamp < (48 * 60 * 60 * 1000)) {
+          console.log(`⚡ Fast load: ${Object.keys(data).length} metadata records from localStorage cache`);
           this.metadata = data;
           this.cache = new Map(Object.entries(data));
           return true;
@@ -57,7 +57,7 @@ class StaticMetadataService {
   }
 
   /**
-   * Načte metadata z JSON souboru
+   * Načte metadata z JSON souboru - optimalizováno pro non-blocking načítání
    */
   async loadMetadata() {
     if (this.isLoading) {
@@ -67,9 +67,18 @@ class StaticMetadataService {
     this.isLoading = true;
 
     try {
-      console.log('Loading metadata from JSON file...');
+      console.log('Loading metadata from JSON file (non-blocking)...');
 
-      const response = await fetch('/audio-metadata.json');
+      // Použij AbortController pro možnost zrušení requestu
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 10000); // 10s timeout
+
+      const response = await fetch('/audio-metadata.json', {
+        signal: controller.signal,
+        priority: 'low' // Nízká priorita pro neblokování animací
+      });
+
+      clearTimeout(timeoutId);
 
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
@@ -80,10 +89,16 @@ class StaticMetadataService {
       this.metadata = metadata;
       this.cache = new Map(Object.entries(metadata));
 
-      console.log(`Loaded ${Object.keys(metadata).length} metadata records from JSON`);
+      console.log(`✅ Loaded ${Object.keys(metadata).length} metadata records from JSON`);
 
-      // Ulož do localStorage pro offline použití
-      this.saveToLocalCache();
+      // Ulož do localStorage asynchronně v pozadí
+      if (window.requestIdleCallback) {
+        window.requestIdleCallback(() => {
+          this.saveToLocalCache();
+        });
+      } else {
+        setTimeout(() => this.saveToLocalCache(), 100);
+      }
 
       return metadata;
     } catch (error) {

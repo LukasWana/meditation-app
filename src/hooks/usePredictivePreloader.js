@@ -217,6 +217,7 @@ export const useTouchPreloader = () => {
 
 /**
  * Hook pro background preloading - načítá kritická data při startu aplikace
+ * Optimalizováno pro načtení metadat bez ovlivnění animací
  */
 export const useBackgroundPreloader = () => {
   const initializedRef = useRef(false);
@@ -226,23 +227,43 @@ export const useBackgroundPreloader = () => {
 
     const initializePreloading = async () => {
       try {
-        console.log('Starting background preloading...');
+        console.log('🚀 Starting background metadata preloading...');
 
-        // Preload kritická data v pozadí
-        await cacheService.preloadCriticalData();
+        // Použij requestIdleCallback pro načítání během idle time
+        const preloadDuringIdle = () => {
+          cacheService.preloadCriticalData()
+            .then(() => {
+              console.log('✅ Background metadata preloading completed');
+              // Optimalizuj cache po dokončení
+              requestIdleCallback(() => {
+                cacheService.optimizeCache();
+              });
+            })
+            .catch(err => {
+              console.warn('Background metadata preloading failed:', err);
+            });
+        };
+
+        // Pokud browser podporuje requestIdleCallback, použij ho
+        if (window.requestIdleCallback) {
+          window.requestIdleCallback(preloadDuringIdle, { timeout: 2000 });
+        } else {
+          // Fallback pro starší browsery - malý delay pro UI
+          setTimeout(preloadDuringIdle, 100);
+        }
 
         initializedRef.current = true;
-        console.log('Background preloading completed');
       } catch (err) {
-        console.warn('Background preloading failed:', err);
+        console.warn('Background preloading setup failed:', err);
+        initializedRef.current = true;
       }
     };
 
-    // Spusť po 100ms od startu aplikace pro okamžitou odezvu
-    const timer = setTimeout(initializePreloading, 100);
+    // Spusť po malém delay aby neovlivnilo inicializační animace
+    setTimeout(initializePreloading, 50);
 
     return () => {
-      clearTimeout(timer);
+      // Cleanup
     };
   }, []);
 

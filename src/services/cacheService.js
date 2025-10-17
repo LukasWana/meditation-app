@@ -192,6 +192,17 @@ class CacheService {
 
   async _preloadAudioInternal(url, fileName) {
     try {
+      // Validace parametrů
+      if (!fileName) {
+        console.warn('PreloadAudio called with undefined fileName, skipping');
+        return Promise.resolve();
+      }
+
+      if (!url) {
+        console.warn(`PreloadAudio called with undefined url for ${fileName}, using metadata-only preload`);
+        return this._preloadFirebaseMetadata(null, fileName);
+      }
+
       console.log(`Preloading audio metadata: ${fileName}`);
 
       // Zkontroluj, jestli už není v cache
@@ -442,11 +453,12 @@ class CacheService {
   }
 
   /**
-   * Preloading kritických dat pro plynulou navigaci - ze statického JSON
+   * Preloading kritických dat při startu aplikace - optimalizováno pro non-blocking načítání
+   * Načte všechna metadata ze statické databáze bez ovlivnění animací
    */
   async preloadCriticalData() {
     try {
-      console.log('Preloading critical data from static JSON...');
+      console.log('🚀 Preloading metadata from database (non-blocking)...');
 
       // Inicializuj statickou metadata službu
       await staticMetadataService.initialize();
@@ -454,14 +466,54 @@ class CacheService {
       // Načti všechna metadata ze statické služby
       const allMetadata = staticMetadataService.getAllFromCache();
 
-      // Ulož do cache
-      Object.entries(allMetadata).forEach(([fileName, metadata]) => {
-        if (!this.has('metadata', fileName)) {
-          this.setMetadata(fileName, metadata);
-        }
-      });
+      // Rozděl načítání do malých chunků pro non-blocking UI
+      const entries = Object.entries(allMetadata);
+      const chunkSize = 20; // Načti po 20 položkách
 
-      console.log(`Critical data preloading completed: ${Object.keys(allMetadata).length} files`);
+      for (let i = 0; i < entries.length; i += chunkSize) {
+        const chunk = entries.slice(i, i + chunkSize);
+
+        // Ulož chunk do cache
+        chunk.forEach(([fileName, metadata]) => {
+          this.setMetadata(fileName, metadata);
+        });
+
+        // Yield control back to browser pro plynulé animace
+        if (i + chunkSize < entries.length) {
+          await new Promise(resolve => setTimeout(resolve, 0));
+        }
+      }
+
+      console.log(`✅ Metadata loaded: ${Object.keys(allMetadata).length} entries cached from static JSON`);
+      console.log(`ℹ️ Note: New files not in static JSON will be loaded from Firebase when needed`);
+
+      // Preload kritické audio URL asynchronně v pozadí - pouze metadata
+      const criticalFiles = [
+        'muzsky4FSK-uzkost-osamelost.mp3',
+        'zensky4FSK-uzkost-osamelost.mp3',
+        '00--00--00--00-ambient1.mp3'
+      ];
+
+      // Použij requestIdleCallback pro metadata preloading (ne audio preloading)
+      const preloadMetadataInBackground = () => {
+        criticalFiles.forEach((fileName, index) => {
+          if (allMetadata[fileName]) {
+            // Delay mezi metadata preloady pro non-blocking
+            setTimeout(() => {
+              // Pouze preload metadata, ne audio URL
+              this._preloadFirebaseMetadata(null, fileName).catch(err => {
+                console.warn(`Failed to preload metadata for ${fileName}:`, err);
+              });
+            }, index * 100);
+          }
+        });
+      };
+
+      if (window.requestIdleCallback) {
+        window.requestIdleCallback(preloadMetadataInBackground);
+      } else {
+        setTimeout(preloadMetadataInBackground, 500);
+      }
 
     } catch (err) {
       console.warn('Critical data preloading failed:', err);
@@ -501,10 +553,11 @@ class CacheService {
 
   /**
    * Preloading dat pro Hudba/Bez-slov screen - ze statického JSON
+   * Optimalizováno pro rychlejší načítání velkých sbírek
    */
-  async preloadHudbaData() {
+  async preloadHudbaData(batchSize = 20) {
     try {
-      console.log('Preloading hudba data from static JSON...');
+      console.log('Preloading hudba data from static JSON (optimized)...');
 
       // Načti metadata ze statické služby cache
       const allMetadata = staticMetadataService.getAllFromCache();
@@ -517,14 +570,37 @@ class CacheService {
         return isMp3 && isHudba;
       });
 
-      // Ulož do cache
-      hudbaFiles.forEach(([fileName, metadata]) => {
+      // Batch processing pro lepší výkon
+      const batches = [];
+      for (let i = 0; i < hudbaFiles.length; i += batchSize) {
+        batches.push(hudbaFiles.slice(i, i + batchSize));
+      }
+
+      // Zpracuj první batch okamžitě
+      const firstBatch = batches[0] || [];
+      firstBatch.forEach(([fileName, metadata]) => {
         if (!this.has('metadata', fileName)) {
           this.setMetadata(fileName, metadata);
         }
       });
 
-      console.log(`Hudba data preloading completed: ${hudbaFiles.length} files`);
+      console.log(`Hudba data preloading completed (first batch): ${firstBatch.length} files`);
+
+      // Zpracuj zbytek asynchronně v pozadí
+      if (batches.length > 1) {
+        setTimeout(() => {
+          batches.slice(1).forEach((batch, index) => {
+            setTimeout(() => {
+              batch.forEach(([fileName, metadata]) => {
+                if (!this.has('metadata', fileName)) {
+                  this.setMetadata(fileName, metadata);
+                }
+              });
+              console.log(`Hudba batch ${index + 2}/${batches.length} completed: ${batch.length} files`);
+            }, index * 100); // 100ms delay mezi batchy
+          });
+        }, 500); // 500ms delay před zpracováním dalších batchů
+      }
 
     } catch (err) {
       console.warn('Hudba data preloading failed:', err);

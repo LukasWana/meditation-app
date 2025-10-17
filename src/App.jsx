@@ -14,17 +14,21 @@ export default function MeditationApp() {
   // Background preloading při startu aplikace
   useBackgroundPreloader();
 
-  // Inicializace statické metadata služby při startu
+  // Inicializace statické metadata služby při startu - non-blocking
   useEffect(() => {
     const initializeMetadata = async () => {
       try {
+        // Počkej až budou inicializační animace dokončené
+        await new Promise(resolve => setTimeout(resolve, 200));
+
         await staticMetadataService.initialize();
-        console.log('Static metadata service initialized');
+        console.log('✅ Static metadata service initialized (non-blocking)');
       } catch (error) {
         console.warn('Failed to initialize static metadata service:', error);
       }
     };
 
+    // Spusť asynchronně v pozadí
     initializeMetadata();
   }, []);
 

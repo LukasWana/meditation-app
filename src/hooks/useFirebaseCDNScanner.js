@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { ref, listAll, getDownloadURL } from 'firebase/storage';
 import { storage } from '@services/firebase';
 import { parseAudioFileName } from '@utils/audioParser';
+import cacheService from '@services/cacheService';
 
 /**
  * Hook pro načítání aktuálního obsahu z Firebase CDN
@@ -12,10 +13,32 @@ export const useFirebaseCDNScanner = () => {
   const [error, setError] = useState(null);
   const [lastUpdated, setLastUpdated] = useState(null);
 
+  // Funkce pro zpracování cached výsledků - optimalizováno pro rychlost
+  const processCachedResult = async (cachedResult) => {
+    setAudioFiles(cachedResult.audioFiles);
+    setLastUpdated(cachedResult.lastUpdated);
+    setIsLoading(false);
+
+    console.log('✅ Using cached slova data - no Firebase loading needed');
+
+    // Metadata jsou už načtené z preloadingu, jen optimalizuj cache
+    cacheService.optimizeCache();
+  };
+
   const scanCDN = async () => {
     try {
       setIsLoading(true);
       setError(null);
+
+      // Zkontroluj cache pro Firebase query
+      const cacheKey = 'slova_scanner_all_files';
+      const cachedResult = cacheService.getFirebaseQuery(cacheKey);
+
+      if (cachedResult) {
+        console.log('Using cached Firebase scan result for slova');
+        await processCachedResult(cachedResult);
+        return;
+      }
 
       // Získej referenci na root složku v Firebase Storage
       const listRef = ref(storage, '');
@@ -36,15 +59,40 @@ export const useFirebaseCDNScanner = () => {
         })
         .map(item => item.name);
 
-      // Ověř, že soubory skutečně existují (získej download URL)
+      // Použij metadata z cache místo načítání ze Firebase
       const verifiedFiles = [];
 
       for (const fileName of mp3Files) {
         try {
-          const fileRef = ref(storage, fileName);
-          const downloadURL = await getDownloadURL(fileRef);
+          // Použij metadata z cache (už načtené z preloadingu)
+          const cachedMetadata = cacheService.getMetadata(fileName);
+          if (!cachedMetadata) {
+            console.log(`No cached metadata for ${fileName}, loading from Firebase`);
+            // Pokud není v cache, načti normálně ze Firebase
+            const fileRef = ref(storage, fileName);
+            const downloadURL = await getDownloadURL(fileRef);
+            cacheService.setAudioUrl(fileName, downloadURL);
 
-          // Parsuj název souboru pro získání metadat
+            const parsed = parseAudioFileName(fileName);
+            verifiedFiles.push({
+              fileName,
+              downloadURL,
+              parsed,
+              isAvailable: true
+            });
+            continue;
+          }
+
+          // Zkontroluj cache pro download URL (může být už načtené)
+          let downloadURL = cacheService.getAudioUrl(fileName);
+          if (!downloadURL) {
+            // Pouze pokud není v cache, načti ze Firebase
+            const fileRef = ref(storage, fileName);
+            downloadURL = await getDownloadURL(fileRef);
+            cacheService.setAudioUrl(fileName, downloadURL);
+          }
+
+          // Parse metadata z cache
           const parsed = parseAudioFileName(fileName);
 
           verifiedFiles.push({
@@ -53,6 +101,9 @@ export const useFirebaseCDNScanner = () => {
             parsed,
             isAvailable: true
           });
+
+          console.log(`✅ Loaded ${fileName} from cache (no Firebase loading needed)`);
+
         } catch (err) {
           console.warn(`Soubor ${fileName} není dostupný:`, err.message);
           // Přidej i nedostupné soubory pro debug
@@ -69,11 +120,18 @@ export const useFirebaseCDNScanner = () => {
       setAudioFiles(verifiedFiles);
       setLastUpdated(new Date());
 
-      console.log(`Načteno ${verifiedFiles.filter(f => f.isAvailable).length} dostupných audio souborů z CDN`);
+      // Ulož výsledek do cache
+      const resultToCache = {
+        audioFiles: verifiedFiles,
+        lastUpdated: new Date()
+      };
+      cacheService.setFirebaseQuery(cacheKey, resultToCache);
+
+      console.log(`✅ Loaded ${verifiedFiles.filter(f => f.isAvailable).length} slova files from cache (no Firebase loading needed)`);
 
       // Debug: vypiš všechny načtené soubory
       verifiedFiles.filter(f => f.isAvailable).forEach(file => {
-        console.log(`Soubor: ${file.fileName}, parsed:`, file.parsed);
+        console.log(`✅ File: ${file.fileName}, parsed:`, file.parsed);
       });
 
     } catch (err) {

@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { FramerButton, FramerSection, FramerPageTransition, BackButton } from '@components';
-// Odstraněny skeleton loadery
 import { AudioPlayer } from '@features/audio';
 import { useFirebaseHudbaFilter } from '@features/audio/hooks/useFirebaseHudbaFilter';
 
@@ -15,7 +14,7 @@ const BezSlovScreen = ({
 }) => {
   const [activeAudio, setActiveAudio] = useState(null);
 
-  // Použij hudební filtrovací systém
+  // Použij původní hudební filtrovací systém
   const { hudbaItems: bezSlovItems, isLoading, error, stats } = useFirebaseHudbaFilter();
 
   const handleItemClick = (item) => {
