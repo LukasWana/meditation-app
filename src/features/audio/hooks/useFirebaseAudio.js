@@ -42,9 +42,9 @@ export const useFirebaseAudio = (audioFileName) => {
         console.log('loadAudioUrl - Success, URL:', url);
         setAudioUrl(url);
 
-        // Spusť preloading pro rychlejší přístup příště
-        cacheService.preloadAudio(url, audioFileName).catch(err => {
-          console.warn('Preload failed:', err);
+        // Spusť metadata preloading pro rychlejší přístup příště
+        cacheService._preloadFirebaseMetadata(url, audioFileName).catch(err => {
+          console.warn('Metadata preload failed:', err);
         });
 
       } catch (err) {

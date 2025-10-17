@@ -41,15 +41,12 @@ export const useFirebaseHudbaScanner = () => {
     setLastUpdated(cachedResult.lastUpdated);
     setIsLoading(false);
 
-    // Preloading je teď méně agresivní - jen cache URL
-    // const availableFiles = cachedResult.audioFiles.filter(f => f.isAvailable);
-    // if (availableFiles.length > 0) {
-    //   console.log('Starting preload for cached files');
-    //   await cacheService.preloadBatch(availableFiles.slice(0, 5).map(file => ({
-    //     url: file.downloadURL,
-    //     fileName: file.fileName
-    //   })), 'audio');
-    // }
+    // Použij nový metadata-only preloading systém
+    const availableFiles = cachedResult.audioFiles.filter(f => f.isAvailable);
+    if (availableFiles.length > 0) {
+      console.log('Starting metadata preload for cached files');
+      await cacheService.fastPreloadMetadata(availableFiles, 3); // Pouze první 3 soubory
+    }
   };
 
   const scanCDN = async () => {

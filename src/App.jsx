@@ -1,10 +1,20 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useRef } from 'react';
 import { PageManager } from '@features/navigation';
 import { useNavigation, useTouchNavigation, useAppState } from '@hooks';
+import { usePredictivePreloader, useBackgroundPreloader } from '@hooks/usePredictivePreloader';
 
 export default function MeditationApp() {
   // Navigation state
   const { currentScreen, navigateToScreen } = useNavigation('intro');
+
+  // Navigation history pro prediktivní preloading
+  const navigationHistoryRef = useRef([]);
+
+  // Background preloading při startu aplikace
+  useBackgroundPreloader();
+
+  // Prediktivní preloading na základě navigace
+  usePredictivePreloader(currentScreen, navigationHistoryRef.current);
 
   // App state
   const {
@@ -46,6 +56,17 @@ export default function MeditationApp() {
       }
     }
   });
+
+  // Aktualizuj navigation history při změně obrazovky
+  useEffect(() => {
+    if (currentScreen) {
+      navigationHistoryRef.current.push(currentScreen);
+      // Udržuj pouze posledních 10 navigací
+      if (navigationHistoryRef.current.length > 10) {
+        navigationHistoryRef.current = navigationHistoryRef.current.slice(-10);
+      }
+    }
+  }, [currentScreen]);
 
   // Timer effect with proper cleanup
   useEffect(() => {

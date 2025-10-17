@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { FramerButton, FramerSection, FramerPageTransition, BackButton } from '@components';
+// Odstraněny skeleton loadery
 import { AudioPlayer } from '@features/audio';
 import { useInitialPreloader, useHoverPreloader } from '@hooks/useSmartPreloader';
 import { useFirebaseAudioFilter } from '@features/audio/hooks/useFirebaseAudioFilter';
@@ -34,7 +35,7 @@ const SlovaScreen = ({
     onPlayerStateChange?.(false); // Informuj o zavřeném přehrávači
   };
 
-  // Loading state
+  // Loading state - jednoduchý spinner
   if (isLoading) {
     return (
       <FramerPageTransition screenKey="slova">

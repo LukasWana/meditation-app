@@ -288,9 +288,9 @@ const PageManager = ({
 
     const transitionConfig = {
       type: "spring",
-      stiffness: 100,
-      damping: 20,
-      duration: transition.duration || 0.6
+      stiffness: 300,
+      damping: 30,
+      duration: transition.duration || 0.4
     };
 
     const screenElement = (

@@ -7,6 +7,21 @@ export { useAppState } from './useAppState';
 export {
   useSmartPreloader,
   useScrollPreloader,
-  useHoverPreloader,
   useInitialPreloader
 } from './useSmartPreloader';
+
+export {
+  useMetadataLoader,
+  useBatchMetadataLoader
+} from './useMetadataLoader';
+
+export {
+  useFastTrackLoader,
+  useLazyMetadataLoader
+} from './useFastTrackLoader';
+
+export {
+  usePredictivePreloader,
+  useTouchPreloader,
+  useBackgroundPreloader
+} from './usePredictivePreloader';

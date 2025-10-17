@@ -2,7 +2,7 @@ import { useEffect, useRef } from 'react';
 import cacheService from '@services/cacheService';
 
 /**
- * Hook pro inteligentní preloading na základě uživatelského chování
+ * Hook pro inteligentní preloading na základě uživatelského chování - optimalizovaný pro metadata
  */
 export const useSmartPreloader = (currentItem, allItems, type = 'audio') => {
   const preloadTimeoutRef = useRef(null);
@@ -16,15 +16,15 @@ export const useSmartPreloader = (currentItem, allItems, type = 'audio') => {
       clearTimeout(preloadTimeoutRef.current);
     }
 
-    // Nastav nový timeout pro preloading (po 2 sekundách nečinnosti)
+    // Nastav nový timeout pro preloading (po 1 sekundě nečinnosti - rychlejší)
     preloadTimeoutRef.current = setTimeout(async () => {
       try {
         await cacheService.smartPreload(currentItem, allItems);
         lastPreloadedRef.current = currentItem;
       } catch (error) {
-        console.warn('Smart preload failed:', error);
+        console.warn('Smart metadata preload failed:', error);
       }
-    }, 2000);
+    }, 1000);
 
     return () => {
       if (preloadTimeoutRef.current) {
@@ -121,43 +121,15 @@ export const useHoverPreloader = () => {
 };
 
 /**
- * Hook pro batch preloading při inicializaci
+ * Hook pro batch preloading při inicializaci - optimalizovaný pro metadata
  */
 export const useInitialPreloader = (items, enabled = true) => {
   useEffect(() => {
     if (!enabled || !items || items.length === 0) return;
 
-    // Agresivnější preloading pro hudbu - preload více položek najednou
-    const itemsToPreload = items.slice(0, Math.min(5, items.length)); // Prvních 5 položek
-
-    itemsToPreload.forEach((item, index) => {
-      let preloadItem = null;
-
-      // Pro slova screen - použij audioSrc z variants
-      if (item.variants && item.variants.length > 0) {
-        preloadItem = {
-          url: item.variants[0].audioSrc,
-          fileName: item.title || item.fileName
-        };
-      }
-      // Pro hudba screen - použij downloadURL
-      else if (item.downloadURL || item.audioSrc) {
-        preloadItem = {
-          url: item.downloadURL || item.audioSrc,
-          fileName: item.fileName || item.title
-        };
-      }
-
-      if (preloadItem) {
-        // První položku preload okamžitě, ostatní s malým delay
-        const delay = index === 0 ? 0 : index * 1000; // 0s, 1s, 2s, 3s, 4s
-
-        setTimeout(() => {
-          cacheService.preloadAudio(preloadItem.url, preloadItem.fileName).catch(err => {
-            console.warn(`Preload failed for ${preloadItem.fileName}:`, err);
-          });
-        }, delay);
-      }
+    // Použij nový metadata-only preloading systém
+    cacheService.fastPreloadMetadata(items, 5).catch(err => {
+      console.warn('Initial metadata preload failed:', err);
     });
   }, [items, enabled]);
 };

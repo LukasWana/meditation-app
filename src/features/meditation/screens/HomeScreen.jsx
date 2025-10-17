@@ -1,6 +1,7 @@
 import React from 'react';
 import { motion } from 'framer-motion';
 import { FramerPageTransition } from '@components';
+import { useTouchPreloader } from '@hooks/usePredictivePreloader';
 
 const HomeScreen = ({
   onNavigateToScreen,
@@ -8,6 +9,8 @@ const HomeScreen = ({
   onTouchMove,
   onTouchEnd
 }) => {
+  // Touch preloading pro plynulou navigaci
+  const { preloadOnTouch, cancelTouchPreload } = useTouchPreloader();
 
   return (
     <FramerPageTransition screenKey="home">
@@ -24,11 +27,11 @@ const HomeScreen = ({
         <motion.div
           className="flex-1 flex items-center justify-center bg-[#f4ddc4] cursor-pointer"
           onClick={() => onNavigateToScreen('slova')}
+          onTouchStart={() => preloadOnTouch('slova', 50)}
           initial={{ opacity: 0, scale: 0.9 }}
           animate={{ opacity: 1, scale: 1 }}
-          whileHover={{ scale: 1.1 }}
           whileTap={{ scale: 0.95 }}
-          transition={{ type: "spring", stiffness: 300, damping: 20 }}
+          transition={{ type: "spring", stiffness: 400, damping: 25 }}
         >
           <motion.div
             className="text-center px-2 sm:px-8 py-4"
@@ -48,11 +51,11 @@ const HomeScreen = ({
         <motion.div
           className="flex-1 flex items-center justify-center bg-[#ffffff] cursor-pointer"
           onClick={() => onNavigateToScreen('bez-slov')}
+          onTouchStart={() => preloadOnTouch('bez-slov', 50)}
           initial={{ opacity: 0, scale: 0.9 }}
           animate={{ opacity: 1, scale: 1 }}
-          whileHover={{ scale: 1.1 }}
           whileTap={{ scale: 0.95 }}
-          transition={{ type: "spring", stiffness: 300, damping: 20 }}
+          transition={{ type: "spring", stiffness: 400, damping: 25 }}
         >
           <motion.div
             className="text-center px-2 sm:px-8 py-4"
@@ -74,9 +77,8 @@ const HomeScreen = ({
           onClick={() => onNavigateToScreen('meditation')}
           initial={{ opacity: 0, scale: 0.9 }}
           animate={{ opacity: 1, scale: 1 }}
-          whileHover={{ scale: 1.1 }}
           whileTap={{ scale: 0.95 }}
-          transition={{ type: "spring", stiffness: 300, damping: 20 }}
+          transition={{ type: "spring", stiffness: 400, damping: 25 }}
         >
           <motion.div
             className="text-center px-2 sm:px-8 py-4"
@@ -98,9 +100,8 @@ const HomeScreen = ({
           onClick={() => onNavigateToScreen('breath')}
           initial={{ opacity: 0, scale: 0.9 }}
           animate={{ opacity: 1, scale: 1 }}
-          whileHover={{ scale: 1.1 }}
           whileTap={{ scale: 0.95 }}
-          transition={{ type: "spring", stiffness: 300, damping: 20 }}
+          transition={{ type: "spring", stiffness: 400, damping: 25 }}
         >
           <motion.div
             className="text-center px-2 sm:px-8 py-4"

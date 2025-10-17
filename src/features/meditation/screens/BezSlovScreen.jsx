@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { FramerButton, FramerSection, FramerPageTransition, BackButton } from '@components';
+// Odstraněny skeleton loadery
 import { AudioPlayer } from '@features/audio';
 import { useFirebaseHudbaFilter } from '@features/audio/hooks/useFirebaseHudbaFilter';
 
@@ -47,7 +48,7 @@ const BezSlovScreen = ({
     onPlayerStateChange?.(false);
   };
 
-  // Loading state
+  // Loading state - jednoduchý spinner
   if (isLoading) {
     return (
       <FramerPageTransition screenKey="bez-slov">
@@ -161,13 +162,13 @@ const BezSlovScreen = ({
                             </div>
                           </div>
                         )}
-                        <div>
+                        <div className="flex-1">
                           <h3 className="text-2xl font-light" style={{fontFamily: 'Playfair Display'}}>
                             {item.title}
                           </h3>
                           {item.type === 'album' && (
                             <p className="text-sm text-gray-500 mt-1">
-                              Album • {item.tracks.length} skladieb • {item.totalDuration}
+                              Album • {item.tracks.length} skladieb
                             </p>
                           )}
                           {item.type === 'hudba' && item.duration && (
@@ -181,6 +182,11 @@ const BezSlovScreen = ({
                         {item.type === 'hudba' && (
                           <span className="text-2xl font-light text-gray-500" style={{fontFamily: 'Playfair Display'}}>
                             {item.duration}
+                          </span>
+                        )}
+                        {item.type === 'album' && (
+                          <span className="text-2xl font-light text-gray-500" style={{fontFamily: 'Playfair Display'}}>
+                            {item.totalDuration}
                           </span>
                         )}
                       </div>
