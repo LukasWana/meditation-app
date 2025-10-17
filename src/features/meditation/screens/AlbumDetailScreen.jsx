@@ -14,6 +14,7 @@ const AlbumDetailScreen = ({
   onTouchEnd
 }) => {
   const [activeAudio, setActiveAudio] = useState(null);
+  const [currentTrackIndex, setCurrentTrackIndex] = useState(0);
 
   // Ochrana proti undefined album - MUSÍ BÝT NA ZAČÁTKU
   if (!album || !album.tracks) {
@@ -39,7 +40,7 @@ const AlbumDetailScreen = ({
     );
   }
 
-  const handleTrackClick = (track) => {
+  const handleTrackClick = (track, index) => {
     // Vytvoř audio objekt stejně jako v BezSlovScreen
     const audioData = {
       audioSrc: track.audioSrc,
@@ -47,7 +48,21 @@ const AlbumDetailScreen = ({
       fileName: track.fileName
     };
     setActiveAudio(audioData);
+    setCurrentTrackIndex(index);
     onPlayerStateChange(true);
+  };
+
+  const handleTrackChange = (newIndex) => {
+    if (album && album.tracks && album.tracks[newIndex]) {
+      const track = album.tracks[newIndex];
+      const audioData = {
+        audioSrc: track.audioSrc,
+        title: track.trackName,
+        fileName: track.fileName
+      };
+      setActiveAudio(audioData);
+      setCurrentTrackIndex(newIndex);
+    }
   };
 
   const handleBackClick = () => {
@@ -56,6 +71,7 @@ const AlbumDetailScreen = ({
 
   const handleCloseAudio = () => {
     setActiveAudio(null);
+    setCurrentTrackIndex(0);
     onPlayerStateChange(false);
   };
 
@@ -141,7 +157,7 @@ const AlbumDetailScreen = ({
               <FramerButton
                 variant="ghost"
                 className="w-full p-4 sm:p-6 text-left bg-white/50 backdrop-blur rounded-none border border-black/10"
-                onClick={() => handleTrackClick(track)}
+                onClick={() => handleTrackClick(track, index)}
               >
                 <div className="flex items-center justify-between">
                   <div className="flex items-center space-x-4">
@@ -180,6 +196,9 @@ const AlbumDetailScreen = ({
           onClose={handleCloseAudio}
           className="fixed inset-0 z-50"
           albumCover={album?.coverImage}
+          albumTracks={album?.tracks}
+          currentTrackIndex={currentTrackIndex}
+          onTrackChange={handleTrackChange}
         />
       )}
     </motion.div>

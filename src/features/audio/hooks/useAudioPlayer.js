@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from 'react';
 import cacheService from '@services/cacheService';
 
-export const useAudioPlayer = (audioSrc) => {
+export const useAudioPlayer = (audioSrc, albumTracks = null, currentTrackIndex = 0, onTrackChange = null) => {
   console.log('useAudioPlayer called with audioSrc:', audioSrc);
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);
@@ -58,7 +58,15 @@ export const useAudioPlayer = (audioSrc) => {
         });
       }
     };
-    const handleEnded = () => setIsPlaying(false);
+    const handleEnded = () => {
+      setIsPlaying(false);
+
+      // Automatické přehrávání další skladby v albu
+      if (albumTracks && albumTracks.length > 1 && onTrackChange) {
+        const nextIndex = (currentTrackIndex + 1) % albumTracks.length;
+        onTrackChange(nextIndex);
+      }
+    };
 
     audio.addEventListener('timeupdate', updateTime);
     audio.addEventListener('loadedmetadata', updateDuration);
@@ -70,6 +78,13 @@ export const useAudioPlayer = (audioSrc) => {
       audio.removeEventListener('ended', handleEnded);
     };
   }, [wasPlayingBeforeSwitch, shouldAutoPlay]);
+
+  // Nastav shouldAutoPlay na true když se změní currentTrackIndex (pro album přehrávání)
+  useEffect(() => {
+    if (albumTracks && albumTracks.length > 1) {
+      setShouldAutoPlay(true);
+    }
+  }, [currentTrackIndex, albumTracks]);
 
   const togglePlayPause = () => {
     const audio = audioRef.current;

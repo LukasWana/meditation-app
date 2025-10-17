@@ -4,6 +4,7 @@ import PlayPauseButton from './PlayPauseButton';
 import SkipButton from './SkipButton';
 import CurrentTimeDisplay from './CurrentTimeDisplay';
 import VoiceSwitcher from './VoiceSwitcher';
+import TrackSwitcher from './TrackSwitcher';
 
 const AudioControls = ({
   progress,
@@ -20,6 +21,10 @@ const AudioControls = ({
   hasVariants,
   selectedVoice,
   onVoiceChange,
+  // Track switcher props
+  albumTracks = null,
+  currentTrackIndex = 0,
+  onTrackChange = null,
   className = "w-full flex flex-col items-center justify-center h-full"
 }) => {
   return (
@@ -91,6 +96,15 @@ const AudioControls = ({
             onVoiceChange={onVoiceChange}
           />
         </div>
+      )}
+
+      {/* Track Switcher - Only show for album content */}
+      {albumTracks && albumTracks.length > 1 && (
+        <TrackSwitcher
+          tracks={albumTracks}
+          currentTrackIndex={currentTrackIndex}
+          onTrackChange={onTrackChange}
+        />
       )}
 
     </div>

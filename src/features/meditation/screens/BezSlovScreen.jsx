@@ -148,7 +148,7 @@ const BezSlovScreen = ({
                               }}
                             />
                             <div className="w-full h-full bg-gray-200 flex items-center justify-center text-gray-400" style={{display: 'none'}}>
-                              📀
+                              🎵
                             </div>
                           </div>
                         )}
@@ -158,7 +158,7 @@ const BezSlovScreen = ({
                           </h3>
                           {item.type === 'album' && (
                             <p className="text-sm text-gray-500 mt-1">
-                              Album • {item.tracks.length} skladieb
+                              Album • {item.tracks.length} skladieb • {item.totalDuration}
                             </p>
                           )}
                           {item.type === 'hudba' && item.duration && (
@@ -169,11 +169,7 @@ const BezSlovScreen = ({
                         </div>
                       </div>
                       <div className="flex items-center space-x-3">
-                        {item.type === 'album' ? (
-                          <span className="text-lg text-gray-400">
-                            📀
-                          </span>
-                        ) : (
+                        {item.type === 'hudba' && (
                           <span className="text-2xl font-light text-gray-500" style={{fontFamily: 'Playfair Display'}}>
                             {item.duration}
                           </span>

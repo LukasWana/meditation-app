@@ -59,7 +59,10 @@ const AudioPlayer = ({
   title,
   onClose,
   className = "",
-  albumCover = null
+  albumCover = null,
+  albumTracks = null,
+  currentTrackIndex = 0,
+  onTrackChange = null
 }) => {
   const [selectedVoice, setSelectedVoice] = useState('male'); // 'male', 'female'
   const [currentAudioFile, setCurrentAudioFile] = useState(audioSrc); // Aktuální soubor
@@ -70,6 +73,14 @@ const AudioPlayer = ({
     return parseAudioFileName(currentAudioFile);
   }, [currentAudioFile]);
 
+  // Pokud máme album tracks, použij aktuální track
+  const actualAudioSrc = useMemo(() => {
+    if (albumTracks && albumTracks.length > 0 && currentTrackIndex >= 0 && currentTrackIndex < albumTracks.length) {
+      return albumTracks[currentTrackIndex].audioSrc;
+    }
+    return audioSrc;
+  }, [audioSrc, albumTracks, currentTrackIndex]);
+
   const currentVoice = currentFileInfo?.voice; // 'muzsky' nebo 'zensky'
 
   // Získej téma pro hledání variant
@@ -77,11 +88,19 @@ const AudioPlayer = ({
 
   // Aktualizuj currentAudioFile když se změní audioSrc
   useEffect(() => {
-    setCurrentAudioFile(audioSrc);
+    setCurrentAudioFile(actualAudioSrc);
 
     // Preloading aktuálního souboru je už v useAudioPlayer hooku
     // Nemusíme ho duplikovat zde
-  }, [audioSrc, title]);
+  }, [actualAudioSrc, title]);
+
+  // Aktualizuj title podle aktuální skladby v albu
+  const actualTitle = useMemo(() => {
+    if (albumTracks && albumTracks.length > 0 && currentTrackIndex >= 0 && currentTrackIndex < albumTracks.length) {
+      return albumTracks[currentTrackIndex].trackName;
+    }
+    return title;
+  }, [title, albumTracks, currentTrackIndex]);
 
   // Zobraz přepínač pouze pro mluvené slovo (hudební soubory nemají varianty)
   const hasVariants = currentFileInfo && currentFileInfo.voice && (
@@ -122,7 +141,7 @@ const AudioPlayer = ({
   };
 
   // Načtení URL z Firebase Storage
-  const { audioUrl, loading: firebaseLoading, error: firebaseError } = useFirebaseAudio(currentAudioFile);
+  const { audioUrl, loading: firebaseLoading, error: firebaseError } = useFirebaseAudio(actualAudioSrc);
 
   const {
     audioRef,
@@ -136,7 +155,7 @@ const AudioPlayer = ({
     skipForward,
     handleSeek,
     formatTime
-  } = useAudioPlayer(audioUrl);
+  } = useAudioPlayer(audioUrl, albumTracks, currentTrackIndex, onTrackChange);
 
   return (
     <motion.div
@@ -179,7 +198,7 @@ const AudioPlayer = ({
             className="absolute inset-0 bg-cover bg-center bg-no-repeat"
             style={{
               backgroundImage: `url(${albumCover})`,
-              filter: 'blur(5px) brightness(0.8)',
+              filter: 'blur(10px) brightness(1)',
               opacity: 1
             }}
           />
@@ -221,7 +240,7 @@ const AudioPlayer = ({
             progress={progress}
             isPlaying={isPlaying}
             currentTime={currentTime}
-            title={title}
+            title={actualTitle}
             duration={duration}
             onSeek={handleSeek}
             onTogglePlayPause={togglePlayPause}
@@ -232,6 +251,10 @@ const AudioPlayer = ({
             hasVariants={hasVariants}
             selectedVoice={selectedVoice}
             onVoiceChange={handleVoiceChange}
+            // Track switcher props
+            albumTracks={albumTracks}
+            currentTrackIndex={currentTrackIndex}
+            onTrackChange={onTrackChange}
             className="w-full flex flex-col items-center justify-center h-full"
           />
 
