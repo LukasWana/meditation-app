@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Menu, X } from 'lucide-react';
+import { motion } from 'framer-motion';
 
 const Layout = ({
   children,
@@ -8,6 +9,7 @@ const Layout = ({
   voicePreference,
   onVoicePreferenceChange,
   isPlayerActive = false,
+  currentScreen = "",
   className = ""
 }) => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -28,32 +30,43 @@ const Layout = ({
       {/* Hlavní obsah */}
       {children}
 
-      {/* Top Right Controls - Hidden when player is active */}
-      {!isPlayerActive && (
+      {/* Top Right Controls - Hidden when player is active, only show on slova page */}
+      {!isPlayerActive && currentScreen === 'slova' && (
         <div className="fixed top-6 right-6 z-50 flex items-center space-x-3">
           {/* Gender Switcher */}
-          <div className="flex bg-white/90 backdrop-blur-sm border border-gray-200 rounded-full p-1 shadow-sm">
-            <button
+          <motion.div
+            className="flex bg-white/90 backdrop-blur-sm border border-gray-200 rounded-full p-1 shadow-sm"
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ duration: 0.3, ease: "easeOut" }}
+          >
+            <motion.button
               onClick={() => handleGenderSelect('male')}
               className={`px-3 py-2 rounded-full text-sm font-medium transition-colors duration-200 ${
                 gender === 'male'
                   ? 'bg-gray-800 text-white'
                   : 'text-gray-600 hover:text-gray-800'
               }`}
+              whileHover={{ scale: 1 }}
+              whileTap={{ scale: 0.9 }}
+              transition={{ type: "spring", stiffness: 300, damping: 20 }}
             >
               jsem Muž
-            </button>
-            <button
+            </motion.button>
+            <motion.button
               onClick={() => handleGenderSelect('female')}
               className={`px-3 py-2 rounded-full text-sm font-medium transition-colors duration-200 ${
                 gender === 'female'
                   ? 'bg-gray-800 text-white'
                   : 'text-gray-600 hover:text-gray-800'
               }`}
+              whileHover={{ scale: 1 }}
+              whileTap={{ scale: 0.9 }}
+              transition={{ type: "spring", stiffness: 300, damping: 20 }}
             >
               jsem Žena
-            </button>
-          </div>
+            </motion.button>
+          </motion.div>
 
           {/* Hamburger Menu Button - COMMENTED OUT */}
           {/* <button

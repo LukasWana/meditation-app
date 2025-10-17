@@ -296,6 +296,7 @@ const PageManager = ({
           voicePreference={voicePreference}
           onVoicePreferenceChange={onVoicePreferenceChange}
           isPlayerActive={isPlayerActive}
+          currentScreen={currentScreen}
         >
           {screenElement}
         </Layout>

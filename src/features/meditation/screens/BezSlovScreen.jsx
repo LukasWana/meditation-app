@@ -33,7 +33,7 @@ const BezSlovScreen = ({
   if (isLoading) {
     return (
       <FramerPageTransition screenKey="bez-slov">
-        <div className="min-h-screen w-full max-w-full bg-[#f4ddc4] flex flex-col items-center justify-center p-8 pb-20 overflow-x-hidden relative">
+        <div className="min-h-screen w-full max-w-full bg-[#f4ddc4] flex flex-col items-center justify-center p-2 sm:p-8 pb-20 overflow-x-hidden relative">
           <BackButton onClick={() => onNavigateToScreen('home')} />
           <div className="text-center">
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-gray-700 mx-auto mb-4"></div>
@@ -48,7 +48,7 @@ const BezSlovScreen = ({
   if (error) {
     return (
       <FramerPageTransition screenKey="bez-slov">
-        <div className="min-h-screen w-full max-w-full bg-[#f4ddc4] flex flex-col items-center justify-center p-8 pb-20 overflow-x-hidden relative">
+        <div className="min-h-screen w-full max-w-full bg-[#f4ddc4] flex flex-col items-center justify-center p-2 sm:p-8 pb-20 overflow-x-hidden relative">
           <BackButton onClick={() => onNavigateToScreen('home')} />
           <div className="text-center">
             <p className="text-xl text-red-600 mb-4">Chyba při načítání</p>
@@ -62,7 +62,7 @@ const BezSlovScreen = ({
   return (
     <FramerPageTransition screenKey="bez-slov">
       <div
-        className={`min-h-screen w-full max-w-full bg-[#f4ddc4] flex flex-col items-center justify-center p-8 pb-20 overflow-x-hidden relative ${
+        className={`min-h-screen w-full max-w-full bg-[#f4ddc4] flex flex-col items-center justify-center p-2 sm:p-8 pb-20 overflow-x-hidden relative ${
           activeAudio ? 'pointer-events-none' : ''
         }`}
         onTouchStart={activeAudio ? undefined : onTouchStart}
@@ -83,12 +83,12 @@ const BezSlovScreen = ({
             <h1 className="text-6xl font-light" style={{fontFamily: 'Playfair Display'}}>
               bez slov
             </h1>
-            <p className="text-xl text-center text-gray-700 mb-8" style={{fontFamily: 'Playfair Display'}}>
+            {/* <p className="text-xl text-center text-gray-700 mb-8" style={{fontFamily: 'Playfair Display'}}>
               hudobné meditácie a relaxačné zvuky
-            </p>
+            </p> */}
 
-            {/* Zobraz statistiky */}
-            {stats && (
+            {/* Zobraz statistiky - ZAKOMENTOVÁNO */}
+            {/* {stats && (
               <div className="text-center mb-8 p-4 bg-white/30 rounded-lg">
                 <p className="text-sm text-gray-600 mb-2">
                   Dostupné skladby: {stats.availableFiles} z {stats.totalFiles}
@@ -102,7 +102,7 @@ const BezSlovScreen = ({
                   </p>
                 )}
               </div>
-            )}
+            )} */}
           </FramerSection>
 
           <div className="space-y-4">
@@ -131,20 +131,17 @@ const BezSlovScreen = ({
                           <h3 className="text-2xl font-light" style={{fontFamily: 'Playfair Display'}}>
                             {item.title}
                           </h3>
-                          {item.voiceInfo && (
+                          {/* {item.voiceInfo && (
                             <p className="text-sm text-gray-500 mt-1">
                               {item.voiceInfo}
                             </p>
-                          )}
+                          )} */}
                         </div>
                       </div>
                       <div className="flex items-center space-x-3">
-                        <span className="text-gray-500" style={{fontFamily: 'Playfair Display'}}>
+                        <span className="text-2xl font-light text-gray-500" style={{fontFamily: 'Playfair Display'}}>
                           {item.duration}
                         </span>
-                        {item.audioSrc && (
-                          <span className="text-black text-lg">♪</span>
-                        )}
                       </div>
                     </div>
                   </FramerButton>

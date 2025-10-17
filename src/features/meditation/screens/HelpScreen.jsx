@@ -18,7 +18,7 @@ const HelpScreen = ({
       >
         <BackButton onClick={() => onNavigateToScreen('home')} />
 
-        <div className="flex-1 flex items-center justify-center p-8">
+        <div className="flex-1 flex items-center justify-center p-2 sm:p-8">
           <div className="max-w-md w-full mt-16">
             <FramerSection
               className="mb-16"
@@ -38,7 +38,7 @@ const HelpScreen = ({
                 <FramerButton
                   onClick={() => onNavigateToScreen('breath')}
                   variant="ghost"
-                  className="w-full p-8 text-left"
+                  className="w-full p-2 sm:p-8 text-left"
                 >
                   <div>
                     <h3 className="text-3xl font-light mb-2" style={{fontFamily: 'Playfair Display'}}>
@@ -57,7 +57,7 @@ const HelpScreen = ({
               >
                 <FramerButton
                   variant="ghost"
-                  className="w-full p-8 text-left"
+                  className="w-full p-2 sm:p-8 text-left"
                 >
                   <div>
                     <h3 className="text-3xl font-light mb-2" style={{fontFamily: 'Playfair Display'}}>
@@ -76,7 +76,7 @@ const HelpScreen = ({
               >
                 <FramerButton
                   variant="ghost"
-                  className="w-full p-8 text-left"
+                  className="w-full p-2 sm:p-8 text-left"
                 >
                   <div>
                     <h3 className="text-3xl font-light mb-2" style={{fontFamily: 'Playfair Display'}}>

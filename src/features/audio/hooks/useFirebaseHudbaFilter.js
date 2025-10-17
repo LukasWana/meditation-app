@@ -38,7 +38,7 @@ export const useFirebaseHudbaFilter = () => {
         items.push({
           key: `${topic}-${parsed.version}`,
           title: parsed.name,
-          duration: 'N/A', // Hudební soubory nemají předem známou délku
+          duration: bestFile.duration || 'N/A', // Pokusíme se získat délku z metadata
           audioSrc: bestFile.downloadURL,
           fullNumbering: parsed.fullNumbering,
           version: parsed.version,

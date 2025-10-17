@@ -3,6 +3,29 @@ import { ref, listAll, getDownloadURL } from 'firebase/storage';
 import { storage } from '@services/firebase';
 import { parseHudbaFileName } from '@utils/hudbaParser';
 
+// Pomocná funkce pro načtení délky audio souboru
+const getAudioDuration = (audioSrc) => {
+  return new Promise((resolve) => {
+    const audio = new Audio();
+    audio.addEventListener('loadedmetadata', () => {
+      const duration = audio.duration;
+      if (isFinite(duration) && duration > 0) {
+        const minutes = Math.floor(duration / 60);
+        const seconds = Math.floor(duration % 60);
+        resolve(`${minutes}:${seconds.toString().padStart(2, '0')}`);
+      } else {
+        resolve(null);
+      }
+    });
+    audio.addEventListener('error', () => {
+      resolve(null);
+    });
+    audio.src = audioSrc;
+    // Timeout po 5 sekundách
+    setTimeout(() => resolve(null), 5000);
+  });
+};
+
 export const useFirebaseHudbaScanner = () => {
   const [audioFiles, setAudioFiles] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -36,10 +59,14 @@ export const useFirebaseHudbaScanner = () => {
           const downloadURL = await getDownloadURL(fileRef);
           const parsed = parseHudbaFileName(fileName);
 
+          // Pokusíme se načíst délku audio souboru
+          const duration = await getAudioDuration(downloadURL);
+
           verifiedFiles.push({
             fileName,
             downloadURL,
             parsed,
+            duration,
             isAvailable: true
           });
         } catch (err) {
@@ -48,6 +75,7 @@ export const useFirebaseHudbaScanner = () => {
             fileName,
             downloadURL: null,
             parsed: parseHudbaFileName(fileName),
+            duration: null,
             isAvailable: false,
             error: err.message
           });
