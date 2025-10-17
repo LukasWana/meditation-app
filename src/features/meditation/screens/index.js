@@ -6,3 +6,4 @@ export { default as HelpScreen } from './HelpScreen';
 export { default as BezSlovScreen } from './BezSlovScreen';
 export { default as SlovaScreen } from './SlovaScreen';
 export { default as IntroScreen } from './IntroScreen';
+export { default as AlbumDetailScreen } from './AlbumDetailScreen';

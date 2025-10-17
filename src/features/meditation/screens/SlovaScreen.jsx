@@ -84,7 +84,7 @@ const SlovaScreen = ({
               slova
             </h1>
             <p className="text-xl text-center text-gray-700 mb-8" style={{fontFamily: 'Playfair Display'}}>
-              mluvené slovo a audio meditácie
+            mluvené meditacie
             </p>
 
             {/* Zobraz statistiky pro uživatele - ZAKOMENTOVÁNO kvůli poskakování */}

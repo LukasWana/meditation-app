@@ -7,6 +7,7 @@ export const useAudioPlayer = (audioSrc) => {
   const [duration, setDuration] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
   const [wasPlayingBeforeSwitch, setWasPlayingBeforeSwitch] = useState(false);
+  const [shouldAutoPlay, setShouldAutoPlay] = useState(true); // Auto-play při prvním načtení
   const audioRef = useRef(null);
 
   // Sleduj změnu audioSrc a zachovej stav přehrávání
@@ -35,15 +36,17 @@ export const useAudioPlayer = (audioSrc) => {
       setDuration(audio.duration);
       setIsLoading(false);
 
-      // Pokud se přehrávalo před změnou zdroje, pokračuj v přehrávání
-      if (wasPlayingBeforeSwitch) {
-        console.log('Auto-playing after source change');
+      // Auto-play při prvním načtení nebo po změně zdroje
+      if (shouldAutoPlay || wasPlayingBeforeSwitch) {
+        console.log('Auto-playing:', shouldAutoPlay ? 'first load' : 'source change');
         audio.play().then(() => {
           setIsPlaying(true);
+          setShouldAutoPlay(false); // Reset po prvním auto-play
           setWasPlayingBeforeSwitch(false);
         }).catch((error) => {
-          console.error('Failed to auto-play after source change:', error);
+          console.error('Failed to auto-play:', error);
           setIsPlaying(false);
+          setShouldAutoPlay(false);
           setWasPlayingBeforeSwitch(false);
         });
       }
@@ -59,7 +62,7 @@ export const useAudioPlayer = (audioSrc) => {
       audio.removeEventListener('loadedmetadata', updateDuration);
       audio.removeEventListener('ended', handleEnded);
     };
-  }, [wasPlayingBeforeSwitch]);
+  }, [wasPlayingBeforeSwitch, shouldAutoPlay]);
 
   const togglePlayPause = () => {
     const audio = audioRef.current;

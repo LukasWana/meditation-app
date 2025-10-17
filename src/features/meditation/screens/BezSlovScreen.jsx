@@ -10,7 +10,8 @@ const BezSlovScreen = ({
   onTouchMove,
   onTouchEnd,
   gender = 'none',
-  onPlayerStateChange
+  onPlayerStateChange,
+  onAlbumSelect
 }) => {
   const [activeAudio, setActiveAudio] = useState(null);
 
@@ -18,7 +19,12 @@ const BezSlovScreen = ({
   const { hudbaItems: bezSlovItems, isLoading, error, stats } = useFirebaseHudbaFilter();
 
   const handleItemClick = (item) => {
-    if (item.audioSrc) {
+    if (item.type === 'album') {
+      // Navigace na detail alba
+      onAlbumSelect?.(item);
+      onNavigateToScreen('album-detail');
+    } else if (item.audioSrc) {
+      // Pro jednotlivé skladby
       setActiveAudio(item);
       onPlayerStateChange?.(true);
     }
@@ -81,7 +87,7 @@ const BezSlovScreen = ({
             delay={0.1}
           >
             <h1 className="text-6xl font-light" style={{fontFamily: 'Playfair Display'}}>
-              bez slov
+              hudba
             </h1>
             {/* <p className="text-xl text-center text-gray-700 mb-8" style={{fontFamily: 'Playfair Display'}}>
               hudobné meditácie a relaxačné zvuky
@@ -127,21 +133,48 @@ const BezSlovScreen = ({
                   >
                     <div className="flex items-center justify-between">
                       <div className="flex items-center space-x-3">
+                        {item.type === 'album' && item.coverImage && (
+                          <div className="w-16 h-16 rounded-lg overflow-hidden bg-gray-200 flex-shrink-0">
+                            <img
+                              src={item.coverImage}
+                              alt={item.title}
+                              className="w-full h-full object-cover"
+                              onError={(e) => {
+                                e.target.style.display = 'none';
+                                e.target.nextSibling.style.display = 'flex';
+                              }}
+                            />
+                            <div className="w-full h-full bg-gray-200 flex items-center justify-center text-gray-400" style={{display: 'none'}}>
+                              📀
+                            </div>
+                          </div>
+                        )}
                         <div>
                           <h3 className="text-2xl font-light" style={{fontFamily: 'Playfair Display'}}>
                             {item.title}
                           </h3>
-                          {/* {item.voiceInfo && (
+                          {item.type === 'album' && (
                             <p className="text-sm text-gray-500 mt-1">
-                              {item.voiceInfo}
+                              Album • {item.tracks.length} skladieb
                             </p>
-                          )} */}
+                          )}
+                          {item.type === 'hudba' && item.duration && (
+                            <p className="text-sm text-gray-500 mt-1">
+                              {item.duration}
+                            </p>
+                          )}
                         </div>
                       </div>
                       <div className="flex items-center space-x-3">
-                        <span className="text-2xl font-light text-gray-500" style={{fontFamily: 'Playfair Display'}}>
-                          {item.duration}
-                        </span>
+                        {item.type === 'album' ? (
+                          <span className="text-lg text-gray-400">
+                            📀
+                          </span>
+                        ) : (
+                          <span className="text-2xl font-light text-gray-500" style={{fontFamily: 'Playfair Display'}}>
+                            {item.duration}
+                          </span>
+                        )}
                       </div>
                     </div>
                   </FramerButton>

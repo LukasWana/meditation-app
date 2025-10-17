@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { ref, listAll, getDownloadURL } from 'firebase/storage';
 import { storage } from '@services/firebase';
-import { parseHudbaFileName } from '@utils/hudbaParser';
+import { parseAudioFileName } from '@utils/hudbaParser';
 
 // Pomocná funkce pro načtení délky audio souboru
 const getAudioDuration = (audioSrc) => {
@@ -40,15 +40,39 @@ export const useFirebaseHudbaScanner = () => {
       const listRef = ref(storage, '');
       const result = await listAll(listRef);
 
-      // Filtruj pouze MP3 soubory s hudebním formátem
-      const mp3Files = result.items
+      // Získej všechny soubory včetně podsložek
+      const allFiles = [...result.items];
+
+      // Prohledej podsložky
+      for (const folderRef of result.prefixes) {
+        try {
+          const folderResult = await listAll(folderRef);
+          // Přidej soubory z podsložky s prefixem složky
+          folderResult.items.forEach(item => {
+            allFiles.push({
+              ...item,
+              name: `${folderRef.name}/${item.name}` // Přidej cestu složky k názvu
+            });
+          });
+        } catch (err) {
+          console.warn(`Nelze prohledat složku ${folderRef.name}:`, err.message);
+        }
+      }
+
+      // Filtruj pouze MP3 soubory s hudebním formátem a obrázky pro cover
+      const audioFiles = allFiles
         .filter(item => {
           const name = item.name.toLowerCase();
           const isMp3 = name.endsWith('.mp3');
-          const isHudba = /^\d{2}--\d{2}--\d{2}--\d{2}-/.test(item.name);
-          return isMp3 && isHudba;
+          const isImage = /\.(jpg|jpeg|png|gif|webp)$/i.test(name);
+          // Zkontroluj hudební formát buď na začátku názvu nebo po cestě složky
+          const isHudba = /\d{2}--\d{2}--\d{2}--\d{2}-/.test(item.name);
+          return (isMp3 || isImage) && isHudba;
         })
         .map(item => item.name);
+
+      const mp3Files = audioFiles.filter(name => name.toLowerCase().endsWith('.mp3'));
+      const imageFiles = audioFiles.filter(name => /\.(jpg|jpeg|png|gif|webp)$/i.test(name));
 
       // Ověř, že soubory skutečně existují (získej download URL)
       const verifiedFiles = [];
@@ -57,7 +81,15 @@ export const useFirebaseHudbaScanner = () => {
         try {
           const fileRef = ref(storage, fileName);
           const downloadURL = await getDownloadURL(fileRef);
-          const parsed = parseHudbaFileName(fileName);
+          // Extraktuj pouze název souboru ze cesty
+          const fileNameOnly = fileName.includes('/') ? fileName.split('/').pop() : fileName;
+
+          // Přeskoč obrázky - neparsuj je jako audio soubory
+          if (/\.(jpg|jpeg|png|gif|webp)$/i.test(fileNameOnly)) {
+            continue;
+          }
+
+          const parsed = parseAudioFileName(fileNameOnly);
 
           // Pokusíme se načíst délku audio souboru
           const duration = await getAudioDuration(downloadURL);
@@ -74,11 +106,39 @@ export const useFirebaseHudbaScanner = () => {
           verifiedFiles.push({
             fileName,
             downloadURL: null,
-            parsed: parseHudbaFileName(fileName),
+            parsed: parseAudioFileName(fileName),
             duration: null,
             isAvailable: false,
             error: err.message
           });
+        }
+      }
+
+      // Načti cover obrázky pro alba
+      const coverImages = new Map();
+      for (const imageName of imageFiles) {
+        try {
+          const imageRef = ref(storage, imageName);
+          const downloadURL = await getDownloadURL(imageRef);
+
+          // Pro soubory ze složek - použij název složky jako klíč
+          if (imageName.includes('/')) {
+            const folderName = imageName.split('/')[0];
+            const imageFileName = imageName.split('/')[1];
+
+            // Pokud je to cover.jpg v složce, použij název složky
+            if (imageFileName.toLowerCase().includes('cover')) {
+              coverImages.set(folderName, downloadURL);
+            }
+          } else {
+            // Pro obrázky v root složce - pokus se parsovat jako album
+            const parsed = parseAudioFileName(imageName.replace(/\.(jpg|jpeg|png|gif|webp)$/i, '.mp3'));
+            if (parsed && parsed.isAlbum) {
+              coverImages.set(parsed.albumName, downloadURL);
+            }
+          }
+        } catch (err) {
+          console.warn(`Cover obrázek ${imageName} není dostupný:`, err.message);
         }
       }
 
@@ -100,7 +160,18 @@ export const useFirebaseHudbaScanner = () => {
   const availableFiles = audioFiles.filter(file => file.isAvailable);
   const filesByTopic = availableFiles.reduce((acc, file) => {
     if (!file.parsed) return acc;
-    const topic = file.parsed.name;
+
+    // Pro soubory ve složce použij název složky jako téma
+    let topic;
+    if (file.fileName.includes('/')) {
+      // Soubor je ve složce, použij název složky
+      const folderName = file.fileName.split('/')[0];
+      topic = folderName.replace(/-/g, ' '); // ambient-journey -> ambient journey
+    } else {
+      // Soubor je v root složce, použij původní logiku
+      topic = file.parsed.name;
+    }
+
     if (!acc[topic]) {
       acc[topic] = [];
     }

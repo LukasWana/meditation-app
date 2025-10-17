@@ -14,6 +14,7 @@ export const useAppState = () => {
   // Audio player state
   const [isPlayerActive, setIsPlayerActive] = useState(false);
   const [activeAudio, setActiveAudio] = useState(null);
+  const [selectedAlbum, setSelectedAlbum] = useState(null);
 
   // Handlers pro meditaci
   const handleDurationChange = useCallback((duration) => {
@@ -55,6 +56,14 @@ export const useAppState = () => {
     setIsPlayerActive(false);
   }, []);
 
+  const handleAlbumSelect = useCallback((album) => {
+    setSelectedAlbum(album);
+  }, []);
+
+  const handleAlbumClose = useCallback(() => {
+    setSelectedAlbum(null);
+  }, []);
+
   return {
     // Meditace state
     time,
@@ -72,6 +81,7 @@ export const useAppState = () => {
     // Audio player state
     isPlayerActive,
     activeAudio,
+    selectedAlbum,
 
     // Handlers
     handleDurationChange,
@@ -81,6 +91,8 @@ export const useAppState = () => {
     handleVoicePreferenceChange,
     handlePlayerStateChange,
     handleOpenAudio,
-    handleCloseAudio
+    handleCloseAudio,
+    handleAlbumSelect,
+    handleAlbumClose
   };
 };

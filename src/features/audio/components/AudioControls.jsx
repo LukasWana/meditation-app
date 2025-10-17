@@ -83,14 +83,15 @@ const AudioControls = ({
         />
       </div>
 
-      {/* Voice Switcher - Bottom */}
-      <div className="mt-6 pointer-events-auto z-10">
-        {console.log('AudioControls hasVariants:', hasVariants)}
-        <VoiceSwitcher
-          selectedVoice={selectedVoice}
-          onVoiceChange={onVoiceChange}
-        />
-      </div>
+      {/* Voice Switcher - Bottom - pouze pro mluvené slovo */}
+      {hasVariants && (
+        <div className="mt-6 pointer-events-auto z-10">
+          <VoiceSwitcher
+            selectedVoice={selectedVoice}
+            onVoiceChange={onVoiceChange}
+          />
+        </div>
+      )}
 
     </div>
   );

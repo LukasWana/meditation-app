@@ -6,7 +6,51 @@ import {
   CloseButton,
   LoadingIndicator
 } from './components';
-import { parseAudioFileName } from '@utils/audioParser';
+import { parseAudioFileName as parseSpeechFileName } from '@utils/audioParser';
+import { parseAudioFileName as parseMusicFileName } from '@utils/hudbaParser';
+
+// Pomocná funkce pro extrakci názvu souboru z URL
+const extractFileNameFromUrl = (url) => {
+  if (!url || typeof url !== 'string') return null;
+
+  try {
+    // Pro Firebase Storage URL: https://firebasestorage.googleapis.com/v0/b/.../o/filename.mp3?alt=media
+    const match = url.match(/\/o\/([^?]+)/);
+    if (match) {
+      const fullPath = decodeURIComponent(match[1]);
+      // Extraktuj pouze název souboru ze cesty (např. "ambient-journey/filename.mp3" -> "filename.mp3")
+      return fullPath.includes('/') ? fullPath.split('/').pop() : fullPath;
+    }
+
+    // Fallback pro běžné URL
+    const pathname = new URL(url).pathname;
+    return pathname.split('/').pop();
+  } catch (error) {
+    // Pokud to není validní URL, zkusíme to jako název souboru
+    // Také extraktuj název souboru ze cesty pokud obsahuje "/"
+    return url.includes('/') ? url.split('/').pop() : url;
+  }
+};
+
+// Univerzální parser - zkusí oba formáty
+const parseAudioFileName = (fileNameOrUrl) => {
+  const fileName = extractFileNameFromUrl(fileNameOrUrl);
+  if (!fileName) return null;
+
+  // Nejdřív zkusíme hudební formát (hudba/alba)
+  const musicResult = parseMusicFileName(fileName);
+  if (musicResult) {
+    return musicResult;
+  }
+
+  // Pak zkusíme mluvené slovo formát
+  const speechResult = parseSpeechFileName(fileName);
+  if (speechResult) {
+    return speechResult;
+  }
+
+  return null;
+};
 
 const AudioPlayer = ({
   audioSrc,
@@ -29,9 +73,9 @@ const AudioPlayer = ({
     setCurrentAudioFile(audioSrc);
   }, [audioSrc]);
 
-  // Zobraz přepínač pro všechny soubory s mužským nebo ženským hlasem
-  const hasVariants = currentAudioFile && (
-    currentAudioFile.includes('muzsky') || currentAudioFile.includes('zensky')
+  // Zobraz přepínač pouze pro mluvené slovo (hudební soubory nemají varianty)
+  const hasVariants = currentFileInfo && currentFileInfo.voice && (
+    currentFileInfo.voice === 'muzsky' || currentFileInfo.voice === 'zensky'
   );
 
   console.log('AudioPlayer debug:', {

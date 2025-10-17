@@ -10,7 +10,8 @@ import {
   BreathScreen,
   HelpScreen,
   BezSlovScreen,
-  SlovaScreen
+  SlovaScreen,
+  AlbumDetailScreen
 } from '@features/meditation';
 import { AudioPlayer } from '@features/audio';
 
@@ -67,7 +68,7 @@ const SCREEN_REGISTRY = {
   'bez-slov': {
     component: BezSlovScreen,
     requiresLayout: true,
-    props: ['onNavigateToScreen', 'onTouchStart', 'onTouchMove', 'onTouchEnd', 'gender', 'onPlayerStateChange'],
+    props: ['onNavigateToScreen', 'onTouchStart', 'onTouchMove', 'onTouchEnd', 'gender', 'onPlayerStateChange', 'onAlbumSelect'],
     transition: {
       type: 'slide',
       direction: 'up',
@@ -81,6 +82,16 @@ const SCREEN_REGISTRY = {
     transition: {
       type: 'slide',
       direction: 'up',
+      duration: 0.6
+    }
+  },
+  'album-detail': {
+    component: AlbumDetailScreen,
+    requiresLayout: true,
+    props: ['album', 'onNavigateToScreen', 'onPlayerStateChange', 'onTouchStart', 'onTouchMove', 'onTouchEnd'],
+    transition: {
+      type: 'slide',
+      direction: 'left',
       duration: 0.6
     }
   },
@@ -165,7 +176,10 @@ const PageManager = ({
   // Audio player specifické
   activeAudio,
   onPlayerStateChange,
-  onCloseAudio
+  onCloseAudio,
+  selectedAlbum,
+  onAlbumSelect,
+  onAlbumClose
 }) => {
   // Získání konfigurace aktuální stránky
   const currentScreenConfig = useMemo(() => {
@@ -207,6 +221,12 @@ const PageManager = ({
           break;
         case 'onPlayerStateChange':
           props.onPlayerStateChange = onPlayerStateChange;
+          break;
+        case 'onAlbumSelect':
+          props.onAlbumSelect = onAlbumSelect;
+          break;
+        case 'album':
+          props.album = selectedAlbum;
           break;
         case 'time':
           props.time = time;

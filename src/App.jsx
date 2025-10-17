@@ -19,13 +19,16 @@ export default function MeditationApp() {
     voicePreference,
     isPlayerActive,
     activeAudio,
+    selectedAlbum,
     handleDurationChange,
     handlePlayPause,
     handleReset,
     handleGenderChange,
     handleVoicePreferenceChange,
     handlePlayerStateChange,
-    handleCloseAudio
+    handleCloseAudio,
+    handleAlbumSelect,
+    handleAlbumClose
   } = useAppState();
 
   // Touch navigation
@@ -108,8 +111,11 @@ export default function MeditationApp() {
 
       // Audio player specifické
       activeAudio={activeAudio}
+      selectedAlbum={selectedAlbum}
       onPlayerStateChange={handlePlayerStateChange}
       onCloseAudio={handleCloseAudio}
+      onAlbumSelect={handleAlbumSelect}
+      onAlbumClose={handleAlbumClose}
     />
   );
 }
