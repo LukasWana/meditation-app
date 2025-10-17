@@ -59,7 +59,7 @@ const AudioControls = ({
       </div>
 
       {/* Skip Buttons - Centered below circular progress */}
-      <div className="flex items-center justify-center space-x-4 mt-6 pointer-events-auto">
+      <div className="flex items-center justify-center space-x-4 mt-6 mb-4 pointer-events-auto">
         <SkipButton
           direction="backward"
           onClick={onSkipBackward}
