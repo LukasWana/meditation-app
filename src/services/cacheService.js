@@ -3,6 +3,8 @@
  * Podporuje cache pro audio, obrázky, metadata a Firebase dotazy
  */
 
+import { staticMetadataService } from './staticMetadataService';
+
 class CacheService {
   constructor() {
     this.caches = {
@@ -214,50 +216,26 @@ class CacheService {
   }
 
   /**
-   * Preloading pouze metadat pro Firebase Storage soubory
+   * Preloading metadat ze statického JSON souboru (rychlé a spolehlivé)
    */
   async _preloadFirebaseMetadata(url, fileName) {
     try {
-      // Import Firebase Storage funkcí
-      const { ref, getMetadata } = await import('firebase/storage');
-      const { storage } = await import('@services/firebase');
+      // Načti metadata ze statické služby
+      const metadata = staticMetadataService.getMetadata(fileName);
 
-      // Extrahuj název souboru z URL nebo použij poskytnutý fileName
-      const fileRef = ref(storage, fileName);
-
-      const loadPromise = Promise.race([
-        getMetadata(fileRef),
-        new Promise((_, reject) =>
-          setTimeout(() => reject(new Error('Metadata preload timeout')), 3000)
-        )
-      ]);
-
-      const metadata = await loadPromise;
-
-      // Ulož metadata do cache
-      const extractedMetadata = {
-        size: metadata.size,
-        contentType: metadata.contentType,
-        timeCreated: metadata.timeCreated,
-        updated: metadata.updated,
-        fileName,
-        estimatedDuration: this._estimateDurationFromSize(metadata.size, metadata.contentType)
-      };
-
-      this.setMetadata(fileName, extractedMetadata);
-      console.log(`Firebase metadata preloaded: ${fileName}`);
-
-      return metadata;
-
-    } catch (error) {
-      // Pokud je soubor 404, nevrhni chybu - jen zaloguj
-      if (error.code === 'storage/object-not-found' || error.message.includes('404')) {
-        console.log(`File not found (404): ${fileName} - skipping preload`);
+      if (metadata) {
+        // Ulož metadata do cache
+        this.setMetadata(fileName, metadata);
+        console.log(`Static metadata preloaded: ${fileName}`);
+        return metadata;
+      } else {
+        console.log(`No static metadata found for: ${fileName}`);
         return null;
       }
 
-      console.warn(`Firebase metadata preload failed for ${fileName}:`, error);
-      throw error;
+    } catch (error) {
+      console.warn(`Static metadata preload failed for ${fileName}:`, error);
+      return null;
     }
   }
 
@@ -464,40 +442,26 @@ class CacheService {
   }
 
   /**
-   * Preloading kritických dat pro plynulou navigaci - optimalizované
+   * Preloading kritických dat pro plynulou navigaci - ze statického JSON
    */
   async preloadCriticalData() {
     try {
-      console.log('Preloading critical data...');
+      console.log('Preloading critical data from static JSON...');
 
-      // Pouze cache základní informace bez síťových requestů
-      const basicMetadata = {
-        'muzsky4FSK-uzkost-osamelost.mp3': {
-          size: 2500000, // ~2.5MB
-          contentType: 'audio/mpeg',
-          estimatedDuration: 180 // 3 minuty
-        },
-        'zensky4FSK-uzkost-osamelost.mp3': {
-          size: 2500000,
-          contentType: 'audio/mpeg',
-          estimatedDuration: 180
-        }
-      };
+      // Inicializuj statickou metadata službu
+      await staticMetadataService.initialize();
 
-      // Ulož základní metadata do cache bez síťových requestů
-      Object.entries(basicMetadata).forEach(([fileName, metadata]) => {
+      // Načti všechna metadata ze statické služby
+      const allMetadata = staticMetadataService.getAllFromCache();
+
+      // Ulož do cache
+      Object.entries(allMetadata).forEach(([fileName, metadata]) => {
         if (!this.has('metadata', fileName)) {
-          this.setMetadata(fileName, {
-            ...metadata,
-            fileName,
-            timeCreated: new Date().toISOString(),
-            updated: new Date().toISOString(),
-            preloaded: true
-          });
+          this.setMetadata(fileName, metadata);
         }
       });
 
-      console.log('Critical data preloading completed (cached)');
+      console.log(`Critical data preloading completed: ${Object.keys(allMetadata).length} files`);
 
     } catch (err) {
       console.warn('Critical data preloading failed:', err);
@@ -505,34 +469,30 @@ class CacheService {
   }
 
   /**
-   * Preloading dat pro Slova screen - optimalizované bez síťových requestů
+   * Preloading dat pro Slova screen - ze statického JSON
    */
   async preloadSlovaData() {
     try {
-      console.log('Preloading slova data...');
+      console.log('Preloading slova data from static JSON...');
 
-      // Cache základní metadata bez síťových requestů
-      const slovaFiles = [
-        'muzsky4FSK-uzkost-osamelost.mp3',
-        'zensky4FSK-uzkost-osamelost.mp3',
-        'muzsky4MSK-uzkost-osamelost.mp3'
-      ];
+      // Načti metadata ze statické služby cache
+      const allMetadata = staticMetadataService.getAllFromCache();
 
-      slovaFiles.forEach(fileName => {
+      // Filtruj soubory pro mluvené slovo
+      const slovaFiles = Object.entries(allMetadata).filter(([fileName, metadata]) => {
+        const isMp3 = fileName.toLowerCase().endsWith('.mp3');
+        const isSpokenWord = /^(muzsky|zensky)/.test(fileName);
+        return isMp3 && isSpokenWord;
+      });
+
+      // Ulož do cache
+      slovaFiles.forEach(([fileName, metadata]) => {
         if (!this.has('metadata', fileName)) {
-          this.setMetadata(fileName, {
-            fileName,
-            size: 2500000, // ~2.5MB
-            contentType: 'audio/mpeg',
-            estimatedDuration: 180, // 3 minuty
-            timeCreated: new Date().toISOString(),
-            updated: new Date().toISOString(),
-            preloaded: true
-          });
+          this.setMetadata(fileName, metadata);
         }
       });
 
-      console.log('Slova data preloading completed (cached)');
+      console.log(`Slova data preloading completed: ${slovaFiles.length} files`);
 
     } catch (err) {
       console.warn('Slova data preloading failed:', err);
@@ -540,34 +500,31 @@ class CacheService {
   }
 
   /**
-   * Preloading dat pro Hudba/Bez-slov screen - optimalizované bez síťových requestů
+   * Preloading dat pro Hudba/Bez-slov screen - ze statického JSON
    */
   async preloadHudbaData() {
     try {
-      console.log('Preloading hudba data...');
+      console.log('Preloading hudba data from static JSON...');
 
-      // Cache základní metadata bez síťových requestů
-      const hudbaFiles = [
-        '00--00--00--00-ambient1.mp3',
-        '00--00--00--01-ambient2.mp3',
-        '00--00--00--02-nature.mp3'
-      ];
+      // Načti metadata ze statické služby cache
+      const allMetadata = staticMetadataService.getAllFromCache();
 
-      hudbaFiles.forEach(fileName => {
+      // Filtruj hudební soubory
+      const hudbaFiles = Object.entries(allMetadata).filter(([fileName, metadata]) => {
+        const isMp3 = fileName.toLowerCase().endsWith('.mp3');
+        // Hudební formát podle useFirebaseHudbaScanner
+        const isHudba = /\d{2}--\d{2}--\d{2}--\d{2}-/.test(fileName);
+        return isMp3 && isHudba;
+      });
+
+      // Ulož do cache
+      hudbaFiles.forEach(([fileName, metadata]) => {
         if (!this.has('metadata', fileName)) {
-          this.setMetadata(fileName, {
-            fileName,
-            size: 5000000, // ~5MB pro hudební soubory
-            contentType: 'audio/mpeg',
-            estimatedDuration: 300, // 5 minut
-            timeCreated: new Date().toISOString(),
-            updated: new Date().toISOString(),
-            preloaded: true
-          });
+          this.setMetadata(fileName, metadata);
         }
       });
 
-      console.log('Hudba data preloading completed (cached)');
+      console.log(`Hudba data preloading completed: ${hudbaFiles.length} files`);
 
     } catch (err) {
       console.warn('Hudba data preloading failed:', err);

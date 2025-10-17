@@ -2,6 +2,7 @@ import React, { useEffect, useRef } from 'react';
 import { PageManager } from '@features/navigation';
 import { useNavigation, useTouchNavigation, useAppState } from '@hooks';
 import { usePredictivePreloader, useBackgroundPreloader } from '@hooks/usePredictivePreloader';
+import { staticMetadataService } from '@services/staticMetadataService';
 
 export default function MeditationApp() {
   // Navigation state
@@ -12,6 +13,20 @@ export default function MeditationApp() {
 
   // Background preloading při startu aplikace
   useBackgroundPreloader();
+
+  // Inicializace statické metadata služby při startu
+  useEffect(() => {
+    const initializeMetadata = async () => {
+      try {
+        await staticMetadataService.initialize();
+        console.log('Static metadata service initialized');
+      } catch (error) {
+        console.warn('Failed to initialize static metadata service:', error);
+      }
+    };
+
+    initializeMetadata();
+  }, []);
 
   // Prediktivní preloading na základě navigace
   usePredictivePreloader(currentScreen, navigationHistoryRef.current);
