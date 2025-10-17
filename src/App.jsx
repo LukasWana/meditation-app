@@ -1,44 +1,23 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { PageManager } from '@features/navigation';
 import { useNavigation, useTouchNavigation, useAppState } from '@hooks';
-import { usePredictivePreloader, useBackgroundPreloader } from '@hooks/usePredictivePreloader';
-import { useSimplePreloader } from '@hooks/useSimplePreloader';
-import { staticMetadataService } from '@services/staticMetadataService';
-import SimpleLoading from '@components/SimpleLoading';
+// Predictive preloader odstraněn - data se načítají při startu
+// useSimplePreloader odstraněn - data se načítají v pozadí
+import IntroScreen from '@features/meditation/screens/IntroScreen';
 
 export default function MeditationApp() {
+  // Intro state
+  const [showIntro, setShowIntro] = useState(true);
+
   // Navigation state
   const { currentScreen, navigateToScreen } = useNavigation('intro');
 
   // Navigation history pro prediktivní preloading
   const navigationHistoryRef = useRef([]);
 
-  // Background preloading při startu aplikace
-  useBackgroundPreloader();
+  // Preloading odstraněn - data se načítají v pozadí během animace
 
-  // Zjednodušený preloading systém
-  const { isPreloaded, preloadStatus } = useSimplePreloader();
-
-  // Inicializace statické metadata služby při startu - non-blocking
-  useEffect(() => {
-    const initializeMetadata = async () => {
-      try {
-        // Počkej až budou inicializační animace dokončené
-        await new Promise(resolve => setTimeout(resolve, 200));
-
-        await staticMetadataService.initialize();
-        console.log('✅ Static metadata service initialized (non-blocking)');
-      } catch (error) {
-        console.warn('Failed to initialize static metadata service:', error);
-      }
-    };
-
-    // Spusť asynchronně v pozadí
-    initializeMetadata();
-  }, []);
-
-  // Prediktivní preloading na základě navigace
-  usePredictivePreloader(currentScreen, navigationHistoryRef.current);
+  // Prediktivní preloading odstraněn - data se načítají při startu
 
   // App state
   const {
@@ -126,18 +105,49 @@ export default function MeditationApp() {
     };
   }, [isPlaying, time, setBreathPhase]);
 
+  // Načti data v pozadí během intro animace
+  useEffect(() => {
+    if (showIntro) {
+      // Spusť načítání dat v pozadí během animace
+      const loadDataInBackground = async () => {
+        try {
+          // Import dynamicky aby se nenačítal při startu
+          const { staticMetadataService } = await import('@services/staticMetadataService');
+          const cacheService = (await import('@services/cacheService')).default;
+
+          // Inicializuj metadata službu
+          await staticMetadataService.initialize();
+
+          // Preload kritická metadata
+          await cacheService.preloadCriticalData();
+
+          console.log('✅ Background data loading completed during intro animation');
+        } catch (error) {
+          console.warn('Background data loading failed:', error);
+        }
+      };
+
+      // Spusť po malém delay aby neovlivnilo animaci
+      setTimeout(loadDataInBackground, 500);
+    }
+  }, [showIntro]);
+
+  // Intro completion handler
+  const handleIntroComplete = () => {
+    setShowIntro(false);
+    navigateToScreen('home');
+  };
+
   return (
     <div className="min-h-screen w-full bg-[#f4ddc4] overflow-x-hidden">
-      {/* Loading screen při preloading */}
-      {!isPreloaded && (
-        <SimpleLoading
-          message="Načítám všechna data..."
-          show={!isPreloaded}
-        />
+      {/* Intro animace s písmem "Meditácia" */}
+      {showIntro && (
+        <IntroScreen onIntroComplete={handleIntroComplete} />
       )}
 
-      {/* Hlavní aplikace */}
-      <PageManager
+      {/* Hlavní aplikace - zobrazí se až po intro */}
+      {!showIntro && (
+        <PageManager
         // Navigation
         currentScreen={currentScreen}
         onNavigateToScreen={navigateToScreen}
@@ -169,7 +179,8 @@ export default function MeditationApp() {
         onPlayerStateChange={handlePlayerStateChange}
         onCloseAudio={handleCloseAudio}
         onAlbumClose={handleAlbumClose}
-      />
+        />
+      )}
 
       {/* Debug info v development módu - HIDDEN */}
       {/* {process.env.NODE_ENV === 'development' && (

@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { FramerButton, FramerSection, FramerPageTransition, BackButton } from '@components';
 // Odstraněny skeleton loadery
 import { AudioPlayer } from '@features/audio';
-import { useInitialPreloader, useHoverPreloader } from '@hooks/useSmartPreloader';
+// Preloadery odstraněny - data se načítají při startu
 import { useFirebaseAudioFilter } from '@features/audio/hooks/useFirebaseAudioFilter';
 
 const SlovaScreen = ({
@@ -15,13 +15,11 @@ const SlovaScreen = ({
   onPlayerStateChange // Callback pro předání stavu přehrávače
 }) => {
   const [activeAudio, setActiveAudio] = useState(null);
-  const { preloadOnHover, cancelHoverPreload } = useHoverPreloader();
 
   // Použij nový filtrovací systém
   const { troubleItems: slovaItems, isLoading, error, userStats } = useFirebaseAudioFilter(gender);
 
-  // Spusť preloading pro dostupné soubory
-  useInitialPreloader(slovaItems, true);
+  // Preloading odstraněn - data se načítají při startu aplikace
 
   const handleItemClick = (item) => {
     if (item.audioSrc) {
@@ -132,8 +130,7 @@ const SlovaScreen = ({
                       activeAudio ? 'pointer-events-none opacity-50' : ''
                     }`}
                     onClick={activeAudio ? undefined : () => handleItemClick(item)}
-                    onMouseEnter={() => preloadOnHover(item)}
-                    onMouseLeave={cancelHoverPreload}
+                    // Hover preloading odstraněn
                   >
                     <div className="flex items-center justify-between">
                       <div className="flex items-center space-x-3">

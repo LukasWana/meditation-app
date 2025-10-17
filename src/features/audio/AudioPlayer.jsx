@@ -8,7 +8,7 @@ import {
 } from './components';
 import { parseAudioFileName as parseSpeechFileName } from '@utils/audioParser';
 import { parseAudioFileName as parseMusicFileName } from '@utils/hudbaParser';
-import { useSmartPreloader } from '@hooks/useSmartPreloader';
+// Preloader odstraněn - data se načítají při startu
 import cacheService from '@services/cacheService';
 
 // Pomocná funkce pro extrakci názvu souboru z URL
