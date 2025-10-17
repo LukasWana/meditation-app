@@ -10,8 +10,7 @@ const BezSlovScreen = ({
   onTouchMove,
   onTouchEnd,
   gender = 'none',
-  onPlayerStateChange,
-  onAlbumSelect
+  onPlayerStateChange
 }) => {
   const [activeAudio, setActiveAudio] = useState(null);
 
@@ -20,9 +19,19 @@ const BezSlovScreen = ({
 
   const handleItemClick = (item) => {
     if (item.type === 'album') {
-      // Navigace na detail alba
-      onAlbumSelect?.(item);
-      onNavigateToScreen('album-detail');
+      // Spusť první skladbu z alba
+      if (item.tracks && item.tracks.length > 0) {
+        const firstTrack = item.tracks[0];
+        setActiveAudio({
+          audioSrc: firstTrack.audioSrc,
+          title: firstTrack.trackName,
+          fileName: firstTrack.fileName,
+          albumCover: item.coverImage,
+          albumTracks: item.tracks,
+          currentTrackIndex: 0
+        });
+        onPlayerStateChange?.(true);
+      }
     } else if (item.audioSrc) {
       // Pro jednotlivé skladby
       setActiveAudio({
@@ -193,6 +202,20 @@ const BezSlovScreen = ({
               title={activeAudio.title}
               onClose={handleCloseAudio}
               albumCover={activeAudio.albumCover}
+              albumTracks={activeAudio.albumTracks}
+              currentTrackIndex={activeAudio.currentTrackIndex}
+              onTrackChange={(newIndex) => {
+                if (activeAudio.albumTracks && activeAudio.albumTracks[newIndex]) {
+                  const track = activeAudio.albumTracks[newIndex];
+                  setActiveAudio({
+                    ...activeAudio,
+                    audioSrc: track.audioSrc,
+                    title: track.trackName,
+                    fileName: track.fileName,
+                    currentTrackIndex: newIndex
+                  });
+                }
+              }}
             />
           )}
         </AnimatePresence>

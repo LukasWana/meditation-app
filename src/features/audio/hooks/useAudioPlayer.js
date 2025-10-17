@@ -10,6 +10,7 @@ export const useAudioPlayer = (audioSrc, albumTracks = null, currentTrackIndex =
   const [wasPlayingBeforeSwitch, setWasPlayingBeforeSwitch] = useState(false);
   const [shouldAutoPlay, setShouldAutoPlay] = useState(true); // Auto-play při prvním načtení
   const audioRef = useRef(null);
+  const fadeTimeoutRef = useRef(null);
 
   // Sleduj změnu audioSrc a zachovej stav přehrávání
   useEffect(() => {
@@ -50,6 +51,7 @@ export const useAudioPlayer = (audioSrc, albumTracks = null, currentTrackIndex =
           setIsPlaying(true);
           setShouldAutoPlay(false); // Reset po prvním auto-play
           setWasPlayingBeforeSwitch(false);
+          fadeIn(audio, 1000); // Fade in při auto-play
         }).catch((error) => {
           console.error('Failed to auto-play:', error);
           setIsPlaying(false);
@@ -76,6 +78,11 @@ export const useAudioPlayer = (audioSrc, albumTracks = null, currentTrackIndex =
       audio.removeEventListener('timeupdate', updateTime);
       audio.removeEventListener('loadedmetadata', updateDuration);
       audio.removeEventListener('ended', handleEnded);
+
+      // Cleanup fade timeout
+      if (fadeTimeoutRef.current) {
+        clearTimeout(fadeTimeoutRef.current);
+      }
     };
   }, [wasPlayingBeforeSwitch, shouldAutoPlay]);
 
@@ -86,16 +93,68 @@ export const useAudioPlayer = (audioSrc, albumTracks = null, currentTrackIndex =
     }
   }, [currentTrackIndex, albumTracks]);
 
+  // Fade out funkce
+  const fadeOut = (audio, duration = 1000, callback) => {
+    if (!audio) return;
+
+    const startVolume = audio.volume;
+    const fadeStep = startVolume / (duration / 50); // 50ms intervaly
+    let currentVolume = startVolume;
+
+    const fadeInterval = setInterval(() => {
+      currentVolume -= fadeStep;
+      if (currentVolume <= 0) {
+        currentVolume = 0;
+        audio.volume = currentVolume;
+        audio.pause();
+        audio.volume = startVolume; // Obnov původní hlasitost
+        clearInterval(fadeInterval);
+        if (callback) callback();
+      } else {
+        audio.volume = currentVolume;
+      }
+    }, 50);
+
+    return fadeInterval;
+  };
+
+  // Fade in funkce
+  const fadeIn = (audio, duration = 1000) => {
+    if (!audio) return;
+
+    audio.volume = 0;
+    const fadeStep = 1 / (duration / 50); // 50ms intervaly
+    let currentVolume = 0;
+
+    const fadeInterval = setInterval(() => {
+      currentVolume += fadeStep;
+      if (currentVolume >= 1) {
+        currentVolume = 1;
+        audio.volume = currentVolume;
+        clearInterval(fadeInterval);
+      } else {
+        audio.volume = currentVolume;
+      }
+    }, 50);
+
+    return fadeInterval;
+  };
+
   const togglePlayPause = () => {
     const audio = audioRef.current;
     if (!audio) return;
 
     if (isPlaying) {
-      audio.pause();
-      setIsPlaying(false);
+      // Fade out při zastavení
+      fadeOut(audio, 1000, () => {
+        setIsPlaying(false);
+      });
     } else {
-      audio.play();
-      setIsPlaying(true);
+      // Fade in při spuštění
+      audio.play().then(() => {
+        setIsPlaying(true);
+        fadeIn(audio, 1000);
+      });
     }
   };
 
@@ -139,8 +198,23 @@ export const useAudioPlayer = (audioSrc, albumTracks = null, currentTrackIndex =
 
     // Validate newTime is finite
     if (isFinite(newTime) && newTime >= 0) {
-      audio.currentTime = newTime;
-      setCurrentTime(newTime);
+      // Fade out, změň pozici, fade in
+      const wasPlaying = isPlaying;
+
+      if (wasPlaying) {
+        fadeOut(audio, 300, () => {
+          audio.currentTime = newTime;
+          setCurrentTime(newTime);
+          if (wasPlaying) {
+            audio.play().then(() => {
+              fadeIn(audio, 300);
+            });
+          }
+        });
+      } else {
+        audio.currentTime = newTime;
+        setCurrentTime(newTime);
+      }
     }
   };
 

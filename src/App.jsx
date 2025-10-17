@@ -27,7 +27,6 @@ export default function MeditationApp() {
     handleVoicePreferenceChange,
     handlePlayerStateChange,
     handleCloseAudio,
-    handleAlbumSelect,
     handleAlbumClose
   } = useAppState();
 
@@ -114,7 +113,6 @@ export default function MeditationApp() {
       selectedAlbum={selectedAlbum}
       onPlayerStateChange={handlePlayerStateChange}
       onCloseAudio={handleCloseAudio}
-      onAlbumSelect={handleAlbumSelect}
       onAlbumClose={handleAlbumClose}
     />
   );

@@ -56,10 +56,6 @@ export const useAppState = () => {
     setIsPlayerActive(false);
   }, []);
 
-  const handleAlbumSelect = useCallback((album) => {
-    setSelectedAlbum(album);
-  }, []);
-
   const handleAlbumClose = useCallback(() => {
     setSelectedAlbum(null);
   }, []);
@@ -92,7 +88,6 @@ export const useAppState = () => {
     handlePlayerStateChange,
     handleOpenAudio,
     handleCloseAudio,
-    handleAlbumSelect,
     handleAlbumClose
   };
 };

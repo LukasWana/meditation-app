@@ -16,8 +16,8 @@ const TrackSwitcher = ({
           className={`
             w-10 h-10 rounded-full flex items-center justify-center text-sm font-medium transition-all duration-200
             ${index === currentTrackIndex
-              ? 'bg-[#f4ddc4] text-black border-2 border-black cursor-default'
-              : 'bg-white/20 text-white border border-white/30 hover:bg-white/30 cursor-pointer'
+              ? 'bg-black text-white border-2 border-black cursor-default'
+              : 'bg-transparent text-black border-2 border-black hover:bg-black/10 cursor-pointer'
             }
           `}
           whileHover={index !== currentTrackIndex ? { scale: 1.05 } : {}}
