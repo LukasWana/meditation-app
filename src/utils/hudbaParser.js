@@ -102,17 +102,18 @@ export const parseAlbumFileName = (fileName) => {
  * Univerzální parser - zkusí oba formáty
  */
 export const parseAudioFileName = (fileName) => {
-  // Nejdřív zkusíme původní hudební formát (častější)
+  // Nejdřív zkusíme album formát (pro soubory ze složek)
+  const albumResult = parseAlbumFileName(fileName);
+  if (albumResult) {
+    return albumResult;
+  }
+
+  // Pak zkusíme původní hudební formát
   const hudbaResult = parseHudbaFileName(fileName);
   if (hudbaResult) {
     return hudbaResult;
   }
 
-  // Pak zkusíme album formát
-  const albumResult = parseAlbumFileName(fileName);
-  if (albumResult) {
-    return albumResult;
-  }
   return null;
 };
 

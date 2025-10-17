@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { FramerButton, FramerSection, FramerPageTransition, BackButton } from '@components';
 import { AudioPlayer } from '@features/audio';
+import { useInitialPreloader, useHoverPreloader } from '@hooks/useSmartPreloader';
 import { useFirebaseAudioFilter } from '@features/audio/hooks/useFirebaseAudioFilter';
 
 const SlovaScreen = ({
@@ -13,9 +14,13 @@ const SlovaScreen = ({
   onPlayerStateChange // Callback pro předání stavu přehrávače
 }) => {
   const [activeAudio, setActiveAudio] = useState(null);
+  const { preloadOnHover, cancelHoverPreload } = useHoverPreloader();
 
   // Použij nový filtrovací systém
   const { troubleItems: slovaItems, isLoading, error, userStats } = useFirebaseAudioFilter(gender);
+
+  // Spusť preloading pro dostupné soubory
+  useInitialPreloader(slovaItems, true);
 
   const handleItemClick = (item) => {
     if (item.audioSrc) {
@@ -126,6 +131,8 @@ const SlovaScreen = ({
                       activeAudio ? 'pointer-events-none opacity-50' : ''
                     }`}
                     onClick={activeAudio ? undefined : () => handleItemClick(item)}
+                    onMouseEnter={() => preloadOnHover(item)}
+                    onMouseLeave={cancelHoverPreload}
                   >
                     <div className="flex items-center justify-between">
                       <div className="flex items-center space-x-3">

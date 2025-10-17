@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { ref, getDownloadURL } from 'firebase/storage';
 import { storage } from '@services/firebase';
+import cacheService from '@services/cacheService';
 
 export const useFirebaseAudio = (audioFileName) => {
   console.log('useFirebaseAudio called with audioFileName:', audioFileName);
@@ -20,13 +21,32 @@ export const useFirebaseAudio = (audioFileName) => {
         setLoading(true);
         setError(null);
 
+        // Zkontroluj cache první
+        const cachedUrl = cacheService.getAudioUrl(audioFileName);
+        if (cachedUrl) {
+          console.log('loadAudioUrl - From cache:', audioFileName);
+          setAudioUrl(cachedUrl);
+          setLoading(false);
+          return;
+        }
+
         // Vytvoření reference k souboru v Firebase Storage
         const audioRef = ref(storage, audioFileName);
 
         // Získání download URL
         const url = await getDownloadURL(audioRef);
+
+        // Ulož do cache
+        cacheService.setAudioUrl(audioFileName, url);
+
         console.log('loadAudioUrl - Success, URL:', url);
         setAudioUrl(url);
+
+        // Spusť preloading pro rychlejší přístup příště
+        cacheService.preloadAudio(url, audioFileName).catch(err => {
+          console.warn('Preload failed:', err);
+        });
+
       } catch (err) {
         console.error('Chyba při načítání audio URL:', err);
         setError(err.message);

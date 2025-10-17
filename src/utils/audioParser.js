@@ -22,7 +22,7 @@ export const parseAudioFileName = (fileName) => {
   const prefix = parts[0]; // "muzsky4FSK"
   const topic = parts.slice(1).join('-'); // "uzkost-osamelost"
 
-  // Parsuj prefix: "muzsky4FSK"
+  // Parsuj prefix: "muzsky4FSK" nebo "muzsky4MSK"
   const match = prefix.match(/^(\w+)(\d+)([A-Z]+)$/);
   if (!match) {
     console.warn(`Nepodařilo se parsovat název souboru: ${fileName}`);

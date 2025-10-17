@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { motion } from 'framer-motion';
 import { useAudioPlayer, useFirebaseAudio } from './hooks';
 import {
@@ -8,6 +8,8 @@ import {
 } from './components';
 import { parseAudioFileName as parseSpeechFileName } from '@utils/audioParser';
 import { parseAudioFileName as parseMusicFileName } from '@utils/hudbaParser';
+import { useSmartPreloader } from '@hooks/useSmartPreloader';
+import cacheService from '@services/cacheService';
 
 // Pomocná funkce pro extrakci názvu souboru z URL
 const extractFileNameFromUrl = (url) => {
@@ -56,13 +58,18 @@ const AudioPlayer = ({
   audioSrc,
   title,
   onClose,
-  className = ""
+  className = "",
+  albumCover = null
 }) => {
   const [selectedVoice, setSelectedVoice] = useState('male'); // 'male', 'female'
   const [currentAudioFile, setCurrentAudioFile] = useState(audioSrc); // Aktuální soubor
 
   // Získej informace o aktuálním souboru
-  const currentFileInfo = parseAudioFileName(currentAudioFile);
+  const currentFileInfo = useMemo(() => {
+    if (!currentAudioFile) return null;
+    return parseAudioFileName(currentAudioFile);
+  }, [currentAudioFile]);
+
   const currentVoice = currentFileInfo?.voice; // 'muzsky' nebo 'zensky'
 
   // Získej téma pro hledání variant
@@ -71,7 +78,10 @@ const AudioPlayer = ({
   // Aktualizuj currentAudioFile když se změní audioSrc
   useEffect(() => {
     setCurrentAudioFile(audioSrc);
-  }, [audioSrc]);
+
+    // Preloading aktuálního souboru je už v useAudioPlayer hooku
+    // Nemusíme ho duplikovat zde
+  }, [audioSrc, title]);
 
   // Zobraz přepínač pouze pro mluvené slovo (hudební soubory nemají varianty)
   const hasVariants = currentFileInfo && currentFileInfo.voice && (
@@ -147,7 +157,10 @@ const AudioPlayer = ({
     >
       {/* Responsive Player Container */}
       <motion.div
-        className="bg-[#f4ddc4] w-full h-full flex flex-col items-center justify-center relative overflow-hidden"
+        className="w-full h-full flex flex-col items-center justify-center relative overflow-hidden"
+        style={{
+          backgroundColor: albumCover ? 'rgba(244, 221, 196, 0.9)' : '#f4ddc4'
+        }}
         initial={{ scale: 0.95, opacity: 0 }}
         animate={{ scale: 1, opacity: 1 }}
         exit={{ scale: 0.95, opacity: 0 }}
@@ -160,11 +173,25 @@ const AudioPlayer = ({
         }}
         onClick={(e) => e.stopPropagation()}
       >
+        {/* Album cover background */}
+        {albumCover && (
+          <div
+            className="absolute inset-0 bg-cover bg-center bg-no-repeat opacity-30"
+            style={{
+              backgroundImage: `url(${albumCover})`,
+              filter: 'blur(30px) brightness(0.7)'
+            }}
+          />
+        )}
+
         {/* Side bars for wide screens */}
-        <div className="hidden lg:block absolute inset-0 pointer-events-none">
-          <div className="absolute left-0 top-0 w-[calc((100vw-600px)/2)] h-full bg-gradient-to-r from-[#f4ddc4] to-transparent"></div>
-          <div className="absolute right-0 top-0 w-[calc((100vw-600px)/2)] h-full bg-gradient-to-l from-[#f4ddc4] to-transparent"></div>
+        <div className="hidden lg:block absolute inset-0 pointer-events-none z-5">
+          <div className="absolute left-0 top-0 w-[calc((100vw-600px)/2)] h-full bg-gradient-to-r from-[#f4ddc4]/90 to-transparent"></div>
+          <div className="absolute right-0 top-0 w-[calc((100vw-600px)/2)] h-full bg-gradient-to-l from-[#f4ddc4]/90 to-transparent"></div>
         </div>
+
+        {/* Content overlay */}
+        <div className="relative z-10 w-full h-full flex flex-col items-center justify-center">
 
         {/* Main content container - max width 600px */}
         <div className="w-full max-w-[600px] h-full flex flex-col items-center justify-center relative">
@@ -216,6 +243,7 @@ const AudioPlayer = ({
               </div>
             </div>
           )}
+        </div>
         </div>
       </motion.div>
 

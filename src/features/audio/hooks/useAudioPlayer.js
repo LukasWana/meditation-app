@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
+import cacheService from '@services/cacheService';
 
 export const useAudioPlayer = (audioSrc) => {
   console.log('useAudioPlayer called with audioSrc:', audioSrc);
@@ -33,8 +34,14 @@ export const useAudioPlayer = (audioSrc) => {
 
     const updateTime = () => setCurrentTime(audio.currentTime);
     const updateDuration = () => {
-      setDuration(audio.duration);
+      const audioDuration = audio.duration;
+      setDuration(audioDuration);
       setIsLoading(false);
+
+      // Ulož duration do cache
+      if (audioDuration && audioSrc) {
+        cacheService.setDuration(audioSrc, audioDuration);
+      }
 
       // Auto-play při prvním načtení nebo po změně zdroje
       if (shouldAutoPlay || wasPlayingBeforeSwitch) {

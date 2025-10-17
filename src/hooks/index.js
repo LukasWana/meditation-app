@@ -4,3 +4,9 @@ export { useFirebaseHudbaScanner } from './useFirebaseHudbaScanner';
 export { useNavigation } from './useNavigation';
 export { useTouchNavigation } from './useTouchNavigation';
 export { useAppState } from './useAppState';
+export {
+  useSmartPreloader,
+  useScrollPreloader,
+  useHoverPreloader,
+  useInitialPreloader
+} from './useSmartPreloader';

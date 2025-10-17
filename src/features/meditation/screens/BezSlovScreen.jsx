@@ -25,7 +25,10 @@ const BezSlovScreen = ({
       onNavigateToScreen('album-detail');
     } else if (item.audioSrc) {
       // Pro jednotlivé skladby
-      setActiveAudio(item);
+      setActiveAudio({
+        ...item,
+        albumCover: item.coverImage // Předaj cover obrázek
+      });
       onPlayerStateChange?.(true);
     }
   };
@@ -193,6 +196,7 @@ const BezSlovScreen = ({
               audioSrc={activeAudio.audioSrc}
               title={activeAudio.title}
               onClose={handleCloseAudio}
+              albumCover={activeAudio.albumCover}
             />
           )}
         </AnimatePresence>

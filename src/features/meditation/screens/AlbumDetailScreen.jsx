@@ -61,7 +61,7 @@ const AlbumDetailScreen = ({
 
   return (
     <motion.div
-      className="min-h-screen w-full max-w-full bg-[#f4ddc4] flex flex-col overflow-x-hidden"
+      className="min-h-screen w-full max-w-full flex flex-col overflow-x-hidden relative"
       onTouchStart={onTouchStart}
       onTouchMove={onTouchMove}
       onTouchEnd={onTouchEnd}
@@ -70,13 +70,26 @@ const AlbumDetailScreen = ({
       transition={{ duration: 0.3, ease: "easeOut" }}
       style={{ height: '100vh' }}
     >
-      {/* Header s back buttonem */}
-      <div className="p-2 sm:p-8 pt-4 pb-4">
-        <BackButton onClick={handleBackClick} />
-      </div>
+      {/* Cover background */}
+      {album?.coverImage && (
+        <div
+          className="absolute inset-0 bg-cover bg-center bg-no-repeat opacity-20"
+          style={{
+            backgroundImage: `url(${album.coverImage})`,
+            filter: 'blur(20px) brightness(0.8)'
+          }}
+        />
+      )}
 
-      {/* Album info */}
-      <div className="flex-1 flex flex-col items-center justify-start p-2 sm:p-8 pb-20">
+      {/* Content overlay */}
+      <div className="relative z-10 min-h-screen w-full bg-[#f4ddc4]/80 backdrop-blur-sm flex flex-col">
+        {/* Header s back buttonem */}
+        <div className="p-2 sm:p-8 pt-4 pb-4">
+          <BackButton onClick={handleBackClick} />
+        </div>
+
+        {/* Album info */}
+        <div className="flex-1 flex flex-col items-center justify-start p-2 sm:p-8 pb-20">
         <motion.div
           className="text-center mb-8"
           initial={{ opacity: 0, y: 20 }}
@@ -156,6 +169,7 @@ const AlbumDetailScreen = ({
             </FramerSection>
           ))}
         </div>
+        </div>
       </div>
 
       {/* Audio Player */}
@@ -165,6 +179,7 @@ const AlbumDetailScreen = ({
           title={activeAudio.title}
           onClose={handleCloseAudio}
           className="fixed inset-0 z-50"
+          albumCover={album?.coverImage}
         />
       )}
     </motion.div>

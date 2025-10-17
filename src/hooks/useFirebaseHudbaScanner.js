@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { ref, listAll, getDownloadURL } from 'firebase/storage';
 import { storage } from '@services/firebase';
 import { parseAudioFileName } from '@utils/hudbaParser';
+import cacheService from '@services/cacheService';
 
 // Pomocná funkce pro načtení délky audio souboru
 const getAudioDuration = (audioSrc) => {
@@ -28,14 +29,43 @@ const getAudioDuration = (audioSrc) => {
 
 export const useFirebaseHudbaScanner = () => {
   const [audioFiles, setAudioFiles] = useState([]);
+  const [coverImages, setCoverImages] = useState(new Map());
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
   const [lastUpdated, setLastUpdated] = useState(null);
+
+  // Funkce pro zpracování cached výsledků
+  const processCachedResult = async (cachedResult) => {
+    setAudioFiles(cachedResult.audioFiles);
+    setCoverImages(new Map(Object.entries(cachedResult.coverImages || {})));
+    setLastUpdated(cachedResult.lastUpdated);
+    setIsLoading(false);
+
+    // Preloading je teď méně agresivní - jen cache URL
+    // const availableFiles = cachedResult.audioFiles.filter(f => f.isAvailable);
+    // if (availableFiles.length > 0) {
+    //   console.log('Starting preload for cached files');
+    //   await cacheService.preloadBatch(availableFiles.slice(0, 5).map(file => ({
+    //     url: file.downloadURL,
+    //     fileName: file.fileName
+    //   })), 'audio');
+    // }
+  };
 
   const scanCDN = async () => {
     try {
       setIsLoading(true);
       setError(null);
+
+      // Zkontroluj cache pro Firebase query
+      const cacheKey = 'hudba_scanner_all_files';
+      const cachedResult = cacheService.getFirebaseQuery(cacheKey);
+
+      if (cachedResult) {
+        console.log('Using cached Firebase scan result');
+        await processCachedResult(cachedResult);
+        return;
+      }
 
       const listRef = ref(storage, '');
       const result = await listAll(listRef);
@@ -79,8 +109,6 @@ export const useFirebaseHudbaScanner = () => {
 
       for (const fileName of mp3Files) {
         try {
-          const fileRef = ref(storage, fileName);
-          const downloadURL = await getDownloadURL(fileRef);
           // Extraktuj pouze název souboru ze cesty
           const fileNameOnly = fileName.includes('/') ? fileName.split('/').pop() : fileName;
 
@@ -89,10 +117,31 @@ export const useFirebaseHudbaScanner = () => {
             continue;
           }
 
-          const parsed = parseAudioFileName(fileNameOnly);
+          // Zkontroluj cache pro download URL
+          let downloadURL = cacheService.getAudioUrl(fileName);
+          if (!downloadURL) {
+            const fileRef = ref(storage, fileName);
+            downloadURL = await getDownloadURL(fileRef);
+            // Ulož do cache
+            cacheService.setAudioUrl(fileName, downloadURL);
+          }
 
-          // Pokusíme se načíst délku audio souboru
-          const duration = await getAudioDuration(downloadURL);
+          // Zkontroluj cache pro metadata
+          const metadataKey = `metadata_${fileNameOnly}`;
+          let parsed = cacheService.getMetadata(metadataKey);
+          if (!parsed) {
+            parsed = parseAudioFileName(fileNameOnly);
+            cacheService.setMetadata(metadataKey, parsed);
+          }
+
+          // Zkontroluj cache pro duration
+          let duration = cacheService.getDuration(downloadURL);
+          if (!duration) {
+            duration = await getAudioDuration(downloadURL);
+            if (duration) {
+              cacheService.setDuration(downloadURL, duration);
+            }
+          }
 
           verifiedFiles.push({
             fileName,
@@ -101,6 +150,12 @@ export const useFirebaseHudbaScanner = () => {
             duration,
             isAvailable: true
           });
+
+          // Preloading je teď méně agresivní - jen cache URL
+          // cacheService.preloadAudio(downloadURL, fileName).catch(err => {
+          //   console.warn('Preload failed:', err);
+          // });
+
         } catch (err) {
           console.warn(`Hudební soubor ${fileName} není dostupný:`, err.message);
           verifiedFiles.push({
@@ -118,8 +173,14 @@ export const useFirebaseHudbaScanner = () => {
       const coverImages = new Map();
       for (const imageName of imageFiles) {
         try {
-          const imageRef = ref(storage, imageName);
-          const downloadURL = await getDownloadURL(imageRef);
+          // Zkontroluj cache pro image URL
+          let downloadURL = cacheService.getImageUrl(imageName);
+          if (!downloadURL) {
+            const imageRef = ref(storage, imageName);
+            downloadURL = await getDownloadURL(imageRef);
+            // Ulož do cache
+            cacheService.setImageUrl(imageName, downloadURL);
+          }
 
           // Pro soubory ze složek - použij název složky jako klíč
           if (imageName.includes('/')) {
@@ -129,6 +190,11 @@ export const useFirebaseHudbaScanner = () => {
             // Pokud je to cover.jpg v složce, použij název složky
             if (imageFileName.toLowerCase().includes('cover')) {
               coverImages.set(folderName, downloadURL);
+
+              // Spusť preloading obrázku
+              cacheService.preloadImage(downloadURL, imageName).catch(err => {
+                console.warn('Image preload failed:', err);
+              });
             }
           } else {
             // Pro obrázky v root složce - pokus se parsovat jako album
@@ -143,7 +209,18 @@ export const useFirebaseHudbaScanner = () => {
       }
 
       setAudioFiles(verifiedFiles);
+      setCoverImages(coverImages);
       setLastUpdated(new Date());
+
+      // Ulož výsledek do cache
+      const resultToCache = {
+        audioFiles: verifiedFiles,
+        lastUpdated: new Date(),
+        coverImages: Object.fromEntries(coverImages)
+      };
+      cacheService.setFirebaseQuery(cacheKey, resultToCache);
+
+      console.log(`Načteno ${verifiedFiles.filter(f => f.isAvailable).length} dostupných hudebních souborů z CDN`);
 
     } catch (err) {
       console.error('Chyba při načítání hudebních souborů z CDN:', err);
@@ -195,6 +272,7 @@ export const useFirebaseHudbaScanner = () => {
     filesByTopic,
     availableTopics,
     stats,
+    coverImages,
 
     // State
     isLoading,
