@@ -151,10 +151,10 @@ export const useFirebaseHudbaScanner = () => {
             isAvailable: true
           });
 
-          // Preloading je teď méně agresivní - jen cache URL
-          // cacheService.preloadAudio(downloadURL, fileName).catch(err => {
-          //   console.warn('Preload failed:', err);
-          // });
+          // Agresivnější preloading pro hudbu
+          cacheService.preloadAudio(downloadURL, fileName).catch(err => {
+            console.warn('Preload failed:', err);
+          });
 
         } catch (err) {
           console.warn(`Hudební soubor ${fileName} není dostupný:`, err.message);

@@ -1,8 +1,8 @@
 import { useState, useRef, useEffect } from 'react';
 import cacheService from '@services/cacheService';
 
-export const useAudioPlayer = (audioSrc, albumTracks = null, currentTrackIndex = 0, onTrackChange = null) => {
-  console.log('useAudioPlayer called with audioSrc:', audioSrc);
+export const useAudioPlayer = (audioUrl, albumTracks = null, currentTrackIndex = 0, onTrackChange = null) => {
+  console.log('useAudioPlayer called with audioUrl:', audioUrl);
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
@@ -12,10 +12,10 @@ export const useAudioPlayer = (audioSrc, albumTracks = null, currentTrackIndex =
   const audioRef = useRef(null);
   const fadeTimeoutRef = useRef(null);
 
-  // Sleduj změnu audioSrc a zachovej stav přehrávání
+  // Sleduj změnu audioUrl a zachovej stav přehrávání
   useEffect(() => {
     const audio = audioRef.current;
-    if (!audio || !audioSrc) return;
+    if (!audio || !audioUrl) return;
 
     // Ulož aktuální stav přehrávání před změnou zdroje
     const wasPlaying = isPlaying;
@@ -27,7 +27,7 @@ export const useAudioPlayer = (audioSrc, albumTracks = null, currentTrackIndex =
     setIsLoading(true);
 
     console.log('Audio source changed, was playing:', wasPlaying);
-  }, [audioSrc]);
+  }, [audioUrl]);
 
   useEffect(() => {
     const audio = audioRef.current;
@@ -40,8 +40,8 @@ export const useAudioPlayer = (audioSrc, albumTracks = null, currentTrackIndex =
       setIsLoading(false);
 
       // Ulož duration do cache
-      if (audioDuration && audioSrc) {
-        cacheService.setDuration(audioSrc, audioDuration);
+      if (audioDuration && audioUrl) {
+        cacheService.setDuration(audioUrl, audioDuration);
       }
 
       // Auto-play při prvním načtení nebo po změně zdroje
@@ -227,6 +227,22 @@ export const useAudioPlayer = (audioSrc, albumTracks = null, currentTrackIndex =
 
   const progress = duration > 0 ? (currentTime / duration) * 100 : 0;
 
+  // Funkce pro fade out při zavření přehrávače
+  const fadeOutAndClose = (onClose, duration = 3000) => {
+    const audio = audioRef.current;
+
+    // Zavři přehrávač okamžitě
+    onClose();
+
+    // Pokud je audio a přehrává se, spusť fade out na pozadí
+    if (audio && isPlaying) {
+      fadeOut(audio, duration, () => {
+        // Po dokončení fade out nic nedělej - přehrávač už je zavřený
+        console.log('Background fade out completed');
+      });
+    }
+  };
+
   return {
     audioRef,
     isPlaying,
@@ -238,6 +254,7 @@ export const useAudioPlayer = (audioSrc, albumTracks = null, currentTrackIndex =
     skipBackward,
     skipForward,
     handleSeek,
-    formatTime
+    formatTime,
+    fadeOutAndClose
   };
 };

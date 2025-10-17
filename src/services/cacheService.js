@@ -214,10 +214,10 @@ class CacheService {
           reject(e);
         });
 
-        // Timeout po 15 sekundách
+        // Timeout po 8 sekundách (rychlejší timeout)
         setTimeout(() => {
           reject(new Error('Preload timeout'));
-        }, 15000);
+        }, 8000);
       });
 
       audio.src = url;

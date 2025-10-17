@@ -6,7 +6,7 @@ const CircularProgress = ({
   onSeek,
   className = "w-[50vw] h-[50vw] max-w-[400px] max-h-[400px] min-w-[200px] min-h-[200px]"
 }) => {
-  const radius = 200;
+  const radius = 180; // Snížil radius aby se vešel do viewBox
   const circumference = 2 * Math.PI * radius;
   const [isDragging, setIsDragging] = useState(false);
   const [lastClickTime, setLastClickTime] = useState(0);
@@ -138,13 +138,13 @@ const CircularProgress = ({
       onMouseMove={handleMouseMove}
       onMouseUp={handleMouseUp}
       onMouseLeave={handleMouseUp}
-      viewBox="0 0 420 420"
+      viewBox="0 0 450 450"
       style={{ aspectRatio: '1/1', userSelect: 'none' }}
     >
       {/* Background Circle */}
       <circle
-        cx="210"
-        cy="210"
+        cx="225"
+        cy="225"
         r={radius}
         stroke="rgba(255,255,255,0.3)"
         strokeWidth="12"
@@ -152,8 +152,8 @@ const CircularProgress = ({
       />
       {/* Background Progress Circle - Duplicate with 50% opacity and 50% thicker */}
       <motion.circle
-        cx="210"
-        cy="210"
+        cx="225"
+        cy="225"
         r={radius}
         stroke="white"
         strokeWidth="50"
@@ -166,8 +166,8 @@ const CircularProgress = ({
       />
       {/* Main Progress Circle */}
       <motion.circle
-        cx="210"
-        cy="210"
+        cx="225"
+        cy="225"
         r={radius}
         stroke="limegreen"
         strokeWidth="20"

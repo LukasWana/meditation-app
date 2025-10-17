@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useAudioFilter } from '@hooks/useAudioFilter';
 import { useFirebaseCDNScanner } from '@hooks/useFirebaseCDNScanner';
 
@@ -18,14 +18,17 @@ export const useFirebaseAudioFilter = (userGender, userLanguage = 'sk') => {
     getFilesByGender
   } = useFirebaseCDNScanner();
 
-  // Filtruj soubory podle pohlaví uživatele
-  const filteredFiles = getFilesByGender(userGender);
+  // Filtruj soubory podle pohlaví uživatele - reaguje na změnu gender
+  const filteredFiles = useMemo(() => {
+    return getFilesByGender(userGender);
+  }, [userGender, availableFiles]);
 
   // Získej názvy souborů pro kompatibilitu s useAudioFilter
   const audioFileNames = availableFiles.map(file => file.fileName);
 
   // Získej doporučené soubory - zobraz všechny kombinace hlasů a pohlaví pro každé téma
-  const getTroubleItems = () => {
+  const troubleItems = useMemo(() => {
+    const getTroubleItems = () => {
     console.log('Filtrované soubory pro uživatele:', filteredFiles);
 
     const topicConfig = {
@@ -80,7 +83,10 @@ export const useFirebaseAudioFilter = (userGender, userLanguage = 'sk') => {
 
     console.log('Finální troubleItems (všechny kombinace):', result);
     return result;
-  };
+    };
+
+    return getTroubleItems();
+  }, [filteredFiles, availableFiles]);
 
   // Získej statistiky pro uživatele
   const getUserStats = () => {
@@ -100,7 +106,7 @@ export const useFirebaseAudioFilter = (userGender, userLanguage = 'sk') => {
     filteredFiles,
     filesByTopic,
     availableTopics,
-    troubleItems: getTroubleItems(),
+    troubleItems,
     userStats: getUserStats(),
 
     // State

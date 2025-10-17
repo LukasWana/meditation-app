@@ -15,6 +15,11 @@ import cacheService from '@services/cacheService';
 const extractFileNameFromUrl = (url) => {
   if (!url || typeof url !== 'string') return null;
 
+  // Pokud už je to název souboru (ne URL), vrať ho
+  if (!url.startsWith('http')) {
+    return url.includes('/') ? url.split('/').pop() : url;
+  }
+
   try {
     // Pro Firebase Storage URL: https://firebasestorage.googleapis.com/v0/b/.../o/filename.mp3?alt=media
     const match = url.match(/\/o\/([^?]+)/);
@@ -36,21 +41,27 @@ const extractFileNameFromUrl = (url) => {
 
 // Univerzální parser - zkusí oba formáty
 const parseAudioFileName = (fileNameOrUrl) => {
+  console.log('parseAudioFileName called with:', fileNameOrUrl);
   const fileName = extractFileNameFromUrl(fileNameOrUrl);
+  console.log('Extracted fileName:', fileName);
+
   if (!fileName) return null;
 
   // Nejdřív zkusíme hudební formát (hudba/alba)
   const musicResult = parseMusicFileName(fileName);
   if (musicResult) {
+    console.log('Parsed as music:', musicResult);
     return musicResult;
   }
 
   // Pak zkusíme mluvené slovo formát
   const speechResult = parseSpeechFileName(fileName);
   if (speechResult) {
+    console.log('Parsed as speech:', speechResult);
     return speechResult;
   }
 
+  console.log('Could not parse fileName:', fileName);
   return null;
 };
 
@@ -94,6 +105,15 @@ const AudioPlayer = ({
     // Nemusíme ho duplikovat zde
   }, [actualAudioSrc, title]);
 
+  // Inicializuj selectedVoice podle aktuálního hlasu v souboru
+  useEffect(() => {
+    if (currentFileInfo && currentFileInfo.voice) {
+      const voice = currentFileInfo.voice === 'muzsky' ? 'male' : 'female';
+      setSelectedVoice(voice);
+      console.log('Initialized selectedVoice to:', voice, 'based on file voice:', currentFileInfo.voice);
+    }
+  }, [currentFileInfo]);
+
   // Aktualizuj title podle aktuální skladby v albu
   const actualTitle = useMemo(() => {
     if (albumTracks && albumTracks.length > 0 && currentTrackIndex >= 0 && currentTrackIndex < albumTracks.length) {
@@ -105,7 +125,7 @@ const AudioPlayer = ({
   // Zobraz přepínač pouze pro mluvené slovo (hudební soubory nemají varianty)
   const hasVariants = currentFileInfo && currentFileInfo.voice && (
     currentFileInfo.voice === 'muzsky' || currentFileInfo.voice === 'zensky'
-  );
+  ) && currentTopic && currentFileInfo.number && currentFileInfo.codes; // Musí mít téma a kódy pro hledání alternativ
 
   console.log('AudioPlayer debug:', {
     audioSrc,
@@ -116,32 +136,58 @@ const AudioPlayer = ({
   });
 
   // Funkce pro přepínání hlasů
-  const handleVoiceChange = (voice) => {
-    setSelectedVoice(voice);
-    console.log('Voice changed to:', voice);
+      const handleVoiceChange = (voice) => {
+        setSelectedVoice(voice);
+        console.log('Voice changed to:', voice);
 
-    // Najdi alternativní soubor s opačným hlasem
-    if (currentFileInfo && currentTopic) {
-      const targetVoice = voice === 'male' ? 'muzsky' : 'zensky';
-      const currentVoiceType = currentFileInfo.voice;
+        // Najdi alternativní soubor s opačným hlasem
+        if (currentFileInfo && currentTopic) {
+          const targetVoice = voice === 'male' ? 'muzsky' : 'zensky';
+          const currentVoiceType = currentFileInfo.voice;
 
-      // Pokud už je vybraný správný hlas, nic nedělej
-      if (currentVoiceType === targetVoice) {
-        console.log('Already playing correct voice');
-        return;
-      }
+          // Pokud už je vybraný správný hlas, nic nedělej
+          if (currentVoiceType === targetVoice) {
+            console.log('Already playing correct voice');
+            return;
+          }
 
-      // Sestav název souboru s opačným hlasem
-      const newFileName = `${targetVoice}${currentFileInfo.number}${currentFileInfo.codes}-${currentTopic}.mp3`;
-      console.log('Switching to file:', newFileName);
+          // Sestav název souboru s opačným hlasem
+          // Formát: "zensky4FSK-téma.mp3" nebo "muzsky4MSK-téma.mp3"
+          // Musíme změnit codes podle targetVoice: FSK pro ženy, MSK pro muže
+          const targetCodes = voice === 'male' ? 'MSK' : 'FSK';
+          const newFileName = `${targetVoice}${currentFileInfo.number}${targetCodes}-${currentTopic}.mp3`;
+          console.log('Switching to file:', newFileName);
+          console.log('Current file components:', {
+            targetVoice,
+            number: currentFileInfo.number,
+            originalCodes: currentFileInfo.codes,
+            targetCodes,
+            topic: currentTopic
+          });
 
-      // Přepni na nový soubor
-      setCurrentAudioFile(newFileName);
-    }
-  };
+          // Najdi původní cestu k souboru (složku)
+          // Pokud currentAudioFile obsahuje cestu, použij ji, jinak použij jen název souboru
+          let fullPath;
+          if (currentAudioFile.includes('/')) {
+            const originalPath = currentAudioFile.substring(0, currentAudioFile.lastIndexOf('/') + 1);
+            fullPath = originalPath + newFileName;
+          } else {
+            // Pokud je to jen název souboru, použij jen nový název
+            fullPath = newFileName;
+          }
+
+          console.log('Full path to new file:', fullPath);
+          console.log('Current file info:', currentFileInfo);
+
+          // Přepni na nový soubor
+          setCurrentAudioFile(fullPath);
+        } else {
+          console.log('Cannot switch voice - missing file info or topic:', { currentFileInfo, currentTopic });
+        }
+      };
 
   // Načtení URL z Firebase Storage
-  const { audioUrl, loading: firebaseLoading, error: firebaseError } = useFirebaseAudio(actualAudioSrc);
+  const { audioUrl, loading: firebaseLoading, error: firebaseError } = useFirebaseAudio(currentAudioFile);
 
   const {
     audioRef,
@@ -154,7 +200,8 @@ const AudioPlayer = ({
     skipBackward,
     skipForward,
     handleSeek,
-    formatTime
+    formatTime,
+    fadeOutAndClose
   } = useAudioPlayer(audioUrl, albumTracks, currentTrackIndex, onTrackChange);
 
   return (
@@ -198,7 +245,7 @@ const AudioPlayer = ({
             className="absolute inset-0 bg-cover bg-center bg-no-repeat"
             style={{
               backgroundImage: `url(${albumCover})`,
-              filter: 'blur(10px) brightness(1)',
+              filter: 'blur(80px) brightness(1)',
               opacity: 1
             }}
           />
@@ -225,7 +272,7 @@ const AudioPlayer = ({
           {/* Close Button - Top Right */}
           <div className="absolute top-4 right-4 z-10">
             <CloseButton
-              onClose={onClose}
+              onClose={() => fadeOutAndClose(onClose, 3000)}
               className="w-10 h-10 sm:w-12 sm:h-12"
             />
           </div>
@@ -274,7 +321,7 @@ const AudioPlayer = ({
       {/* Close Button - Touching Main Circle
       <div className="absolute bottom-[20vw] sm:bottom-20 left-1/2 transform -translate-x-1/2 translate-y-1/2 z-20">
         <CloseButton
-          onClose={onClose}
+          onClose={() => fadeOutAndClose(onClose, 3000)}
           className="w-[8vw] h-[8vw] max-w-[40px] max-h-[40px] min-w-[32px] min-h-[32px]"
         />
       </div>*/}

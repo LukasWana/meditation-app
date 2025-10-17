@@ -127,62 +127,37 @@ export const useInitialPreloader = (items, enabled = true) => {
   useEffect(() => {
     if (!enabled || !items || items.length === 0) return;
 
-    // Preload pouze první položku okamžitě (méně agresivní)
-    const firstItem = items[0];
-    if (firstItem) {
+    // Agresivnější preloading pro hudbu - preload více položek najednou
+    const itemsToPreload = items.slice(0, Math.min(5, items.length)); // Prvních 5 položek
+
+    itemsToPreload.forEach((item, index) => {
       let preloadItem = null;
 
-      // Pro slova screen - použij audioSrc z variant
-      if (firstItem.variants && firstItem.variants.length > 0) {
+      // Pro slova screen - použij audioSrc z variants
+      if (item.variants && item.variants.length > 0) {
         preloadItem = {
-          url: firstItem.variants[0].audioSrc,
-          fileName: firstItem.title || firstItem.fileName
+          url: item.variants[0].audioSrc,
+          fileName: item.title || item.fileName
         };
       }
       // Pro hudba screen - použij downloadURL
-      else if (firstItem.downloadURL || firstItem.audioSrc) {
+      else if (item.downloadURL || item.audioSrc) {
         preloadItem = {
-          url: firstItem.downloadURL || firstItem.audioSrc,
-          fileName: firstItem.fileName || firstItem.title
+          url: item.downloadURL || item.audioSrc,
+          fileName: item.fileName || item.title
         };
       }
 
       if (preloadItem) {
-        cacheService.preloadAudio(preloadItem.url, preloadItem.fileName).catch(err => {
-          console.warn('Initial preload failed:', err);
-        });
+        // První položku preload okamžitě, ostatní s malým delay
+        const delay = index === 0 ? 0 : index * 1000; // 0s, 1s, 2s, 3s, 4s
+
+        setTimeout(() => {
+          cacheService.preloadAudio(preloadItem.url, preloadItem.fileName).catch(err => {
+            console.warn(`Preload failed for ${preloadItem.fileName}:`, err);
+          });
+        }, delay);
       }
-    }
-
-    // Preload další 2 položky s delay
-    const nextItems = items.slice(1, 3);
-    if (nextItems.length > 0) {
-      setTimeout(() => {
-        nextItems.forEach(item => {
-          let preloadItem = null;
-
-          // Pro slova screen
-          if (item.variants && item.variants.length > 0) {
-            preloadItem = {
-              url: item.variants[0].audioSrc,
-              fileName: item.title || item.fileName
-            };
-          }
-          // Pro hudba screen
-          else if (item.downloadURL || item.audioSrc) {
-            preloadItem = {
-              url: item.downloadURL || item.audioSrc,
-              fileName: item.fileName || item.title
-            };
-          }
-
-          if (preloadItem) {
-            cacheService.preloadAudio(preloadItem.url, preloadItem.fileName).catch(err => {
-              console.warn('Delayed preload failed:', err);
-            });
-          }
-        });
-      }, 5000); // Zvýšil delay na 5 sekund
-    }
+    });
   }, [items, enabled]);
 };
