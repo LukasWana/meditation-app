@@ -101,7 +101,7 @@ const AudioPlayer = ({
         zIndex: 9999
       }}
     >
-      {/* Full Screen Player - Always Full Screen */}
+      {/* Responsive Player Container */}
       <motion.div
         className="bg-[#f4ddc4] w-full h-full flex flex-col items-center justify-center relative overflow-hidden"
         initial={{ scale: 0.95, opacity: 0 }}
@@ -116,53 +116,63 @@ const AudioPlayer = ({
         }}
         onClick={(e) => e.stopPropagation()}
       >
-        {/* Audio Element */}
-        <audio
-          ref={audioRef}
-          src={audioUrl}
-          preload="metadata"
-        />
+        {/* Side bars for wide screens */}
+        <div className="hidden lg:block absolute inset-0 pointer-events-none">
+          <div className="absolute left-0 top-0 w-[calc((100vw-600px)/2)] h-full bg-gradient-to-r from-[#f4ddc4] to-transparent"></div>
+          <div className="absolute right-0 top-0 w-[calc((100vw-600px)/2)] h-full bg-gradient-to-l from-[#f4ddc4] to-transparent"></div>
+        </div>
 
-        {/* Close Button - Top Right for All Devices - Larger for Full Screen */}
-        <div className="absolute top-6 right-6 z-10">
-          <CloseButton
-            onClose={onClose}
-            className="w-14 h-14"
+        {/* Main content container - max width 600px */}
+        <div className="w-full max-w-[600px] h-full flex flex-col items-center justify-center relative">
+          {/* Audio Element */}
+          <audio
+            ref={audioRef}
+            src={audioUrl}
+            preload="metadata"
           />
-        </div>
 
-        {/* Loading Indicator - Top Left */}
-        <div className="absolute top-6 left-6 z-10">
-          <LoadingIndicator isLoading={isLoading || firebaseLoading} />
-        </div>
-
-        {/* Audio Controls */}
-        <AudioControls
-          progress={progress}
-          isPlaying={isPlaying}
-          currentTime={currentTime}
-          title={title}
-          duration={duration}
-          onSeek={handleSeek}
-          onTogglePlayPause={togglePlayPause}
-          onSkipBackward={skipBackward}
-          onSkipForward={skipForward}
-          formatTime={formatTime}
-          // Voice switcher props
-          hasVariants={hasVariants}
-          selectedVoice={selectedVoice}
-          onVoiceChange={handleVoiceChange}
-        />
-
-        {/* Firebase Error */}
-        {firebaseError && (
-          <div className="absolute inset-0 flex items-center justify-center bg-red-100 rounded-full">
-            <div className="text-center p-4">
-              <p className="text-red-600 font-medium">Chyba při načítání audio</p>
-              <p className="text-red-500 text-sm">{firebaseError}</p>
-            </div>
+          {/* Close Button - Top Right */}
+          <div className="absolute top-4 right-4 z-10">
+            <CloseButton
+              onClose={onClose}
+              className="w-10 h-10 sm:w-12 sm:h-12"
+            />
           </div>
-        )}
+
+          {/* Loading Indicator - Top Left */}
+          <div className="absolute top-4 left-4 z-10">
+            <LoadingIndicator isLoading={isLoading || firebaseLoading} />
+          </div>
+
+          {/* Audio Controls - Centered */}
+          <AudioControls
+            progress={progress}
+            isPlaying={isPlaying}
+            currentTime={currentTime}
+            title={title}
+            duration={duration}
+            onSeek={handleSeek}
+            onTogglePlayPause={togglePlayPause}
+            onSkipBackward={skipBackward}
+            onSkipForward={skipForward}
+            formatTime={formatTime}
+            // Voice switcher props
+            hasVariants={hasVariants}
+            selectedVoice={selectedVoice}
+            onVoiceChange={handleVoiceChange}
+            className="w-full flex flex-col items-center justify-center h-full"
+          />
+
+          {/* Firebase Error */}
+          {firebaseError && (
+            <div className="absolute inset-0 flex items-center justify-center bg-red-100 rounded-full">
+              <div className="text-center p-4">
+                <p className="text-red-600 font-medium">Chyba při načítání audio</p>
+                <p className="text-red-500 text-sm">{firebaseError}</p>
+              </div>
+            </div>
+          )}
+        </div>
       </motion.div>
 
       {/* Close Button - Touching Main Circle

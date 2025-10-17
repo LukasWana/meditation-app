@@ -18,7 +18,7 @@ const SkipButton = ({
     <motion.button
       onClick={onClick}
       onTouchEnd={handleTouchEnd}
-      className={`${className} rounded-full bg-white/20 backdrop-blur-sm border border-black/10 flex items-center justify-center hover:bg-white/20 cursor-pointer`}
+      className={`${className} rounded-full bg-white/30 backdrop-blur-sm border border-black/20 flex items-center justify-center hover:bg-white/40 cursor-pointer shadow-md`}
       whileTap={{ scale: 0.95 }}
     >
       <IconComponent className="w-[50%] h-[50%] text-black" />

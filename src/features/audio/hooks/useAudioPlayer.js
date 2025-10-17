@@ -6,7 +6,25 @@ export const useAudioPlayer = (audioSrc) => {
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
+  const [wasPlayingBeforeSwitch, setWasPlayingBeforeSwitch] = useState(false);
   const audioRef = useRef(null);
+
+  // Sleduj změnu audioSrc a zachovej stav přehrávání
+  useEffect(() => {
+    const audio = audioRef.current;
+    if (!audio || !audioSrc) return;
+
+    // Ulož aktuální stav přehrávání před změnou zdroje
+    const wasPlaying = isPlaying;
+    setWasPlayingBeforeSwitch(wasPlaying);
+
+    // Resetuj stav pro nový soubor
+    setCurrentTime(0);
+    setDuration(0);
+    setIsLoading(true);
+
+    console.log('Audio source changed, was playing:', wasPlaying);
+  }, [audioSrc]);
 
   useEffect(() => {
     const audio = audioRef.current;
@@ -16,6 +34,19 @@ export const useAudioPlayer = (audioSrc) => {
     const updateDuration = () => {
       setDuration(audio.duration);
       setIsLoading(false);
+
+      // Pokud se přehrávalo před změnou zdroje, pokračuj v přehrávání
+      if (wasPlayingBeforeSwitch) {
+        console.log('Auto-playing after source change');
+        audio.play().then(() => {
+          setIsPlaying(true);
+          setWasPlayingBeforeSwitch(false);
+        }).catch((error) => {
+          console.error('Failed to auto-play after source change:', error);
+          setIsPlaying(false);
+          setWasPlayingBeforeSwitch(false);
+        });
+      }
     };
     const handleEnded = () => setIsPlaying(false);
 
@@ -28,7 +59,7 @@ export const useAudioPlayer = (audioSrc) => {
       audio.removeEventListener('loadedmetadata', updateDuration);
       audio.removeEventListener('ended', handleEnded);
     };
-  }, []);
+  }, [wasPlayingBeforeSwitch]);
 
   const togglePlayPause = () => {
     const audio = audioRef.current;
