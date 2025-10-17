@@ -1,8 +1,9 @@
 import { useState, useEffect } from 'react';
-import { ref, listAll, getDownloadURL } from 'firebase/storage';
+import { ref, listAll, getDownloadURL, getMetadata } from 'firebase/storage';
 import { storage } from '@services/firebase';
 import { parseAudioFileName } from '@utils/hudbaParser';
 import cacheService from '@services/cacheService';
+import { usePreloadReady } from './usePreloadReady';
 
 // Pomocná funkce pro načtení délky audio souboru
 const getAudioDuration = (audioSrc) => {
@@ -13,7 +14,12 @@ const getAudioDuration = (audioSrc) => {
       if (isFinite(duration) && duration > 0) {
         const minutes = Math.floor(duration / 60);
         const seconds = Math.floor(duration % 60);
-        resolve(`${minutes}:${seconds.toString().padStart(2, '0')}`);
+        const durationString = `${minutes}:${seconds.toString().padStart(2, '0')}`;
+
+        // Ulož duration do cache
+        cacheService.setDuration(audioSrc, duration);
+
+        resolve(durationString);
       } else {
         resolve(null);
       }
@@ -27,12 +33,28 @@ const getAudioDuration = (audioSrc) => {
   });
 };
 
+// Pomocná funkce pro odhad délky na základě velikosti souboru
+const estimateDuration = (fileSizeBytes) => {
+  // Předpokládáme 128kbps bitrate pro MP3
+  const bitrateKbps = 128;
+  const bitrateBps = bitrateKbps * 1000 / 8; // Převod na bajty za sekundu
+  const durationSeconds = fileSizeBytes / bitrateBps;
+
+  const minutes = Math.floor(durationSeconds / 60);
+  const seconds = Math.floor(durationSeconds % 60);
+
+  return `${minutes}:${seconds.toString().padStart(2, '0')}`;
+};
+
 export const useFirebaseHudbaScanner = () => {
   const [audioFiles, setAudioFiles] = useState([]);
   const [coverImages, setCoverImages] = useState(new Map());
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
   const [lastUpdated, setLastUpdated] = useState(null);
+
+  // Čekej na dokončení preloadingu
+  const { isReady } = usePreloadReady();
 
   // Funkce pro zpracování cached výsledků - optimalizováno pro rychlost
   const processCachedResult = async (cachedResult) => {
@@ -121,12 +143,53 @@ export const useFirebaseHudbaScanner = () => {
             const downloadURL = await getDownloadURL(fileRef);
             cacheService.setAudioUrl(fileName, downloadURL);
 
+            // Pokus se načíst metadata ze Firebase
+            let duration = 'N/A';
+            try {
+              const firebaseMetadata = await getMetadata(fileRef);
+
+              // 1. Zkus skutečnou délku z cache (z přehrávače)
+              const realDuration = cacheService.getDuration(downloadURL);
+              if (realDuration && realDuration > 0) {
+                const minutes = Math.floor(realDuration / 60);
+                const seconds = Math.floor(realDuration % 60);
+                duration = `${minutes}:${seconds.toString().padStart(2, '0')}`;
+              } else {
+                // 2. Zkus načíst skutečnou délku z audio souboru
+                try {
+                  const audioDuration = await getAudioDuration(downloadURL);
+                  if (audioDuration) {
+                    duration = audioDuration;
+                  } else if (firebaseMetadata.customMetadata && firebaseMetadata.customMetadata.duration) {
+                    // 3. Firebase custom metadata
+                    duration = firebaseMetadata.customMetadata.duration;
+                  } else {
+                    // 4. Odhad na základě velikosti souboru
+                    const estimatedDuration = estimateDuration(firebaseMetadata.size);
+                    duration = estimatedDuration;
+                  }
+                } catch (audioErr) {
+                  console.warn(`Failed to get audio duration for ${fileNameOnly}:`, audioErr.message);
+                  if (firebaseMetadata.customMetadata && firebaseMetadata.customMetadata.duration) {
+                    // 3. Firebase custom metadata
+                    duration = firebaseMetadata.customMetadata.duration;
+                  } else {
+                    // 4. Odhad na základě velikosti souboru
+                    const estimatedDuration = estimateDuration(firebaseMetadata.size);
+                    duration = estimatedDuration;
+                  }
+                }
+              }
+            } catch (err) {
+              console.warn(`Failed to get metadata for ${fileNameOnly}:`, err.message);
+            }
+
             const parsed = parseAudioFileName(fileNameOnly);
             verifiedFiles.push({
               fileName,
               downloadURL,
               parsed,
-              duration: 'N/A', // Bez cache metadata
+              duration,
               isAvailable: true
             });
             continue;
@@ -141,10 +204,31 @@ export const useFirebaseHudbaScanner = () => {
             cacheService.setAudioUrl(fileName, downloadURL);
           }
 
-          // Použij duration z cache metadata
-          const duration = cachedMetadata.estimatedDuration
-            ? `${Math.floor(cachedMetadata.estimatedDuration / 60)}:${(cachedMetadata.estimatedDuration % 60).toString().padStart(2, '0')}`
-            : 'N/A';
+          // Použij duration z cache metadata - nejdříve skutečná délka z přehrávače
+          let duration = 'N/A';
+
+          // 1. Zkus skutečnou délku z cache (z přehrávače)
+          const realDuration = cacheService.getDuration(downloadURL);
+          if (realDuration && realDuration > 0) {
+            const minutes = Math.floor(realDuration / 60);
+            const seconds = Math.floor(realDuration % 60);
+            duration = `${minutes}:${seconds.toString().padStart(2, '0')}`;
+          } else {
+            // 2. Zkus načíst skutečnou délku z audio souboru
+            try {
+              const audioDuration = await getAudioDuration(downloadURL);
+              if (audioDuration) {
+                duration = audioDuration;
+              } else {
+                // 3. Fallback na metadata duration
+                duration = cachedMetadata.duration || cachedMetadata.estimatedDuration || 'N/A';
+              }
+            } catch (err) {
+              console.warn(`Failed to get audio duration for ${fileNameOnly}:`, err.message);
+              // 3. Fallback na metadata duration
+              duration = cachedMetadata.duration || cachedMetadata.estimatedDuration || 'N/A';
+            }
+          }
 
           // Parse metadata z cache
           const parsed = parseAudioFileName(fileNameOnly);
@@ -234,8 +318,10 @@ export const useFirebaseHudbaScanner = () => {
   };
 
   useEffect(() => {
-    scanCDN();
-  }, []);
+    if (isReady) {
+      scanCDN();
+    }
+  }, [isReady]);
 
   const availableFiles = audioFiles.filter(file => file.isAvailable);
   const filesByTopic = availableFiles.reduce((acc, file) => {

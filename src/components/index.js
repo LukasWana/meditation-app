@@ -8,3 +8,4 @@ export { default as FramerButton } from './FramerButton';
 export { default as FramerMeditationCircle } from './FramerMeditationCircle';
 export { default as FramerPageTransition } from './FramerPageTransition';
 export { default as FramerSection } from './FramerSection';
+export { default as SimpleLoading } from './SimpleLoading';

@@ -25,3 +25,10 @@ export {
   useTouchPreloader,
   useBackgroundPreloader
 } from './usePredictivePreloader';
+
+export {
+  useSimplePreloader,
+  useDataReady
+} from './useSimplePreloader';
+
+export { usePreloadReady } from './usePreloadReady';

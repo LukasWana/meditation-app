@@ -2,7 +2,9 @@ import React, { useEffect, useRef } from 'react';
 import { PageManager } from '@features/navigation';
 import { useNavigation, useTouchNavigation, useAppState } from '@hooks';
 import { usePredictivePreloader, useBackgroundPreloader } from '@hooks/usePredictivePreloader';
+import { useSimplePreloader } from '@hooks/useSimplePreloader';
 import { staticMetadataService } from '@services/staticMetadataService';
+import SimpleLoading from '@components/SimpleLoading';
 
 export default function MeditationApp() {
   // Navigation state
@@ -13,6 +15,9 @@ export default function MeditationApp() {
 
   // Background preloading při startu aplikace
   useBackgroundPreloader();
+
+  // Zjednodušený preloading systém
+  const { isPreloaded, preloadStatus } = useSimplePreloader();
 
   // Inicializace statické metadata služby při startu - non-blocking
   useEffect(() => {
@@ -122,38 +127,64 @@ export default function MeditationApp() {
   }, [isPlaying, time, setBreathPhase]);
 
   return (
-    <PageManager
-      // Navigation
-      currentScreen={currentScreen}
-      onNavigateToScreen={navigateToScreen}
+    <div className="min-h-screen w-full bg-[#f4ddc4] overflow-x-hidden">
+      {/* Loading screen při preloading */}
+      {!isPreloaded && (
+        <SimpleLoading
+          message="Načítám všechna data..."
+          show={!isPreloaded}
+        />
+      )}
 
-      // Touch handling
-      onTouchStart={handleTouchStart}
-      onTouchMove={handleTouchMove}
-      onTouchEnd={handleTouchEnd}
+      {/* Hlavní aplikace */}
+      <PageManager
+        // Navigation
+        currentScreen={currentScreen}
+        onNavigateToScreen={navigateToScreen}
 
-      // Global state
-      gender={gender}
-      onGenderChange={handleGenderChange}
-      voicePreference={voicePreference}
-      onVoicePreferenceChange={handleVoicePreferenceChange}
-      isPlayerActive={isPlayerActive}
+        // Touch handling
+        onTouchStart={handleTouchStart}
+        onTouchMove={handleTouchMove}
+        onTouchEnd={handleTouchEnd}
 
-      // Meditace specifické
-      time={time}
-      selectedDuration={selectedDuration}
-      isPlaying={isPlaying}
-      onDurationChange={handleDurationChange}
-      onPlayPause={handlePlayPause}
-      onReset={handleReset}
-      breathPhase={breathPhase}
+        // Global state
+        gender={gender}
+        onGenderChange={handleGenderChange}
+        voicePreference={voicePreference}
+        onVoicePreferenceChange={handleVoicePreferenceChange}
+        isPlayerActive={isPlayerActive}
 
-      // Audio player specifické
-      activeAudio={activeAudio}
-      selectedAlbum={selectedAlbum}
-      onPlayerStateChange={handlePlayerStateChange}
-      onCloseAudio={handleCloseAudio}
-      onAlbumClose={handleAlbumClose}
-    />
+        // Meditace specifické
+        time={time}
+        selectedDuration={selectedDuration}
+        isPlaying={isPlaying}
+        onDurationChange={handleDurationChange}
+        onPlayPause={handlePlayPause}
+        onReset={handleReset}
+        breathPhase={breathPhase}
+
+        // Audio player specifické
+        activeAudio={activeAudio}
+        selectedAlbum={selectedAlbum}
+        onPlayerStateChange={handlePlayerStateChange}
+        onCloseAudio={handleCloseAudio}
+        onAlbumClose={handleAlbumClose}
+      />
+
+      {/* Debug info v development módu - HIDDEN */}
+      {/* {process.env.NODE_ENV === 'development' && (
+        <div className="fixed top-4 right-4 bg-white bg-opacity-90 p-3 rounded-lg shadow-lg z-40 text-xs">
+          <div className="font-bold mb-1">Data Collection:</div>
+          <div>Static: {preloadStatus.metadata ? '✅' : '⏳'}</div>
+          <div>Firebase: {preloadStatus.firebase ? '✅' : '⏳'}</div>
+          <div>Slova: {preloadStatus.slova ? '✅' : '⏳'}</div>
+          <div>Hudba: {preloadStatus.hudba ? '✅' : '⏳'}</div>
+          <div>Structured: {preloadStatus.structured ? '✅' : '⏳'}</div>
+          <div className="mt-2 text-xs text-gray-600">
+            Firebase metadata + UI data
+          </div>
+        </div>
+      )} */}
+    </div>
   );
 }
