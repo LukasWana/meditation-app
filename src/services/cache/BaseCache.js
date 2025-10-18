@@ -1,13 +1,20 @@
 /**
- * Základní cache třída s TTL a limit managementem
+ * Základní cache třída s TTL, limit managementem a localStorage persistencí
  */
 
 export class BaseCache {
-  constructor(type, limit = 100, ttl = 60 * 60 * 1000) {
+  constructor(type, limit = 100, ttl = 60 * 60 * 1000, enablePersistence = false) {
     this.cache = new Map();
     this.type = type;
     this.limit = limit;
     this.ttl = ttl;
+    this.enablePersistence = enablePersistence;
+    this.storageKey = `cache_${type}`;
+
+    // Načti data z localStorage při inicializaci
+    if (this.enablePersistence) {
+      this.loadFromStorage();
+    }
   }
 
   /**
@@ -26,6 +33,11 @@ export class BaseCache {
     };
 
     this.cache.set(key, entry);
+
+    // Ulož do localStorage pokud je persistence povolena
+    if (this.enablePersistence) {
+      this.saveToStorage();
+    }
   }
 
   /**
@@ -59,6 +71,11 @@ export class BaseCache {
    */
   delete(key) {
     this.cache.delete(key);
+
+    // Aktualizuj localStorage pokud je persistence povolena
+    if (this.enablePersistence) {
+      this.saveToStorage();
+    }
   }
 
   /**
@@ -66,6 +83,11 @@ export class BaseCache {
    */
   clear() {
     this.cache.clear();
+
+    // Vyčisti localStorage pokud je persistence povolena
+    if (this.enablePersistence) {
+      this.clearStorage();
+    }
   }
 
   /**
@@ -99,8 +121,76 @@ export class BaseCache {
       type: this.type,
       size: this.cache.size,
       limit: this.limit,
-      ttl: this.ttl
+      ttl: this.ttl,
+      persistence: this.enablePersistence
     };
   }
+
+  /**
+   * Uložení cache do localStorage
+   */
+  saveToStorage() {
+    if (!this.enablePersistence || typeof window === 'undefined') {
+      return;
+    }
+
+    try {
+      const dataToSave = {};
+      const now = Date.now();
+
+      // Ulož pouze neexpirované položky
+      for (const [key, entry] of this.cache.entries()) {
+        if (now - entry.timestamp <= entry.ttl) {
+          dataToSave[key] = entry;
+        }
+      }
+
+      localStorage.setItem(this.storageKey, JSON.stringify(dataToSave));
+    } catch (error) {
+      console.warn(`Failed to save ${this.type} cache to localStorage:`, error);
+    }
+  }
+
+  /**
+   * Načtení cache z localStorage
+   */
+  loadFromStorage() {
+    if (!this.enablePersistence || typeof window === 'undefined') {
+      return;
+    }
+
+    try {
+      const stored = localStorage.getItem(this.storageKey);
+      if (stored) {
+        const data = JSON.parse(stored);
+        const now = Date.now();
+
+        // Načti pouze neexpirované položky
+        for (const [key, entry] of Object.entries(data)) {
+          if (now - entry.timestamp <= entry.ttl) {
+            this.cache.set(key, entry);
+          }
+        }
+      }
+    } catch (error) {
+      console.warn(`Failed to load ${this.type} cache from localStorage:`, error);
+    }
+  }
+
+  /**
+   * Vyčištění localStorage
+   */
+  clearStorage() {
+    if (!this.enablePersistence || typeof window === 'undefined') {
+      return;
+    }
+
+    try {
+      localStorage.removeItem(this.storageKey);
+    } catch (error) {
+      console.warn(`Failed to clear ${this.type} cache from localStorage:`, error);
+    }
+  }
 }
+
 

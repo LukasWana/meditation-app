@@ -99,11 +99,22 @@ export const useFirebaseHudbaScanner = () => {
 
     // Zpracuj soubory
     const processedFiles = hudbaFiles.map(metadata => {
+      // Zkus načíst délku z cacheService (pokud už byla skladba přehrána)
+      let duration = metadata.durationFormatted || metadata.duration || 'N/A';
+
+      // Pokud je délka 'N/A', zkus načíst z cacheService
+      if (duration === 'N/A' && metadata.downloadURL) {
+        const cachedDuration = cacheService.getDuration(metadata.downloadURL);
+        if (cachedDuration && cachedDuration !== 'N/A') {
+          duration = cachedDuration;
+        }
+      }
+
       const processedFile = {
         fileName: metadata.fileName,
         fileNameOnly: metadata.fileNameOnly,
         downloadURL: metadata.downloadURL,
-        duration: metadata.durationFormatted || 'N/A',
+        duration: duration,
         parsed: metadata.parsed,
         isAvailable: !!metadata.downloadURL,
         type: 'hudba'
@@ -114,7 +125,10 @@ export const useFirebaseHudbaScanner = () => {
         fileName: processedFile.fileName,
         isAvailable: processedFile.isAvailable,
         downloadURL: processedFile.downloadURL ? 'OK' : 'FAILED',
-        isAlbum: processedFile.parsed?.isAlbum
+        isAlbum: processedFile.parsed?.isAlbum,
+        duration: processedFile.duration,
+        metadataDuration: metadata.duration,
+        metadataDurationFormatted: metadata.durationFormatted
       });
 
       return processedFile;

@@ -3,6 +3,12 @@ import { PageManager } from '@features/navigation';
 import { useNavigation, useTouchNavigation, useAppState, useBackgroundDataLoader, useTimer, useBreathPhase } from '@hooks';
 import IntroScreen from '@features/meditation/screens/IntroScreen';
 
+// Import cache test utility pro development
+if (import.meta.env.MODE === 'development') {
+  import('./utils/cacheTest');
+  import('./components/CacheTestComponent');
+}
+
 export default function MeditationApp() {
   // Intro state
   const [showIntro, setShowIntro] = useState(true);

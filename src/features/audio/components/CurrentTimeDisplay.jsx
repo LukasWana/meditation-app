@@ -11,7 +11,7 @@ const CurrentTimeDisplay = ({
       className={className}
       style={{
         fontFamily: 'Playfair Display',
-        fontSize: '22px',
+        fontSize: '32px',
         ...style
       }}
     >

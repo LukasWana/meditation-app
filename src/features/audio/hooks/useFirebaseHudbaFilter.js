@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
 import { useFirebaseHudbaScanner } from '@hooks/useFirebaseHudbaScanner';
-import globalMetadataPreloader from '@services/globalMetadataPreloader';
+import fastMetadataService from '@services/fastMetadataService';
 
 // Funkce pro výpočet celkového času alba
 const calculateTotalDuration = (tracks) => {
@@ -87,9 +87,8 @@ export const useFirebaseHudbaFilter = () => {
     standaloneSongs.forEach(file => {
       const parsed = file.parsed;
 
-      // Získej skutečnou délku z globálního preloaderu
-      const globalMetadata = globalMetadataPreloader.getMetadata(file.fileName);
-      const actualDuration = globalMetadata?.durationFormatted || file.duration || 'N/A';
+      // Získej skutečnou délku z fastMetadataService
+      const actualDuration = file.duration || 'N/A';
 
       items.push({
         key: `standalone-${file.fileName}`,
@@ -144,9 +143,8 @@ export const useFirebaseHudbaFilter = () => {
 
       // Vytvoř tracks pro album
       const tracks = songs.map(file => {
-        // Získej skutečnou délku z globálního preloaderu
-        const globalMetadata = globalMetadataPreloader.getMetadata(file.fileName);
-        const actualDuration = globalMetadata?.durationFormatted || file.duration || 'N/A';
+        // Získej skutečnou délku z fastMetadataService
+        const actualDuration = file.duration || 'N/A';
 
         return {
           trackNumber: songs.indexOf(file) + 1,

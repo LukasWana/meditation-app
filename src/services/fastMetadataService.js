@@ -14,7 +14,7 @@ class FastMetadataService {
     this.isLoading = false;
     this.lastUpdate = null;
     this.cacheKey = 'fast-metadata-cache';
-    this.cacheExpiry = 24 * 60 * 60 * 1000; // 24 hodin
+    this.cacheExpiry = 7 * 24 * 60 * 60 * 1000; // 7 dní - delší cache pro lepší performance
   }
 
   /**
@@ -60,10 +60,47 @@ class FastMetadataService {
   }
 
   /**
+   * Vymaže cache (při změnách v Firebase)
+   */
+  clearCache() {
+    try {
+      localStorage.removeItem(this.cacheKey);
+      this.metadata.clear();
+      this.lastUpdate = null;
+      log.info('Cache cleared - will reload from Firebase');
+    } catch (error) {
+      log.warn('Failed to clear cache:', error);
+    }
+  }
+
+  /**
+   * Zkontroluje, jestli je cache stále platná
+   */
+  isCacheValid() {
+    try {
+      const cached = localStorage.getItem(this.cacheKey);
+      if (cached) {
+        const { timestamp } = JSON.parse(cached);
+        const now = Date.now();
+        return (now - timestamp) < this.cacheExpiry;
+      }
+    } catch (error) {
+      log.warn('Failed to check cache validity:', error);
+    }
+    return false;
+  }
+
+  /**
    * Načte všechna metadata z Firebase Storage (rychlá verze)
    */
   async loadAllMetadata() {
     if (this.isLoading) {
+      return this.metadata;
+    }
+
+    // Nejdříve zkus načíst z cache
+    if (this.loadFromCache()) {
+      this.isLoading = false;
       return this.metadata;
     }
 
@@ -282,6 +319,20 @@ class FastMetadataService {
       isAlbum: metadata.isAlbum,
       albumName: metadata.albumName
     });
+
+    // Načti délku skladby
+    if (metadata.downloadURL) {
+      try {
+        const duration = await this._loadAudioDuration(metadata.downloadURL);
+        if (duration) {
+          metadata.duration = duration;
+          metadata.durationFormatted = this.formatDuration(duration);
+          log.debug(`⏱️ Duration loaded for ${fileName}: ${metadata.durationFormatted}`);
+        }
+      } catch (error) {
+        log.warn(`Failed to load duration for ${fileName}:`, error);
+      }
+    }
 
     return metadata;
   }

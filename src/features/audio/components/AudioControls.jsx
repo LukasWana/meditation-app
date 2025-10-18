@@ -37,13 +37,15 @@ const AudioControls = ({
         >
           {title || 'Meditácia'}
         </div>
-        {/* Duration - Total Time - Right under title - HIDDEN */}
-        {/* <div
-          className="text-gray-600 text-center"
-          style={{fontFamily: 'Playfair Display', fontSize: 'clamp(14px, 2.5vw, 18px)'}}
-        >
-          {formatTime(duration)}
-        </div> */}
+        {/* Duration - Total Time - Right under title */}
+        {duration && duration > 0 && (
+          <div
+            className="text-gray-600 text-center"
+            style={{fontFamily: 'Playfair Display', fontSize: 'clamp(20px, 1.3vw, 16px)'}}
+          >
+            {formatTime(duration)}
+          </div>
+        )}
       </div>
 
       {/* Circular Progress with Play Button - Always Centered */}

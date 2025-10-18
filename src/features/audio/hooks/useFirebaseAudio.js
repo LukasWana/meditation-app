@@ -4,14 +4,11 @@ import { storage } from '@services/firebase';
 import cacheService from '@services/cacheService';
 
 export const useFirebaseAudio = (audioFileName) => {
-  console.log('useFirebaseAudio called with audioFileName:', audioFileName);
+  console.log('🔗 useFirebaseAudio called with:', audioFileName);
   const [audioUrl, setAudioUrl] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [currentFileName, setCurrentFileName] = useState(null);
-
-  // Debug: zobraz aktuální stav
-  console.log('useFirebaseAudio state:', { audioFileName, currentFileName, audioUrl: !!audioUrl, loading });
 
   useEffect(() => {
     if (!audioFileName) {
@@ -21,26 +18,23 @@ export const useFirebaseAudio = (audioFileName) => {
 
     // Zkontroluj, jestli už máme URL pro tento soubor
     if (audioUrl && audioFileName === currentFileName) {
-      console.log('useFirebaseAudio: Already have URL for this file, skipping load');
       return;
     }
 
     // Zkontroluj, jestli se soubor nezměnil
     if (audioFileName === currentFileName) {
-      console.log('useFirebaseAudio: Same file as before, skipping load');
       return;
     }
 
     const loadAudioUrl = async () => {
       try {
-        console.log('loadAudioUrl - Loading:', audioFileName);
         setLoading(true);
         setError(null);
 
         // Zkontroluj cache první
         const cachedUrl = cacheService.getAudioUrl(audioFileName);
         if (cachedUrl) {
-          console.log('loadAudioUrl - From cache:', audioFileName);
+          console.log('🔗 Using cached URL for:', audioFileName);
           setAudioUrl(cachedUrl);
           setCurrentFileName(audioFileName);
           setLoading(false);
@@ -51,12 +45,13 @@ export const useFirebaseAudio = (audioFileName) => {
         const audioRef = ref(storage, audioFileName);
 
         // Získání download URL
+        console.log('🔗 Fetching download URL for:', audioFileName);
         const url = await getDownloadURL(audioRef);
+        console.log('🔗 Download URL obtained:', url);
 
         // Ulož do cache
         cacheService.setAudioUrl(audioFileName, url);
 
-        console.log('loadAudioUrl - Success, URL:', url);
         setAudioUrl(url);
         setCurrentFileName(audioFileName);
 

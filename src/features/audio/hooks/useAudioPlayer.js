@@ -3,7 +3,9 @@ import cacheService from '@services/cacheService';
 import { log } from '@services/logger';
 
 export const useAudioPlayer = (audioUrl, albumTracks = null, currentTrackIndex = 0, onTrackChange = null) => {
-  log.audio('useAudioPlayer called with audioUrl:', audioUrl);
+  log.audio('🎵 useAudioPlayer called with audioUrl:', audioUrl);
+  log.audio('🎵 Album tracks:', albumTracks?.length || 0);
+  log.audio('🎵 Current track index:', currentTrackIndex);
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
@@ -193,13 +195,17 @@ export const useAudioPlayer = (audioUrl, albumTracks = null, currentTrackIndex =
     const audio = audioRef.current;
     if (!audio) return;
 
+    log.audio(`🎵 Toggle play/pause - currently playing: ${isPlaying}`);
+
     if (isPlaying) {
       // Fade out při zastavení
+      log.audio('🎵 Pausing audio with fade out');
       fadeOut(audio, 1000, () => {
         setIsPlaying(false);
       });
     } else {
       // Fade in při spuštění
+      log.audio('🎵 Playing audio with fade in');
       audio.play().then(() => {
         setIsPlaying(true);
         fadeIn(audio, 1000);

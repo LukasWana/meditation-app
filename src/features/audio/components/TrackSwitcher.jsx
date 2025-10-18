@@ -22,9 +22,7 @@ const TrackSwitcher = ({
   // Automatické přepnutí na správnou stránku při změně currentTrackIndex
   useEffect(() => {
     const trackPage = Math.floor(currentTrackIndex / tracksPerPage);
-    console.log('useEffect triggered:', { currentTrackIndex, trackPage, currentPage, tracksPerPage });
     if (trackPage !== currentPage) {
-      console.log('Changing page from', currentPage, 'to', trackPage);
       setCurrentPage(trackPage);
     }
   }, [currentTrackIndex, tracksPerPage]);
@@ -74,28 +72,15 @@ const TrackSwitcher = ({
     trackRows.push(currentTracks.slice(i, i + maxTracksPerRow));
   }
 
-  // Debug logy
-  console.log('TrackSwitcher state:', {
-    tracksLength: tracks.length,
-    currentPage,
-    totalPages,
-    startIndex,
-    endIndex,
-    currentTracksLength: currentTracks.length,
-    currentTrackIndex,
-    trackRowsLength: trackRows.length
-  });
 
   // Navigační funkce
   const goToNextPage = () => {
-    console.log('Next page clicked:', { currentPage, totalPages });
     if (currentPage < totalPages - 1) {
       setCurrentPage(currentPage + 1);
     }
   };
 
   const goToPrevPage = () => {
-    console.log('Prev page clicked:', { currentPage, totalPages });
     if (currentPage > 0) {
       setCurrentPage(currentPage - 1);
     }
@@ -112,7 +97,6 @@ const TrackSwitcher = ({
               <motion.button
                 key={globalIndex}
                 onClick={() => {
-                  console.log('Track clicked:', { globalIndex, currentTrackIndex, startIndex, rowIndex, index });
                   if (globalIndex !== currentTrackIndex) {
                     onTrackChange(globalIndex);
                   }
