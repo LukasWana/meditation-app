@@ -1,12 +1,14 @@
 import React, { useEffect, useState } from 'react';
 import { PageManager } from '@features/navigation';
-import { useNavigation, useTouchNavigation, useAppState, useBackgroundDataLoader, useTimer, useBreathPhase } from '@hooks';
+import { useNavigation, useTouchNavigation, useAppState, useBackgroundDataLoader, useTimer, useBreathPhase, useOptimizedPreloader } from '@hooks';
 import IntroScreen from '@features/meditation/screens/IntroScreen';
+import { firestoreMetadataService } from '@services/firestoreMetadataService';
 
 // Import cache test utility pro development
 if (import.meta.env.MODE === 'development') {
   import('./utils/cacheTest');
   import('./components/CacheTestComponent');
+  import('./scripts/initFirestoreMetadata');
 }
 
 export default function MeditationApp() {
@@ -21,6 +23,9 @@ export default function MeditationApp() {
   // Preloading odstraněn - data se načítají v pozadí během animace
 
   // Prediktivní preloading odstraněn - data se načítají při startu
+
+  // Initialize metadata service and preloader
+  const { isPreloading, preloadProgress, preloadError } = useOptimizedPreloader();
 
   // App state
   const {

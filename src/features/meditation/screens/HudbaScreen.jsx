@@ -138,7 +138,7 @@ const HudbaScreen = ({
     return 'N/A';
   };
 
-  // Použij původní hudební filtrovací systém
+  // Použij hudební filtrovací systém z Firebase
   const { hudbaItems, isLoading, error, stats, isLoadingCovers, isLoadingDurations } = useFirebaseHudbaFilter();
 
   // Debug logging s informacemi o cache

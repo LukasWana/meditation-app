@@ -20,3 +20,4 @@ export {
 export { useBackgroundDataLoader } from './useBackgroundDataLoader';
 export { useTimer } from './useTimer';
 export { useBreathPhase } from './useBreathPhase';
+export { useOptimizedPreloader } from './useOptimizedPreloader';

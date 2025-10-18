@@ -226,61 +226,44 @@ export const useFirebaseHudbaScanner = () => {
 
       log.warn('❌ No cached data found, loading from Firebase Storage...');
 
-      // Načti přímo obsah složky "hudba" místo prohledávání všech složek
-      const hudbaRef = ref(storage, 'hudba');
-      log.firebase('📂 Loading hudba folder directly...');
-      const hudbaResult = await listAll(hudbaRef);
-      log.firebase('📂 Hudba folder loaded:', {
-        items: hudbaResult.items.length,
-        prefixes: hudbaResult.prefixes.length,
-        prefixNames: hudbaResult.prefixes.map(p => p.name)
+      // Načti všechny soubory z Firebase Storage (stejně jako useFirebaseCDNScanner)
+      const listRef = ref(storage, '');
+      log.firebase('📂 Loading all files from Firebase Storage...');
+      const result = await listAll(listRef);
+      log.firebase('📂 Firebase Storage loaded:', {
+        items: result.items.length,
+        prefixes: result.prefixes.length
       });
 
-      // Získej všechny soubory z hudba složky
-      const allFiles = [];
+      // Získej všechny soubory včetně podsložek
+      const allFiles = [...result.items];
 
-      // Přidej soubory přímo z hudba/ složky
-      hudbaResult.items.forEach(item => {
-        allFiles.push({
-          ...item,
-          name: `hudba/${item.name}`,
-          folder: 'hudba'
-        });
-        log.firebase(`📄 Added direct file: hudba/${item.name}`);
-      });
-
-      // Prohledej podsložky v hudba/ (např. ambient-journey/)
-      for (const subFolderRef of hudbaResult.prefixes) {
+      // Prohledej podsložky
+      for (const folderRef of result.prefixes) {
         try {
-          const subFolderResult = await listAll(subFolderRef);
-          log.firebase(`📁 Processing subfolder: ${subFolderRef.name}, found ${subFolderResult.items.length} items`);
-          log.firebase(`📁 Subfolder ref:`, subFolderRef);
-          log.firebase(`📁 Subfolder items:`, subFolderResult.items.map(i => i.name));
-          subFolderResult.items.forEach(item => {
-            const fullPath = `hudba/${subFolderRef.name}/${item.name.trim()}`;
+          const folderResult = await listAll(folderRef);
+          // Přidej soubory z podsložky s prefixem složky
+          folderResult.items.forEach(item => {
             allFiles.push({
               ...item,
-              name: fullPath,
-              folder: 'hudba',
-              subFolder: subFolderRef.name
+              name: `${folderRef.name}/${item.name}` // Přidej cestu složky k názvu
             });
-            log.firebase(`📄 Added subfolder file: ${fullPath}, subFolder: ${subFolderRef.name}`);
           });
-        } catch (subErr) {
-          log.warn(`Nelze prohledat podsložku ${subFolderRef.name}:`, subErr.message);
+        } catch (err) {
+          log.warn(`Nelze prohledat složku ${folderRef.name}:`, err.message);
         }
       }
 
       // Debug: vypiš všechny soubory po načítání podsložek
-      log.firebase(`📊 Files after subfolder processing:`, allFiles.map(f => ({ name: f.name, folder: f.folder, subFolder: f.subFolder })));
+      log.firebase(`📊 Files after subfolder processing:`, allFiles.map(f => ({ name: f.name })));
 
       // Debug: vypiš pouze album soubory
       const allAlbumFiles = allFiles.filter(f => f.name.includes('/') && f.name.startsWith('hudba/'));
-      log.firebase(`🎵 Album files:`, allAlbumFiles.map(f => ({ name: f.name, folder: f.folder, subFolder: f.subFolder })));
+      log.firebase(`🎵 Album files:`, allAlbumFiles.map(f => ({ name: f.name })));
 
       // Debug: vypiš pouze MP3 soubory z alb
       const albumMp3Files = allAlbumFiles.filter(f => f.name.toLowerCase().endsWith('.mp3'));
-      log.firebase(`🎵 Album MP3 files:`, albumMp3Files.map(f => ({ name: f.name, folder: f.folder, subFolder: f.subFolder })));
+      log.firebase(`🎵 Album MP3 files:`, albumMp3Files.map(f => ({ name: f.name })));
 
       // Filtruj pouze MP3 soubory z hudba/ složky a obrázky pro cover
       const audioFiles = allFiles
@@ -288,9 +271,9 @@ export const useFirebaseHudbaScanner = () => {
           const name = item.name.toLowerCase();
           const isMp3 = name.endsWith('.mp3');
           const isImage = /\.(jpg|jpeg|png|gif|webp)$/i.test(name);
-          // Pouze soubory z hudba/ složky (podle folder vlastnosti)
-          const isHudba = item.folder === 'hudba';
-          log.firebase(`🔍 File filter: ${item.name}, isMp3: ${isMp3}, isImage: ${isImage}, isHudba: ${isHudba}, folder: ${item.folder}`);
+          // Pouze soubory z hudba/ složky (podle názvu souboru)
+          const isHudba = name.startsWith('hudba/');
+          log.firebase(`🔍 File filter: ${item.name}, isMp3: ${isMp3}, isImage: ${isImage}, isHudba: ${isHudba}`);
           return (isMp3 || isImage) && isHudba;
         })
         .map(item => item.name);
