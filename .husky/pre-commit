@@ -1,0 +1,44 @@
+#!/usr/bin/env sh
+echo "🔍 Spouštím pre-commit kontroly..."
+
+# Kontrola na .env soubory
+if git diff --cached --name-only | grep -q "^\.env$"; then
+  echo "❌ CHYBA: Pokoušíte se commitovat .env soubor!"
+  echo "   .env obsahuje citlivé údaje a neměl by být v repository."
+  echo "   Použijte .env.example místo toho."
+  exit 1
+fi
+
+# Kontrola na Firebase API klíče v kódu
+if git diff --cached -U0 | grep -E "AIza[0-9A-Za-z_-]{35}"; then
+  echo "❌ CHYBA: Detekován Firebase API klíč v kódu!"
+  echo "   API klíče by měly být pouze v .env souboru."
+  exit 1
+fi
+
+# Kontrola na hardcoded Firebase config
+if git diff --cached -U0 | grep -E "(apiKey:|authDomain:|projectId:).*['\"]"; then
+  echo "⚠️  VAROVÁNÍ: Detekována možná Firebase konfigurace v kódu."
+  echo "   Zkontrolujte, že používáte import.meta.env místo hardcoded hodnot."
+fi
+
+# ESLint kontrola
+echo "🔍 Spouštím ESLint..."
+npx eslint src/ --ext .js,.jsx --max-warnings 0
+if [ $? -ne 0 ]; then
+  echo "❌ ESLint našel chyby. Opravte je před commitem."
+  exit 1
+fi
+
+# Security audit (pouze warning, neblokuje commit)
+echo "🔒 Spouštím security audit..."
+npm audit --audit-level=high
+if [ $? -ne 0 ]; then
+  echo "⚠️  VAROVÁNÍ: Nalezeny bezpečnostní zranitelnosti ve závislostech."
+  echo "   Spusťte 'npm audit fix' pro opravu."
+  # Neblokujeme commit, pouze varujeme
+fi
+
+echo "✅ Pre-commit kontroly prošly úspěšně!"
+exit 0
+

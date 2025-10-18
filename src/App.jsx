@@ -3,12 +3,15 @@ import { PageManager } from '@features/navigation';
 import { useNavigation, useTouchNavigation, useAppState, useBackgroundDataLoader, useTimer, useBreathPhase, useOptimizedPreloader } from '@hooks';
 import IntroScreen from '@features/meditation/screens/IntroScreen';
 import { firestoreMetadataService } from '@services/firestoreMetadataService';
+import SecurityDashboard from './components/SecurityDashboard';
 
 // Import cache test utility pro development
 if (import.meta.env.MODE === 'development') {
   import('./utils/cacheTest');
   import('./components/CacheTestComponent');
   import('./scripts/initFirestoreMetadata');
+  import('./components/SecurityDashboard');
+  import('./services/securityMonitor');
 }
 
 export default function MeditationApp() {
@@ -127,6 +130,11 @@ export default function MeditationApp() {
         onCloseAudio={handleCloseAudio}
         onAlbumClose={handleAlbumClose}
         />
+      )}
+
+      {/* Security Dashboard - pouze v development módu */}
+      {import.meta.env.MODE === 'development' && (
+        <SecurityDashboard />
       )}
 
     </div>

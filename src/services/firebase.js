@@ -1,6 +1,7 @@
 import { initializeApp } from 'firebase/app';
 import { getStorage } from 'firebase/storage';
 import { getFirestore } from 'firebase/firestore';
+import { initializeAppCheck, ReCaptchaV3Provider } from 'firebase/app-check';
 
 // Validace Firebase konfigurace
 const validateFirebaseConfig = () => {
@@ -46,6 +47,30 @@ const validateFirebaseConfig = () => {
 const firebaseConfig = validateFirebaseConfig();
 
 const app = initializeApp(firebaseConfig);
+
+// Inicializace Firebase App Check pro ochranu proti abuse
+let appCheck = null;
+if (import.meta.env.VITE_RECAPTCHA_SITE_KEY) {
+  try {
+    appCheck = initializeAppCheck(app, {
+      provider: new ReCaptchaV3Provider(import.meta.env.VITE_RECAPTCHA_SITE_KEY),
+      isTokenAutoRefreshEnabled: true
+    });
+    
+    if (import.meta.env.MODE === 'development') {
+      console.log('🛡️ Firebase App Check initialized with reCAPTCHA v3');
+    }
+  } catch (error) {
+    console.warn('⚠️ Firebase App Check initialization failed:', error.message);
+    console.warn('   App Check je volitelný, ale doporučený pro produkci');
+  }
+} else {
+  if (import.meta.env.MODE === 'development') {
+    console.warn('⚠️ VITE_RECAPTCHA_SITE_KEY není nastaven - App Check není aktivní');
+    console.warn('   Pro produkci doporučujeme nastavit reCAPTCHA v3');
+  }
+}
+
 export const storage = getStorage(app);
 export const db = getFirestore(app);
 
@@ -54,5 +79,6 @@ if (import.meta.env.MODE === 'development') {
   console.log('🔥 Firebase initialized successfully');
   console.log('📁 Project ID:', firebaseConfig.projectId);
   console.log('📦 Storage Bucket:', firebaseConfig.storageBucket);
+  console.log('🛡️ App Check:', appCheck ? 'Active' : 'Disabled');
   // Nezobrazujeme API klíče ani jiné citlivé údaje
 }
