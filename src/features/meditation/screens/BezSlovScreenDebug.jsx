@@ -3,8 +3,10 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { FramerButton, FramerSection, FramerPageTransition, BackButton } from '@components';
 import { AudioPlayer } from '@features/audio';
 import { useFirebaseHudbaFilter } from '@features/audio/hooks/useFirebaseHudbaFilter';
+import { log } from '@services/logger';
+import { captureError } from '@services/errorMonitoring';
 
-const BezSlovScreen = ({
+const HudbaScreenDebug = ({
   onNavigateToScreen,
   onTouchStart,
   onTouchMove,
@@ -13,11 +15,40 @@ const BezSlovScreen = ({
   onPlayerStateChange
 }) => {
   const [activeAudio, setActiveAudio] = useState(null);
+  const [debugInfo, setDebugInfo] = useState({});
 
   // Použij původní hudební filtrovací systém
   const { hudbaItems: bezSlovItems, isLoading, error, stats } = useFirebaseHudbaFilter();
 
+  // Rozšířené debug logging - opraveno pro zabránění nekonečné smyčky
+  React.useEffect(() => {
+    const debugData = {
+      isLoading,
+      error,
+      itemsCount: bezSlovItems?.length || 0,
+      stats: stats ? {
+        totalFiles: stats.totalFiles,
+        availableFiles: stats.availableFiles,
+        lastUpdated: stats.lastUpdated
+      } : null,
+      items: bezSlovItems?.slice(0, 3).map(item => ({
+        key: item.key,
+        title: item.title,
+        type: item.type
+      })) || [] // Pouze základní info pro debug
+    };
+
+    setDebugInfo(debugData);
+    log.debug('HudbaScreenDebug state:', debugData);
+
+    if (error) {
+      captureError('HudbaScreen loading error', error, { debugData });
+    }
+  }, [isLoading, error, bezSlovItems?.length, stats?.totalFiles, stats?.availableFiles]);
+
   const handleItemClick = (item) => {
+    log.audio('Item clicked:', item);
+
     if (item.type === 'album') {
       // Spusť první skladbu z alba
       if (item.tracks && item.tracks.length > 0) {
@@ -47,7 +78,12 @@ const BezSlovScreen = ({
     onPlayerStateChange?.(false);
   };
 
-  // Loading state - jednoduchý spinner
+  const handleRefresh = () => {
+    log.info('Manual refresh triggered');
+    window.location.reload();
+  };
+
+  // Loading state - rozšířený s debug info
   if (isLoading) {
     return (
       <FramerPageTransition screenKey="bez-slov">
@@ -56,13 +92,14 @@ const BezSlovScreen = ({
           <div className="text-center">
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-gray-700 mx-auto mb-4"></div>
             <p className="text-xl text-gray-700">Načítám hudbu...</p>
+            <p className="text-sm text-gray-500 mt-2">Debug: {JSON.stringify(debugInfo)}</p>
           </div>
         </div>
       </FramerPageTransition>
     );
   }
 
-  // Error state
+  // Error state - rozšířený s debug info
   if (error) {
     return (
       <FramerPageTransition screenKey="bez-slov">
@@ -70,7 +107,19 @@ const BezSlovScreen = ({
           <BackButton onClick={() => onNavigateToScreen('home')} />
           <div className="text-center">
             <p className="text-xl text-red-600 mb-4">Chyba při načítání</p>
-            <p className="text-gray-700">{error}</p>
+            <p className="text-gray-700 mb-4">{error}</p>
+            <div className="text-sm text-gray-500 mb-4 p-4 bg-white/30 rounded-lg">
+              <p>Debug info:</p>
+              <pre className="text-xs overflow-auto max-h-32">
+                {JSON.stringify(debugInfo, null, 2)}
+              </pre>
+            </div>
+            <button
+              onClick={handleRefresh}
+              className="px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600"
+            >
+              Obnovit stránku
+            </button>
           </div>
         </div>
       </FramerPageTransition>
@@ -101,26 +150,15 @@ const BezSlovScreen = ({
             <h1 className="text-6xl font-light" style={{fontFamily: 'Playfair Display'}}>
               hudba
             </h1>
-            {/* <p className="text-xl text-center text-gray-700 mb-8" style={{fontFamily: 'Playfair Display'}}>
-              hudobné meditácie a relaxačné zvuky
-            </p> */}
 
-            {/* Zobraz statistiky - ZAKOMENTOVÁNO */}
-            {/* {stats && (
-              <div className="text-center mb-8 p-4 bg-white/30 rounded-lg">
-                <p className="text-sm text-gray-600 mb-2">
-                  Dostupné skladby: {stats.availableFiles} z {stats.totalFiles}
-                </p>
-                <p className="text-xs text-gray-500 mb-1">
-                  Hudební meditace a relaxační zvuky
-                </p>
-                {stats.lastUpdated && (
-                  <p className="text-xs text-gray-400">
-                    Aktualizováno: {new Date(stats.lastUpdated).toLocaleTimeString('sk-SK')}
-                  </p>
-                )}
+            {/* Debug info */}
+            {import.meta.env.MODE === 'development' && (
+              <div className="text-center mb-4 p-2 bg-white/30 rounded-lg text-xs">
+                <p>Items: {bezSlovItems?.length || 0}</p>
+                <p>Loading: {isLoading ? 'Yes' : 'No'}</p>
+                <p>Error: {error || 'None'}</p>
               </div>
-            )} */}
+            )}
           </FramerSection>
 
           <div className="space-y-4">
@@ -128,6 +166,9 @@ const BezSlovScreen = ({
               <div className="text-center py-8">
                 <p className="text-gray-600 text-lg">Žiadne skladby nie sú dostupné</p>
                 <p className="text-gray-500 text-sm mt-2">Skúste zmeniť nastavenia v menu</p>
+                <div className="text-xs text-gray-400 mt-4 p-2 bg-white/30 rounded">
+                  Debug: {JSON.stringify(debugInfo)}
+                </div>
               </div>
             ) : (
               bezSlovItems.map((item, idx) => (
@@ -167,12 +208,18 @@ const BezSlovScreen = ({
                           </h3>
                           {item.type === 'album' && (
                             <p className="text-sm text-gray-500 mt-1">
-                              Album • {item.tracks.length} skladieb
+                              Album • {item.tracks?.length || 0} skladieb
                             </p>
                           )}
                           {item.type === 'hudba' && item.duration && (
                             <p className="text-sm text-gray-500 mt-1">
                               {item.duration}
+                            </p>
+                          )}
+                          {/* Debug info pro každou položku */}
+                          {import.meta.env.MODE === 'development' && (
+                            <p className="text-xs text-gray-400 mt-1">
+                              Type: {item.type}, AudioSrc: {item.audioSrc ? 'Yes' : 'No'}
                             </p>
                           )}
                         </div>
@@ -229,4 +276,4 @@ const BezSlovScreen = ({
   );
 };
 
-export default BezSlovScreen;
+export default HudbaScreenDebug;

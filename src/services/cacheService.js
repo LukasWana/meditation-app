@@ -1,9 +1,14 @@
 /**
+ * @deprecated Použij cacheServiceRefactored.js místo tohoto souboru
+ * Tento soubor je zachován pro zpětnou kompatibilitu
+ *
  * Univerzální cache service pro optimalizaci výkonu aplikace
  * Podporuje cache pro audio, obrázky, metadata a Firebase dotazy
  */
 
 import { staticMetadataService } from './staticMetadataService';
+import cacheServiceRefactored from './cacheServiceRefactored.js';
+import { parseAudioFileName } from '@utils/hudbaParser';
 
 class CacheService {
   constructor() {
@@ -40,7 +45,9 @@ class CacheService {
    */
   set(cacheType, key, value, customTTL = null) {
     if (!this.caches[cacheType]) {
-      console.warn(`Unknown cache type: ${cacheType}`);
+      if (import.meta.env.MODE === 'development') {
+        console.warn(`Unknown cache type: ${cacheType}`);
+      }
       return;
     }
 
@@ -194,20 +201,28 @@ class CacheService {
     try {
       // Validace parametrů
       if (!fileName) {
-        console.warn('PreloadAudio called with undefined fileName, skipping');
+        if (import.meta.env.MODE === 'development') {
+          console.warn('PreloadAudio called with undefined fileName, skipping');
+        }
         return Promise.resolve();
       }
 
       if (!url) {
-        console.warn(`PreloadAudio called with undefined url for ${fileName}, using metadata-only preload`);
+        if (import.meta.env.MODE === 'development') {
+          console.warn(`PreloadAudio called with undefined url for ${fileName}, using metadata-only preload`);
+        }
         return this._preloadFirebaseMetadata(null, fileName);
       }
 
-      console.log(`Preloading audio metadata: ${fileName}`);
+      if (import.meta.env.MODE === 'development') {
+        console.log(`Preloading audio metadata: ${fileName}`);
+      }
 
       // Zkontroluj, jestli už není v cache
       if (this.has('audio', fileName)) {
-        console.log(`Audio already cached: ${fileName}`);
+        if (import.meta.env.MODE === 'development') {
+          console.log(`Audio already cached: ${fileName}`);
+        }
         return Promise.resolve();
       }
 
@@ -220,7 +235,9 @@ class CacheService {
       return this._preloadAudioElement(url, fileName);
 
     } catch (error) {
-      console.warn(`Preload failed for ${fileName}:`, error);
+      if (import.meta.env.MODE === 'development') {
+        console.warn(`Preload failed for ${fileName}:`, error);
+      }
       // Nevrhni chybu, jen ji zaloguj
       return Promise.resolve();
     }
@@ -237,15 +254,21 @@ class CacheService {
       if (metadata) {
         // Ulož metadata do cache
         this.setMetadata(fileName, metadata);
-        console.log(`Static metadata preloaded: ${fileName}`);
+        if (import.meta.env.MODE === 'development') {
+          console.log(`Static metadata preloaded: ${fileName}`);
+        }
         return metadata;
       } else {
-        console.log(`No static metadata found for: ${fileName}`);
+        if (import.meta.env.MODE === 'development') {
+          console.log(`No static metadata found for: ${fileName}`);
+        }
         return null;
       }
 
     } catch (error) {
-      console.warn(`Static metadata preload failed for ${fileName}:`, error);
+      if (import.meta.env.MODE === 'development') {
+        console.warn(`Static metadata preload failed for ${fileName}:`, error);
+      }
       return null;
     }
   }
@@ -260,12 +283,16 @@ class CacheService {
 
       const loadPromise = new Promise((resolve, reject) => {
         audio.addEventListener('loadedmetadata', () => {
-        console.log(`Audio metadata preloaded: ${fileName}`);
+        if (import.meta.env.MODE === 'development') {
+          console.log(`Audio metadata preloaded: ${fileName}`);
+        }
           resolve(audio);
         });
 
         audio.addEventListener('error', (e) => {
-          console.warn(`Failed to preload audio: ${fileName}`, e);
+          if (import.meta.env.MODE === 'development') {
+            console.warn(`Failed to preload audio: ${fileName}`, e);
+          }
           reject(e);
         });
 
@@ -325,7 +352,9 @@ class CacheService {
 
       return await loadPromise;
     } catch (error) {
-      console.warn(`Preload failed for ${fileName}:`, error);
+      if (import.meta.env.MODE === 'development') {
+        console.warn(`Preload failed for ${fileName}:`, error);
+      }
       throw error;
     }
   }
@@ -487,36 +516,343 @@ class CacheService {
       console.log(`✅ Metadata loaded: ${Object.keys(allMetadata).length} entries cached from static JSON`);
       console.log(`ℹ️ Note: New files not in static JSON will be loaded from Firebase when needed`);
 
-      // Preload kritické audio URL asynchronně v pozadí - pouze metadata
-      const criticalFiles = [
-        'muzsky4FSK-uzkost-osamelost.mp3',
-        'zensky4FSK-uzkost-osamelost.mp3',
-        '00--00--00--00-ambient1.mp3'
-      ];
-
-      // Použij requestIdleCallback pro metadata preloading (ne audio preloading)
-      const preloadMetadataInBackground = () => {
-        criticalFiles.forEach((fileName, index) => {
-          if (allMetadata[fileName]) {
-            // Delay mezi metadata preloady pro non-blocking
-            setTimeout(() => {
-              // Pouze preload metadata, ne audio URL
-              this._preloadFirebaseMetadata(null, fileName).catch(err => {
-                console.warn(`Failed to preload metadata for ${fileName}:`, err);
-              });
-            }, index * 100);
-          }
-        });
-      };
-
-      if (window.requestIdleCallback) {
-        window.requestIdleCallback(preloadMetadataInBackground);
-      } else {
-        setTimeout(preloadMetadataInBackground, 500);
-      }
+      // Preload hudba data do cache
+      console.log('🎵 Starting hudba data preloading...');
+      await this.preloadHudbaData();
+      console.log('🎵 Hudba data preloading completed');
 
     } catch (err) {
       console.warn('Critical data preloading failed:', err);
+    }
+  }
+
+  /**
+   * Získej délku audio souboru
+   */
+  async getAudioDuration(audioSrc) {
+    return new Promise((resolve) => {
+      try {
+        const audio = new Audio();
+
+        // Nastavení pro načítání metadata (bez CORS kvůli Firebase Storage)
+        audio.preload = 'metadata';
+
+        audio.addEventListener('loadedmetadata', () => {
+          const duration = audio.duration;
+          if (isFinite(duration) && duration > 0) {
+            const minutes = Math.floor(duration / 60);
+            const seconds = Math.floor(duration % 60);
+            const durationString = `${minutes}:${seconds.toString().padStart(2, '0')}`;
+            resolve(durationString);
+          } else {
+            resolve(null);
+          }
+        });
+
+        audio.addEventListener('error', (e) => {
+          console.warn(`Failed to load audio metadata for ${audioSrc}:`, e);
+          resolve(null);
+        });
+
+        audio.src = audioSrc;
+
+        // Timeout po 3 sekundách (zkráceno)
+        setTimeout(() => {
+          audio.src = '';
+          resolve(null);
+        }, 3000);
+      } catch (error) {
+        console.warn(`Error creating audio element for ${audioSrc}:`, error);
+        resolve(null);
+      }
+    });
+  }
+
+  /**
+   * Preloading hudba dat z Firebase Storage
+   */
+  async preloadHudbaData() {
+    try {
+      console.log('🎵 Preloading hudba data from Firebase Storage...');
+
+      // Import Firebase Storage dynamicky
+      const { ref, listAll, getDownloadURL, getMetadata } = await import('firebase/storage');
+      const { storage } = await import('./firebase');
+
+      const listRef = ref(storage, '');
+      console.log('📂 Listing Firebase Storage root...');
+      const result = await listAll(listRef);
+      console.log('📂 Firebase Storage result:', {
+        items: result.items.length,
+        prefixes: result.prefixes.length
+      });
+
+      // Získej všechny soubory z podsložek (slova/ a hudba/)
+      const allFiles = [];
+
+      // Prohledej podsložky (slova/ a hudba/) a jejich podsložky
+      console.log('📂 Root prefixes:', result.prefixes.map(p => p.name));
+      for (const folderRef of result.prefixes) {
+        try {
+          const folderResult = await listAll(folderRef);
+          console.log(`📂 Processing folder: ${folderRef.name}, items: ${folderResult.items.length}, prefixes: ${folderResult.prefixes.length}`);
+          console.log(`📂 Folder prefixes:`, folderResult.prefixes.map(p => p.name));
+
+          // Přidej soubory z této složky
+          folderResult.items.forEach(item => {
+            allFiles.push({
+              ...item,
+              name: `${folderRef.name}/${item.name}`,
+              folder: folderRef.name // Přidej informaci o složce
+            });
+          });
+
+          // Prohledej podsložky této složky (např. hudba/ambient-journey/)
+          for (const subFolderRef of folderResult.prefixes) {
+            try {
+              const subFolderResult = await listAll(subFolderRef);
+              console.log(`📁 Processing subfolder: ${subFolderRef.name}, found ${subFolderResult.items.length} items`);
+              subFolderResult.items.forEach(item => {
+                const fileName = `${subFolderRef.name}/${item.name.trim()}`;
+                allFiles.push({
+                  ...item,
+                  name: fileName, // Odstraň mezery z názvu souboru
+                  folder: folderRef.name, // Hlavní složka (hudba/ nebo slova/)
+                  subFolder: subFolderRef.name // Podsložka (např. ambient-journey)
+                });
+                console.log(`📄 Added file: ${fileName}, subFolder: ${subFolderRef.name}, folder: ${folderRef.name}`);
+              });
+            } catch (subErr) {
+              if (import.meta.env.MODE === 'development') {
+                console.warn(`Nelze prohledat podsložku ${subFolderRef.name}:`, subErr.message);
+              }
+            }
+          }
+        } catch (err) {
+          if (import.meta.env.MODE === 'development') {
+            console.warn(`Nelze prohledat složku ${folderRef.name}:`, err.message);
+          }
+        }
+      }
+
+      // Debug: zobraz všechny soubory
+      console.log('📁 All files found:', allFiles.map(item => item.name));
+
+      // Filtruj MP3 soubory podle složky
+      const hudbaFiles = allFiles
+        .filter(item => {
+          const name = item.name.toLowerCase();
+          const isMp3 = name.endsWith('.mp3');
+          const isHudba = item.folder === 'hudba';
+          const isSubFolder = item.subFolder; // Zkontroluj, jestli je to soubor z podsložky
+          console.log(`🔍 File: ${item.name}, folder: ${item.folder}, subFolder: ${item.subFolder}, isMp3: ${isMp3}, isHudba: ${isHudba}`);
+          return isMp3 && isHudba; // Načti pouze MP3 soubory ze složky hudba/
+        })
+        .map(item => item.name);
+
+      const slovaFiles = allFiles
+        .filter(item => {
+          const name = item.name.toLowerCase();
+          const isMp3 = name.endsWith('.mp3');
+          const isSlova = item.folder === 'slova';
+          console.log(`🔍 File: ${item.name}, folder: ${item.folder}, isMp3: ${isMp3}, isSlova: ${isSlova}`);
+          return isMp3 && isSlova; // Načti pouze MP3 soubory ze složky slova/
+        })
+        .map(item => item.name);
+
+      console.log('🎵 Hudba files:', hudbaFiles);
+      console.log('🗣️ Slova files:', slovaFiles);
+
+      // Načti skutečné Firebase URL pro hudbu
+      const hudbaData = {
+        audioFiles: [],
+        coverImages: {},
+        lastUpdated: new Date().toISOString()
+      };
+
+      // Načti skutečné URL pro hudební soubory
+      for (const fileName of hudbaFiles) {
+        try {
+          // Pro soubory z podsložek, přidej hudba/ prefix
+          const fullPath = fileName.startsWith('hudba/') ? fileName : `hudba/${fileName}`;
+          const fileRef = ref(storage, fullPath);
+          const downloadURL = await getDownloadURL(fileRef);
+
+          // Extrahuj pouze název souboru z cesty
+          const fileNameOnly = fileName.split('/').pop();
+
+          // Pro Firebase Storage soubory použij default duration kvůli CORS problémům
+          let duration = 'N/A';
+
+          // Zkus načíst duration pouze pokud není Firebase Storage URL
+          if (!downloadURL.includes('firebasestorage.googleapis.com')) {
+            try {
+              const audioDuration = await this.getAudioDuration(downloadURL);
+              if (audioDuration) {
+                duration = audioDuration;
+              }
+            } catch (durationError) {
+              console.warn(`Failed to get duration for ${fileName}:`, durationError);
+            }
+          }
+
+          // Urči typ podle složky
+          const fileType = fileName.startsWith('hudba/') ? 'hudba' : 'slova';
+
+          // Rozpoznej album soubory podle cesty (např. hudba/ambient-journey/song.mp3)
+          const isAlbumFile = fileName.split('/').length > 2;
+          let parsed;
+
+          if (isAlbumFile) {
+            // Album soubor - hudba/ambient-journey/song.mp3
+            const pathParts = fileName.split('/');
+            const albumName = pathParts[1]; // ambient-journey
+            const trackName = pathParts[2].replace(/\.mp3$/i, ''); // song
+
+            parsed = {
+              originalFileName: fileNameOnly,
+              name: trackName,
+              type: 'album_track',
+              isHudba: true,
+              isAlbum: true,
+              trackName: trackName,
+              albumName: albumName,
+              folder: 'hudba'
+            };
+          } else {
+            // Samostatná skladba - hudba/song.mp3
+            parsed = {
+              originalFileName: fileNameOnly,
+              name: fileNameOnly.replace(/\.mp3$/i, ''),
+              type: 'simple',
+              isHudba: fileType === 'hudba',
+              isAlbum: false,
+              trackName: fileNameOnly.replace(/\.mp3$/i, ''),
+              albumName: fileNameOnly.replace(/\.mp3$/i, ''),
+              folder: 'hudba'
+            };
+          }
+
+          hudbaData.audioFiles.push({
+            fileName,
+            audioSrc: downloadURL, // Skutečné Firebase URL
+            trackName: fileName.replace('.mp3', ''),
+            duration: duration || 'N/A',
+            type: fileType,
+            isAvailable: true,
+            parsed: parsed, // Přidej parsed data
+            folder: 'hudba' // Přidej informaci o složce
+          });
+        } catch (err) {
+          if (import.meta.env.MODE === 'development') {
+            const fullPath = fileName.startsWith('hudba/') ? fileName : `hudba/${fileName}`;
+            console.warn(`Failed to get URL for ${fileName} (tried ${fullPath}):`, err);
+          }
+        }
+      }
+
+      // Načti skutečné URL pro slova soubory
+      for (const fileName of slovaFiles) {
+        try {
+          // Pro soubory z podsložek, přidej slova/ prefix
+          const fullPath = fileName.startsWith('slova/') ? fileName : `slova/${fileName}`;
+          const fileRef = ref(storage, fullPath);
+          const downloadURL = await getDownloadURL(fileRef);
+
+          // Extrahuj pouze název souboru z cesty
+          const fileNameOnly = fileName.split('/').pop();
+
+          // Pro Firebase Storage soubory použij default duration kvůli CORS problémům
+          let duration = 'N/A';
+
+          // Zkus načíst duration pouze pokud není Firebase Storage URL
+          if (!downloadURL.includes('firebasestorage.googleapis.com')) {
+            try {
+              const audioDuration = await this.getAudioDuration(downloadURL);
+              if (audioDuration) {
+                duration = audioDuration;
+              }
+            } catch (durationError) {
+              console.warn(`Failed to get duration for ${fileName}:`, durationError);
+            }
+          }
+
+          // Parsuj název souboru pro slova soubory
+          const parsed = parseAudioFileName(fileNameOnly);
+
+          // Pokud se nepodařilo parsovat, vytvoř základní objekt
+          if (!parsed) {
+            const basicParsed = {
+              originalFileName: fileNameOnly,
+              name: fileNameOnly.replace(/\.mp3$/i, ''),
+              type: 'simple',
+              isHudba: false,
+              isAlbum: false,
+              trackName: fileNameOnly.replace(/\.mp3$/i, ''),
+              albumName: fileNameOnly.replace(/\.mp3$/i, ''),
+              folder: 'slova'
+            };
+            parsed = basicParsed;
+          } else {
+            // Aktualizuj parsed data pro slova soubory
+            parsed.isHudba = false;
+            parsed.isAlbum = false;
+            parsed.folder = 'slova';
+          }
+
+          hudbaData.audioFiles.push({
+            fileName,
+            audioSrc: downloadURL, // Skutečné Firebase URL
+            trackName: fileName.replace('.mp3', ''),
+            duration: duration || 'N/A',
+            type: 'slova',
+            isAvailable: true,
+            parsed: parsed, // Přidej parsed data
+            folder: 'slova' // Přidej informaci o složce
+          });
+        } catch (err) {
+          if (import.meta.env.MODE === 'development') {
+            const fullPath = fileName.startsWith('slova/') ? fileName : `slova/${fileName}`;
+            console.warn(`Failed to get URL for ${fileName} (tried ${fullPath}):`, err);
+          }
+        }
+      }
+
+      // Načti obrázky alb (cover.jpg z hudba/ složky)
+      console.log('🖼️ Loading album cover images...');
+      for (const item of allFiles) {
+        const name = item.name.toLowerCase();
+        const isCover = name.endsWith('cover.jpg');
+        const isHudbaFolder = item.folder === 'hudba';
+
+        if (isCover && isHudbaFolder) {
+          try {
+            // Pro soubory z podsložek, přidej hudba/ prefix
+            const fullPath = item.name.startsWith('hudba/') ? item.name : `hudba/${item.name}`;
+            const fileRef = ref(storage, fullPath);
+            const downloadURL = await getDownloadURL(fileRef);
+
+            // Extrahuj název alba ze složky (např. "ambient-journey/cover.jpg" -> "ambient-journey")
+            const albumName = item.subFolder || item.name.split('/')[0];
+            hudbaData.coverImages[albumName] = downloadURL;
+            console.log(`🖼️ Album cover loaded: ${albumName} from ${fullPath}`);
+          } catch (err) {
+            if (import.meta.env.MODE === 'development') {
+              const fullPath = item.name.startsWith('hudba/') ? item.name : `hudba/${item.name}`;
+              console.warn(`Failed to get cover image for ${item.name} (tried ${fullPath}):`, err);
+            }
+          }
+        }
+      }
+
+      // Ulož do cache
+      this.setFirebaseQuery('hudba_scanner_all_files', hudbaData);
+
+      console.log(`✅ Hudba data preloaded: ${hudbaData.audioFiles.length} files cached with real URLs`);
+      console.log(`🖼️ Cover images loaded: ${Object.keys(hudbaData.coverImages).length} images`);
+
+    } catch (err) {
+      console.warn('Hudba data preloading failed:', err);
     }
   }
 
@@ -551,61 +887,7 @@ class CacheService {
     }
   }
 
-  /**
-   * Preloading dat pro Hudba/Bez-slov screen - ze statického JSON
-   * Optimalizováno pro rychlejší načítání velkých sbírek
-   */
-  async preloadHudbaData(batchSize = 20) {
-    try {
-      console.log('Preloading hudba data from static JSON (optimized)...');
-
-      // Načti metadata ze statické služby cache
-      const allMetadata = staticMetadataService.getAllFromCache();
-
-      // Filtruj hudební soubory
-      const hudbaFiles = Object.entries(allMetadata).filter(([fileName, metadata]) => {
-        const isMp3 = fileName.toLowerCase().endsWith('.mp3');
-        // Hudební formát podle useFirebaseHudbaScanner
-        const isHudba = /\d{2}--\d{2}--\d{2}--\d{2}-/.test(fileName);
-        return isMp3 && isHudba;
-      });
-
-      // Batch processing pro lepší výkon
-      const batches = [];
-      for (let i = 0; i < hudbaFiles.length; i += batchSize) {
-        batches.push(hudbaFiles.slice(i, i + batchSize));
-      }
-
-      // Zpracuj první batch okamžitě
-      const firstBatch = batches[0] || [];
-      firstBatch.forEach(([fileName, metadata]) => {
-        if (!this.has('metadata', fileName)) {
-          this.setMetadata(fileName, metadata);
-        }
-      });
-
-      console.log(`Hudba data preloading completed (first batch): ${firstBatch.length} files`);
-
-      // Zpracuj zbytek asynchronně v pozadí
-      if (batches.length > 1) {
-        setTimeout(() => {
-          batches.slice(1).forEach((batch, index) => {
-            setTimeout(() => {
-              batch.forEach(([fileName, metadata]) => {
-                if (!this.has('metadata', fileName)) {
-                  this.setMetadata(fileName, metadata);
-                }
-              });
-              console.log(`Hudba batch ${index + 2}/${batches.length} completed: ${batch.length} files`);
-            }, index * 100); // 100ms delay mezi batchy
-          });
-        }, 500); // 500ms delay před zpracováním dalších batchů
-      }
-
-    } catch (err) {
-      console.warn('Hudba data preloading failed:', err);
-    }
-  }
+  // Duplicitní preloadHudbaData funkce odstraněna - používá se pouze Firebase verze
 
   /**
    * Optimalizace cache pro lepší výkon
@@ -670,12 +952,26 @@ class CacheService {
   }
 }
 
-// Singleton instance
+// @deprecated - použij cacheServiceRefactored
+// Singleton instance pro zpětnou kompatibilitu
 const cacheService = new CacheService();
 
-// Automatický cleanup každých 5 minut
-setInterval(() => {
+// Automatický cleanup každých 5 minut - s cleanup
+let cleanupInterval = setInterval(() => {
   cacheService.cleanup();
 }, 5 * 60 * 1000);
 
+// Cleanup při ukončení aplikace
+if (typeof window !== 'undefined') {
+  window.addEventListener('beforeunload', () => {
+    if (cleanupInterval) {
+      clearInterval(cleanupInterval);
+    }
+  });
+}
+
+// Export pro zpětnou kompatibilitu
 export default cacheService;
+
+// Export nového refaktorovaného service
+export { cacheServiceRefactored as newCacheService };

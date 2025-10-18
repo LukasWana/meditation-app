@@ -1,8 +1,9 @@
 import { useState, useRef, useEffect } from 'react';
 import cacheService from '@services/cacheService';
+import { log } from '@services/logger';
 
 export const useAudioPlayer = (audioUrl, albumTracks = null, currentTrackIndex = 0, onTrackChange = null) => {
-  console.log('useAudioPlayer called with audioUrl:', audioUrl);
+  log.audio('useAudioPlayer called with audioUrl:', audioUrl);
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
@@ -11,6 +12,8 @@ export const useAudioPlayer = (audioUrl, albumTracks = null, currentTrackIndex =
   const [shouldAutoPlay, setShouldAutoPlay] = useState(true); // Auto-play při prvním načtení
   const audioRef = useRef(null);
   const fadeTimeoutRef = useRef(null);
+  const fadeOutIntervalRef = useRef(null);
+  const fadeInIntervalRef = useRef(null);
 
   // Sleduj změnu audioUrl a zachovej stav přehrávání
   useEffect(() => {
@@ -26,7 +29,27 @@ export const useAudioPlayer = (audioUrl, albumTracks = null, currentTrackIndex =
     setDuration(0);
     setIsLoading(true);
 
-    console.log('Audio source changed, was playing:', wasPlaying);
+    // Načti délku při načítání metadata
+    const handleLoadedMetadata = () => {
+      if (audio.duration && isFinite(audio.duration)) {
+        setDuration(audio.duration);
+        log.audio(`Duration loaded: ${audio.duration}s`);
+
+        // Ulož délku do cache pro budoucí použití
+        if (audioUrl) {
+          cacheService.setDuration(audioUrl, audio.duration);
+        }
+      }
+    };
+
+    audio.addEventListener('loadedmetadata', handleLoadedMetadata);
+
+    log.audio('Audio source changed, was playing:', wasPlaying);
+
+    // Cleanup event listener
+    return () => {
+      audio.removeEventListener('loadedmetadata', handleLoadedMetadata);
+    };
   }, [audioUrl]);
 
   useEffect(() => {
@@ -46,14 +69,14 @@ export const useAudioPlayer = (audioUrl, albumTracks = null, currentTrackIndex =
 
       // Auto-play při prvním načtení nebo po změně zdroje
       if (shouldAutoPlay || wasPlayingBeforeSwitch) {
-        console.log('Auto-playing:', shouldAutoPlay ? 'first load' : 'source change');
+        log.audio('Auto-playing:', shouldAutoPlay ? 'first load' : 'source change');
         audio.play().then(() => {
           setIsPlaying(true);
           setShouldAutoPlay(false); // Reset po prvním auto-play
           setWasPlayingBeforeSwitch(false);
           fadeIn(audio, 1000); // Fade in při auto-play
         }).catch((error) => {
-          console.error('Failed to auto-play:', error);
+          log.error('Failed to auto-play:', error);
           setIsPlaying(false);
           setShouldAutoPlay(false);
           setWasPlayingBeforeSwitch(false);
@@ -83,6 +106,16 @@ export const useAudioPlayer = (audioUrl, albumTracks = null, currentTrackIndex =
       if (fadeTimeoutRef.current) {
         clearTimeout(fadeTimeoutRef.current);
       }
+
+      // Cleanup fade intervals
+      if (fadeOutIntervalRef.current) {
+        clearInterval(fadeOutIntervalRef.current);
+        fadeOutIntervalRef.current = null;
+      }
+      if (fadeInIntervalRef.current) {
+        clearInterval(fadeInIntervalRef.current);
+        fadeInIntervalRef.current = null;
+      }
     };
   }, [wasPlayingBeforeSwitch, shouldAutoPlay]);
 
@@ -97,47 +130,63 @@ export const useAudioPlayer = (audioUrl, albumTracks = null, currentTrackIndex =
   const fadeOut = (audio, duration = 1000, callback) => {
     if (!audio) return;
 
+    // Vyčisti předchozí fade interval pokud existuje
+    if (fadeOutIntervalRef.current) {
+      clearInterval(fadeOutIntervalRef.current);
+    }
+
     const startVolume = audio.volume;
-    const fadeStep = startVolume / (duration / 50); // 50ms intervaly
+    const fadeStep = duration > 50 ? startVolume / (duration / 50) : startVolume / 10; // Ochrana proti division by zero
     let currentVolume = startVolume;
 
-    const fadeInterval = setInterval(() => {
+    fadeOutIntervalRef.current = setInterval(() => {
       currentVolume -= fadeStep;
       if (currentVolume <= 0) {
         currentVolume = 0;
         audio.volume = currentVolume;
         audio.pause();
         audio.volume = startVolume; // Obnov původní hlasitost
-        clearInterval(fadeInterval);
+        if (fadeOutIntervalRef.current) {
+          clearInterval(fadeOutIntervalRef.current);
+          fadeOutIntervalRef.current = null;
+        }
         if (callback) callback();
       } else {
         audio.volume = currentVolume;
       }
     }, 50);
 
-    return fadeInterval;
+    return fadeOutIntervalRef.current;
   };
 
   // Fade in funkce
   const fadeIn = (audio, duration = 1000) => {
     if (!audio) return;
 
+    // Vyčisti předchozí fade interval pokud existuje
+    if (fadeInIntervalRef.current) {
+      clearInterval(fadeInIntervalRef.current);
+    }
+
     audio.volume = 0;
-    const fadeStep = 1 / (duration / 50); // 50ms intervaly
+    const fadeStep = duration > 50 ? 1 / (duration / 50) : 1 / 10; // Ochrana proti division by zero
     let currentVolume = 0;
 
-    const fadeInterval = setInterval(() => {
+    fadeInIntervalRef.current = setInterval(() => {
       currentVolume += fadeStep;
       if (currentVolume >= 1) {
         currentVolume = 1;
         audio.volume = currentVolume;
-        clearInterval(fadeInterval);
+        if (fadeInIntervalRef.current) {
+          clearInterval(fadeInIntervalRef.current);
+          fadeInIntervalRef.current = null;
+        }
       } else {
         audio.volume = currentVolume;
       }
     }, 50);
 
-    return fadeInterval;
+    return fadeInIntervalRef.current;
   };
 
   const togglePlayPause = () => {
@@ -165,7 +214,7 @@ export const useAudioPlayer = (audioUrl, albumTracks = null, currentTrackIndex =
     const currentAudioTime = audio.currentTime;
     const newTime = Math.max(0, currentAudioTime - 10);
 
-    console.log('Skip backward:', { currentAudioTime, newTime, duration });
+    log.audio('Skip backward:', { currentAudioTime, newTime, duration });
 
     if (isFinite(newTime) && newTime >= 0) {
       audio.currentTime = newTime;
@@ -180,7 +229,7 @@ export const useAudioPlayer = (audioUrl, albumTracks = null, currentTrackIndex =
     const currentAudioTime = audio.currentTime;
     const newTime = Math.min(duration, currentAudioTime + 10);
 
-    console.log('Skip forward:', { currentAudioTime, newTime, duration });
+    log.audio('Skip forward:', { currentAudioTime, newTime, duration });
 
     if (isFinite(newTime) && newTime >= 0) {
       audio.currentTime = newTime;
@@ -238,7 +287,7 @@ export const useAudioPlayer = (audioUrl, albumTracks = null, currentTrackIndex =
     if (audio && isPlaying) {
       fadeOut(audio, duration, () => {
         // Po dokončení fade out nic nedělej - přehrávač už je zavřený
-        console.log('Background fade out completed');
+        log.audio('Background fade out completed');
       });
     }
   };

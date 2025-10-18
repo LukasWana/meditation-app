@@ -2,16 +2,57 @@ import { initializeApp } from 'firebase/app';
 import { getStorage } from 'firebase/storage';
 import { getFirestore } from 'firebase/firestore';
 
-const firebaseConfig = {
-  // Zde vložte vaši Firebase konfiguraci z Firebase Console
-  apiKey: "your-api-key",
-  authDomain: "meditations-audio.firebaseapp.com",
-  projectId: "meditations-audio",
-  storageBucket: "meditations-audio.firebasestorage.app",
-  messagingSenderId: "your-sender-id",
-  appId: "your-app-id"
+// Validace Firebase konfigurace
+const validateFirebaseConfig = () => {
+  const requiredKeys = [
+    'VITE_FIREBASE_API_KEY',
+    'VITE_FIREBASE_AUTH_DOMAIN',
+    'VITE_FIREBASE_PROJECT_ID',
+    'VITE_FIREBASE_STORAGE_BUCKET',
+    'VITE_FIREBASE_MESSAGING_SENDER_ID',
+    'VITE_FIREBASE_APP_ID'
+  ];
+
+  const missingKeys = requiredKeys.filter(key => !import.meta.env[key]);
+
+  if (missingKeys.length > 0) {
+    console.error('❌ Missing Firebase environment variables:', missingKeys);
+    throw new Error(`Missing required Firebase configuration: ${missingKeys.join(', ')}`);
+  }
+
+  // Základní validace formátu
+  const config = {
+    apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
+    authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,
+    projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID,
+    storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET,
+    messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID,
+    appId: import.meta.env.VITE_FIREBASE_APP_ID
+  };
+
+  // Validace projectId (nemělo by být prázdné nebo příliš krátké)
+  if (!config.projectId || config.projectId.length < 3) {
+    throw new Error('Invalid Firebase projectId configuration');
+  }
+
+  // Validace storageBucket (mělo by obsahovat projectId)
+  if (!config.storageBucket || !config.storageBucket.includes(config.projectId)) {
+    throw new Error('Invalid Firebase storageBucket configuration');
+  }
+
+  return config;
 };
+
+const firebaseConfig = validateFirebaseConfig();
 
 const app = initializeApp(firebaseConfig);
 export const storage = getStorage(app);
 export const db = getFirestore(app);
+
+// Debug Firebase připojení - pouze v development módu a bez citlivých dat
+if (import.meta.env.MODE === 'development') {
+  console.log('🔥 Firebase initialized successfully');
+  console.log('📁 Project ID:', firebaseConfig.projectId);
+  console.log('📦 Storage Bucket:', firebaseConfig.storageBucket);
+  // Nezobrazujeme API klíče ani jiné citlivé údaje
+}

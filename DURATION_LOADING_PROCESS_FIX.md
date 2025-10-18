@@ -257,3 +257,4 @@ Duration Loading Process Fix řeší problém s načítáním duration krok za k
 
 Aplikace nyní správně načítá a zobrazuje skutečnou délku skladeb! 🎉
 
+

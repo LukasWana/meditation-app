@@ -206,3 +206,4 @@ Metadata Loading Timing Fix řeší problém s timing načítání metadat tím,
 
 Aplikace nyní správně čeká na dokončení preloadingu před načítáním metadat! 🎉
 
+

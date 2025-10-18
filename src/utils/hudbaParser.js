@@ -10,27 +10,18 @@ export const parseHudbaFileName = (fileName) => {
   }
 
   try {
-    // Regex pro hudební soubory: 00--00--00--79-mediatacie-002.mp3
-    // Číslování: XX--XX--XX--XX
-    // Název: mediatacie (může obsahovat pomlčky)
-    // Verze: -002 (volitelná)
-    const match = fileName.match(/^(\d{2}--\d{2}--\d{2}--\d{2})-([^.]+?)(?:-(\d{3}))?\.mp3$/i);
-
-    if (!match) {
-      console.warn(`Nepodařilo se parsovat název souboru: ${fileName}`);
-      return null;
-    }
-
-    const [, numbering, name, version] = match;
+    // Starý formát 00--00--00--00- se už nepoužívá
+    // Pro jednoduché názvy souborů (generator.mp3, meditacie.mp3, atd.)
+    const nameWithoutExt = fileName.replace(/\.mp3$/i, '');
 
     return {
       originalFileName: fileName,
-      numbering,
-      name,
-      version: version || '001', // Výchozí verze je 001
-      fullNumbering: numbering,
-      type: 'hudba',
-      isHudba: true
+      name: nameWithoutExt,
+      type: 'simple',
+      isHudba: true,
+      isAlbum: false,
+      trackName: nameWithoutExt,
+      albumName: null
     };
 
   } catch (error) {
@@ -40,9 +31,8 @@ export const parseHudbaFileName = (fileName) => {
 };
 
 /**
- * Parser pro album soubory s formátem: 00--00--00--00- - Ambient Journey - 01 Zhooliox.mp3
- * Formát: XX--XX--XX--XX- - Album Name - Track Number Track Name.mp3
- * kde XX--XX--XX--XX je číslování, Album Name je název alba, Track Number je číslo skladby, Track Name je název skladby
+ * Parser pro album soubory s novým formátem: "Album Name - Track Number Track Name.mp3"
+ * Např: "Ambient Journey - 02 Haluly.mp3"
  */
 export const parseAlbumFileName = (fileName) => {
   if (!fileName || typeof fileName !== 'string') {
@@ -51,46 +41,25 @@ export const parseAlbumFileName = (fileName) => {
 
 
   try {
-    // Regex pro album soubory: 00--00--00--00- - Ambient Journey - 01 Zhooliox.mp3
-    // Číslování: XX--XX--XX--XX-
-    // Název alba: Ambient Journey (může obsahovat mezery a pomlčky)
-    // Číslo skladby: 01
-    // Název skladby: Zhooliox
-    const match = fileName.match(/^(\d{2}--\d{2}--\d{2}--\d{2})- - (.+?) - (\d{2}) (.+)\.mp3$/i);
+    // Nový formát: "Album Name - Track Number Track Name.mp3"
+    const match = fileName.match(/^(.+?)\s*-\s*(\d+)\s+(.+?)\.mp3$/i);
 
-    if (!match) {
-      // Zkusíme alternativní formát bez pomlček kolem názvu alba
-      const altMatch = fileName.match(/^(\d{2}--\d{2}--\d{2}--\d{2})- (.+?) - (\d{2}) (.+)\.mp3$/i);
+    if (match) {
+      const [, albumName, trackNumber, trackName] = match;
+      console.log(`🎵 Parsed album file: ${fileName} -> Album: "${albumName.trim()}", Track: ${trackNumber}, Name: "${trackName.trim()}"`);
 
-      if (altMatch) {
-        const [, numbering, albumName, trackNumber, trackName] = altMatch;
-        return {
-          originalFileName: fileName,
-          numbering: numbering,
-          albumName: albumName.trim(),
-          trackNumber: parseInt(trackNumber, 10),
-          trackName: trackName.trim(),
-          fullNumbering: numbering,
-          type: 'album',
-          isAlbum: true
-        };
-      }
-
-      return null;
+      return {
+        originalFileName: fileName,
+        albumName: albumName.trim(),
+        trackNumber: parseInt(trackNumber, 10),
+        trackName: trackName.trim(),
+        type: 'album',
+        isAlbum: true,
+        isHudba: true
+      };
     }
 
-    const [, numbering, albumName, trackNumber, trackName] = match;
-
-    return {
-      originalFileName: fileName,
-      numbering,
-      albumName: albumName.trim(),
-      trackNumber: parseInt(trackNumber, 10),
-      trackName: trackName.trim(),
-      fullNumbering: numbering,
-      type: 'album',
-      isAlbum: true
-    };
+    return null;
 
   } catch (error) {
     console.error(`Chyba při parsování album souboru ${fileName}:`, error);
@@ -99,10 +68,70 @@ export const parseAlbumFileName = (fileName) => {
 };
 
 /**
- * Univerzální parser - zkusí oba formáty
+ * Parser pro slova soubory s formátem: muzsky4FSK-uzkost-osamelost.mp3
+ * Formát: (muzsky|zensky)(číslo)(typ)-(téma).mp3
+ */
+export const parseSlovaFileName = (fileName) => {
+  if (!fileName || typeof fileName !== 'string') {
+    return null;
+  }
+
+  try {
+    // Extrahuj pouze název souboru bez cesty
+    const fileNameOnly = fileName.split('/').pop();
+
+    // Regex pro slova soubory: muzsky4FSK-uzkost-osamelost.mp3
+    const match = fileNameOnly.match(/^(muzsky|zensky)(\d+)([A-Z]+)-(.+)\.mp3$/i);
+
+    if (!match) {
+      return null;
+    }
+
+    const [, gender, number, type, topic] = match;
+
+    return {
+      originalFileName: fileName,
+      gender: gender === 'muzsky' ? 'male' : 'female',
+      number: parseInt(number),
+      type,
+      topic: topic.replace(/-/g, ' '),
+      title: topic.replace(/-/g, ' '), // Čistý název bez pohlaví
+      isHudba: false,
+      isAlbum: false,
+      trackName: topic.replace(/-/g, ' '), // Čistý název bez pohlaví
+      albumName: topic.replace(/-/g, ' '),
+      // Metoda pro filtrování podle pohlaví uživatele
+      isForUser: (userGender) => {
+        // Pokud uživatel nemá nastavené pohlaví, zobraz všechny soubory
+        if (!userGender || userGender === 'none') return true;
+
+        // Pro muže: zobraz soubory s mužským hlasem (muzsky)
+        // Pro ženy: zobraz soubory se ženským hlasem (zensky)
+        const fileGender = gender === 'muzsky' ? 'male' : 'female';
+        return fileGender === userGender;
+      }
+    };
+  } catch (error) {
+    console.warn(`Chyba při parsování slova souboru: ${fileName}`, error);
+    return null;
+  }
+};
+
+/**
+ * Univerzální parser - zkusí všechny formáty
  */
 export const parseAudioFileName = (fileName) => {
-  // Nejdřív zkusíme album formát (pro soubory ze složek)
+  if (!fileName || typeof fileName !== 'string') {
+    return null;
+  }
+
+  // Nejdřív zkusíme slova formát (pro mluvené slovo)
+  const slovaResult = parseSlovaFileName(fileName);
+  if (slovaResult) {
+    return slovaResult;
+  }
+
+  // Pak zkusíme album formát (pro soubory ze složek)
   const albumResult = parseAlbumFileName(fileName);
   if (albumResult) {
     return albumResult;
@@ -114,7 +143,37 @@ export const parseAudioFileName = (fileName) => {
     return hudbaResult;
   }
 
-  return null;
+  // Zkusíme album formát: "Album Name - Track Number Track Name.mp3"
+  // Např: "Ambient Journey - 02 Haluly.mp3"
+  const albumMatch = fileName.match(/^(.+?)\s*-\s*(\d+)\s+(.+?)\.mp3$/i);
+  if (albumMatch) {
+    const [, albumName, trackNumber, trackName] = albumMatch;
+    console.log(`🎵 Parsed album track: ${fileName} -> Album: "${albumName.trim()}", Track: ${trackNumber}, Name: "${trackName.trim()}"`);
+    return {
+      originalFileName: fileName,
+      name: trackName.trim(),
+      type: 'album_track',
+      isHudba: true,
+      isAlbum: true,
+      trackName: trackName.trim(),
+      albumName: albumName.trim(),
+      trackNumber: parseInt(trackNumber, 10)
+    };
+  }
+
+  // Pro jednoduché názvy souborů (generator.mp3, meditacie.mp3, atd.)
+  // Vytvoříme základní parsed objekt
+  const nameWithoutExt = fileName.replace(/\.mp3$/i, '');
+
+  return {
+    originalFileName: fileName,
+    name: nameWithoutExt,
+    type: 'simple', // Označíme jako jednoduchý soubor
+    isHudba: false, // Bude se určovat podle složky
+    isAlbum: false,
+    trackName: nameWithoutExt,
+    albumName: nameWithoutExt
+  };
 };
 
 export default parseHudbaFileName;

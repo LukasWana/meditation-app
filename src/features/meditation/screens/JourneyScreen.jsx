@@ -4,7 +4,7 @@ import { FramerButton, FramerSection, FramerPageTransition, BackButton } from '@
 import { AudioPlayer } from '@features/audio';
 import { useFirebaseAudioFilter } from '@features/audio/hooks/useFirebaseAudioFilter';
 
-const BezSlovScreen = ({
+const HudbaScreen = ({
   onNavigateToScreen,
   onTouchStart,
   onTouchMove,
@@ -15,7 +15,7 @@ const BezSlovScreen = ({
   const [activeAudio, setActiveAudio] = useState(null);
 
   // Použij nový filtrovací systém
-  const { troubleItems: bezSlovItems, isLoading, error, userStats } = useFirebaseAudioFilter(gender);
+  const { troubleItems: hudbaItems, isLoading, error, userStats } = useFirebaseAudioFilter(gender);
 
   const handleItemClick = (item) => {
     if (item.audioSrc) {
@@ -32,7 +32,7 @@ const BezSlovScreen = ({
   // Loading state
   if (isLoading) {
     return (
-      <FramerPageTransition screenKey="bez-slov">
+      <FramerPageTransition screenKey="hudba">
         <div className="min-h-screen w-full max-w-full bg-[#f4ddc4] flex flex-col items-center justify-center p-2 sm:p-8 pb-20 overflow-x-hidden relative">
           <BackButton onClick={() => onNavigateToScreen('home')} />
           <div className="text-center">
@@ -47,7 +47,7 @@ const BezSlovScreen = ({
   // Error state
   if (error) {
     return (
-      <FramerPageTransition screenKey="bez-slov">
+      <FramerPageTransition screenKey="hudba">
         <div className="min-h-screen w-full max-w-full bg-[#f4ddc4] flex flex-col items-center justify-center p-2 sm:p-8 pb-20 overflow-x-hidden relative">
           <BackButton onClick={() => onNavigateToScreen('home')} />
           <div className="text-center">
@@ -108,13 +108,13 @@ const BezSlovScreen = ({
           </FramerSection>
 
           <div className="space-y-4">
-            {bezSlovItems.length === 0 ? (
+            {hudbaItems.length === 0 ? (
               <div className="text-center py-8">
                 <p className="text-gray-600 text-lg">Žiadne skladby nie sú dostupné</p>
                 <p className="text-gray-500 text-sm mt-2">Skúste zmeniť nastavenia v menu</p>
               </div>
             ) : (
-              bezSlovItems.map((item, idx) => (
+              hudbaItems.map((item, idx) => (
                 <FramerSection
                   key={item.key || idx}
                   animationType="slideInUp"
@@ -170,4 +170,4 @@ const BezSlovScreen = ({
   );
 };
 
-export default BezSlovScreen;
+export default HudbaScreen;

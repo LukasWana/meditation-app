@@ -1,6 +1,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import { useAudioFilter } from '@hooks/useAudioFilter';
 import { useFirebaseCDNScanner } from '@hooks/useFirebaseCDNScanner';
+import globalMetadataPreloader from '@services/globalMetadataPreloader';
 
 /**
  * Hook pro kombinaci Firebase audio a filtrování
@@ -62,19 +63,24 @@ export const useFirebaseAudioFilter = (userGender, userLanguage = 'sk') => {
 
       // Zobraz pouze první soubor pro toto téma (varianty se přepínají v playeru)
       const file = topicFiles[0]; // Vezmi první soubor
-      if (file) {
-        const voiceGender = file.parsed?.voice === 'zensky' ? 'žena' : 'muž';
-        const targetGender = file.parsed?.targetGender === 'female' ? 'ženy' :
-                           file.parsed?.targetGender === 'male' ? 'muže' : 'všechny';
+      if (file && file.parsed) {
+        const voiceGender = file.parsed.gender === 'female' ? 'žena' : 'muž';
+        const voiceType = file.parsed.type || 'MSK';
+        const topic = file.parsed.topic || topicKey.replace('-', ' ');
+
+        // Získej skutečnou délku z globálního preloaderu
+        const globalMetadata = globalMetadataPreloader.getMetadata(file.fileName);
+        const actualDuration = globalMetadata?.durationFormatted || file.duration || 'N/A';
 
         result.push({
-          key: `${topicKey}-${file.parsed?.voice}-${file.parsed?.targetGender}`,
-          title: file.parsed?.readableTopic || topicKey.replace('-', ' '),
-          audioSrc: file.fileName,
-          duration: '4:25',
-          voiceInfo: `${voiceGender} hlas (přepínání v playeru)`,
-          isAvailable: true,
-          allFiles: topicFiles // Zachovej všechny soubory pro přepínání v playeru
+          key: `${topicKey}-${file.parsed.gender}-${file.parsed.type}`,
+          title: file.parsed.title || `${voiceGender} hlas - ${topic}`,
+          audioSrc: file.downloadURL || file.fileName,
+          duration: actualDuration,
+          voiceInfo: `${voiceGender} hlas (${voiceType})`,
+          isAvailable: file.isAvailable || true,
+          allFiles: topicFiles, // Zachovej všechny soubory pro přepínání v playeru
+          parsed: file.parsed // Přidej parsed data pro další použití
         });
       }
 

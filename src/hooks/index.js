@@ -4,11 +4,6 @@ export { useFirebaseHudbaScanner } from './useFirebaseHudbaScanner';
 export { useNavigation } from './useNavigation';
 export { useTouchNavigation } from './useTouchNavigation';
 export { useAppState } from './useAppState';
-export {
-  useSmartPreloader,
-  useScrollPreloader,
-  useInitialPreloader
-} from './useSmartPreloader';
 
 export {
   useMetadataLoader,
@@ -20,15 +15,8 @@ export {
   useLazyMetadataLoader
 } from './useFastTrackLoader';
 
-export {
-  usePredictivePreloader,
-  useTouchPreloader,
-  useBackgroundPreloader
-} from './usePredictivePreloader';
+// usePreloadReady odstraněn - nepoužívaný
 
-export {
-  useSimplePreloader,
-  useDataReady
-} from './useSimplePreloader';
-
-export { usePreloadReady } from './usePreloadReady';
+export { useBackgroundDataLoader } from './useBackgroundDataLoader';
+export { useTimer } from './useTimer';
+export { useBreathPhase } from './useBreathPhase';

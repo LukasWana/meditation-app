@@ -1,19 +1,17 @@
-import React, { useState, useCallback, useMemo } from 'react';
+import React, { useState, useCallback, useMemo, lazy, Suspense } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import Layout from './Layout';
 
-// Import všech stránek
-import IntroScreen from '@features/meditation/screens/IntroScreen';
-import {
-  HomeScreen,
-  MeditationScreen,
-  BreathScreen,
-  HelpScreen,
-  BezSlovScreen,
-  SlovaScreen,
-  AlbumDetailScreen
-} from '@features/meditation';
-import { AudioPlayer } from '@features/audio';
+// Lazy loading pro lepší performance
+const IntroScreen = lazy(() => import('@features/meditation/screens/IntroScreen'));
+const HomeScreen = lazy(() => import('@features/meditation/screens/HomeScreen'));
+const MeditationScreen = lazy(() => import('@features/meditation/screens/MeditationScreen'));
+const BreathScreen = lazy(() => import('@features/meditation/screens/BreathScreen'));
+const HelpScreen = lazy(() => import('@features/meditation/screens/HelpScreen'));
+const HudbaScreen = lazy(() => import('@features/meditation/screens/HudbaScreen'));
+const SlovaScreen = lazy(() => import('@features/meditation/screens/SlovaScreen'));
+const AlbumDetailScreen = lazy(() => import('@features/meditation/screens/AlbumDetailScreen'));
+const AudioPlayer = lazy(() => import('@features/audio/AudioPlayer'));
 
 // Registry stránek s jejich konfigurací
 const SCREEN_REGISTRY = {
@@ -65,8 +63,8 @@ const SCREEN_REGISTRY = {
       duration: 0.6
     }
   },
-  'bez-slov': {
-    component: BezSlovScreen,
+  'hudba': {
+    component: HudbaScreen,
     requiresLayout: true,
     props: ['onNavigateToScreen', 'onTouchStart', 'onTouchMove', 'onTouchEnd', 'gender', 'onPlayerStateChange', 'onAlbumSelect'],
     transition: {
@@ -303,7 +301,9 @@ const PageManager = ({
         transition={transitionConfig}
         className="w-full h-full max-w-full overflow-x-hidden"
       >
-        <Component {...props} />
+        <Suspense fallback={<div className="flex items-center justify-center h-full">Loading...</div>}>
+          <Component {...props} />
+        </Suspense>
       </motion.div>
     );
 

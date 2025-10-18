@@ -8,10 +8,26 @@ export const useFirebaseAudio = (audioFileName) => {
   const [audioUrl, setAudioUrl] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [currentFileName, setCurrentFileName] = useState(null);
+
+  // Debug: zobraz aktuální stav
+  console.log('useFirebaseAudio state:', { audioFileName, currentFileName, audioUrl: !!audioUrl, loading });
 
   useEffect(() => {
     if (!audioFileName) {
       setLoading(false);
+      return;
+    }
+
+    // Zkontroluj, jestli už máme URL pro tento soubor
+    if (audioUrl && audioFileName === currentFileName) {
+      console.log('useFirebaseAudio: Already have URL for this file, skipping load');
+      return;
+    }
+
+    // Zkontroluj, jestli se soubor nezměnil
+    if (audioFileName === currentFileName) {
+      console.log('useFirebaseAudio: Same file as before, skipping load');
       return;
     }
 
@@ -26,6 +42,7 @@ export const useFirebaseAudio = (audioFileName) => {
         if (cachedUrl) {
           console.log('loadAudioUrl - From cache:', audioFileName);
           setAudioUrl(cachedUrl);
+          setCurrentFileName(audioFileName);
           setLoading(false);
           return;
         }
@@ -41,6 +58,7 @@ export const useFirebaseAudio = (audioFileName) => {
 
         console.log('loadAudioUrl - Success, URL:', url);
         setAudioUrl(url);
+        setCurrentFileName(audioFileName);
 
         // Spusť metadata preloading pro rychlejší přístup příště
         cacheService._preloadFirebaseMetadata(url, audioFileName).catch(err => {

@@ -1,7 +1,7 @@
 import React from 'react';
 import { motion } from 'framer-motion';
 import { FramerPageTransition } from '@components';
-import { useTouchPreloader } from '@hooks/usePredictivePreloader';
+// useTouchPreloader odstraněn - nepoužívaný
 
 const HomeScreen = ({
   onNavigateToScreen,
@@ -9,8 +9,7 @@ const HomeScreen = ({
   onTouchMove,
   onTouchEnd
 }) => {
-  // Touch preloading pro plynulou navigaci
-  const { preloadOnTouch, cancelTouchPreload } = useTouchPreloader();
+  // Touch preloading odstraněn - nepoužívaný
 
   return (
     <FramerPageTransition screenKey="home">
@@ -27,7 +26,7 @@ const HomeScreen = ({
         <motion.div
           className="flex-1 flex items-center justify-center bg-[#f4ddc4] cursor-pointer"
           onClick={() => onNavigateToScreen('slova')}
-          onTouchStart={() => preloadOnTouch('slova', 50)}
+          onTouchStart={onTouchStart}
           initial={{ opacity: 0, scale: 0.9 }}
           animate={{ opacity: 1, scale: 1 }}
           whileTap={{ scale: 0.95 }}
@@ -50,8 +49,8 @@ const HomeScreen = ({
 
         <motion.div
           className="flex-1 flex items-center justify-center bg-[#ffffff] cursor-pointer"
-          onClick={() => onNavigateToScreen('bez-slov')}
-          onTouchStart={() => preloadOnTouch('bez-slov', 50)}
+          onClick={() => onNavigateToScreen('hudba')}
+          onTouchStart={onTouchStart}
           initial={{ opacity: 0, scale: 0.9 }}
           animate={{ opacity: 1, scale: 1 }}
           whileTap={{ scale: 0.95 }}

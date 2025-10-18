@@ -10,8 +10,8 @@ const IntroScreen = ({ onIntroComplete }) => {
       // Po fade out sa spustí onIntroComplete
       setTimeout(() => {
         onIntroComplete();
-      }, 1000); // 1s fade out duration
-    }, 3500); // 3.5s celková animace - delší pro lepší efekt
+      }, 500); // Zkráceno z 1000ms na 500ms
+    }, 2000); // Zkráceno z 3500ms na 2000ms pro lepší LCP
 
     return () => clearTimeout(timer);
   }, [onIntroComplete]);
@@ -23,7 +23,7 @@ const IntroScreen = ({ onIntroComplete }) => {
           className="h-screen w-full max-w-full bg-[#f4ddc4] flex items-center justify-center overflow-x-hidden fixed inset-0 z-50"
           initial={{ opacity: 1 }}
           exit={{ opacity: 0 }}
-          transition={{ duration: 1, ease: "easeInOut" }}
+          transition={{ duration: 0.5, ease: "easeInOut" }}
         >
           {/* Úvodný text "Meditácia" uprostred */}
           <motion.div
@@ -33,7 +33,7 @@ const IntroScreen = ({ onIntroComplete }) => {
               opacity: 1,
               y: 0
             }}
-            transition={{ duration: 0.8, ease: "easeInOut" }}
+            transition={{ duration: 0.4, ease: "easeInOut" }}
           >
             <motion.h1
               className="text-7xl font-light tracking-wide mb-4"
@@ -45,9 +45,9 @@ const IntroScreen = ({ onIntroComplete }) => {
                 y: 0
               }}
               transition={{
-                duration: 1.5,
+                duration: 0.8,
                 ease: "easeOut",
-                delay: 0.3
+                delay: 0.1
               }}
             >
               Meditácia

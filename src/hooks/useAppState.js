@@ -46,10 +46,6 @@ export const useAppState = () => {
     setIsPlayerActive(isActive);
   }, []);
 
-  const handleOpenAudio = useCallback((audioData) => {
-    setActiveAudio(audioData);
-    setIsPlayerActive(true);
-  }, []);
 
   const handleCloseAudio = useCallback(() => {
     setActiveAudio(null);
@@ -86,7 +82,6 @@ export const useAppState = () => {
     handleGenderChange,
     handleVoicePreferenceChange,
     handlePlayerStateChange,
-    handleOpenAudio,
     handleCloseAudio,
     handleAlbumClose
   };

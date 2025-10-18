@@ -17,7 +17,7 @@ const SlovaScreen = ({
   const [activeAudio, setActiveAudio] = useState(null);
 
   // Použij nový filtrovací systém
-  const { troubleItems: slovaItems, isLoading, error, userStats } = useFirebaseAudioFilter(gender);
+  const { troubleItems: slovaItems, isLoading, error, userStats, audioFiles } = useFirebaseAudioFilter(gender);
 
   // Preloading odstraněn - data se načítají při startu aplikace
 
@@ -168,6 +168,7 @@ const SlovaScreen = ({
               title={activeAudio.title}
               onClose={handleCloseAudio}
               gender={gender}
+              allFiles={audioFiles}
             />
           )}
         </AnimatePresence>

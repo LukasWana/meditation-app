@@ -1,8 +1,9 @@
 import { useState, useEffect } from 'react';
 import { ref, listAll, getDownloadURL } from 'firebase/storage';
 import { storage } from '@services/firebase';
-import { parseAudioFileName } from '@utils/audioParser';
+import { parseAudioFileName } from '@utils/hudbaParser';
 import cacheService from '@services/cacheService';
+import { log } from '@services/logger';
 
 /**
  * Hook pro načítání aktuálního obsahu z Firebase CDN
@@ -19,7 +20,7 @@ export const useFirebaseCDNScanner = () => {
     setLastUpdated(cachedResult.lastUpdated);
     setIsLoading(false);
 
-    console.log('✅ Using cached slova data - no Firebase loading needed');
+    log.success('✅ Using cached slova data - no Firebase loading needed');
 
     // Metadata jsou už načtené z preloadingu, jen optimalizuj cache
     cacheService.optimizeCache();
@@ -43,19 +44,38 @@ export const useFirebaseCDNScanner = () => {
       // Získej referenci na root složku v Firebase Storage
       const listRef = ref(storage, '');
 
-      // Načti všechny soubory
+      // Načti všechny soubory včetně podsložek
       const result = await listAll(listRef);
 
-      // Filtruj pouze MP3 soubory pro mluvené slovo (ne hudební soubory)
-      const mp3Files = result.items
+      // Získej všechny soubory včetně podsložek
+      const allFiles = [...result.items];
+
+      // Prohledej podsložky
+      for (const folderRef of result.prefixes) {
+        try {
+          const folderResult = await listAll(folderRef);
+          // Přidej soubory z podsložky s prefixem složky
+          folderResult.items.forEach(item => {
+            allFiles.push({
+              ...item,
+              name: `${folderRef.name}/${item.name}` // Přidej cestu složky k názvu
+            });
+          });
+        } catch (err) {
+          console.warn(`Nelze prohledat složku ${folderRef.name}:`, err.message);
+        }
+      }
+
+      // Filtruj pouze MP3 soubory pro mluvené slovo ze slova/ složky
+      const mp3Files = allFiles
         .filter(item => {
           const name = item.name;
           const isMp3 = name.toLowerCase().endsWith('.mp3');
-          // Pouze soubory začínající "muzsky" nebo "zensky" (ne "00--00--00--")
-          const isSpokenWord = /^(muzsky|zensky)/.test(name);
+          // Pouze soubory ze slova/ složky nebo začínající "muzsky" nebo "zensky"
+          const isSlova = name.startsWith('slova/') || /^(muzsky|zensky)/.test(name);
           const isNotMusic = !name.startsWith('00--00--00--');
-          console.log(`Filtering ${name}: isMp3=${isMp3}, isSpokenWord=${isSpokenWord}, isNotMusic=${isNotMusic}`);
-          return isMp3 && isSpokenWord && isNotMusic;
+          console.log(`Filtering ${name}: isMp3=${isMp3}, isSlova=${isSlova}, isNotMusic=${isNotMusic}`);
+          return isMp3 && isSlova && isNotMusic;
         })
         .map(item => item.name);
 
@@ -64,11 +84,24 @@ export const useFirebaseCDNScanner = () => {
 
       for (const fileName of mp3Files) {
         try {
-          // Použij metadata z cache (už načtené z preloadingu)
-          const cachedMetadata = cacheService.getMetadata(fileName);
-          if (!cachedMetadata) {
-            console.log(`No cached metadata for ${fileName}, loading from Firebase`);
-            // Pokud není v cache, načti normálně ze Firebase
+          // Zkontroluj, jestli je soubor v hudbaData cache (slova soubory)
+          const hudbaData = cacheService.getFirebaseQuery('hudba_scanner_all_files');
+          const cachedFile = hudbaData?.audioFiles?.find(file => file.fileName === fileName);
+
+          if (cachedFile) {
+            // Použij data z cache
+            verifiedFiles.push({
+              fileName: cachedFile.fileName,
+              downloadURL: cachedFile.audioSrc,
+              parsed: cachedFile.parsed,
+              isAvailable: cachedFile.isAvailable
+            });
+            continue;
+          }
+
+          // Pokud není v cache, načti ze Firebase
+          console.log(`No cached data for ${fileName}, loading from Firebase`);
+          try {
             const fileRef = ref(storage, fileName);
             const downloadURL = await getDownloadURL(fileRef);
             cacheService.setAudioUrl(fileName, downloadURL);
@@ -80,27 +113,10 @@ export const useFirebaseCDNScanner = () => {
               parsed,
               isAvailable: true
             });
-            continue;
+          } catch (error) {
+            console.warn(`Soubor ${fileName} nebyl nalezen v Firebase Storage:`, error.message);
+            // Přeskoč tento soubor
           }
-
-          // Zkontroluj cache pro download URL (může být už načtené)
-          let downloadURL = cacheService.getAudioUrl(fileName);
-          if (!downloadURL) {
-            // Pouze pokud není v cache, načti ze Firebase
-            const fileRef = ref(storage, fileName);
-            downloadURL = await getDownloadURL(fileRef);
-            cacheService.setAudioUrl(fileName, downloadURL);
-          }
-
-          // Parse metadata z cache
-          const parsed = parseAudioFileName(fileName);
-
-          verifiedFiles.push({
-            fileName,
-            downloadURL,
-            parsed,
-            isAvailable: true
-          });
 
           console.log(`✅ Loaded ${fileName} from cache (no Firebase loading needed)`);
 
@@ -127,15 +143,15 @@ export const useFirebaseCDNScanner = () => {
       };
       cacheService.setFirebaseQuery(cacheKey, resultToCache);
 
-      console.log(`✅ Loaded ${verifiedFiles.filter(f => f.isAvailable).length} slova files from cache (no Firebase loading needed)`);
+      log.success(`✅ Loaded ${verifiedFiles.filter(f => f.isAvailable).length} slova files from cache (no Firebase loading needed)`);
 
       // Debug: vypiš všechny načtené soubory
       verifiedFiles.filter(f => f.isAvailable).forEach(file => {
-        console.log(`✅ File: ${file.fileName}, parsed:`, file.parsed);
+        log.debug(`✅ File: ${file.fileName}, parsed:`, file.parsed);
       });
 
     } catch (err) {
-      console.error('Chyba při načítání obsahu z CDN:', err);
+      log.error('Chyba při načítání obsahu z CDN:', err);
       setError(err.message);
     } finally {
       setIsLoading(false);

@@ -30,7 +30,7 @@ const AlbumDetailScreen = ({
             Album nenalezeno
           </h1>
           <button
-            onClick={() => onNavigateToScreen('bez-slov')}
+            onClick={() => onNavigateToScreen('hudba')}
             className="px-6 py-3 bg-white/50 backdrop-blur rounded-lg border border-black/10 hover:bg-white/70 transition-colors"
           >
             Zpět na hudbu
@@ -41,7 +41,7 @@ const AlbumDetailScreen = ({
   }
 
   const handleTrackClick = (track, index) => {
-    // Vytvoř audio objekt stejně jako v BezSlovScreen
+    // Vytvoř audio objekt stejně jako v HudbaScreen
     const audioData = {
       audioSrc: track.audioSrc,
       title: track.trackName, // Pouze název skladby, bez názvu alba
@@ -66,7 +66,7 @@ const AlbumDetailScreen = ({
   };
 
   const handleBackClick = () => {
-    onNavigateToScreen('bez-slov');
+    onNavigateToScreen('hudba');
   };
 
   const handleCloseAudio = () => {

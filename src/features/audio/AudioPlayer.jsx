@@ -73,7 +73,8 @@ const AudioPlayer = ({
   albumCover = null,
   albumTracks = null,
   currentTrackIndex = 0,
-  onTrackChange = null
+  onTrackChange = null,
+  allFiles = []
 }) => {
   const [selectedVoice, setSelectedVoice] = useState('male'); // 'male', 'female'
   const [currentAudioFile, setCurrentAudioFile] = useState(audioSrc); // Aktuální soubor
@@ -92,25 +93,26 @@ const AudioPlayer = ({
     return audioSrc;
   }, [audioSrc, albumTracks, currentTrackIndex]);
 
-  const currentVoice = currentFileInfo?.voice; // 'muzsky' nebo 'zensky'
+  const currentVoice = currentFileInfo?.gender; // 'male' nebo 'female'
 
   // Získej téma pro hledání variant
-  const currentTopic = currentFileInfo?.topic;
+  const currentTopic = currentFileInfo?.topic || currentFileInfo?.albumName;
 
   // Aktualizuj currentAudioFile když se změní audioSrc
   useEffect(() => {
+    console.log('AudioPlayer: actualAudioSrc changed:', actualAudioSrc);
     setCurrentAudioFile(actualAudioSrc);
 
     // Preloading aktuálního souboru je už v useAudioPlayer hooku
     // Nemusíme ho duplikovat zde
-  }, [actualAudioSrc, title]);
+  }, [actualAudioSrc]); // Odstraněn title z dependencies
 
   // Inicializuj selectedVoice podle aktuálního hlasu v souboru
   useEffect(() => {
-    if (currentFileInfo && currentFileInfo.voice) {
-      const voice = currentFileInfo.voice === 'muzsky' ? 'male' : 'female';
+    if (currentFileInfo && currentFileInfo.gender) {
+      const voice = currentFileInfo.gender; // Už je 'male' nebo 'female'
       setSelectedVoice(voice);
-      console.log('Initialized selectedVoice to:', voice, 'based on file voice:', currentFileInfo.voice);
+      console.log('Initialized selectedVoice to:', voice, 'based on file gender:', currentFileInfo.gender);
     }
   }, [currentFileInfo]);
 
@@ -123,9 +125,9 @@ const AudioPlayer = ({
   }, [title, albumTracks, currentTrackIndex]);
 
   // Zobraz přepínač pouze pro mluvené slovo (hudební soubory nemají varianty)
-  const hasVariants = currentFileInfo && currentFileInfo.voice && (
-    currentFileInfo.voice === 'muzsky' || currentFileInfo.voice === 'zensky'
-  ) && currentTopic && currentFileInfo.number && currentFileInfo.codes; // Musí mít téma a kódy pro hledání alternativ
+  const hasVariants = currentFileInfo && currentFileInfo.gender && (
+    currentFileInfo.gender === 'male' || currentFileInfo.gender === 'female'
+  ) && currentTopic && currentFileInfo.number && currentFileInfo.type; // Musí mít téma a typ pro hledání alternativ
 
   console.log('AudioPlayer debug:', {
     audioSrc,
@@ -143,25 +145,26 @@ const AudioPlayer = ({
         // Najdi alternativní soubor s opačným hlasem
         if (currentFileInfo && currentTopic) {
           const targetVoice = voice === 'male' ? 'muzsky' : 'zensky';
-          const currentVoiceType = currentFileInfo.voice;
+          const currentVoiceType = currentFileInfo.gender;
 
           // Pokud už je vybraný správný hlas, nic nedělej
-          if (currentVoiceType === targetVoice) {
+          if (currentVoiceType === voice) {
             console.log('Already playing correct voice');
             return;
           }
 
           // Sestav název souboru s opačným hlasem
           // Formát: "zensky4FSK-téma.mp3" nebo "muzsky4MSK-téma.mp3"
-          // Musíme změnit codes podle targetVoice: FSK pro ženy, MSK pro muže
-          const targetCodes = voice === 'male' ? 'MSK' : 'FSK';
-          const newFileName = `${targetVoice}${currentFileInfo.number}${targetCodes}-${currentTopic}.mp3`;
+          // Musíme změnit type podle targetVoice: FSK pro ženy, MSK pro muže
+          const targetType = voice === 'male' ? 'MSK' : 'FSK';
+          const topicForFileName = currentTopic.replace(/\s+/g, '-'); // Nahraď mezery pomlčkami
+          const newFileName = `${targetVoice}${currentFileInfo.number}${targetType}-${topicForFileName}.mp3`;
           console.log('Switching to file:', newFileName);
           console.log('Current file components:', {
             targetVoice,
             number: currentFileInfo.number,
-            originalCodes: currentFileInfo.codes,
-            targetCodes,
+            originalType: currentFileInfo.type,
+            targetType,
             topic: currentTopic
           });
 
@@ -179,15 +182,65 @@ const AudioPlayer = ({
           console.log('Full path to new file:', fullPath);
           console.log('Current file info:', currentFileInfo);
 
-          // Přepni na nový soubor
-          setCurrentAudioFile(fullPath);
+          // Zkontroluj, jestli alternativní soubor existuje v allFiles
+          const alternativeFile = allFiles.find(file =>
+            file.fileName === fullPath || file.fileName === newFileName
+          );
+
+          if (alternativeFile) {
+            console.log('Alternative file found:', alternativeFile);
+            // Přepni na nový soubor
+            setCurrentAudioFile(alternativeFile.audioSrc || fullPath);
+          } else {
+            console.warn('Alternative file not found:', fullPath);
+            // Zkus najít soubor s podobným názvem
+            const similarFile = allFiles.find(file =>
+              file.fileName.includes(topicForFileName) &&
+              file.fileName.includes(targetVoice)
+            );
+
+            if (similarFile) {
+              console.log('Similar file found:', similarFile);
+              setCurrentAudioFile(similarFile.audioSrc || similarFile.fileName);
+            } else {
+              console.error('No alternative file found for voice switch');
+            }
+          }
         } else {
           console.log('Cannot switch voice - missing file info or topic:', { currentFileInfo, currentTopic });
         }
       };
 
+  // Extrahuj název souboru z URL nebo použij přímo název souboru
+  const getFileNameFromUrl = (urlOrFileName) => {
+    if (!urlOrFileName) return null;
+
+    // Pokud je to už název souboru (ne URL), vrať ho
+    if (!urlOrFileName.startsWith('http')) {
+      return urlOrFileName;
+    }
+
+    // Pokud je to URL, extrahuj název souboru z Firebase Storage URL
+    try {
+      const url = new URL(urlOrFileName);
+      const pathname = decodeURIComponent(url.pathname);
+      // Odstraň /o/ prefix a extrahuj cestu k souboru
+      const match = pathname.match(/\/o\/(.+?)\?/);
+      if (match) {
+        return match[1];
+      }
+    } catch (error) {
+      console.warn('Failed to parse URL:', urlOrFileName, error);
+    }
+
+    return urlOrFileName; // Fallback
+  };
+
+  const fileName = getFileNameFromUrl(currentAudioFile);
+  console.log('AudioPlayer: Extracted fileName from currentAudioFile:', { currentAudioFile, fileName });
+
   // Načtení URL z Firebase Storage
-  const { audioUrl, loading: firebaseLoading, error: firebaseError } = useFirebaseAudio(currentAudioFile);
+  const { audioUrl, loading: firebaseLoading, error: firebaseError } = useFirebaseAudio(fileName);
 
   const {
     audioRef,
