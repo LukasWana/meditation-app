@@ -1,3 +1,4 @@
+import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 
 const TrackSwitcher = ({
@@ -5,34 +6,122 @@ const TrackSwitcher = ({
   currentTrackIndex,
   onTrackChange
 }) => {
+  const [currentPage, setCurrentPage] = useState(0);
+  const tracksPerPage = 10;
+
   if (!tracks || tracks.length <= 1) return null;
 
-  // Vypočítej počet skladeb na řádek (maximálně 3 řádky)
-  const maxRows = 3;
-  const tracksPerRow = Math.ceil(tracks.length / maxRows);
-  const maxTracksPerRow = Math.min(tracksPerRow, 16); // Maximálně 16 skladeb na řádek pro lepší zobrazení
+  // Počet stránek
+  const totalPages = Math.ceil(tracks.length / tracksPerPage);
 
-  // Rozděl skladby do řádků
-  const trackRows = [];
-  for (let i = 0; i < tracks.length; i += maxTracksPerRow) {
-    trackRows.push(tracks.slice(i, i + maxTracksPerRow));
+  // Aktuální skladby na stránce
+  const startIndex = currentPage * tracksPerPage;
+  const endIndex = Math.min(startIndex + tracksPerPage, tracks.length);
+  const currentTracks = tracks.slice(startIndex, endIndex);
+
+  // Automatické přepnutí na správnou stránku při změně currentTrackIndex
+  useEffect(() => {
+    const trackPage = Math.floor(currentTrackIndex / tracksPerPage);
+    console.log('useEffect triggered:', { currentTrackIndex, trackPage, currentPage, tracksPerPage });
+    if (trackPage !== currentPage) {
+      console.log('Changing page from', currentPage, 'to', trackPage);
+      setCurrentPage(trackPage);
+    }
+  }, [currentTrackIndex, tracksPerPage]);
+
+  // Inteligentní zalamování - zalamuj až když je potřeba
+  const shouldWrap = tracks.length > 10; // Zalamuj až při více než 10 skladbách
+
+  if (!shouldWrap) {
+    // Pro malý počet skladeb - jeden řádek
+    return (
+      <div className="flex items-center justify-center space-x-2 mt-6 max-w-full px-4">
+        {currentTracks.map((track, index) => {
+          const globalIndex = startIndex + index;
+          return (
+            <motion.button
+              key={globalIndex}
+              onClick={() => globalIndex !== currentTrackIndex && onTrackChange(globalIndex)}
+              className={`
+                w-10 h-10 sm:w-12 sm:h-12 rounded-full flex items-center justify-center text-sm font-medium transition-all duration-200 flex-shrink-0
+                ${globalIndex === currentTrackIndex
+                  ? 'bg-black text-white cursor-default'
+                  : 'bg-white text-black hover:bg-gray-100 cursor-pointer'
+                }
+              `}
+              whileHover={globalIndex !== currentTrackIndex ? { scale: 1.05 } : {}}
+              whileTap={globalIndex !== currentTrackIndex ? { scale: 0.95 } : {}}
+              transition={{
+                type: "spring",
+                stiffness: 300,
+                damping: 20
+              }}
+            >
+              {globalIndex + 1}
+            </motion.button>
+          );
+        })}
+      </div>
+    );
   }
 
+  // Pro velký počet skladeb - paginace s 10 skladbami na stránku (5 na řádek, 2 řádky)
+  const maxTracksPerRow = 5; // 5 skladeb na řádek pro lepší zobrazení
+
+  // Rozděl aktuální skladby do řádků
+  const trackRows = [];
+  for (let i = 0; i < currentTracks.length; i += maxTracksPerRow) {
+    trackRows.push(currentTracks.slice(i, i + maxTracksPerRow));
+  }
+
+  // Debug logy
+  console.log('TrackSwitcher state:', {
+    tracksLength: tracks.length,
+    currentPage,
+    totalPages,
+    startIndex,
+    endIndex,
+    currentTracksLength: currentTracks.length,
+    currentTrackIndex,
+    trackRowsLength: trackRows.length
+  });
+
+  // Navigační funkce
+  const goToNextPage = () => {
+    console.log('Next page clicked:', { currentPage, totalPages });
+    if (currentPage < totalPages - 1) {
+      setCurrentPage(currentPage + 1);
+    }
+  };
+
+  const goToPrevPage = () => {
+    console.log('Prev page clicked:', { currentPage, totalPages });
+    if (currentPage > 0) {
+      setCurrentPage(currentPage - 1);
+    }
+  };
+
   return (
-    <div className="flex flex-col items-center justify-center space-y-1 mt-6 max-w-full px-4">
+    <div className="flex flex-col items-center justify-center space-y-4 mt-6 max-w-full px-4">
+      {/* Skladby */}
       {trackRows.map((rowTracks, rowIndex) => (
-        <div key={rowIndex} className="flex items-center justify-center space-x-1 flex-wrap gap-1">
+        <div key={rowIndex} className="flex items-center justify-center space-x-2">
           {rowTracks.map((track, index) => {
-            const globalIndex = rowIndex * maxTracksPerRow + index;
+            const globalIndex = startIndex + rowIndex * maxTracksPerRow + index;
             return (
               <motion.button
                 key={globalIndex}
-                onClick={() => globalIndex !== currentTrackIndex && onTrackChange(globalIndex)}
+                onClick={() => {
+                  console.log('Track clicked:', { globalIndex, currentTrackIndex, startIndex, rowIndex, index });
+                  if (globalIndex !== currentTrackIndex) {
+                    onTrackChange(globalIndex);
+                  }
+                }}
                 className={`
-                  w-7 h-7 sm:w-8 sm:h-8 rounded-full flex items-center justify-center text-xs font-medium transition-all duration-200 flex-shrink-0
+                  w-10 h-10 sm:w-12 sm:h-12 rounded-full flex items-center justify-center text-sm font-medium transition-all duration-200 flex-shrink-0
                   ${globalIndex === currentTrackIndex
-                    ? 'bg-black text-white border-2 border-black cursor-default'
-                    : 'bg-transparent text-black border-2 border-black hover:bg-black/10 cursor-pointer'
+                    ? 'bg-black text-white cursor-default'
+                    : 'bg-white text-black hover:bg-gray-100 cursor-pointer'
                   }
                 `}
                 whileHover={globalIndex !== currentTrackIndex ? { scale: 1.05 } : {}}
@@ -49,6 +138,60 @@ const TrackSwitcher = ({
           })}
         </div>
       ))}
+
+      {/* Navigace */}
+      {totalPages > 1 && (
+        <div className="flex items-center justify-center space-x-4 mt-4">
+          {/* Předchozí stránka */}
+          <motion.button
+            onClick={goToPrevPage}
+            disabled={currentPage === 0}
+            className={`
+              w-10 h-10 rounded-full flex items-center justify-center text-base font-medium transition-all duration-200
+              ${currentPage === 0
+                ? 'bg-gray-200 text-gray-400 cursor-not-allowed opacity-20'
+                : 'bg-white text-black hover:bg-gray-100 cursor-pointer'
+              }
+            `}
+            whileHover={currentPage > 0 ? { scale: 1.05 } : {}}
+            whileTap={currentPage > 0 ? { scale: 0.95 } : {}}
+            transition={{
+              type: "spring",
+              stiffness: 300,
+              damping: 20
+            }}
+          >
+            ←
+          </motion.button>
+
+          {/* Informace o stránce */}
+          <span className="text-sm text-black font-medium">
+            {currentPage + 1} / {totalPages}
+          </span>
+
+          {/* Další stránka */}
+          <motion.button
+            onClick={goToNextPage}
+            disabled={currentPage === totalPages - 1}
+            className={`
+              w-10 h-10 rounded-full flex items-center justify-center text-base font-medium transition-all duration-200
+              ${currentPage === totalPages - 1
+                ? 'bg-gray-200 text-gray-400 cursor-not-allowed opacity-20'
+                : 'bg-white text-black hover:bg-gray-100 cursor-pointer'
+              }
+            `}
+            whileHover={currentPage < totalPages - 1 ? { scale: 1.05 } : {}}
+            whileTap={currentPage < totalPages - 1 ? { scale: 0.95 } : {}}
+            transition={{
+              type: "spring",
+              stiffness: 300,
+              damping: 20
+            }}
+          >
+            →
+          </motion.button>
+        </div>
+      )}
     </div>
   );
 };
