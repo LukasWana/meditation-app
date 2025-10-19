@@ -247,7 +247,7 @@ export const useAudioPlayer = (audioUrl, albumTracks = null, currentTrackIndex =
       setPlaybackState(prev => ({
         ...prev,
         isLoading: false,
-        duration: 0,
+        // Nezměň duration při chybě - zachovej existující hodnotu
         hasError: true,
         errorMessage: event.error?.message || 'Audio loading failed'
       }));
@@ -882,10 +882,21 @@ export const useAudioPlayer = (audioUrl, albumTracks = null, currentTrackIndex =
 
   const handleSeek = (progressValue) => {
     const audio = audioRef.current;
-    if (!audio || !playbackState.duration || isNaN(playbackState.duration) || playbackState.duration <= 0) {
-      log.audio('⚠️ handleSeek: Invalid audio or duration', {
+    if (!audio) {
+      log.audio('⚠️ handleSeek: No audio element');
+      return;
+    }
+
+    // Použij audio.duration jako fallback pokud playbackState.duration není validní
+    const duration = playbackState.duration && !isNaN(playbackState.duration) && playbackState.duration > 0
+      ? playbackState.duration
+      : audio.duration;
+
+    if (!duration || isNaN(duration) || duration <= 0) {
+      log.audio('⚠️ handleSeek: Invalid duration', {
         hasAudio: !!audio,
-        duration: playbackState.duration,
+        playbackDuration: playbackState.duration,
+        audioDuration: audio.duration,
         durationStable: playbackState.durationStable
       });
       return;
@@ -912,10 +923,10 @@ export const useAudioPlayer = (audioUrl, albumTracks = null, currentTrackIndex =
     try {
       // progressValue is already in percentage (0-100)
       const progress = Math.max(0, Math.min(1, progressValue / 100));
-      const newTime = progress * playbackState.duration;
+      const newTime = progress * duration;
 
       // Validate newTime is finite and within bounds
-      if (isFinite(newTime) && newTime >= 0 && newTime <= playbackState.duration) {
+      if (isFinite(newTime) && newTime >= 0 && newTime <= duration) {
         log.audio(`🎵 Seeking to ${newTime}s (${progress.toFixed(2)})`);
 
         // Zjednodušený seek bez fade efektů

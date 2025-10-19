@@ -75,7 +75,7 @@ const AudioControls = ({
         </div>
       </div>
 
-      {/* Skip Buttons - Centered below circular progress */}
+      {/* Skip Buttons with Current Time in between - Centered below circular progress */}
       <div className="flex items-center justify-center space-x-4 mt-6 mb-4 pointer-events-auto">
         <SkipButton
           direction="backward"
@@ -83,20 +83,20 @@ const AudioControls = ({
           className="w-[10vw] h-[10vw] max-w-[60px] max-h-[60px] min-w-[45px] min-h-[45px] sm:w-[8vw] sm:h-[8vw] sm:max-w-[70px] sm:max-h-[70px] sm:min-w-[55px] sm:min-h-[55px]"
         />
 
+        {/* Current Time Display - Between skip buttons with fixed width */}
+        <div className="pointer-events-none z-10" style={{minWidth: '60px', textAlign: 'center'}}>
+          <CurrentTimeDisplay
+            currentTime={currentTime}
+            formatTime={formatTime}
+            className="text-black font-medium text-center"
+            style={{fontSize: 'clamp(20px, 2.5vw, 28px)'}}
+          />
+        </div>
+
         <SkipButton
           direction="forward"
           onClick={onSkipForward}
           className="w-[10vw] h-[10vw] max-w-[60px] max-h-[60px] min-w-[45px] min-h-[45px] sm:w-[8vw] sm:h-[8vw] sm:max-w-[70px] sm:max-h-[70px] sm:min-w-[55px] sm:min-h-[55px]"
-        />
-      </div>
-
-      {/* Current Time Display - Below Circular Progress */}
-      <div className="mt-6 pointer-events-none z-10 w-full px-6 sm:px-8">
-        <CurrentTimeDisplay
-          currentTime={currentTime}
-          formatTime={formatTime}
-          className="text-black font-medium text-center"
-          style={{fontSize: 'clamp(24px, 3.5vw, 36px)'}}
         />
       </div>
 
