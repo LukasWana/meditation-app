@@ -141,14 +141,27 @@ export const useFirebaseHudbaFilter = () => {
       }
       console.log(`🖼️ Cover image for ${albumName}:`, coverImageUrl);
 
+      // Funkce pro vyčištění názvu skladby - odstraní číslo skladby
+      const cleanTrackName = (trackName) => {
+        if (!trackName) return trackName;
+
+        // Odstraň číslo skladby z názvu (např. "01 - Název skladby" -> "Název skladby")
+        // Podporuje různé formáty: "01 - Název", "1. Název", "01 Název", atd.
+        return trackName.replace(/^\d+[\s\-\.]*/, '').trim();
+      };
+
       // Vytvoř tracks pro album
       const tracks = songs.map(file => {
         // Získej skutečnou délku z fastMetadataService
         const actualDuration = file.duration || 'N/A';
 
+        // Získej název skladby a vyčisti ho od čísla
+        const rawTrackName = file.parsed.trackName || file.parsed.name || file.fileNameOnly;
+        const cleanName = cleanTrackName(rawTrackName);
+
         return {
           trackNumber: songs.indexOf(file) + 1,
-          trackName: file.parsed.trackName || file.parsed.name || file.fileNameOnly,
+          trackName: cleanName,
           duration: actualDuration,
           audioSrc: file.downloadURL,
           fileName: file.fileName,

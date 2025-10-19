@@ -37,7 +37,8 @@ export const useAudioPlayer = (audioUrl, albumTracks = null, currentTrackIndex =
   const [audioState, setAudioState] = useState({
     isPlaying: false,
     isActivated: false,
-    hasInteracted: false
+    hasInteracted: false,
+    userPaused: false // Flag pro sledování, jestli uživatel explicitně vypnul přehrávání
   });
 
   const [playbackState, setPlaybackState] = useState({
@@ -200,7 +201,7 @@ export const useAudioPlayer = (audioUrl, albumTracks = null, currentTrackIndex =
       // Nastav shouldAutoPlay na true pro spuštění autoplay po načtení
       setPlaybackState(prev => ({ ...prev, shouldAutoplay: true }));
       // Zachovej stav přehrávání pro okamžitou autoplay
-      setAudioState(prev => ({ ...prev, isPlaying: true }));
+      setAudioState(prev => ({ ...prev, isPlaying: true, userPaused: false }));
     }
 
     // Načti délku při načítání metadata
@@ -325,7 +326,7 @@ export const useAudioPlayer = (audioUrl, albumTracks = null, currentTrackIndex =
            setTimeout(() => {
              // Zjednodušený autoplay - jen spusť audio bez složitých kontrol
              audio.play().then(() => {
-               setAudioState(prev => ({ ...prev, isPlaying: true }));
+               setAudioState(prev => ({ ...prev, isPlaying: true, userPaused: false }));
                setPlaybackState(prev => ({ ...prev, shouldAutoplay: false, wasPlayingBeforeSwitch: false }));
                console.log('✅ AUTOPLAY: Auto-play successful');
              }).catch((error) => {
@@ -434,12 +435,17 @@ export const useAudioPlayer = (audioUrl, albumTracks = null, currentTrackIndex =
   useEffect(() => {
     if (albumTracks && albumTracks.length > 1 && currentTrackIndex > 0 && audioState.hasInteracted) {
         // Pokud se mění track a uživatel už jednou klikl na play, spusť autoplay
-        // Ale pouze pokud je aktuálně přehrávání aktivní (ne při seek)
-        if (audioState.isPlaying) {
-          setPlaybackState(prev => ({ ...prev, shouldAutoplay: true, wasPlayingBeforeSwitch: true }));
-        }
+        // Bez ohledu na aktuální stav přehrávání (isPlaying)
+        setPlaybackState(prev => ({ ...prev, shouldAutoplay: true, wasPlayingBeforeSwitch: true }));
+        console.log('🎵 Track changed - autoplay enabled for next track');
     }
-  }, [currentTrackIndex, albumTracks, audioState.hasInteracted, audioState.isPlaying]);
+
+    // Resetuj userPaused flag při změně tracku (dříve než se spustí autoplay)
+    if (currentTrackIndex > 0) {
+      setAudioState(prev => ({ ...prev, userPaused: false }));
+      console.log('🎵 Track changed - userPaused flag reset');
+    }
+  }, [currentTrackIndex, albumTracks, audioState.hasInteracted]);
 
   // Fade out funkce
   const fadeOut = (audio, duration = 1000, callback) => {
@@ -748,17 +754,17 @@ export const useAudioPlayer = (audioUrl, albumTracks = null, currentTrackIndex =
     // Zkontroluj jestli audio hraje ale UI si myslí že je paused
     if (!audio.paused && !audioState.isPlaying) {
       log.audio('🎵 Audio is playing but UI thinks it\'s paused, syncing state');
-      setAudioState(prev => ({ ...prev, isPlaying: true }));
+      setAudioState(prev => ({ ...prev, isPlaying: true, userPaused: false }));
     }
 
     if (audioState.isPlaying) {
       // Zjednodušené zastavení
       audio.pause();
-      setAudioState(prev => ({ ...prev, isPlaying: false }));
+      setAudioState(prev => ({ ...prev, isPlaying: false, userPaused: true }));
 
       // Zastav autoplay pro album
       setPlaybackState(prev => ({ ...prev, shouldAutoplay: false, wasPlayingBeforeSwitch: false }));
-      console.log('🎵 Audio paused - autoplay disabled');
+      console.log('🎵 Audio paused by user - autoplay disabled');
     } else {
       // Fade in při spuštění
       log.audio('🎵 Playing audio with fade in');
@@ -770,7 +776,7 @@ export const useAudioPlayer = (audioUrl, albumTracks = null, currentTrackIndex =
           log.audio('🎵 PRVNÍ SPUŠTĚNÍ: Audio je už aktivováno globálně, pokračuji s přehráváním...');
           setAudioState(prev => ({ ...prev, hasInteracted: true }));
           audio.play().then(() => {
-            setAudioState(prev => ({ ...prev, isPlaying: true }));
+            setAudioState(prev => ({ ...prev, isPlaying: true, userPaused: false }));
             console.log('🎵 User interaction recorded - autoplay now enabled');
           }).catch(() => {
             console.log('🎵 Audio play failed');
@@ -796,7 +802,7 @@ export const useAudioPlayer = (audioUrl, albumTracks = null, currentTrackIndex =
               setAudioState(prev => ({ ...prev, hasInteracted: true }));
               window.audioActivated = true;
               audio.play().then(() => {
-                setAudioState(prev => ({ ...prev, isPlaying: true }));
+                setAudioState(prev => ({ ...prev, isPlaying: true, userPaused: false }));
                 console.log('🎵 User interaction recorded - autoplay now enabled');
               }).catch(() => {
                 console.log('🎵 Audio play failed');
@@ -810,7 +816,7 @@ export const useAudioPlayer = (audioUrl, albumTracks = null, currentTrackIndex =
             setAudioState(prev => ({ ...prev, hasInteracted: true }));
             window.audioActivated = true;
             audio.play().then(() => {
-              setAudioState(prev => ({ ...prev, isPlaying: true }));
+              setAudioState(prev => ({ ...prev, isPlaying: true, userPaused: false }));
               console.log('🎵 User interaction recorded - autoplay now enabled');
             }).catch(() => {
               console.log('🎵 Audio play failed');
@@ -827,7 +833,7 @@ export const useAudioPlayer = (audioUrl, albumTracks = null, currentTrackIndex =
 
       // Zjednodušený play - jen spusť audio
       audio.play().then(() => {
-        setAudioState(prev => ({ ...prev, isPlaying: true }));
+        setAudioState(prev => ({ ...prev, isPlaying: true, userPaused: false }));
         setAudioState(prev => ({ ...prev, hasInteracted: true })); // Označ že uživatel už jednou klikl na play
 
         // Pokud je to album a uživatel klikl na play, povol autoplay pro celé album
@@ -960,7 +966,7 @@ export const useAudioPlayer = (audioUrl, albumTracks = null, currentTrackIndex =
   };
 
   // Autoplay hook pro automatické spuštění
-  useAutoplay(audioUrl, audioState.isPlaying, togglePlayPause);
+  useAutoplay(audioUrl, audioState.isPlaying, togglePlayPause, audioState.userPaused, playbackState.shouldAutoplay);
 
   return {
     audioRef,

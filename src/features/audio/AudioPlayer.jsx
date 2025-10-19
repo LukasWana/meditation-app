@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React from 'react';
 import { useAudioPlayer, useAudioPlayerLogic } from './hooks';
 import {
   AudioControls,
@@ -36,13 +36,8 @@ const AudioPlayer = ({
     autoplayEnabled
   });
 
-  // Aktualizuj title podle aktuální skladby v albu
-  const actualTitle = useMemo(() => {
-    if (albumTracks && albumTracks.length > 0 && currentTrackIndex >= 0 && currentTrackIndex < albumTracks.length) {
-      return albumTracks[currentTrackIndex].trackName;
-    }
-    return title;
-  }, [title, albumTracks, currentTrackIndex]);
+  // Použij title prop přímo - onTrackChange callback už aktualizuje title správně
+  const actualTitle = title;
 
   const {
     audioRef,
