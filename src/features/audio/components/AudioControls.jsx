@@ -30,23 +30,32 @@ const AudioControls = ({
 }) => {
   return (
     <div className={className}>
-      {/* Title and Duration - Above Circular Progress */}
-      <div className="mb-6 pointer-events-none z-10 w-full px-6 sm:px-8 flex flex-col items-center space-y-2">
-        <div
-          className="font-light text-center text-black"
-          style={{fontFamily: 'Playfair Display', fontSize: 'clamp(20px, 3.5vw, 32px)'}}
-        >
-          {title || 'Meditácia'}
-        </div>
-        {/* Duration - Total Time - Right under title - zobraz pouze když je stabilní */}
+      {/* Title and Duration - Above Circular Progress with fixed height */}
+      <div className="mb-6 pointer-events-none z-10 w-full pl-10 pr-10 sm:pl-20 sm:pr-20 flex flex-col items-center space-y-0" style={{minHeight: '110px'}}>
+        {/* Duration - Total Time - Above title - zobraz pouze když je stabilní */}
         {duration && duration > 0 && durationStable && (
           <div
-            className="text-gray-600 text-center"
-            style={{fontFamily: 'Playfair Display', fontSize: 'clamp(20px, 1.3vw, 16px)'}}
+            className="text-gray-600 text-center mb-2"
+            style={{fontFamily: 'Playfair Display', fontSize: 'clamp(18px, 1.2vw, 16px)'}}
           >
             {formatTime(duration)}
           </div>
         )}
+        {/* Title - Fixed height container for 2-line support */}
+        <div
+          className="font-light text-center text-black leading-tight"
+          style={{
+            fontFamily: 'Playfair Display',
+            fontSize: 'clamp(20px, 3.5vw, 32px)',
+            minHeight: '60px',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            lineHeight: '1.2'
+          }}
+        >
+          <span>{title || 'Meditácia'}</span>
+        </div>
       </div>
 
       {/* Circular Progress with Play Button - Always Centered */}
