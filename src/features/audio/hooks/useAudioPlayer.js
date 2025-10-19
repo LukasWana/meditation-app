@@ -42,7 +42,7 @@ export const useAudioPlayer = (audioUrl, albumTracks = null, currentTrackIndex =
             console.log('🎵 Track audio activated!');
             window.audioActivated = true;
             setAudioState(prev => ({ ...prev, hasInteracted: true }));
-          }).catch((error) => {
+          }).catch(() => {
             console.log('🎵 Track audio activation failed');
           });
         } else {
@@ -50,7 +50,7 @@ export const useAudioPlayer = (audioUrl, albumTracks = null, currentTrackIndex =
           window.audioActivated = true;
           setAudioState(prev => ({ ...prev, hasInteracted: true }));
         }
-      } catch (error) {
+      } catch {
         console.log('🎵 Track audio activation error');
       }
     }
@@ -274,7 +274,7 @@ export const useAudioPlayer = (audioUrl, albumTracks = null, currentTrackIndex =
              proceedWithAutoplay();
            }
 
-           function proceedWithAutoplay() {
+           const proceedWithAutoplay = () => {
              // Přidej delší delay pro autoplay aby se audio element stihl připravit
              setTimeout(() => {
                // Zjednodušený autoplay - jen spusť audio bez složitých kontrol
@@ -288,7 +288,7 @@ export const useAudioPlayer = (audioUrl, albumTracks = null, currentTrackIndex =
                  setPlaybackState(prev => ({ ...prev, shouldAutoplay: false, wasPlayingBeforeSwitch: false }));
                });
              }, 500); // 500ms delay pro autoplay
-           }
+           };
          } else {
            log.audio('🎵 AUTOPLAY: Audio element not ready for autoplay, skipping');
            log.audio('🎵 AUTOPLAY: Audio readyState:', audio.readyState, 'networkState:', audio.networkState);
@@ -578,8 +578,7 @@ export const useAudioPlayer = (audioUrl, albumTracks = null, currentTrackIndex =
       console.log('🎵 Audio in bad state, reloading...');
       audio.load();
       return new Promise((resolve, reject) => {
-        audio.addEventListener('loadeddata', () => {
-          audio.removeEventListener('loadeddata', arguments.callee);
+        const handleLoadedData = () => {
           console.log('🎵 Audio reloaded, attempting play');
           audio.play().then(() => {
             console.log('🎵 Audio playing after reload');
@@ -588,7 +587,8 @@ export const useAudioPlayer = (audioUrl, albumTracks = null, currentTrackIndex =
             console.log('🎵 Audio play failed after reload:', error);
             reject(error);
           });
-        }, { once: true });
+        };
+        audio.addEventListener('loadeddata', handleLoadedData, { once: true });
       });
     }
 
@@ -740,7 +740,7 @@ export const useAudioPlayer = (audioUrl, albumTracks = null, currentTrackIndex =
             window.audioActivated = true;
             proceedWithPlay();
           }
-        } catch (error) {
+        } catch {
           console.log('🎵 PRVNÍ SPUŠTĚNÍ: Chyba při aktivaci');
         }
         return;
@@ -749,7 +749,7 @@ export const useAudioPlayer = (audioUrl, albumTracks = null, currentTrackIndex =
       log.audio('🎵 SPUŠTĚNÍ: Zvuk je aktivován, spouštím audio...');
       proceedWithPlay();
 
-      function proceedWithPlay() {
+      const proceedWithPlay = () => {
         // Zjednodušený play - jen spusť audio
         audio.play().then(() => {
           setAudioState(prev => ({ ...prev, isPlaying: true }));
@@ -759,18 +759,18 @@ export const useAudioPlayer = (audioUrl, albumTracks = null, currentTrackIndex =
           console.log('🎵 Audio play failed:', error);
           setAudioState(prev => ({ ...prev, isPlaying: false }));
         });
-      }
+      };
     }
   };
 
   const skipBackward = () => {
     const audio = audioRef.current;
-    if (!audio || !duration || isNaN(duration) || duration <= 0) return;
+    if (!audio || !playbackState.duration || isNaN(playbackState.duration) || playbackState.duration <= 0) return;
 
     const currentAudioTime = audio.currentTime;
     const newTime = Math.max(0, currentAudioTime - 10);
 
-    log.audio('Skip backward:', { currentAudioTime, newTime, duration });
+    log.audio('Skip backward:', { currentAudioTime, newTime, duration: playbackState.duration });
 
     if (isFinite(newTime) && newTime >= 0) {
       audio.currentTime = newTime;
@@ -780,12 +780,12 @@ export const useAudioPlayer = (audioUrl, albumTracks = null, currentTrackIndex =
 
   const skipForward = () => {
     const audio = audioRef.current;
-    if (!audio || !duration || isNaN(duration) || duration <= 0) return;
+    if (!audio || !playbackState.duration || isNaN(playbackState.duration) || playbackState.duration <= 0) return;
 
     const currentAudioTime = audio.currentTime;
-    const newTime = Math.min(duration, currentAudioTime + 10);
+    const newTime = Math.min(playbackState.duration, currentAudioTime + 10);
 
-    log.audio('Skip forward:', { currentAudioTime, newTime, duration });
+    log.audio('Skip forward:', { currentAudioTime, newTime, duration: playbackState.duration });
 
     if (isFinite(newTime) && newTime >= 0) {
       audio.currentTime = newTime;
