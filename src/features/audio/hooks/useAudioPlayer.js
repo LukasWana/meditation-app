@@ -11,7 +11,7 @@ export const useAudioPlayer = (audioUrl, albumTracks = null, currentTrackIndex =
 
     // Pokud už je to název souboru (ne URL), vrať ho
     if (!url.startsWith('http')) {
-      return url.includes('/') ? url.split('/').pop() : url;
+      return url; // Vrať celou cestu, ne jen název souboru
     }
 
     try {
@@ -19,17 +19,16 @@ export const useAudioPlayer = (audioUrl, albumTracks = null, currentTrackIndex =
       const match = url.match(/\/o\/([^?]+)/);
       if (match) {
         const fullPath = decodeURIComponent(match[1]);
-        // Extraktuj pouze název souboru ze cesty (např. "ambient-journey/filename.mp3" -> "filename.mp3")
-        return fullPath.includes('/') ? fullPath.split('/').pop() : fullPath;
+        // Vrať celou cestu k souboru (např. "hudba/ambient-journey/filename.mp3")
+        return fullPath;
       }
 
       // Fallback pro běžné URL
       const pathname = new URL(url).pathname;
-      return pathname.split('/').pop();
+      return pathname.startsWith('/') ? pathname.substring(1) : pathname;
     } catch (error) {
       // Pokud to není validní URL, zkusíme to jako název souboru
-      // Také extraktuj název souboru ze cesty pokud obsahuje "/"
-      return url.includes('/') ? url.split('/').pop() : url;
+      return url.includes('/') ? url : url;
     }
   };
 
@@ -149,8 +148,10 @@ export const useAudioPlayer = (audioUrl, albumTracks = null, currentTrackIndex =
     let durationFromMetadata = null;
     if (audioUrl && globalMetadataPreloader.isInitialized) {
       const fileName = extractFileNameFromUrl(audioUrl);
+      log.audio(`🎵 Extracting fileName from URL: ${audioUrl} -> ${fileName}`);
       if (fileName) {
         const metadata = globalMetadataPreloader.getMetadata(fileName);
+        log.audio(`🎵 Metadata lookup for ${fileName}:`, metadata ? `found duration ${metadata.duration}` : 'not found');
         if (metadata && metadata.duration && metadata.duration > 0) {
           durationFromMetadata = metadata.duration;
           log.audio(`Using metadata duration for ${fileName}: ${durationFromMetadata}s`);
