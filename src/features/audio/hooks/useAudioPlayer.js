@@ -739,7 +739,7 @@ export const useAudioPlayer = (audioUrl, albumTracks = null, currentTrackIndex =
       }
 
       log.audio('🎵 SPUŠTĚNÍ: Zvuk je aktivován, spouštím audio...');
-      
+
       // Zjednodušený play - jen spusť audio
       audio.play().then(() => {
         setAudioState(prev => ({ ...prev, isPlaying: true }));
