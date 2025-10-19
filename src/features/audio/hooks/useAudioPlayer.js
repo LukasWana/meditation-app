@@ -1,8 +1,37 @@
 import { useState, useRef, useEffect } from 'react';
 import cacheService from '@services/cacheService';
 import { log } from '@services/logger';
+import globalMetadataPreloader from '@services/globalMetadataPreloader';
 
 export const useAudioPlayer = (audioUrl, albumTracks = null, currentTrackIndex = 0, onTrackChange = null, autoplayEnabled = true) => {
+
+  // Pomocná funkce pro extrakci názvu souboru z URL
+  const extractFileNameFromUrl = (url) => {
+    if (!url || typeof url !== 'string') return null;
+
+    // Pokud už je to název souboru (ne URL), vrať ho
+    if (!url.startsWith('http')) {
+      return url.includes('/') ? url.split('/').pop() : url;
+    }
+
+    try {
+      // Pro Firebase Storage URL: https://firebasestorage.googleapis.com/v0/b/.../o/filename.mp3?alt=media
+      const match = url.match(/\/o\/([^?]+)/);
+      if (match) {
+        const fullPath = decodeURIComponent(match[1]);
+        // Extraktuj pouze název souboru ze cesty (např. "ambient-journey/filename.mp3" -> "filename.mp3")
+        return fullPath.includes('/') ? fullPath.split('/').pop() : fullPath;
+      }
+
+      // Fallback pro běžné URL
+      const pathname = new URL(url).pathname;
+      return pathname.split('/').pop();
+    } catch (error) {
+      // Pokud to není validní URL, zkusíme to jako název souboru
+      // Také extraktuj název souboru ze cesty pokud obsahuje "/"
+      return url.includes('/') ? url.split('/').pop() : url;
+    }
+  };
 
   // Zjednodušený state management - sloučené související stavy
   const [audioState, setAudioState] = useState({
@@ -114,13 +143,31 @@ export const useAudioPlayer = (audioUrl, albumTracks = null, currentTrackIndex =
 
     // Resetuj stav pro nový soubor
     setPlaybackState(prev => ({ ...prev, currentTime: 0 }));
-    // Nezastavuj duration hned - zkus načíst z cache nebo počkej na načtení
-    const cachedDuration = audioUrl ? cacheService.getDuration(audioUrl) : null;
-    if (cachedDuration) {
-      setPlaybackState(prev => ({ ...prev, duration: cachedDuration, isLoading: true })); // Použij cached duration
-      log.audio(`Using cached duration: ${cachedDuration}s`);
+    
+    // Zkus načíst duration z metadata služby (rychlejší než cache podle URL)
+    let durationFromMetadata = null;
+    if (audioUrl) {
+      const fileName = extractFileNameFromUrl(audioUrl);
+      if (fileName) {
+        const metadata = globalMetadataPreloader.getMetadata(fileName);
+        if (metadata && metadata.duration) {
+          durationFromMetadata = metadata.duration;
+          log.audio(`Using metadata duration for ${fileName}: ${durationFromMetadata}s`);
+        }
+      }
+    }
+    
+    if (durationFromMetadata) {
+      setPlaybackState(prev => ({ ...prev, duration: durationFromMetadata, isLoading: false })); // Duration už je známá
     } else {
-      setPlaybackState(prev => ({ ...prev, duration: 0, isLoading: true })); // Reset pouze pokud není v cache
+      // Fallback na cache podle URL
+      const cachedDuration = audioUrl ? cacheService.getDuration(audioUrl) : null;
+      if (cachedDuration) {
+        setPlaybackState(prev => ({ ...prev, duration: cachedDuration, isLoading: true }));
+        log.audio(`Using cached duration: ${cachedDuration}s`);
+      } else {
+        setPlaybackState(prev => ({ ...prev, duration: 0, isLoading: true })); // Reset pouze pokud není v cache
+      }
     }
 
     // Pokud byl audio přehráván, zachovej stav přehrávání
@@ -136,15 +183,15 @@ export const useAudioPlayer = (audioUrl, albumTracks = null, currentTrackIndex =
     // Načti délku při načítání metadata
     const handleLoadedMetadata = () => {
       if (audio.duration && isFinite(audio.duration)) {
-        // Nastav duration pouze pokud není už nastavená z cache
-        if (!cachedDuration) {
+        // Nastav duration pouze pokud není už nastavená z metadata nebo cache
+        if (!durationFromMetadata && !cachedDuration) {
           setPlaybackState(prev => ({ ...prev, duration: audio.duration }));
-          log.audio(`Duration loaded: ${audio.duration}s`);
+          log.audio(`Duration loaded from audio element: ${audio.duration}s`);
         } else {
-          log.audio(`Duration already cached: ${audio.duration}s`);
+          log.audio(`Duration already known from metadata/cache: ${audio.duration}s`);
         }
 
-        // Ulož délku do cache pro budoucí použití
+        // Ulož délku do cache pro budoucí použití (fallback)
         if (audioUrl) {
           cacheService.setDuration(audioUrl, audio.duration);
         }
