@@ -684,7 +684,13 @@ export const useAudioPlayer = (audioUrl, albumTracks = null, currentTrackIndex =
         if (window.audioActivated) {
           log.audio('🎵 PRVNÍ SPUŠTĚNÍ: Audio je už aktivováno globálně, pokračuji s přehráváním...');
           setAudioState(prev => ({ ...prev, hasInteracted: true }));
-          proceedWithPlay();
+          audio.play().then(() => {
+            setAudioState(prev => ({ ...prev, isPlaying: true }));
+            console.log('🎵 User interaction recorded - autoplay now enabled');
+          }).catch(() => {
+            console.log('🎵 Audio play failed');
+            setAudioState(prev => ({ ...prev, isPlaying: false }));
+          });
           return;
         }
 
@@ -704,7 +710,13 @@ export const useAudioPlayer = (audioUrl, albumTracks = null, currentTrackIndex =
               console.log('🎵 Audio aktivován automaticky, pokračuji s přehráváním...');
               setAudioState(prev => ({ ...prev, hasInteracted: true }));
               window.audioActivated = true;
-              proceedWithPlay();
+              audio.play().then(() => {
+                setAudioState(prev => ({ ...prev, isPlaying: true }));
+                console.log('🎵 User interaction recorded - autoplay now enabled');
+              }).catch(() => {
+                console.log('🎵 Audio play failed');
+                setAudioState(prev => ({ ...prev, isPlaying: false }));
+              });
             }).catch(() => {
               console.log('🎵 PRVNÍ SPUŠTĚNÍ: Automatická aktivace selhala');
             });
@@ -712,7 +724,13 @@ export const useAudioPlayer = (audioUrl, albumTracks = null, currentTrackIndex =
             console.log('🎵 Audio už je aktivní, pokračuji s přehráváním...');
             setAudioState(prev => ({ ...prev, hasInteracted: true }));
             window.audioActivated = true;
-            proceedWithPlay();
+            audio.play().then(() => {
+              setAudioState(prev => ({ ...prev, isPlaying: true }));
+              console.log('🎵 User interaction recorded - autoplay now enabled');
+            }).catch(() => {
+              console.log('🎵 Audio play failed');
+              setAudioState(prev => ({ ...prev, isPlaying: false }));
+            });
           }
         } catch {
           console.log('🎵 PRVNÍ SPUŠTĚNÍ: Chyba při aktivaci');
@@ -721,19 +739,16 @@ export const useAudioPlayer = (audioUrl, albumTracks = null, currentTrackIndex =
       }
 
       log.audio('🎵 SPUŠTĚNÍ: Zvuk je aktivován, spouštím audio...');
-      proceedWithPlay();
-
-      const proceedWithPlay = () => {
-        // Zjednodušený play - jen spusť audio
-        audio.play().then(() => {
-          setAudioState(prev => ({ ...prev, isPlaying: true }));
-          setAudioState(prev => ({ ...prev, hasInteracted: true })); // Označ že uživatel už jednou klikl na play
-          console.log('🎵 User interaction recorded - autoplay now enabled');
-        }).catch(() => {
-          console.log('🎵 Audio play failed');
-          setAudioState(prev => ({ ...prev, isPlaying: false }));
-        });
-      };
+      
+      // Zjednodušený play - jen spusť audio
+      audio.play().then(() => {
+        setAudioState(prev => ({ ...prev, isPlaying: true }));
+        setAudioState(prev => ({ ...prev, hasInteracted: true })); // Označ že uživatel už jednou klikl na play
+        console.log('🎵 User interaction recorded - autoplay now enabled');
+      }).catch(() => {
+        console.log('🎵 Audio play failed');
+        setAudioState(prev => ({ ...prev, isPlaying: false }));
+      });
     }
   };
 
