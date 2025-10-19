@@ -66,9 +66,14 @@ class ErrorMonitoringService {
       });
     });
 
-    // Resource loading errors
+    // Resource loading errors - pouze pro kritické chyby
     window.addEventListener('error', (event) => {
       if (event.target !== window) {
+        // Filtruj běžné chyby při načítání zdrojů
+        if (this._shouldIgnoreResourceError(event)) {
+          return;
+        }
+        
         this.captureError('Resource Loading Error', {
           type: event.target.tagName,
           src: event.target.src || event.target.href,
@@ -76,6 +81,47 @@ class ErrorMonitoringService {
         });
       }
     }, true);
+  }
+
+  /**
+   * Zkontroluje, jestli by se měla ignorovat chyba při načítání zdroje
+   * @private
+   */
+  _shouldIgnoreResourceError(event) {
+    // Ignoruj chyby pro audio soubory (běžné při CORS nebo chybějících souborech)
+    if (event.target.tagName === 'AUDIO') {
+      return true;
+    }
+    
+    // Ignoruj chyby pro obrázky (běžné při chybějících obrázcích)
+    if (event.target.tagName === 'IMG') {
+      return true;
+    }
+    
+    // Ignoruj chyby pro Firebase Storage soubory (běžné při network problémech)
+    const src = event.target.src || event.target.href || '';
+    if (src.includes('firebasestorage.googleapis.com')) {
+      return true;
+    }
+    
+    // Ignoruj chyby pro lokální media soubory
+    if (src.includes('/media/') || src.includes('/public/')) {
+      return true;
+    }
+    
+    // Ignoruj chyby s konkrétními chybovými zprávami
+    if (event.error && event.error.message) {
+      const message = event.error.message.toLowerCase();
+      if (message.includes('cors') || 
+          message.includes('network') || 
+          message.includes('timeout') ||
+          message.includes('404') ||
+          message.includes('not found')) {
+        return true;
+      }
+    }
+    
+    return false;
   }
 
   /**
