@@ -862,20 +862,31 @@ export const useAudioPlayer = (audioUrl, albumTracks = null, currentTrackIndex =
 
   const handleSeek = (progressValue) => {
     const audio = audioRef.current;
-    if (!audio || !playbackState.duration || isNaN(playbackState.duration) || playbackState.duration <= 0) return;
+    if (!audio || !playbackState.duration || isNaN(playbackState.duration) || playbackState.duration <= 0) {
+      log.audio('⚠️ handleSeek: Invalid audio or duration', { 
+        hasAudio: !!audio, 
+        duration: playbackState.duration,
+        durationStable: playbackState.durationStable 
+      });
+      return;
+    }
 
-    // Aktivuj audio context při user interaction
-    const audioContext = window.AudioContext || window.webkitAudioContext;
-    if (audioContext) {
-      const ctx = new audioContext();
-      if (ctx.state === 'suspended') {
-        log.audio('🎵 AudioContext suspended in handleSeek, attempting resume');
-        ctx.resume().then(() => {
-          log.audio('🎵 AudioContext resumed successfully in handleSeek');
-        }).catch((error) => {
-          log.error('Failed to resume AudioContext in handleSeek:', error);
+    // Použij globální AudioContext místo vytváření nového
+    try {
+      let audioContext = window.globalAudioContext;
+      if (!audioContext) {
+        audioContext = new (window.AudioContext || window.webkitAudioContext)();
+        window.globalAudioContext = audioContext;
+      }
+      if (audioContext.state === 'suspended') {
+        audioContext.resume().then(() => {
+          log.audio('🎵 Global AudioContext resumed in handleSeek');
+        }).catch(() => {
+          log.audio('⚠️ Failed to resume AudioContext in handleSeek');
         });
       }
+    } catch (error) {
+      log.audio('⚠️ AudioContext error in handleSeek:', error);
     }
 
     try {
@@ -883,30 +894,21 @@ export const useAudioPlayer = (audioUrl, albumTracks = null, currentTrackIndex =
       const progress = Math.max(0, Math.min(1, progressValue / 100));
       const newTime = progress * playbackState.duration;
 
-      // Validate newTime is finite
-      if (isFinite(newTime) && newTime >= 0) {
-        // Fade out, změň pozici, fade in
-        const wasPlaying = audioState.isPlaying;
-
-        if (wasPlaying) {
-          fadeOut(audio, 300, () => {
-            audio.currentTime = newTime;
-            setPlaybackState(prev => ({ ...prev, currentTime: newTime }));
-            if (wasPlaying) {
-              playAudio('seek').then(() => {
-                fadeIn(audio, 300);
-                log.audio('✅ Seek and resume successful');
-              }).catch((error) => {
-                log.error('Failed to resume after seek:', error);
-                log.audio('⚠️ Seek successful but resume failed');
-              });
-            }
-          });
-        } else {
-          audio.currentTime = newTime;
-          setPlaybackState(prev => ({ ...prev, currentTime: newTime }));
-          log.audio('✅ Seek successful');
-        }
+      // Validate newTime is finite and within bounds
+      if (isFinite(newTime) && newTime >= 0 && newTime <= playbackState.duration) {
+        log.audio(`🎵 Seeking to ${newTime}s (${progress.toFixed(2)})`);
+        
+        // Zjednodušený seek bez fade efektů
+        audio.currentTime = newTime;
+        setPlaybackState(prev => ({ ...prev, currentTime: newTime }));
+        
+        // Označ že uživatel interagoval
+        setAudioState(prev => ({ ...prev, hasInteracted: true }));
+        window.audioActivated = true;
+        
+        log.audio('✅ Seek successful');
+      } else {
+        log.audio('⚠️ Invalid seek time:', { newTime, duration: playbackState.duration });
       }
     } catch (error) {
       log.error('Error in handleSeek:', error);

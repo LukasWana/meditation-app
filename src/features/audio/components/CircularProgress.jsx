@@ -101,7 +101,10 @@ const CircularProgress = ({
   }, [isDragging, onSeek]);
 
   const handleSeek = (e) => {
-    if (!svgRef.current || !onSeek) return;
+    if (!svgRef.current || !onSeek) {
+      console.log('⚠️ CircularProgress: handleSeek blocked - no onSeek function');
+      return;
+    }
 
     const rect = svgRef.current.getBoundingClientRect();
     const centerX = rect.left + rect.width / 2;

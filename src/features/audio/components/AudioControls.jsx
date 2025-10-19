@@ -53,7 +53,7 @@ const AudioControls = ({
       <div className="relative flex-shrink-0">
         <CircularProgress
           progress={progress}
-          onSeek={onSeek}
+          onSeek={durationStable ? onSeek : null}
         />
 
         {/* Play/Pause Button - Center */}
