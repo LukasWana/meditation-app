@@ -2,6 +2,7 @@ import { useState, useRef, useEffect } from 'react';
 import cacheService from '@services/cacheService';
 import { log } from '@services/logger';
 import globalMetadataPreloader from '@services/globalMetadataPreloader';
+import { useAutoplay } from './useAutoplay';
 
 export const useAudioPlayer = (audioUrl, albumTracks = null, currentTrackIndex = 0, onTrackChange = null, autoplayEnabled = true) => {
 
@@ -957,6 +958,9 @@ export const useAudioPlayer = (audioUrl, albumTracks = null, currentTrackIndex =
       });
     }
   };
+
+  // Autoplay hook pro automatické spuštění
+  useAutoplay(audioUrl, audioState.isPlaying, togglePlayPause);
 
   return {
     audioRef,

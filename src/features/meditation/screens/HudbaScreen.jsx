@@ -1,61 +1,10 @@
 import React, { useState } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { FramerButton, FramerSection, FramerPageTransition, BackButton } from '@components';
+import { AnimatePresence } from 'framer-motion';
+import { FramerSection, FramerPageTransition, BackButton } from '@components';
 import { AudioPlayer } from '@features/audio';
-import { useFirebaseHudbaFilter } from '@features/audio/hooks/useFirebaseHudbaFilter';
-import { log } from '@services/logger';
-import cacheService from '@services/cacheServiceRefactored';
+import { AlbumGrid } from '../components';
+import { useHudbaScreenData } from '../hooks';
 
-// Vylepšená funkce pro načtení duration s retry logikou
-const getAudioDuration = (audioSrc, retries = 3) => {
-  return new Promise((resolve) => {
-    const audio = new Audio();
-    let timeoutId;
-
-    const cleanup = () => {
-      audio.removeEventListener('loadedmetadata', onLoadedMetadata);
-      audio.removeEventListener('error', onError);
-      if (timeoutId) clearTimeout(timeoutId);
-    };
-
-    const onLoadedMetadata = () => {
-      cleanup();
-      const duration = audio.duration;
-      if (isFinite(duration) && duration > 0) {
-        log.debug(`✅ Duration loaded successfully: ${duration}s`);
-        resolve(duration); // Vrať duration v sekundách, ne jako string
-      } else {
-        log.warn(`Invalid duration received: ${duration}`);
-        resolve(null);
-      }
-    };
-
-    const onError = () => {
-      cleanup();
-      log.warn(`Audio loading failed for ${audioSrc}, retries left: ${retries - 1}`);
-      if (retries > 1) {
-        // Retry s exponenciálním backoff
-        setTimeout(() => {
-          getAudioDuration(audioSrc, retries - 1).then(resolve);
-        }, 1000 * (4 - retries)); // 1s, 2s, 3s
-      } else {
-        resolve(null);
-      }
-    };
-
-    audio.addEventListener('loadedmetadata', onLoadedMetadata);
-    audio.addEventListener('error', onError);
-
-    // Timeout po 10 sekundách
-    timeoutId = setTimeout(() => {
-      cleanup();
-      log.warn(`Timeout loading duration for ${audioSrc}`);
-      resolve(null);
-    }, 10000);
-
-    audio.src = audioSrc;
-  });
-};
 
 const HudbaScreen = ({
   onNavigateToScreen,
@@ -66,142 +15,17 @@ const HudbaScreen = ({
   onPlayerStateChange
 }) => {
   const [activeAudio, setActiveAudio] = useState(null);
-  const [durations, setDurations] = useState(new Map());
 
-  // Funkce pro získání zobrazené délky skladby s vylepšenými fallback mechanismy
-  const getDisplayDuration = (item) => {
-    console.log(`🎵 Getting duration for ${item.title}:`, {
-      audioSrc: item.audioSrc,
-      metadataDuration: item.duration,
-      hasStateDuration: item.audioSrc ? durations.has(item.audioSrc) : false,
-      stateDuration: item.audioSrc ? durations.get(item.audioSrc) : null
-    });
-
-    // 1. Nejdříve zkus načíst z durations state (nejrychlejší)
-    if (item.audioSrc && durations.has(item.audioSrc)) {
-      const duration = durations.get(item.audioSrc);
-      console.log(`🎵 Using state duration for ${item.title}: ${duration}s`);
-      return formatDuration(duration);
-    }
-
-    // 2. Pak zkus načíst z persistentní cache (localStorage)
-    if (item.audioSrc) {
-      const cachedDuration = cacheService.getDuration(item.audioSrc);
-      console.log(`🎵 Cached duration for ${item.title}:`, cachedDuration);
-      if (cachedDuration && cachedDuration !== 'N/A' && cachedDuration > 0) {
-        console.log(`🎵 Using persistent cached duration for ${item.title}: ${cachedDuration}s`);
-        // Aktualizuj state pro budoucí použití
-        setDurations(prev => new Map(prev).set(item.audioSrc, cachedDuration));
-        return formatDuration(cachedDuration);
-      }
-    }
-
-    // 3. Fallback na původní duration z metadata
-    if (item.duration && item.duration !== 'N/A') {
-      console.log(`🎵 Using metadata duration for ${item.title}: ${item.duration}`);
-      return item.duration;
-    }
-
-    // 4. Poslední fallback - zkus načíst z static metadata
-    if (item.fileName) {
-      const staticMetadata = cacheService.getMetadata(item.fileName);
-      console.log(`🎵 Static metadata for ${item.title}:`, staticMetadata);
-      if (staticMetadata && staticMetadata.duration && staticMetadata.duration !== 'N/A') {
-        console.log(`🎵 Using static metadata duration for ${item.title}: ${staticMetadata.duration}`);
-        return staticMetadata.duration;
-      }
-    }
-
-    // 5. Konečný fallback
-    console.log(`🎵 No duration found for ${item.title}, using N/A`);
-    return 'N/A';
-  };
-
-  // Funkce pro formátování délky v sekundách na MM:SS
-  const formatDuration = (seconds) => {
-    if (!seconds || seconds === 'N/A') return 'N/A';
-
-    // Pokud už je string ve formátu MM:SS, vrať ho
-    if (typeof seconds === 'string' && seconds.includes(':')) {
-      return seconds;
-    }
-
-    // Pokud je to číslo (sekundy), převeď na MM:SS
-    if (typeof seconds === 'number' && seconds > 0) {
-      const mins = Math.floor(seconds / 60);
-      const secs = Math.floor(seconds % 60);
-      return `${mins}:${secs.toString().padStart(2, '0')}`;
-    }
-
-    return 'N/A';
-  };
-
-  // Použij hudební filtrovací systém z Firebase
-  const { hudbaItems, isLoading, error, stats, isLoadingCovers, isLoadingDurations } = useFirebaseHudbaFilter();
-
-  // Debug logging s informacemi o cache
-  React.useEffect(() => {
-    log.debug('HudbaScreen state:', {
-      isLoading,
-      error,
-      itemsCount: hudbaItems?.length || 0,
-      stats,
-      durationsStateSize: durations.size,
-      cacheStats: cacheService.getStats ? cacheService.getStats() : 'N/A'
-    });
-
-    // Debug: vypiš detaily každé položky s duration informacemi
-    if (hudbaItems && hudbaItems.length > 0) {
-      hudbaItems.forEach((item, index) => {
-        const cachedDuration = item.audioSrc ? cacheService.getDuration(item.audioSrc) : null;
-        const stateDuration = item.audioSrc ? durations.get(item.audioSrc) : null;
-
-        log.debug(`🎵 Item ${index + 1}:`, {
-          title: item.title,
-          type: item.type,
-          metadataDuration: item.duration,
-          cachedDuration: cachedDuration,
-          stateDuration: stateDuration,
-          displayDuration: getDisplayDuration(item),
-          tracks: item.tracks?.length || 'N/A',
-          audioSrc: !!item.audioSrc
-        });
-      });
-    }
-  }, [isLoading, error, hudbaItems, stats, durations]);
-
-  // Načti délky skladeb po načtení UI s vylepšenou logikou
-  React.useEffect(() => {
-    if (hudbaItems && hudbaItems.length > 0 && !isLoading) {
-      log.debug('🔄 Loading durations for songs...');
-
-      hudbaItems.forEach(async (item) => {
-        if (item.type === 'song' && item.audioSrc) {
-          // Zkontroluj, jestli už máme duration v cache nebo state
-          const hasCachedDuration = cacheService.getDuration(item.audioSrc) || durations.has(item.audioSrc);
-          const hasMetadataDuration = item.duration && item.duration !== 'N/A';
-
-          // Načti duration pouze pokud ho nemáme
-          if (!hasCachedDuration && !hasMetadataDuration) {
-            try {
-              const duration = await getAudioDuration(item.audioSrc);
-              if (duration && duration > 0) {
-                log.debug(`⏱️ Duration loaded for ${item.title}: ${duration}s`);
-                // Ulož do persistentní cache
-                cacheService.setDuration(item.audioSrc, duration);
-                // Aktualizuj state pro okamžité zobrazení
-                setDurations(prev => new Map(prev).set(item.audioSrc, duration));
-              }
-            } catch (error) {
-              log.warn(`Failed to load duration for ${item.title}:`, error);
-            }
-          } else {
-            log.debug(`⏱️ Duration already available for ${item.title}`);
-          }
-        }
-      });
-    }
-  }, [hudbaItems, isLoading]);
+  // Hlavní logika pro data HudbaScreen
+  const {
+    hudbaItems,
+    isLoading,
+    error,
+    stats,
+    isLoadingCovers,
+    isLoadingDurations,
+    getDisplayDuration
+  } = useHudbaScreenData();
 
   const handleItemClick = (item) => {
     if (item.type === 'album') {
@@ -219,10 +43,16 @@ const HudbaScreen = ({
         onPlayerStateChange?.(true);
       }
     } else if (item.type === 'song' || item.audioSrc) {
-      // Pro samostatné skladby nebo jednotlivé skladby
+      // Pro samostatné skladby - vytvoř "album" s jednou skladbou pro autoplay
       setActiveAudio({
         ...item,
-        albumCover: item.coverImage // Předaj cover obrázek
+        albumCover: item.coverImage,
+        albumTracks: [{
+          audioSrc: item.audioSrc,
+          trackName: item.title,
+          fileName: item.fileName
+        }],
+        currentTrackIndex: 0
       });
       onPlayerStateChange?.(true);
     }
@@ -317,88 +147,13 @@ const HudbaScreen = ({
             )} */}
           </FramerSection>
 
-          <div className="space-y-4">
-            {hudbaItems.length === 0 ? (
-              <div className="text-center py-8">
-                <p className="text-gray-600 text-lg">Žiadne skladby nie sú dostupné</p>
-                <p className="text-gray-500 text-sm mt-2">Skúste zmeniť nastavenia v menu</p>
-              </div>
-            ) : (
-              hudbaItems.map((item, idx) => (
-                <FramerSection
-                  key={item.key || idx}
-                  animationType="slideInUp"
-                  delay={0.2 + idx * 0.1}
-                >
-                  <FramerButton
-                    variant="ghost"
-                    className={`w-full p-6 text-left bg-white/50 backdrop-blur rounded-none border border-black/10 ${
-                      activeAudio ? 'pointer-events-none opacity-50' : ''
-                    }`}
-                    onClick={activeAudio ? undefined : () => handleItemClick(item)}
-                  >
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center space-x-3">
-                        {item.type === 'album' && (
-                          <div className="w-16 h-16 rounded-lg overflow-hidden bg-gray-200 flex-shrink-0">
-                            {item.coverImage ? (
-                              <img
-                                src={item.coverImage}
-                                alt={item.title}
-                                className="w-full h-full object-cover"
-                                onError={(e) => {
-                                  e.target.style.display = 'none';
-                                  e.target.nextSibling.style.display = 'flex';
-                                }}
-                              />
-                            ) : (
-                              <div className="w-full h-full bg-gradient-to-br from-gray-200 to-gray-300 flex items-center justify-center text-gray-500">
-                                {isLoadingCovers ? (
-                                  <div className="animate-spin text-lg">⏳</div>
-                                ) : (
-                                  <div className="text-2xl">🎵</div>
-                                )}
-                              </div>
-                            )}
-                            <div className="w-full h-full bg-gradient-to-br from-gray-200 to-gray-300 flex items-center justify-center text-gray-500" style={{display: 'none'}}>
-                              <div className="text-2xl">🎵</div>
-                            </div>
-                          </div>
-                        )}
-                        <div className="flex-1">
-                          <h3 className="text-2xl font-light" style={{fontFamily: 'Playfair Display'}}>
-                            {item.title}
-                          </h3>
-                          {item.type === 'album' && (
-                            <p className="text-sm text-gray-500 mt-1">
-                              Album • {item.tracks.length} skladieb
-                            </p>
-                          )}
-                          {item.type === 'song' && (
-                            <p className="text-sm text-gray-500 mt-1">
-                              Skladba • {getDisplayDuration(item)}
-                            </p>
-                          )}
-                        </div>
-                      </div>
-                      <div className="flex items-center space-x-3">
-                        {item.type === 'song' && (
-                          <span className="text-2xl font-light text-gray-500" style={{fontFamily: 'Playfair Display'}}>
-                            {getDisplayDuration(item)}
-                          </span>
-                        )}
-                        {item.type === 'album' && (
-                          <span className="text-2xl font-light text-gray-500" style={{fontFamily: 'Playfair Display'}}>
-                            {item.totalDuration}
-                          </span>
-                        )}
-                      </div>
-                    </div>
-                  </FramerButton>
-                </FramerSection>
-              ))
-            )}
-          </div>
+          <AlbumGrid
+            hudbaItems={hudbaItems}
+            activeAudio={activeAudio}
+            onItemClick={handleItemClick}
+            getDisplayDuration={getDisplayDuration}
+            isLoadingCovers={isLoadingCovers}
+          />
 
         </div>
 
@@ -425,6 +180,7 @@ const HudbaScreen = ({
                   });
                 }
               }}
+              autoplayEnabled={true}
             />
           )}
         </AnimatePresence>

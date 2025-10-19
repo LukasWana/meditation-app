@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { AnimatePresence } from 'framer-motion';
 import { FramerButton, FramerSection, FramerPageTransition, BackButton } from '@components';
 // Odstraněny skeleton loadery
 import { AudioPlayer } from '@features/audio';
@@ -17,13 +17,26 @@ const SlovaScreen = ({
   const [activeAudio, setActiveAudio] = useState(null);
 
   // Použij nový filtrovací systém
-  const { troubleItems: slovaItems, isLoading, error, userStats, audioFiles } = useFirebaseAudioFilter(gender);
+  const { troubleItems: slovaItems, isLoading, error, audioFiles } = useFirebaseAudioFilter(gender);
 
   // Preloading odstraněn - data se načítají při startu aplikace
 
   const handleItemClick = (item) => {
-    if (item.audioSrc) {
-      setActiveAudio(item);
+    // Použij audioSrc nebo fileName jako fallback
+    const audioSrc = item.audioSrc || item.fileName;
+    if (audioSrc) {
+      // Vytvoř "album" s jednou skladbou pro autoplay funkcionalitu
+      setActiveAudio({
+        audioSrc: audioSrc,
+        title: item.title,
+        fileName: item.fileName || item.audioSrc,
+        albumTracks: [{
+          audioSrc: audioSrc,
+          trackName: item.title,
+          fileName: item.fileName || item.audioSrc
+        }],
+        currentTrackIndex: 0
+      });
       onPlayerStateChange?.(true); // Informuj o aktivním přehrávači
     }
   };
@@ -33,20 +46,20 @@ const SlovaScreen = ({
     onPlayerStateChange?.(false); // Informuj o zavřeném přehrávači
   };
 
-  // Loading state - Hidden, show content immediately
-  // if (isLoading) {
-  //   return (
-  //     <FramerPageTransition screenKey="slova">
-  //       <div className="min-h-screen w-full max-w-full bg-[#f4ddc4] flex flex-col items-center justify-center p-2 sm:p-8 pb-20 overflow-x-hidden relative">
-  //         <BackButton onClick={() => onNavigateToScreen('home')} />
-  //         <div className="text-center">
-  //           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-gray-700 mx-auto mb-4"></div>
-  //           <p className="text-xl text-gray-700">Načítám meditácie...</p>
-  //         </div>
-  //       </div>
-  //     </FramerPageTransition>
-  //   );
-  // }
+  // Loading state - show loading during data fetch
+  if (isLoading) {
+    return (
+      <FramerPageTransition screenKey="slova">
+        <div className="min-h-screen w-full max-w-full bg-[#f4ddc4] flex flex-col items-center justify-center p-2 sm:p-8 pb-20 overflow-x-hidden relative">
+          <BackButton onClick={() => onNavigateToScreen('home')} />
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-gray-700 mx-auto mb-4"></div>
+            <p className="text-xl text-gray-700">Načítám meditácie...</p>
+          </div>
+        </div>
+      </FramerPageTransition>
+    );
+  }
 
   // Error state
   if (error) {
@@ -167,8 +180,22 @@ const SlovaScreen = ({
               audioSrc={activeAudio.audioSrc}
               title={activeAudio.title}
               onClose={handleCloseAudio}
-              gender={gender}
+              albumTracks={activeAudio.albumTracks}
+              currentTrackIndex={activeAudio.currentTrackIndex}
+              onTrackChange={(newIndex) => {
+                if (activeAudio.albumTracks && activeAudio.albumTracks[newIndex]) {
+                  const track = activeAudio.albumTracks[newIndex];
+                  setActiveAudio({
+                    ...activeAudio,
+                    audioSrc: track.audioSrc,
+                    title: track.trackName,
+                    fileName: track.fileName,
+                    currentTrackIndex: newIndex
+                  });
+                }
+              }}
               allFiles={audioFiles}
+              autoplayEnabled={true}
             />
           )}
         </AnimatePresence>

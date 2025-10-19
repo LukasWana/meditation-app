@@ -6,3 +6,6 @@ export { useDirectAudio, DIRECT_AUDIO_URLS } from './useDirectAudio';
 export { useFirebaseAudioFilter } from './useFirebaseAudioFilter';
 export { useFirebaseHudbaFilter } from './useFirebaseHudbaFilter';
 export { useVoiceSwitcher } from './useVoiceSwitcher';
+export { useAudioContext } from './useAudioContext';
+export { useAutoplay } from './useAutoplay';
+export { useAudioPlayerLogic } from './useAudioPlayerLogic';
