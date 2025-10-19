@@ -13,8 +13,6 @@ const SlovaScreen = lazy(() => import('@features/meditation/screens/SlovaScreen'
 const AlbumDetailScreen = lazy(() => import('@features/meditation/screens/AlbumDetailScreen'));
 const AudioPlayer = lazy(() => import('@features/audio/AudioPlayer'));
 
-// Development only components
-const CacheTestComponent = lazy(() => import('@components/CacheTestComponent'));
 
 // Registry stránek s jejich konfigurací
 const SCREEN_REGISTRY = {
@@ -30,7 +28,7 @@ const SCREEN_REGISTRY = {
   'home': {
     component: HomeScreen,
     requiresLayout: true,
-    props: ['onNavigateToScreen', 'onTouchStart', 'onTouchMove', 'onTouchEnd'],
+    props: ['onNavigateToScreen', 'onTouchStart', 'onTouchMove', 'onTouchEnd', 'audioPermission'],
     transition: {
       type: 'slide',
       direction: 'up',
@@ -104,19 +102,7 @@ const SCREEN_REGISTRY = {
       type: 'modal',
       duration: 0.4
     }
-  },
-  // Development only screens
-  ...(import.meta.env.MODE === 'development' && {
-    'cache-test': {
-      component: CacheTestComponent,
-      requiresLayout: true,
-      props: [],
-      transition: {
-        type: 'fade',
-        duration: 0.3
-      }
-    }
-  })
+  }
 };
 
 // Definice animací

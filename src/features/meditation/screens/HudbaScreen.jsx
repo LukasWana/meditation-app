@@ -5,8 +5,6 @@ import { AudioPlayer } from '@features/audio';
 import { useFirebaseHudbaFilter } from '@features/audio/hooks/useFirebaseHudbaFilter';
 import { log } from '@services/logger';
 import cacheService from '@services/cacheServiceRefactored';
-import DurationPersistenceTest from '@components/DurationPersistenceTest';
-import DurationDisplayTest from '@components/DurationDisplayTest';
 
 // Vylepšená funkce pro načtení duration s retry logikou
 const getAudioDuration = (audioSrc, retries = 3) => {
@@ -432,12 +430,6 @@ const HudbaScreen = ({
         </AnimatePresence>
 
         {/* Duration Tests - pouze v development módu */}
-        {import.meta.env.MODE === 'development' && (
-          <>
-            <DurationPersistenceTest />
-            <DurationDisplayTest />
-          </>
-        )}
       </div>
     </FramerPageTransition>
   );

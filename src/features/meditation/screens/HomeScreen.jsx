@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { FramerPageTransition } from '@components';
 // useTouchPreloader odstraněn - nepoužívaný
@@ -7,9 +7,18 @@ const HomeScreen = ({
   onNavigateToScreen,
   onTouchStart,
   onTouchMove,
-  onTouchEnd
+  onTouchEnd,
+  audioPermission
 }) => {
   // Touch preloading odstraněn - nepoužívaný
+
+  // Aktivuj audio permission při prvním renderu HomeScreen
+  useEffect(() => {
+    if (audioPermission?.handleUserInteraction) {
+      // Simuluj user interaction pro aktivaci audio permission
+      audioPermission.handleUserInteraction();
+    }
+  }, [audioPermission]);
 
   return (
     <FramerPageTransition screenKey="home">
@@ -32,18 +41,6 @@ const HomeScreen = ({
           whileTap={{ scale: 0.95 }}
           transition={{ type: "spring", stiffness: 400, damping: 25 }}
         >
-          {/* Development Cache Test Button */}
-          {import.meta.env.MODE === 'development' && (
-            <button
-              onClick={(e) => {
-                e.stopPropagation();
-                onNavigateToScreen('cache-test');
-              }}
-              className="absolute top-4 right-4 px-3 py-1 bg-blue-500 text-white text-xs rounded hover:bg-blue-600 z-10"
-            >
-              🧪 Cache Test
-            </button>
-          )}
           <motion.div
             className="text-center px-2 sm:px-8 py-4"
             initial={{ opacity: 0, y: 20 }}

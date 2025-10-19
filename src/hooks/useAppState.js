@@ -1,6 +1,7 @@
 import { useState, useCallback } from 'react';
 
 export const useAppState = () => {
+
   // Meditace state
   const [time, setTime] = useState(300);
   const [selectedDuration, setSelectedDuration] = useState(5);

@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { motion } from 'framer-motion';
 import { useAudioPlayer, useFirebaseAudio } from './hooks';
 import {
@@ -74,7 +74,9 @@ const AudioPlayer = ({
   albumTracks = null,
   currentTrackIndex = 0,
   onTrackChange = null,
-  allFiles = []
+  allFiles = [],
+  autoplayEnabled = true,
+  onAutoplayChange = null
 }) => {
   const [selectedVoice, setSelectedVoice] = useState('male'); // 'male', 'female'
   const [currentAudioFile, setCurrentAudioFile] = useState(audioSrc); // Aktuální soubor
@@ -93,10 +95,10 @@ const AudioPlayer = ({
     return audioSrc;
   }, [audioSrc, albumTracks, currentTrackIndex]);
 
-  const currentVoice = currentFileInfo?.gender; // 'male' nebo 'female'
+  const currentVoice = useMemo(() => currentFileInfo?.gender, [currentFileInfo]); // 'male' nebo 'female'
 
   // Získej téma pro hledání variant
-  const currentTopic = currentFileInfo?.topic || currentFileInfo?.albumName;
+  const currentTopic = useMemo(() => currentFileInfo?.topic || currentFileInfo?.albumName, [currentFileInfo]);
 
   // Aktualizuj currentAudioFile když se změní audioSrc
   useEffect(() => {
@@ -125,9 +127,11 @@ const AudioPlayer = ({
   }, [title, albumTracks, currentTrackIndex]);
 
   // Zobraz přepínač pouze pro mluvené slovo (hudební soubory nemají varianty)
-  const hasVariants = currentFileInfo && currentFileInfo.gender && (
-    currentFileInfo.gender === 'male' || currentFileInfo.gender === 'female'
-  ) && currentTopic && currentFileInfo.number && currentFileInfo.type; // Musí mít téma a typ pro hledání alternativ
+  const hasVariants = useMemo(() => {
+    return currentFileInfo && currentFileInfo.gender && (
+      currentFileInfo.gender === 'male' || currentFileInfo.gender === 'female'
+    ) && currentTopic && currentFileInfo.number && currentFileInfo.type; // Musí mít téma a typ pro hledání alternativ
+  }, [currentFileInfo, currentTopic]);
 
   console.log('AudioPlayer debug:', {
     audioSrc,
@@ -138,7 +142,7 @@ const AudioPlayer = ({
   });
 
   // Funkce pro přepínání hlasů
-      const handleVoiceChange = (voice) => {
+  const handleVoiceChange = useCallback((voice) => {
         setSelectedVoice(voice);
         console.log('Voice changed to:', voice);
 
@@ -209,10 +213,10 @@ const AudioPlayer = ({
         } else {
           console.log('Cannot switch voice - missing file info or topic:', { currentFileInfo, currentTopic });
         }
-      };
+      }, [currentFileInfo, currentTopic, currentAudioFile]);
 
   // Extrahuj název souboru z URL nebo použij přímo název souboru
-  const getFileNameFromUrl = (urlOrFileName) => {
+  const getFileNameFromUrl = useCallback((urlOrFileName) => {
     if (!urlOrFileName) return null;
 
     // Pokud je to už název souboru (ne URL), vrať ho
@@ -224,23 +228,55 @@ const AudioPlayer = ({
     try {
       const url = new URL(urlOrFileName);
       const pathname = decodeURIComponent(url.pathname);
+      console.log('🔗 Parsing Firebase Storage URL:', { urlOrFileName, pathname });
+
       // Odstraň /o/ prefix a extrahuj cestu k souboru
-      const match = pathname.match(/\/o\/(.+?)\?/);
+      const match = pathname.match(/\/o\/(.+?)(?:\?|$)/);
       if (match) {
-        return match[1];
+        const fileName = match[1];
+        console.log('🔗 Extracted fileName:', fileName);
+        return fileName;
       }
     } catch (error) {
       console.warn('Failed to parse URL:', urlOrFileName, error);
     }
 
-    return urlOrFileName; // Fallback
-  };
+    // Pokud se nepodařilo extrahovat název souboru, vrať null místo celé URL
+    console.error('Failed to extract fileName from URL:', urlOrFileName);
+    return null;
+  }, []);
 
-  const fileName = getFileNameFromUrl(currentAudioFile);
+  const fileName = useMemo(() => getFileNameFromUrl(currentAudioFile), [currentAudioFile]);
   console.log('AudioPlayer: Extracted fileName from currentAudioFile:', { currentAudioFile, fileName });
 
   // Načtení URL z Firebase Storage
   const { audioUrl, loading: firebaseLoading, error: firebaseError } = useFirebaseAudio(fileName);
+
+  // Automatická aktivace audio při načtení stránky a při změně skladby
+  useEffect(() => {
+    if (audioUrl) {
+      console.log('🎵 AUDIO URL ZMĚNĚNO: Zkouším aktivovat zvuk automaticky...');
+
+      try {
+        // Vytvoř AudioContext pro aktivaci
+        const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+
+        if (audioContext.state === 'suspended') {
+          audioContext.resume().then(() => {
+            console.log('🎵 AUDIO URL ZMĚNĚNO: Audio aktivován automaticky!');
+            window.audioActivated = true;
+          }).catch((error) => {
+            console.log('🎵 AUDIO URL ZMĚNĚNO: Automatická aktivace selhala, čekám na uživatelskou interakci');
+          });
+        } else {
+          console.log('🎵 AUDIO URL ZMĚNĚNO: Audio už je aktivní!');
+          window.audioActivated = true;
+        }
+      } catch (error) {
+        console.log('🎵 AUDIO URL ZMĚNĚNO: Chyba při automatické aktivaci');
+      }
+    }
+  }, [audioUrl]);
 
   const {
     audioRef,
@@ -254,8 +290,8 @@ const AudioPlayer = ({
     skipForward,
     handleSeek,
     formatTime,
-    fadeOutAndClose
-  } = useAudioPlayer(audioUrl, albumTracks, currentTrackIndex, onTrackChange);
+    fadeOutAndClose,
+  } = useAudioPlayer(audioUrl, albumTracks, currentTrackIndex, onTrackChange, autoplayEnabled);
 
   return (
     <motion.div
@@ -347,6 +383,8 @@ const AudioPlayer = ({
             onSkipBackward={skipBackward}
             onSkipForward={skipForward}
             formatTime={formatTime}
+            autoplayEnabled={autoplayEnabled}
+            onAutoplayChange={onAutoplayChange}
             // Voice switcher props
             hasVariants={hasVariants}
             selectedVoice={selectedVoice}
@@ -378,6 +416,7 @@ const AudioPlayer = ({
           className="w-[8vw] h-[8vw] max-w-[40px] max-h-[40px] min-w-[32px] min-h-[32px]"
         />
       </div>*/}
+
     </motion.div>
   );
 };

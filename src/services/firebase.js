@@ -56,7 +56,7 @@ if (import.meta.env.VITE_RECAPTCHA_SITE_KEY) {
       provider: new ReCaptchaV3Provider(import.meta.env.VITE_RECAPTCHA_SITE_KEY),
       isTokenAutoRefreshEnabled: true
     });
-    
+
     if (import.meta.env.MODE === 'development') {
       console.log('🛡️ Firebase App Check initialized with reCAPTCHA v3');
     }

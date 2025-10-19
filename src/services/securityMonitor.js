@@ -98,10 +98,10 @@ class SecurityMonitor {
     try {
       // V produkci by se zde odeslalo do skutečného monitoring service
       // Například: Sentry, LogRocket, nebo vlastní API
-      
+
       // Pro demo účely pouze logujeme
       console.log('📡 Sending to monitoring service:', logEntry.event);
-      
+
       // Simulace odeslání
       // await fetch('/api/security-log', {
       //   method: 'POST',
@@ -162,7 +162,7 @@ class SecurityMonitor {
   getSecurityStats() {
     const now = new Date();
     const last24Hours = new Date(now.getTime() - 24 * 60 * 60 * 1000);
-    
+
     const recentEvents = this.events.filter(
       event => new Date(event.timestamp) > last24Hours
     );

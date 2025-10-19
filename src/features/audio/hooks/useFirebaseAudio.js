@@ -9,6 +9,12 @@ export const useFirebaseAudio = (audioFileName) => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [currentFileName, setCurrentFileName] = useState(null);
+  const [fallbackUsed, setFallbackUsed] = useState(false);
+
+  // Pokud není fileName, vrať prázdné hodnoty
+  if (!audioFileName) {
+    return { audioUrl: null, loading: false, error: 'No fileName provided' };
+  }
 
   useEffect(() => {
     if (!audioFileName) {
@@ -54,6 +60,7 @@ export const useFirebaseAudio = (audioFileName) => {
 
         setAudioUrl(url);
         setCurrentFileName(audioFileName);
+        setFallbackUsed(false); // Reset fallback flag při úspěchu
 
         // Spusť metadata preloading pro rychlejší přístup příště
         cacheService._preloadFirebaseMetadata(url, audioFileName).catch(err => {
@@ -62,7 +69,22 @@ export const useFirebaseAudio = (audioFileName) => {
 
       } catch (err) {
         console.error('Chyba při načítání audio URL:', err);
-        setError(err.message);
+
+        // Fallback mechanismus - zkus lokální soubor
+        if (!fallbackUsed) {
+          console.log('🔗 Attempting fallback for:', audioFileName);
+
+          // Zkus fallback URL (např. z public/media)
+          const fallbackUrl = `/media/${audioFileName}`;
+          console.log('🔗 Using fallback URL:', fallbackUrl);
+
+          setAudioUrl(fallbackUrl);
+          setCurrentFileName(audioFileName);
+          setFallbackUsed(true);
+          setError(null); // Clear error při úspěšném fallbacku
+        } else {
+          setError(err.message);
+        }
       } finally {
         setLoading(false);
       }
@@ -71,7 +93,12 @@ export const useFirebaseAudio = (audioFileName) => {
     loadAudioUrl();
   }, [audioFileName]);
 
-  return { audioUrl, loading, error };
+  return {
+    audioUrl,
+    loading,
+    error,
+    fallbackUsed
+  };
 };
 
 // Předdefinované audio soubory z vašeho Firebase Storage

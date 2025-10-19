@@ -4,6 +4,7 @@ export { useFirebaseHudbaScanner } from './useFirebaseHudbaScanner';
 export { useNavigation } from './useNavigation';
 export { useTouchNavigation } from './useTouchNavigation';
 export { useAppState } from './useAppState';
+export { useGlobalAudioPermission } from './useGlobalAudioPermission';
 
 export {
   useMetadataLoader,
