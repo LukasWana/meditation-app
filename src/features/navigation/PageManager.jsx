@@ -302,7 +302,7 @@ const PageManager = ({
         transition={transitionConfig}
         className="w-full h-full max-w-full overflow-x-hidden"
       >
-        <Suspense fallback={<div className="flex items-center justify-center h-full">Loading...</div>}>
+        <Suspense fallback={<div className="flex items-center justify-center h-full"></div>}>
           <Component {...props} />
         </Suspense>
       </motion.div>

@@ -54,7 +54,7 @@ class Logger {
         errorDisplay = JSON.stringify(error, null, 2);
       }
     }
-    
+
     console.error(`❌ [ERROR] ${message}`, errorDisplay, ...args);
     this.addToHistory('error', message, args, error);
 

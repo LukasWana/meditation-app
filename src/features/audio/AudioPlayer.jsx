@@ -379,10 +379,10 @@ const AudioPlayer = ({
             />
           </div>
 
-          {/* Loading Indicator - Top Left */}
-          <div className="absolute top-4 left-4 z-10">
+          {/* Loading Indicator - Hidden */}
+          {/* <div className="absolute top-4 left-4 z-10">
             <LoadingIndicator isLoading={isLoading || firebaseLoading} />
-          </div>
+          </div> */}
 
           {/* Audio Controls - Centered */}
           <AudioControls

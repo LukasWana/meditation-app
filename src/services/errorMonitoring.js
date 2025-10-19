@@ -73,7 +73,7 @@ class ErrorMonitoringService {
         if (this._shouldIgnoreResourceError(event)) {
           return;
         }
-        
+
         this.captureError('Resource Loading Error', {
           type: event.target.tagName,
           src: event.target.src || event.target.href,
@@ -81,7 +81,7 @@ class ErrorMonitoringService {
         });
       }
     };
-    
+
     window.addEventListener('error', handleResourceError, true);
   }
 

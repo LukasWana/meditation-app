@@ -33,20 +33,20 @@ const SlovaScreen = ({
     onPlayerStateChange?.(false); // Informuj o zavřeném přehrávači
   };
 
-  // Loading state - jednoduchý spinner
-  if (isLoading) {
-    return (
-      <FramerPageTransition screenKey="slova">
-        <div className="min-h-screen w-full max-w-full bg-[#f4ddc4] flex flex-col items-center justify-center p-2 sm:p-8 pb-20 overflow-x-hidden relative">
-          <BackButton onClick={() => onNavigateToScreen('home')} />
-          <div className="text-center">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-gray-700 mx-auto mb-4"></div>
-            <p className="text-xl text-gray-700">Načítám meditácie...</p>
-          </div>
-        </div>
-      </FramerPageTransition>
-    );
-  }
+  // Loading state - Hidden, show content immediately
+  // if (isLoading) {
+  //   return (
+  //     <FramerPageTransition screenKey="slova">
+  //       <div className="min-h-screen w-full max-w-full bg-[#f4ddc4] flex flex-col items-center justify-center p-2 sm:p-8 pb-20 overflow-x-hidden relative">
+  //         <BackButton onClick={() => onNavigateToScreen('home')} />
+  //         <div className="text-center">
+  //           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-gray-700 mx-auto mb-4"></div>
+  //           <p className="text-xl text-gray-700">Načítám meditácie...</p>
+  //         </div>
+  //       </div>
+  //     </FramerPageTransition>
+  //   );
+  // }
 
   // Error state
   if (error) {

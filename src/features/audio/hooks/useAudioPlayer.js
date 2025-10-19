@@ -754,7 +754,7 @@ export const useAudioPlayer = (audioUrl, albumTracks = null, currentTrackIndex =
       // Zjednodušené zastavení
       audio.pause();
       setAudioState(prev => ({ ...prev, isPlaying: false }));
-      
+
       // Zastav autoplay pro album
       setPlaybackState(prev => ({ ...prev, shouldAutoplay: false, wasPlayingBeforeSwitch: false }));
       console.log('🎵 Audio paused - autoplay disabled');
@@ -828,13 +828,13 @@ export const useAudioPlayer = (audioUrl, albumTracks = null, currentTrackIndex =
       audio.play().then(() => {
         setAudioState(prev => ({ ...prev, isPlaying: true }));
         setAudioState(prev => ({ ...prev, hasInteracted: true })); // Označ že uživatel už jednou klikl na play
-        
+
         // Pokud je to album a uživatel klikl na play, povol autoplay pro celé album
         if (albumTracks && albumTracks.length > 1) {
           setPlaybackState(prev => ({ ...prev, shouldAutoplay: true }));
           console.log('🎵 Album autoplay enabled - will continue playing through album');
         }
-        
+
         console.log('🎵 User interaction recorded - autoplay now enabled');
       }).catch(() => {
         console.log('🎵 Audio play failed');
@@ -910,18 +910,18 @@ export const useAudioPlayer = (audioUrl, albumTracks = null, currentTrackIndex =
       // Validate newTime is finite and within bounds
       if (isFinite(newTime) && newTime >= 0 && newTime <= playbackState.duration) {
         log.audio(`🎵 Seeking to ${newTime}s (${progress.toFixed(2)})`);
-        
+
         // Zjednodušený seek bez fade efektů
         audio.currentTime = newTime;
         setPlaybackState(prev => ({ ...prev, currentTime: newTime }));
-        
+
         // NENASTAVUJ hasInteracted při seek - play se spustí pouze explicitně
         // Pouze aktivuj audio context pro budoucí použití
         if (!window.audioActivated) {
           window.audioActivated = true;
           setAudioState(prev => ({ ...prev, hasInteracted: true }));
         }
-        
+
         log.audio('✅ Seek successful');
       } else {
         log.audio('⚠️ Invalid seek time:', { newTime, duration: playbackState.duration });
