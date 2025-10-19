@@ -247,33 +247,45 @@ const AudioPlayer = ({
   }, []);
 
   const fileName = useMemo(() => getFileNameFromUrl(currentAudioFile), [currentAudioFile]);
-  console.log('AudioPlayer: Extracted fileName from currentAudioFile:', { currentAudioFile, fileName });
 
   // Načtení URL z Firebase Storage
   const { audioUrl, loading: firebaseLoading, error: firebaseError } = useFirebaseAudio(fileName);
 
+  // Debug logy pro audio URL
+  useEffect(() => {
+    if (audioUrl) {
+      console.log('🎵 Audio URL loaded:', audioUrl);
+    } else if (firebaseError) {
+      console.log('🎵 Audio URL error:', firebaseError);
+    }
+  }, [audioUrl, firebaseError]);
+
   // Automatická aktivace audio při načtení stránky a při změně skladby
   useEffect(() => {
     if (audioUrl) {
-      console.log('🎵 AUDIO URL ZMĚNĚNO: Zkouším aktivovat zvuk automaticky...');
+      console.log('🎵 Activating audio for new track...');
 
       try {
-        // Vytvoř AudioContext pro aktivaci
-        const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+        // Použij globální AudioContext pokud existuje, jinak vytvoř nový
+        let audioContext = window.globalAudioContext;
+        if (!audioContext) {
+          audioContext = new (window.AudioContext || window.webkitAudioContext)();
+          window.globalAudioContext = audioContext;
+        }
 
         if (audioContext.state === 'suspended') {
           audioContext.resume().then(() => {
-            console.log('🎵 AUDIO URL ZMĚNĚNO: Audio aktivován automaticky!');
+            console.log('🎵 Audio activated for new track!');
             window.audioActivated = true;
           }).catch((error) => {
-            console.log('🎵 AUDIO URL ZMĚNĚNO: Automatická aktivace selhala, čekám na uživatelskou interakci');
+            console.log('🎵 Audio activation failed for new track');
           });
         } else {
-          console.log('🎵 AUDIO URL ZMĚNĚNO: Audio už je aktivní!');
+          console.log('🎵 Audio already active for new track');
           window.audioActivated = true;
         }
       } catch (error) {
-        console.log('🎵 AUDIO URL ZMĚNĚNO: Chyba při automatické aktivaci');
+        console.log('🎵 Audio activation error for new track');
       }
     }
   }, [audioUrl]);
@@ -354,7 +366,7 @@ const AudioPlayer = ({
           {/* Audio Element */}
           <audio
             ref={audioRef}
-            src={audioUrl}
+            src={audioUrl || undefined}
             preload="metadata"
           />
 

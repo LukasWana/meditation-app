@@ -778,7 +778,7 @@ class CacheService {
           }
 
           // Parsuj název souboru pro slova soubory
-          const parsed = parseAudioFileName(fileNameOnly);
+          let parsed = parseAudioFileName(fileNameOnly);
 
           // Pokud se nepodařilo parsovat, vytvoř základní objekt
           if (!parsed) {

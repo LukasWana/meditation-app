@@ -382,7 +382,7 @@ class CacheServiceRefactored {
           const fileNameOnly = fileName.split('/').pop();
 
           // Parsuj název souboru pro slova soubory
-          const parsed = parseAudioFileName(fileNameOnly);
+          let parsed = parseAudioFileName(fileNameOnly);
 
           // Pokud se nepodařilo parsovat, vytvoř základní objekt
           if (!parsed) {
