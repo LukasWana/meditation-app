@@ -67,7 +67,7 @@ class ErrorMonitoringService {
     });
 
     // Resource loading errors - pouze pro kritické chyby
-    window.addEventListener('error', (event) => {
+    const handleResourceError = (event) => {
       if (event.target !== window) {
         // Filtruj běžné chyby při načítání zdrojů
         if (this._shouldIgnoreResourceError(event)) {
@@ -80,7 +80,9 @@ class ErrorMonitoringService {
           error: event.error
         });
       }
-    }.bind(this), true);
+    };
+    
+    window.addEventListener('error', handleResourceError, true);
   }
 
   /**
@@ -92,28 +94,28 @@ class ErrorMonitoringService {
     if (event.target.tagName === 'AUDIO') {
       return true;
     }
-    
+
     // Ignoruj chyby pro obrázky (běžné při chybějících obrázcích)
     if (event.target.tagName === 'IMG') {
       return true;
     }
-    
+
     // Ignoruj chyby pro Firebase Storage soubory (běžné při network problémech)
     const src = event.target.src || event.target.href || '';
     if (src.includes('firebasestorage.googleapis.com')) {
       return true;
     }
-    
+
     // Ignoruj chyby pro lokální media soubory
     if (src.includes('/media/') || src.includes('/public/')) {
       return true;
     }
-    
+
     // Ignoruj chyby s konkrétními chybovými zprávami
     if (event.error && event.error.message) {
       const message = event.error.message.toLowerCase();
-      if (message.includes('cors') || 
-          message.includes('network') || 
+      if (message.includes('cors') ||
+          message.includes('network') ||
           message.includes('timeout') ||
           message.includes('404') ||
           message.includes('not found') ||
@@ -122,12 +124,12 @@ class ErrorMonitoringService {
         return true;
       }
     }
-    
+
     // Ignoruj chyby bez konkrétní zprávy (běžné při načítání zdrojů)
     if (!event.error || !event.error.message) {
       return true;
     }
-    
+
     return false;
   }
 
