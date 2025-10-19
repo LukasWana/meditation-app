@@ -705,7 +705,7 @@ export const useAudioPlayer = (audioUrl, albumTracks = null, currentTrackIndex =
               setAudioState(prev => ({ ...prev, hasInteracted: true }));
               window.audioActivated = true;
               proceedWithPlay();
-            }).catch((error) => {
+            }).catch(() => {
               console.log('🎵 PRVNÍ SPUŠTĚNÍ: Automatická aktivace selhala');
             });
           } else {
