@@ -290,17 +290,6 @@ const AudioPlayer = ({
     }
   }, [audioUrl]);
 
-  // Automatické spuštění při prvním otevření přehrávače
-  useEffect(() => {
-    if (audioUrl && !isPlaying && window.audioActivated) {
-      console.log('🎵 PRVNÍ SPUŠTĚNÍ: Spouštím přehrávání automaticky...');
-      // Malé zpoždění pro připravení audio elementu
-      setTimeout(() => {
-        togglePlayPause();
-      }, 1000);
-    }
-  }, [audioUrl, isPlaying, togglePlayPause]);
-
   const {
     audioRef,
     isPlaying,
@@ -316,6 +305,17 @@ const AudioPlayer = ({
     formatTime,
     fadeOutAndClose,
   } = useAudioPlayer(audioUrl, albumTracks, currentTrackIndex, onTrackChange, autoplayEnabled);
+
+  // Automatické spuštění při prvním otevření přehrávače
+  useEffect(() => {
+    if (audioUrl && !isPlaying && window.audioActivated) {
+      console.log('🎵 PRVNÍ SPUŠTĚNÍ: Spouštím přehrávání automaticky...');
+      // Malé zpoždění pro připravení audio elementu
+      setTimeout(() => {
+        togglePlayPause();
+      }, 1000);
+    }
+  }, [audioUrl, isPlaying, togglePlayPause]);
 
   return (
     <motion.div
