@@ -290,6 +290,17 @@ const AudioPlayer = ({
     }
   }, [audioUrl]);
 
+  // Automatické spuštění při prvním otevření přehrávače
+  useEffect(() => {
+    if (audioUrl && !isPlaying && window.audioActivated) {
+      console.log('🎵 PRVNÍ SPUŠTĚNÍ: Spouštím přehrávání automaticky...');
+      // Malé zpoždění pro připravení audio elementu
+      setTimeout(() => {
+        togglePlayPause();
+      }, 1000);
+    }
+  }, [audioUrl, isPlaying, togglePlayPause]);
+
   const {
     audioRef,
     isPlaying,
