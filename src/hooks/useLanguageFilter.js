@@ -26,12 +26,12 @@ export const useLanguageFilter = () => {
     if (section === 'slova') {
       return audioFiles.filter(file => {
         const fileName = file.fileName || file.audioSrc || '';
-        
+
         // Zkontroluj jazyk v názvu souboru
         // Formát: zensky4MSK-uzkost-osamelost.mp3
         // Kde MSK = mužský slovenský, FSK = ženský slovenský
         // atd.
-        
+
         if (fileName.includes('MSK') || fileName.includes('FSK')) {
           // Slovenské soubory
           return language === 'SK';
@@ -42,7 +42,7 @@ export const useLanguageFilter = () => {
           // Anglické soubory
           return language === 'EN';
         }
-        
+
         // Pokud není jazyk specifikován v názvu, zobraz pro všechny jazyky
         return true;
       });
@@ -58,12 +58,12 @@ export const useLanguageFilter = () => {
    */
   const getLanguagePath = (basePath) => {
     if (!basePath) return '';
-    
+
     // Pro sekci slova přidej jazykovou podsložku
     if (basePath.includes('slova')) {
       return `${basePath}/${language}`;
     }
-    
+
     return basePath;
   };
 

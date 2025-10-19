@@ -23,7 +23,7 @@ export const LanguageProvider = ({ children }) => {
       hudba: 'hudba',
       slova: 'slova',
       meditacia: 'meditácia',
-      nastavenie: 'nastavení',
+      nastavenie: 'nastavenie',
       dychanie: 'dýchanie',
       pomoc: 'pomoc',
 
@@ -150,6 +150,7 @@ export const LanguageProvider = ({ children }) => {
 
   const changeLanguage = (newLanguage) => {
     setLanguage(newLanguage);
+    localStorage.setItem('meditation-app-language', newLanguage);
   };
 
   const t = (key) => {

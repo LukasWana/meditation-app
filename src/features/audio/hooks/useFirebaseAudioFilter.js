@@ -7,6 +7,8 @@ import globalMetadataPreloader from '@services/globalMetadataPreloader';
  * Hook pro kombinaci Firebase audio a filtrování
  */
 export const useFirebaseAudioFilter = (userGender, userLanguage = 'sk') => {
+  // Debug: zobraz přijaté parametry
+  console.log(`🔍 useFirebaseAudioFilter - userGender: ${userGender}, userLanguage: ${userLanguage}`);
   // Použij CDN scanner pro dynamické načítání
   const {
     availableFiles,
@@ -19,10 +21,65 @@ export const useFirebaseAudioFilter = (userGender, userLanguage = 'sk') => {
     getFilesByGender
   } = useFirebaseCDNScanner();
 
-  // Filtruj soubory podle pohlaví uživatele - reaguje na změnu gender
+  // Filtruj soubory tuy pohlaví uživatele a jazyka - reaguje na změnu gender a language
   const filteredFiles = useMemo(() => {
-    return getFilesByGender(userGender);
-  }, [userGender, availableFiles]);
+    const genderFiltered = getFilesByGender(userGender);
+    console.log(`🔍 Gender filtered files: ${genderFiltered.length} for gender: ${userGender}`);
+
+    // Debug: zobraz všechny dostupné soubory
+    console.log(`🔍 All available files:`, availableFiles.map(f => ({
+      fileName: f.fileName,
+      parsed: f.parsed,
+      language: f.parsed?.language
+    })));
+
+    const languageFiltered = genderFiltered.filter(file => {
+      if (!file.parsed) {
+        console.log(`🔍 File ${file.fileName} has no parsed data`);
+        return false;
+      }
+
+      // Filtruj podle jazyka
+      const fileLanguage = file.parsed.language;
+      const userLang = userLanguage.toLowerCase();
+
+      // Mapování jazykových kódů - podporuj jak velká, tak malá písmena
+      const languageMap = {
+        'sk': 'sk',
+        'SK': 'sk',
+        'cz': 'cz',
+        'CZ': 'cz',
+        'en': 'en',
+        'EN': 'en'
+      };
+
+      const normalizedUserLang = languageMap[userLang] || 'sk';
+
+      console.log(`🔍 File: ${file.fileName}, fileLanguage: ${fileLanguage}, userLang: ${normalizedUserLang}, match: ${fileLanguage === normalizedUserLang}`);
+
+      // Filtruj podle složky - každý jazyk má svou vlastní složku
+      const fileName = file.fileName;
+
+      if (normalizedUserLang === 'sk') {
+        // Pro SK zobraz soubory ze složky "slova/" (bez jazykové podsložky) a ze složky "SK/"
+        return fileName.startsWith('slova/') || fileName.startsWith('SK/');
+      } else if (normalizedUserLang === 'cz') {
+        // Pro CZ zobraz soubory ze složky "CZ/"
+        return fileName.startsWith('CZ/');
+      } else if (normalizedUserLang === 'en') {
+        // Pro EN zobraz soubory ze složky "EN/"
+        return fileName.startsWith('EN/');
+      }
+
+      // Fallback - zobraz všechny soubory
+      return true;
+    });
+
+    console.log(`🔍 Language filtered files: ${languageFiltered.length} for language: ${userLanguage}`);
+
+    // Vrať pouze soubory v požadovaném jazyce - žádný fallback
+    return languageFiltered;
+  }, [userGender, userLanguage, availableFiles, getFilesByGender]);
 
   // Získej názvy souborů pro kompatibilitu s useAudioFilter
   const audioFileNames = availableFiles.map(file => file.fileName);

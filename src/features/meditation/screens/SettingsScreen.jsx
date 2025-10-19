@@ -37,14 +37,9 @@ const SettingsScreen = ({
             >
               <div className="w-full p-6 bg-white/50 backdrop-blur rounded-none border border-black/10">
                 <h3 className="text-2xl font-light mb-4" style={{fontFamily: 'Playfair Display'}}>
-                  {t('language')}
+                  {t('selectLanguage')}
                 </h3>
-                <div className="flex items-center justify-between">
-                  <span className="text-lg text-gray-700">
-                    {t('selectLanguage')}
-                  </span>
-                  <LanguageSwitcher />
-                </div>
+                <LanguageSwitcher />
               </div>
             </FramerSection>
 

@@ -16,10 +16,13 @@ const SlovaScreen = ({
   onPlayerStateChange // Callback pro předání stavu přehrávače
 }) => {
   const [activeAudio, setActiveAudio] = useState(null);
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
 
-  // Použij nový filtrovací systém
-  const { troubleItems: slovaItems, isLoading, error, audioFiles } = useFirebaseAudioFilter(gender);
+  // Debug: zobraz aktuální jazyk
+  console.log(`🔍 SlovaScreen - Current language: ${language}`);
+
+  // Použij nový filtrovací systém s jazykovým filtrováním
+  const { troubleItems: slovaItems, isLoading, error, audioFiles } = useFirebaseAudioFilter(gender, language.toLowerCase());
 
   // Preloading odstraněn - data se načítají při startu aplikace
 
