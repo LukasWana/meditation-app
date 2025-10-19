@@ -12,6 +12,7 @@ const AudioControls = ({
   currentTime,
   title,
   duration,
+  durationStable = true,
   onSeek,
   onTogglePlayPause,
   onSkipBackward,
@@ -37,8 +38,8 @@ const AudioControls = ({
         >
           {title || 'Meditácia'}
         </div>
-        {/* Duration - Total Time - Right under title */}
-        {duration && duration > 0 && (
+        {/* Duration - Total Time - Right under title - zobraz pouze když je stabilní */}
+        {duration && duration > 0 && durationStable && (
           <div
             className="text-gray-600 text-center"
             style={{fontFamily: 'Playfair Display', fontSize: 'clamp(20px, 1.3vw, 16px)'}}

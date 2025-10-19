@@ -296,6 +296,7 @@ const AudioPlayer = ({
     currentTime,
     duration,
     isLoading,
+    durationStable,
     progress,
     togglePlayPause,
     skipBackward,
@@ -390,6 +391,7 @@ const AudioPlayer = ({
             currentTime={currentTime}
             title={actualTitle}
             duration={duration}
+            durationStable={durationStable}
             onSeek={handleSeek}
             onTogglePlayPause={togglePlayPause}
             onSkipBackward={skipBackward}
