@@ -143,20 +143,24 @@ export const useAudioPlayer = (audioUrl, albumTracks = null, currentTrackIndex =
 
     // Resetuj stav pro nový soubor
     setPlaybackState(prev => ({ ...prev, currentTime: 0 }));
-    
+
     // Zkus načíst duration z metadata služby (rychlejší než cache podle URL)
     let durationFromMetadata = null;
-    if (audioUrl) {
+    if (audioUrl && globalMetadataPreloader.isInitialized) {
       const fileName = extractFileNameFromUrl(audioUrl);
       if (fileName) {
         const metadata = globalMetadataPreloader.getMetadata(fileName);
-        if (metadata && metadata.duration) {
+        if (metadata && metadata.duration && metadata.duration > 0) {
           durationFromMetadata = metadata.duration;
           log.audio(`Using metadata duration for ${fileName}: ${durationFromMetadata}s`);
+        } else {
+          log.audio(`No duration found in metadata for ${fileName}`);
         }
       }
+    } else if (audioUrl) {
+      log.audio(`GlobalMetadataPreloader not initialized yet for ${audioUrl}`);
     }
-    
+
     if (durationFromMetadata) {
       setPlaybackState(prev => ({ ...prev, duration: durationFromMetadata, isLoading: false })); // Duration už je známá
     } else {
@@ -167,6 +171,23 @@ export const useAudioPlayer = (audioUrl, albumTracks = null, currentTrackIndex =
         log.audio(`Using cached duration: ${cachedDuration}s`);
       } else {
         setPlaybackState(prev => ({ ...prev, duration: 0, isLoading: true })); // Reset pouze pokud není v cache
+      }
+
+      // Pokud metadata služba není inicializovaná, zkus ji inicializovat a načíst duration
+      if (audioUrl && !globalMetadataPreloader.isInitialized && !globalMetadataPreloader.isLoading) {
+        const fileName = extractFileNameFromUrl(audioUrl);
+        if (fileName) {
+          log.audio(`Trying to initialize GlobalMetadataPreloader for ${fileName}...`);
+          globalMetadataPreloader.initialize().then(() => {
+            const metadata = globalMetadataPreloader.getMetadata(fileName);
+            if (metadata && metadata.duration && metadata.duration > 0) {
+              setPlaybackState(prev => ({ ...prev, duration: metadata.duration, isLoading: false }));
+              log.audio(`Duration loaded from initialized metadata for ${fileName}: ${metadata.duration}s`);
+            }
+          }).catch((error) => {
+            log.audio(`Failed to initialize GlobalMetadataPreloader: ${error.message}`);
+          });
+        }
       }
     }
 
@@ -182,19 +203,26 @@ export const useAudioPlayer = (audioUrl, albumTracks = null, currentTrackIndex =
 
     // Načti délku při načítání metadata
     const handleLoadedMetadata = () => {
-      if (audio.duration && isFinite(audio.duration)) {
+      if (audio.duration && isFinite(audio.duration) && audio.duration > 0) {
         // Nastav duration pouze pokud není už nastavená z metadata nebo cache
         if (!durationFromMetadata && !cachedDuration) {
-          setPlaybackState(prev => ({ ...prev, duration: audio.duration }));
+          setPlaybackState(prev => ({ ...prev, duration: audio.duration, isLoading: false }));
           log.audio(`Duration loaded from audio element: ${audio.duration}s`);
+        } else if (durationFromMetadata && durationFromMetadata !== audio.duration) {
+          // Pokud se duration liší od metadata, použij tu z audio elementu
+          setPlaybackState(prev => ({ ...prev, duration: audio.duration, isLoading: false }));
+          log.audio(`Duration corrected from audio element: ${audio.duration}s (was ${durationFromMetadata}s)`);
         } else {
           log.audio(`Duration already known from metadata/cache: ${audio.duration}s`);
+          setPlaybackState(prev => ({ ...prev, isLoading: false }));
         }
 
         // Ulož délku do cache pro budoucí použití (fallback)
         if (audioUrl) {
           cacheService.setDuration(audioUrl, audio.duration);
         }
+      } else {
+        log.audio(`Invalid duration from audio element: ${audio.duration}`);
       }
     };
 
