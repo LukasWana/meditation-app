@@ -295,7 +295,7 @@ export const useAudioPlayer = (audioUrl, albumTracks = null, currentTrackIndex =
        // Auto-play při změně tracku (pouze pokud uživatel už jednou klikl na play a autoplay je zapnutý)
        // Ale ne při prvním vstupu do přehrávače (prohlížeč by to blokoval)
        // A pouze pokud je zvuk aktivován
-       const canAutoplay = (playbackState.shouldAutoplay || playbackState.wasPlayingBeforeSwitch) &&
+       const canAutoplay = playbackState.shouldAutoplay &&
                           autoplayEnabled &&
                           audioState.hasInteracted &&
                           !audioState.showActivation;
@@ -433,9 +433,12 @@ export const useAudioPlayer = (audioUrl, albumTracks = null, currentTrackIndex =
   useEffect(() => {
     if (albumTracks && albumTracks.length > 1 && currentTrackIndex > 0 && audioState.hasInteracted) {
         // Pokud se mění track a uživatel už jednou klikl na play, spusť autoplay
-        setPlaybackState(prev => ({ ...prev, shouldAutoplay: true, wasPlayingBeforeSwitch: true }));
+        // Ale pouze pokud je aktuálně přehrávání aktivní (ne při seek)
+        if (audioState.isPlaying) {
+          setPlaybackState(prev => ({ ...prev, shouldAutoplay: true, wasPlayingBeforeSwitch: true }));
+        }
     }
-  }, [currentTrackIndex, albumTracks, audioState.hasInteracted]);
+  }, [currentTrackIndex, albumTracks, audioState.hasInteracted, audioState.isPlaying]);
 
   // Fade out funkce
   const fadeOut = (audio, duration = 1000, callback) => {
@@ -751,7 +754,10 @@ export const useAudioPlayer = (audioUrl, albumTracks = null, currentTrackIndex =
       // Zjednodušené zastavení
       audio.pause();
       setAudioState(prev => ({ ...prev, isPlaying: false }));
-      console.log('🎵 Audio paused');
+      
+      // Zastav autoplay pro album
+      setPlaybackState(prev => ({ ...prev, shouldAutoplay: false, wasPlayingBeforeSwitch: false }));
+      console.log('🎵 Audio paused - autoplay disabled');
     } else {
       // Fade in při spuštění
       log.audio('🎵 Playing audio with fade in');
@@ -822,6 +828,13 @@ export const useAudioPlayer = (audioUrl, albumTracks = null, currentTrackIndex =
       audio.play().then(() => {
         setAudioState(prev => ({ ...prev, isPlaying: true }));
         setAudioState(prev => ({ ...prev, hasInteracted: true })); // Označ že uživatel už jednou klikl na play
+        
+        // Pokud je to album a uživatel klikl na play, povol autoplay pro celé album
+        if (albumTracks && albumTracks.length > 1) {
+          setPlaybackState(prev => ({ ...prev, shouldAutoplay: true }));
+          console.log('🎵 Album autoplay enabled - will continue playing through album');
+        }
+        
         console.log('🎵 User interaction recorded - autoplay now enabled');
       }).catch(() => {
         console.log('🎵 Audio play failed');
@@ -863,10 +876,10 @@ export const useAudioPlayer = (audioUrl, albumTracks = null, currentTrackIndex =
   const handleSeek = (progressValue) => {
     const audio = audioRef.current;
     if (!audio || !playbackState.duration || isNaN(playbackState.duration) || playbackState.duration <= 0) {
-      log.audio('⚠️ handleSeek: Invalid audio or duration', { 
-        hasAudio: !!audio, 
+      log.audio('⚠️ handleSeek: Invalid audio or duration', {
+        hasAudio: !!audio,
         duration: playbackState.duration,
-        durationStable: playbackState.durationStable 
+        durationStable: playbackState.durationStable
       });
       return;
     }
@@ -902,9 +915,12 @@ export const useAudioPlayer = (audioUrl, albumTracks = null, currentTrackIndex =
         audio.currentTime = newTime;
         setPlaybackState(prev => ({ ...prev, currentTime: newTime }));
         
-        // Označ že uživatel interagoval
-        setAudioState(prev => ({ ...prev, hasInteracted: true }));
-        window.audioActivated = true;
+        // NENASTAVUJ hasInteracted při seek - play se spustí pouze explicitně
+        // Pouze aktivuj audio context pro budoucí použití
+        if (!window.audioActivated) {
+          window.audioActivated = true;
+          setAudioState(prev => ({ ...prev, hasInteracted: true }));
+        }
         
         log.audio('✅ Seek successful');
       } else {
