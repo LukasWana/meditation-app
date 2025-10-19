@@ -161,11 +161,12 @@ export const useAudioPlayer = (audioUrl, albumTracks = null, currentTrackIndex =
       log.audio(`GlobalMetadataPreloader not initialized yet for ${audioUrl}`);
     }
 
+    // Fallback na cache podle URL
+    const cachedDuration = audioUrl ? cacheService.getDuration(audioUrl) : null;
+    
     if (durationFromMetadata) {
       setPlaybackState(prev => ({ ...prev, duration: durationFromMetadata, isLoading: false })); // Duration už je známá
     } else {
-      // Fallback na cache podle URL
-      const cachedDuration = audioUrl ? cacheService.getDuration(audioUrl) : null;
       if (cachedDuration) {
         setPlaybackState(prev => ({ ...prev, duration: cachedDuration, isLoading: true }));
         log.audio(`Using cached duration: ${cachedDuration}s`);
@@ -316,6 +317,23 @@ export const useAudioPlayer = (audioUrl, albumTracks = null, currentTrackIndex =
            muted: audio.muted
          });
 
+         // Definuj proceedWithAutoplay funkci před jejím použitím
+         const proceedWithAutoplay = () => {
+           // Přidej delší delay pro autoplay aby se audio element stihl připravit
+           setTimeout(() => {
+             // Zjednodušený autoplay - jen spusť audio bez složitých kontrol
+             audio.play().then(() => {
+               setAudioState(prev => ({ ...prev, isPlaying: true }));
+               setPlaybackState(prev => ({ ...prev, shouldAutoplay: false, wasPlayingBeforeSwitch: false }));
+               console.log('✅ AUTOPLAY: Auto-play successful');
+             }).catch((error) => {
+               console.log('❌ AUTOPLAY: Failed to auto-play:', error);
+               setAudioState(prev => ({ ...prev, isPlaying: false }));
+               setPlaybackState(prev => ({ ...prev, shouldAutoplay: false, wasPlayingBeforeSwitch: false }));
+             });
+           }, 500); // Zvýšen delay na 500ms
+         };
+
          // Zkontroluj jestli je audio element připravený pro autoplay
          if (audio.readyState >= 2 && audio.networkState !== 3) {
            log.audio('🎵 AUTOPLAY: Audio element is ready, attempting autoplay');
@@ -348,22 +366,6 @@ export const useAudioPlayer = (audioUrl, albumTracks = null, currentTrackIndex =
              console.log('🎵 AUTOPLAY: No AudioContext available, proceeding with autoplay');
              proceedWithAutoplay();
            }
-
-           const proceedWithAutoplay = () => {
-             // Přidej delší delay pro autoplay aby se audio element stihl připravit
-             setTimeout(() => {
-               // Zjednodušený autoplay - jen spusť audio bez složitých kontrol
-               audio.play().then(() => {
-                 setAudioState(prev => ({ ...prev, isPlaying: true }));
-                 setPlaybackState(prev => ({ ...prev, shouldAutoplay: false, wasPlayingBeforeSwitch: false }));
-                 console.log('✅ AUTOPLAY: Auto-play successful');
-               }).catch((error) => {
-                 console.log('❌ AUTOPLAY: Failed to auto-play:', error);
-                 setAudioState(prev => ({ ...prev, isPlaying: false }));
-                 setPlaybackState(prev => ({ ...prev, shouldAutoplay: false, wasPlayingBeforeSwitch: false }));
-               });
-             }, 500); // 500ms delay pro autoplay
-           };
          } else {
            log.audio('🎵 AUTOPLAY: Audio element not ready for autoplay, skipping');
            log.audio('🎵 AUTOPLAY: Audio readyState:', audio.readyState, 'networkState:', audio.networkState);
