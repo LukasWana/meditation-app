@@ -167,13 +167,11 @@ export const useAudioPlayer = (audioUrl, albumTracks = null, currentTrackIndex =
 
     if (durationFromMetadata) {
       setPlaybackState(prev => ({ ...prev, duration: durationFromMetadata, isLoading: false, durationStable: true })); // Duration už je známá a stabilní
+    } else if (cachedDuration) {
+      setPlaybackState(prev => ({ ...prev, duration: cachedDuration, isLoading: true, durationStable: true })); // Cached duration je také stabilní
+      log.audio(`Using cached duration: ${cachedDuration}s`);
     } else {
-      if (cachedDuration) {
-        setPlaybackState(prev => ({ ...prev, duration: cachedDuration, isLoading: true, durationStable: false }));
-        log.audio(`Using cached duration: ${cachedDuration}s`);
-      } else {
-        setPlaybackState(prev => ({ ...prev, duration: 0, isLoading: true, durationStable: false })); // Reset pouze pokud není v cache
-      }
+      setPlaybackState(prev => ({ ...prev, duration: 0, isLoading: true, durationStable: false })); // Reset pouze pokud není v cache
 
       // Pokud metadata služba není inicializovaná, zkus ji inicializovat a načíst duration
       if (audioUrl && !globalMetadataPreloader.isInitialized && !globalMetadataPreloader.isLoading) {
@@ -216,7 +214,8 @@ export const useAudioPlayer = (audioUrl, albumTracks = null, currentTrackIndex =
           log.audio(`Duration corrected from audio element: ${audio.duration}s (was ${durationFromMetadata}s)`);
         } else {
           log.audio(`Duration already known from metadata/cache: ${audio.duration}s`);
-          setPlaybackState(prev => ({ ...prev, isLoading: false, durationStable: true }));
+          setPlaybackState(prev => ({ ...prev, isLoading: false }));
+          // Nezměň durationStable - už je správně nastavená
         }
 
         // Ulož délku do cache pro budoucí použití (fallback)
