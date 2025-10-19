@@ -452,33 +452,7 @@ export const useAudioPlayer = (audioUrl, albumTracks = null, currentTrackIndex =
     }
   };
 
-  // Detekce tichého přehrávání - zkontroluje jestli se audio skutečně přehrává
-  const detectSilentPlayback = (audio) => {
-    return new Promise((resolve) => {
-      const startTime = audio.currentTime;
-      setTimeout(() => {
-        const endTime = audio.currentTime;
-        const timeDiff = endTime - startTime;
-        const isActuallyPlaying = timeDiff > 0.1; // Pokud se čas posunul o více než 0.1s
-        log.audio(`🎵 Silent playback detection: time diff = ${timeDiff}, actually playing = ${isActuallyPlaying}`);
-        resolve(isActuallyPlaying);
-      }, 500); // Počkej 500ms
-    });
-  };
-
-  // Detekce nechtěného zastavení - zkontroluje jestli se audio zastavilo nechtěně
-  const detectUnexpectedStop = (audio) => {
-    return new Promise((resolve) => {
-      const startTime = audio.currentTime;
-      setTimeout(() => {
-        const endTime = audio.currentTime;
-        const timeDiff = endTime - startTime;
-        const isStillPlaying = timeDiff > 0.1; // Pokud se čas posunul o více než 0.1s
-        log.audio(`🎵 Unexpected stop detection: time diff = ${timeDiff}, still playing = ${isStillPlaying}`);
-        resolve(isStillPlaying);
-      }, 1000); // Počkej 1s
-    });
-  };
+  // Tyto funkce nejsou používány - odstraněny pro zjednodušení
 
   // Oprava stavu audio elementu po načtení - zajistí že je audio připravené k přehrávání
   const fixAudioElementState = (audio) => {
@@ -755,8 +729,8 @@ export const useAudioPlayer = (audioUrl, albumTracks = null, currentTrackIndex =
           setAudioState(prev => ({ ...prev, isPlaying: true }));
           setAudioState(prev => ({ ...prev, hasInteracted: true })); // Označ že uživatel už jednou klikl na play
           console.log('🎵 User interaction recorded - autoplay now enabled');
-        }).catch((error) => {
-          console.log('🎵 Audio play failed:', error);
+        }).catch(() => {
+          console.log('🎵 Audio play failed');
           setAudioState(prev => ({ ...prev, isPlaying: false }));
         });
       };
