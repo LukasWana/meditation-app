@@ -12,11 +12,11 @@ class Logger {
   }
 
   /**
-   * Debug logging - pouze v development módu
+   * Debug logging - pouze v development módu (SKRYTO)
    */
   debug(message, ...args) {
     if (this.isDevelopment) {
-      console.log(`🔍 [DEBUG] ${message}`, ...args);
+      // console.log(`🔍 [DEBUG] ${message}`, ...args);
       this.addToHistory('debug', message, args);
     }
   }
@@ -79,38 +79,38 @@ class Logger {
    */
   audio(message, ...args) {
     if (this.isDevelopment) {
-      console.log(`🎵 [AUDIO] ${message}`, ...args);
+      // console.log(`🎵 [AUDIO] ${message}`, ...args);
       this.addToHistory('audio', message, args);
     }
   }
 
   /**
-   * Cache specifické logging
+   * Cache specifické logging (SKRYTO)
    */
   cache(message, ...args) {
     if (this.isDevelopment) {
-      console.log(`💾 [CACHE] ${message}`, ...args);
+      // console.log(`💾 [CACHE] ${message}`, ...args);
       this.addToHistory('cache', message, args);
     }
   }
 
   /**
-   * Firebase specifické logging
+   * Firebase specifické logging (SKRYTO)
    */
   firebase(message, ...args) {
     if (this.isDevelopment) {
-      console.log(`🔥 [FIREBASE] ${message}`, ...args);
+      // console.log(`🔥 [FIREBASE] ${message}`, ...args);
       this.addToHistory('firebase', message, args);
     }
   }
 
   /**
-   * Performance logging
+   * Performance logging (SKRYTO)
    */
   performance(message, duration, ...args) {
     if (this.isDevelopment) {
-      const color = duration > 1000 ? '🔴' : duration > 500 ? '🟡' : '🟢';
-      console.log(`${color} [PERF] ${message} (${duration}ms)`, ...args);
+      // const color = duration > 1000 ? '🔴' : duration > 500 ? '🟡' : '🟢';
+      // console.log(`${color} [PERF] ${message} (${duration}ms)`, ...args);
       this.addToHistory('performance', message, args, { duration });
     }
   }

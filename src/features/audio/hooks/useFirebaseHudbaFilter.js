@@ -50,38 +50,38 @@ export const useFirebaseHudbaFilter = () => {
 
   // Filtruj soubory podle témat a vyber nejvyšší verzi pro každé téma
   const hudbaItems = useMemo(() => {
-    console.log('🔄 useFirebaseHudbaFilter useMemo triggered');
-    console.log('📊 availableFiles:', availableFiles?.length || 0);
-    console.log('📊 coverImages:', coverImages);
+    // console.log('🔄 useFirebaseHudbaFilter useMemo triggered');
+    // console.log('📊 availableFiles:', availableFiles?.length || 0);
+    // console.log('📊 coverImages:', coverImages);
     const items = [];
     const albums = new Map(); // Pro skupování album skladeb
 
     // Filtruj pouze hudební soubory (ze složky hudba/)
     const hudbaFiles = availableFiles.filter(file => file.type === 'hudba' && file.isAvailable);
-    console.log(`📊 Processing ${hudbaFiles.length} hudba files:`, hudbaFiles.map(f => ({
-      fileName: f.fileName,
-      type: f.type,
-      isAlbum: f.isAlbum,
-      albumName: f.albumName,
-      parsed: f.parsed
-    })));
+    // console.log(`📊 Processing ${hudbaFiles.length} hudba files:`, hudbaFiles.map(f => ({
+    //   fileName: f.fileName,
+    //   type: f.type,
+    //   isAlbum: f.isAlbum,
+    //   albumName: f.albumName,
+    //   parsed: f.parsed
+    // })));
 
     // Rozděl soubory na samostatné skladby a alba podle struktury složek
     const standaloneSongs = hudbaFiles.filter(file => {
       // Samostatné skladby: přímo ve složce hudba/ (např. hudba/song.mp3)
       const isStandalone = file.fileName.startsWith('hudba/') && !file.fileName.substring(6).includes('/');
-      console.log(`🔍 Standalone song check: ${file.fileName}, isStandalone: ${isStandalone}`);
+      // console.log(`🔍 Standalone song check: ${file.fileName}, isStandalone: ${isStandalone}`);
       return isStandalone;
     });
 
     const albumSongs = hudbaFiles.filter(file => {
       // Album skladby: v podsložce hudba/ (např. hudba/ambient-journey/song.mp3)
       const isAlbumSong = file.fileName.startsWith('hudba/') && file.fileName.substring(6).includes('/');
-      console.log(`🔍 Album song check: ${file.fileName}, isAlbumSong: ${isAlbumSong}, parsed:`, file.parsed);
+      // console.log(`🔍 Album song check: ${file.fileName}, isAlbumSong: ${isAlbumSong}, parsed:`, file.parsed);
       return isAlbumSong;
     });
 
-    console.log(`📊 File classification: ${standaloneSongs.length} standalone, ${albumSongs.length} album songs`);
+    // console.log(`📊 File classification: ${standaloneSongs.length} standalone, ${albumSongs.length} album songs`);
 
     // Zpracuj samostatné skladby jako jednotlivé položky
     standaloneSongs.forEach(file => {
@@ -107,27 +107,27 @@ export const useFirebaseHudbaFilter = () => {
       // Extrahuj název podsložky (např. "ambient-journey" z "hudba/ambient-journey/song.mp3")
       const pathParts = file.fileName.split('/');
       const albumName = pathParts[1]; // Druhá část cesty je název alba
-      console.log(`🔍 Album processing: ${file.fileName}, pathParts: [${pathParts.join(', ')}], albumName: ${albumName}, parsed:`, file.parsed);
+      // console.log(`🔍 Album processing: ${file.fileName}, pathParts: [${pathParts.join(', ')}], albumName: ${albumName}, parsed:`, file.parsed);
 
       if (!albumGroups.has(albumName)) {
         albumGroups.set(albumName, []);
-        console.log(`📁 Created new album group: ${albumName}`);
+        // console.log(`📁 Created new album group: ${albumName}`);
       }
       albumGroups.get(albumName).push(file);
-      console.log(`📄 Added file to album ${albumName}: ${file.fileName}`);
+      // console.log(`📄 Added file to album ${albumName}: ${file.fileName}`);
     });
 
-    console.log(`📊 Album groups after processing:`, Array.from(albumGroups.entries()).map(([name, songs]) => ({
-      name,
-      songCount: songs.length,
-      songs: songs.map(s => s.fileName)
-    })));
+    // console.log(`📊 Album groups after processing:`, Array.from(albumGroups.entries()).map(([name, songs]) => ({
+    //   name,
+    //   songCount: songs.length,
+    //   songs: songs.map(s => s.fileName)
+    // })));
 
     // Vytvoř alba z seskupených skladeb
-    console.log(`📊 Album groups:`, Array.from(albumGroups.keys()));
+    // console.log(`📊 Album groups:`, Array.from(albumGroups.keys()));
     albumGroups.forEach((songs, albumName) => {
-      console.log(`🎵 Creating album: ${albumName} with ${songs.length} tracks`);
-      console.log(`📄 Album songs:`, songs.map(s => s.fileName));
+      // console.log(`🎵 Creating album: ${albumName} with ${songs.length} tracks`);
+      // console.log(`📄 Album songs:`, songs.map(s => s.fileName));
 
       // Seřaď skladby podle názvu souboru
       songs.sort((a, b) => a.fileName.localeCompare(b.fileName));
@@ -139,7 +139,7 @@ export const useFirebaseHudbaFilter = () => {
       } else {
         coverImageUrl = coverImages[albumName] || null;
       }
-      console.log(`🖼️ Cover image for ${albumName}:`, coverImageUrl);
+      // console.log(`🖼️ Cover image for ${albumName}:`, coverImageUrl);
 
       // Funkce pro vyčištění názvu skladby - odstraní číslo skladby
       const cleanTrackName = (trackName) => {
@@ -184,16 +184,16 @@ export const useFirebaseHudbaFilter = () => {
         coverImage: coverImageUrl
       };
 
-      console.log(`✅ Album created:`, albumItem);
+      // console.log(`✅ Album created:`, albumItem);
       items.push(albumItem);
     });
 
-    console.log(`📊 Items before sorting:`, items.map(item => ({
-      key: item.key,
-      title: item.title,
-      type: item.type,
-      tracks: item.tracks?.length || 'N/A'
-    })));
+    // console.log(`📊 Items before sorting:`, items.map(item => ({
+    //   key: item.key,
+    //   title: item.title,
+    //   type: item.type,
+    //   tracks: item.tracks?.length || 'N/A'
+    // })));
 
     // Seřaď podle číslování
     const sortedItems = items.sort((a, b) => {
@@ -206,12 +206,12 @@ export const useFirebaseHudbaFilter = () => {
       return a.title.localeCompare(b.title);
     });
 
-    console.log(`📊 Final items:`, sortedItems.map(item => ({
-      key: item.key,
-      title: item.title,
-      type: item.type,
-      tracks: item.tracks?.length || 'N/A'
-    })));
+    // console.log(`📊 Final items:`, sortedItems.map(item => ({
+    //   key: item.key,
+    //   title: item.title,
+    //   type: item.type,
+    //   tracks: item.tracks?.length || 'N/A'
+    // })));
 
     return sortedItems;
 

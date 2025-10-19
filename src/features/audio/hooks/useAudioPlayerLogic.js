@@ -37,7 +37,7 @@ export const useAudioPlayerLogic = ({
 
   // Aktualizuj currentAudioFile když se změní audioSrc
   useEffect(() => {
-    console.log('AudioPlayer: actualAudioSrc changed:', actualAudioSrc);
+    // console.log('AudioPlayer: actualAudioSrc changed:', actualAudioSrc);
     setCurrentAudioFile(actualAudioSrc);
   }, [actualAudioSrc]);
 
@@ -54,13 +54,13 @@ export const useAudioPlayerLogic = ({
     try {
       const url = new URL(urlOrFileName);
       const pathname = decodeURIComponent(url.pathname);
-      console.log('🔗 Parsing Firebase Storage URL:', { urlOrFileName, pathname });
+      // console.log('🔗 Parsing Firebase Storage URL:', { urlOrFileName, pathname });
 
       // Odstraň /o/ prefix a extrahuj cestu k souboru
       const match = pathname.match(/\/o\/(.+?)(?:\?|$)/);
       if (match) {
         const fileName = match[1];
-        console.log('🔗 Extracted fileName:', fileName);
+        // console.log('🔗 Extracted fileName:', fileName);
         return fileName;
       }
     } catch (error) {
@@ -82,26 +82,26 @@ export const useAudioPlayerLogic = ({
 
   // Debug logy pro audio URL
   useEffect(() => {
-    if (audioUrl) {
-      console.log('🎵 Audio URL loaded:', audioUrl);
-    } else if (firebaseError) {
-      console.log('🎵 Audio URL error:', firebaseError);
-    }
+    // if (audioUrl) {
+    //   console.log('🎵 Audio URL loaded:', audioUrl);
+    // } else if (firebaseError) {
+    //   console.log('🎵 Audio URL error:', firebaseError);
+    // }
   }, [audioUrl, firebaseError]);
 
-  console.log('AudioPlayer debug:', {
-    audioSrc,
-    currentAudioFile,
-    hasVariants,
-    currentVoice,
-    selectedVoice
-  });
+  // console.log('AudioPlayer debug:', {
+  //   audioSrc,
+  //   currentAudioFile,
+  //   hasVariants,
+  //   currentVoice,
+  //   selectedVoice
+  // });
 
   // Wrapper pro handleVoiceChange, který aktualizuje currentAudioFile
   const handleVoiceChangeWithUpdate = useCallback((voice) => {
     const newAudioSrc = handleVoiceChange(voice);
     if (newAudioSrc) {
-      console.log('Switching to new audio source:', newAudioSrc);
+      // console.log('Switching to new audio source:', newAudioSrc);
       setCurrentAudioFile(newAudioSrc);
     }
   }, [handleVoiceChange, setCurrentAudioFile]);

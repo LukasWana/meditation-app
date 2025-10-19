@@ -68,9 +68,24 @@ export const useFirebaseAudioFilter = (userGender, userLanguage = 'sk') => {
         const voiceType = file.parsed.type || 'MSK';
         const topic = file.parsed.topic || topicKey.replace('-', ' ');
 
-        // Získej skutečnou délku z globálního preloaderu
+        // Získej skutečnou délku z globálního preloaderu nebo fallback na file.duration
         const globalMetadata = globalMetadataPreloader.getMetadata(file.fileName);
-        const actualDuration = globalMetadata?.durationFormatted || file.duration || 'N/A';
+        let actualDuration = 'N/A';
+
+        if (globalMetadata?.durationFormatted) {
+          actualDuration = globalMetadata.durationFormatted;
+        } else if (file.duration && file.duration !== 'N/A') {
+          actualDuration = file.duration;
+        } else {
+          // Zkus načíst duration z cache nebo metadata
+          const cachedDuration = globalMetadata?.duration;
+          if (cachedDuration && cachedDuration > 0) {
+            // Převeď sekundy na MM:SS formát
+            const minutes = Math.floor(cachedDuration / 60);
+            const seconds = Math.floor(cachedDuration % 60);
+            actualDuration = `${minutes}:${seconds.toString().padStart(2, '0')}`;
+          }
+        }
 
         result.push({
           key: `${topicKey}-${file.parsed.gender}-${file.parsed.type}`,

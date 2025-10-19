@@ -44,7 +44,7 @@ class OptimizedMetadataService {
           timestamp: Date.now()
         });
 
-        log.debug(`✅ Metadata loaded for ${fileName}:`, metadata);
+        // log.debug(`✅ Metadata loaded for ${fileName}:`, metadata);
         return metadata;
       } else {
         log.warn(`⚠️ No metadata found for ${fileName}`);

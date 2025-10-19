@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { AnimatePresence } from 'framer-motion';
 import { FramerButton, FramerSection, FramerPageTransition, BackButton } from '@components';
+import { useLanguage } from '@contexts/LanguageContext';
 // Odstraněny skeleton loadery
 import { AudioPlayer } from '@features/audio';
 // Preloadery odstraněny - data se načítají při startu
@@ -15,6 +16,7 @@ const SlovaScreen = ({
   onPlayerStateChange // Callback pro předání stavu přehrávače
 }) => {
   const [activeAudio, setActiveAudio] = useState(null);
+  const { t } = useLanguage();
 
   // Použij nový filtrovací systém
   const { troubleItems: slovaItems, isLoading, error, audioFiles } = useFirebaseAudioFilter(gender);
@@ -98,10 +100,10 @@ const SlovaScreen = ({
             delay={0.1}
           >
             <h1 className="text-6xl font-light" style={{fontFamily: 'Playfair Display'}}>
-              slova
+              {t('slova')}
             </h1>
             <p className="text-xl text-center text-gray-700 mb-8" style={{fontFamily: 'Playfair Display'}}>
-            mluvené meditacie
+              {t('mluvene')}
             </p>
 
             {/* Zobraz statistiky pro uživatele - ZAKOMENTOVÁNO kvůli poskakování */}

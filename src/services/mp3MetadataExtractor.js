@@ -77,7 +77,7 @@ class MP3MetadataExtractor {
           fileName: fileName
         };
 
-        log.debug(`✅ Metadata loaded for ${fileName}:`, metadata);
+        // log.debug(`✅ Metadata loaded for ${fileName}:`, metadata);
         resolve(metadata);
       };
 

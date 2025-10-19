@@ -66,8 +66,8 @@ if (import.meta.env.VITE_RECAPTCHA_SITE_KEY) {
   }
 } else {
   if (import.meta.env.MODE === 'development') {
-    console.warn('⚠️ VITE_RECAPTCHA_SITE_KEY není nastaven - App Check není aktivní');
-    console.warn('   Pro produkci doporučujeme nastavit reCAPTCHA v3');
+    // console.warn('⚠️ VITE_RECAPTCHA_SITE_KEY není nastaven - App Check není aktivní');
+    // console.warn('   Pro produkci doporučujeme nastavit reCAPTCHA v3');
   }
 }
 

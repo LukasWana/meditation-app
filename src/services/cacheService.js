@@ -620,7 +620,7 @@ class CacheService {
                   folder: folderRef.name, // Hlavní složka (hudba/ nebo slova/)
                   subFolder: subFolderRef.name // Podsložka (např. ambient-journey)
                 });
-                console.log(`📄 Added file: ${fileName}, subFolder: ${subFolderRef.name}, folder: ${folderRef.name}`);
+                // console.log(`📄 Added file: ${fileName}, subFolder: ${subFolderRef.name}, folder: ${folderRef.name}`);
               });
             } catch (subErr) {
               if (import.meta.env.MODE === 'development') {
@@ -636,7 +636,7 @@ class CacheService {
       }
 
       // Debug: zobraz všechny soubory
-      console.log('📁 All files found:', allFiles.map(item => item.name));
+      // console.log('📁 All files found:', allFiles.map(item => item.name));
 
       // Filtruj MP3 soubory podle složky
       const hudbaFiles = allFiles
@@ -645,7 +645,7 @@ class CacheService {
           const isMp3 = name.endsWith('.mp3');
           const isHudba = item.folder === 'hudba';
           const isSubFolder = item.subFolder; // Zkontroluj, jestli je to soubor z podsložky
-          console.log(`🔍 File: ${item.name}, folder: ${item.folder}, subFolder: ${item.subFolder}, isMp3: ${isMp3}, isHudba: ${isHudba}`);
+          // console.log(`🔍 File: ${item.name}, folder: ${item.folder}, subFolder: ${item.subFolder}, isMp3: ${isMp3}, isHudba: ${isHudba}`);
           return isMp3 && isHudba; // Načti pouze MP3 soubory ze složky hudba/
         })
         .map(item => item.name);
@@ -655,13 +655,13 @@ class CacheService {
           const name = item.name.toLowerCase();
           const isMp3 = name.endsWith('.mp3');
           const isSlova = item.folder === 'slova';
-          console.log(`🔍 File: ${item.name}, folder: ${item.folder}, isMp3: ${isMp3}, isSlova: ${isSlova}`);
+          // console.log(`🔍 File: ${item.name}, folder: ${item.folder}, isMp3: ${isMp3}, isSlova: ${isSlova}`);
           return isMp3 && isSlova; // Načti pouze MP3 soubory ze složky slova/
         })
         .map(item => item.name);
 
-      console.log('🎵 Hudba files:', hudbaFiles);
-      console.log('🗣️ Slova files:', slovaFiles);
+      // console.log('🎵 Hudba files:', hudbaFiles);
+      // console.log('🗣️ Slova files:', slovaFiles);
 
       // Načti skutečné Firebase URL pro hudbu
       const hudbaData = {

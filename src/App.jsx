@@ -3,6 +3,7 @@ import { PageManager } from '@features/navigation';
 import { useNavigation, useTouchNavigation, useAppState, useBackgroundDataLoader, useTimer, useBreathPhase, useOptimizedPreloader } from '@hooks';
 import IntroScreen from '@features/meditation/screens/IntroScreen';
 import { firestoreMetadataService } from '@services/firestoreMetadataService';
+import { LanguageProvider } from '@contexts/LanguageContext';
 
 
 export default function MeditationApp() {
@@ -81,7 +82,8 @@ export default function MeditationApp() {
   };
 
   return (
-    <div className="min-h-screen w-full bg-[#f4ddc4] overflow-x-hidden">
+    <LanguageProvider>
+      <div className="min-h-screen w-full bg-[#f4ddc4] overflow-x-hidden">
       {/* Intro animace s písmem "Meditácia" */}
       {showIntro && (
         <IntroScreen onIntroComplete={handleIntroComplete} />
@@ -126,6 +128,7 @@ export default function MeditationApp() {
 
 
 
-    </div>
+      </div>
+    </LanguageProvider>
   );
 }

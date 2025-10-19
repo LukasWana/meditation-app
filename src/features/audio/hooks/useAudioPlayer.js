@@ -303,22 +303,22 @@ export const useAudioPlayer = (audioUrl, albumTracks = null, currentTrackIndex =
                           !audioState.showActivation;
 
        if (canAutoplay) {
-         log.audio('🎵 AUTOPLAY: Starting autoplay sequence');
-         log.audio('🎵 AUTOPLAY: Conditions:', {
-           shouldAutoplay: playbackState.shouldAutoplay,
-           wasPlayingBeforeSwitch: playbackState.wasPlayingBeforeSwitch,
-           autoplayEnabled,
-           hasInteracted: audioState.hasInteracted,
-           showActivation: audioState.showActivation
-         });
-         log.audio('🎵 AUTOPLAY: Audio element state:', {
-           readyState: audio.readyState,
-           networkState: audio.networkState,
-           paused: audio.paused,
-           currentTime: audio.currentTime,
-           volume: audio.volume,
-           muted: audio.muted
-         });
+        // log.audio('🎵 AUTOPLAY: Starting autoplay sequence');
+        // log.audio('🎵 AUTOPLAY: Conditions:', {
+        //   shouldAutoplay: playbackState.shouldAutoplay,
+        //   wasPlayingBeforeSwitch: playbackState.wasPlayingBeforeSwitch,
+        //   autoplayEnabled,
+        //   hasInteracted: audioState.hasInteracted,
+        //   showActivation: audioState.showActivation
+        // });
+        // log.audio('🎵 AUTOPLAY: Audio element state:', {
+        //   readyState: audio.readyState,
+        //   networkState: audio.networkState,
+        //   paused: audio.paused,
+        //   currentTime: audio.currentTime,
+        //   volume: audio.volume,
+        //   muted: audio.muted
+        // });
 
          // Definuj proceedWithAutoplay funkci před jejím použitím
          const proceedWithAutoplay = () => {
@@ -328,9 +328,9 @@ export const useAudioPlayer = (audioUrl, albumTracks = null, currentTrackIndex =
              audio.play().then(() => {
                setAudioState(prev => ({ ...prev, isPlaying: true, userPaused: false }));
                setPlaybackState(prev => ({ ...prev, shouldAutoplay: false, wasPlayingBeforeSwitch: false }));
-               console.log('✅ AUTOPLAY: Auto-play successful');
+               // console.log('✅ AUTOPLAY: Auto-play successful');
              }).catch((error) => {
-               console.log('❌ AUTOPLAY: Failed to auto-play:', error);
+               // console.log('❌ AUTOPLAY: Failed to auto-play:', error);
                setAudioState(prev => ({ ...prev, isPlaying: false }));
                setPlaybackState(prev => ({ ...prev, shouldAutoplay: false, wasPlayingBeforeSwitch: false }));
              });

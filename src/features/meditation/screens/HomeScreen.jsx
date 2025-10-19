@@ -1,6 +1,7 @@
 import React, { useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { FramerPageTransition } from '@components';
+import { useLanguage } from '@contexts/LanguageContext';
 // useTouchPreloader odstraněn - nepoužívaný
 
 const HomeScreen = ({
@@ -10,6 +11,8 @@ const HomeScreen = ({
   onTouchEnd,
   audioPermission
 }) => {
+  const { t } = useLanguage();
+
   // Touch preloading odstraněn - nepoužívaný
 
   // Aktivuj audio permission při prvním renderu HomeScreen
@@ -27,9 +30,9 @@ const HomeScreen = ({
         onTouchStart={onTouchStart}
         onTouchMove={onTouchMove}
         onTouchEnd={onTouchEnd}
-        initial={{ opacity: 0, scale: 0.9 }}
+        initial={{ opacity: 0, scale: 1.1 }}
         animate={{ opacity: 1, scale: 1 }}
-        transition={{ duration: 0.3, ease: "easeOut" }}
+        transition={{ duration: 0.15, ease: "easeOut" }}
         style={{ height: '100vh' }}
       >
         <motion.div
@@ -45,13 +48,13 @@ const HomeScreen = ({
             className="text-center px-2 sm:px-8 py-4"
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.1, duration: 0.3, ease: "easeOut" }}
+            transition={{ delay: 0.05, duration: 0.15, ease: "easeOut" }}
           >
             <div
               className="text-5xl font-light tracking-wide py-4 leading-loose"
               style={{fontFamily: 'Playfair Display'}}
             >
-              slova
+              {t('slova')}
             </div>
           </motion.div>
         </motion.div>
@@ -69,13 +72,13 @@ const HomeScreen = ({
             className="text-center px-2 sm:px-8 py-4"
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.2, duration: 0.3, ease: "easeOut" }}
+            transition={{ delay: 0.1, duration: 0.15, ease: "easeOut" }}
           >
             <div
               className="text-5xl font-light tracking-wide py-4 leading-loose"
               style={{fontFamily: 'Playfair Display'}}
             >
-              hudba
+              {t('hudba')}
             </div>
           </motion.div>
         </motion.div>
@@ -92,20 +95,20 @@ const HomeScreen = ({
             className="text-center px-2 sm:px-8 py-4"
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.3, duration: 0.3, ease: "easeOut" }}
+            transition={{ delay: 0.15, duration: 0.15, ease: "easeOut" }}
           >
             <div
               className="text-5xl font-light tracking-wide mb-4 py-4 leading-loose"
               style={{fontFamily: 'Playfair Display'}}
             >
-              meditácia
+              {t('meditacia')}
             </div>
           </motion.div>
         </motion.div>
 
         <motion.div
           className="flex-1 flex items-center justify-center bg-[#ffffff] cursor-pointer"
-          onClick={() => onNavigateToScreen('breath')}
+          onClick={() => onNavigateToScreen('settings')}
           initial={{ opacity: 0, scale: 0.9 }}
           animate={{ opacity: 1, scale: 1 }}
           whileTap={{ scale: 0.95 }}
@@ -115,16 +118,17 @@ const HomeScreen = ({
             className="text-center px-2 sm:px-8 py-4"
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.4, duration: 0.3, ease: "easeOut" }}
+            transition={{ delay: 0.2, duration: 0.15, ease: "easeOut" }}
           >
             <div
               className="text-5xl font-light tracking-wide py-4 leading-loose"
               style={{fontFamily: 'Playfair Display'}}
             >
-              dýchanie
+              {t('nastavenie')}
             </div>
           </motion.div>
         </motion.div>
+
       </motion.div>
     </FramerPageTransition>
   );

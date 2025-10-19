@@ -4,7 +4,7 @@ import { storage } from '@services/firebase';
 import cacheService from '@services/cacheService';
 
 export const useFirebaseAudio = (audioFileName) => {
-  console.log('🔗 useFirebaseAudio called with:', audioFileName);
+  // console.log('🔗 useFirebaseAudio called with:', audioFileName);
   const [audioUrl, setAudioUrl] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);

@@ -7,6 +7,7 @@ const IntroScreen = lazy(() => import('@features/meditation/screens/IntroScreen'
 const HomeScreen = lazy(() => import('@features/meditation/screens/HomeScreen'));
 const MeditationScreen = lazy(() => import('@features/meditation/screens/MeditationScreen'));
 const BreathScreen = lazy(() => import('@features/meditation/screens/BreathScreen'));
+const SettingsScreen = lazy(() => import('@features/meditation/screens/SettingsScreen'));
 const HelpScreen = lazy(() => import('@features/meditation/screens/HelpScreen'));
 const HudbaScreen = lazy(() => import('@features/meditation/screens/HudbaScreen'));
 const SlovaScreen = lazy(() => import('@features/meditation/screens/SlovaScreen'));
@@ -52,6 +53,16 @@ const SCREEN_REGISTRY = {
     transition: {
       type: 'scale',
       duration: 0.7
+    }
+  },
+  'settings': {
+    component: SettingsScreen,
+    requiresLayout: true,
+    props: ['onNavigateToScreen', 'onTouchStart', 'onTouchMove', 'onTouchEnd', 'onPlayerStateChange'],
+    transition: {
+      type: 'slide',
+      direction: 'up',
+      duration: 0.6
     }
   },
   'help': {
