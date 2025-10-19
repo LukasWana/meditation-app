@@ -43,7 +43,19 @@ class Logger {
    * Error logging - vždy se zobrazí
    */
   error(message, error = null, ...args) {
-    console.error(`❌ [ERROR] ${message}`, error, ...args);
+    // Lepší zobrazení error objektů
+    let errorDisplay = error;
+    if (error && typeof error === 'object') {
+      if (error.message) {
+        errorDisplay = error.message;
+      } else if (error.toString && error.toString() !== '[object Object]') {
+        errorDisplay = error.toString();
+      } else {
+        errorDisplay = JSON.stringify(error, null, 2);
+      }
+    }
+    
+    console.error(`❌ [ERROR] ${message}`, errorDisplay, ...args);
     this.addToHistory('error', message, args, error);
 
     // V production módu odeslat error na monitoring service

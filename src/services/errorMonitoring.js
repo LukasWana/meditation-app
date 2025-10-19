@@ -80,7 +80,7 @@ class ErrorMonitoringService {
           error: event.error
         });
       }
-    }, true);
+    }.bind(this), true);
   }
 
   /**
@@ -116,9 +116,16 @@ class ErrorMonitoringService {
           message.includes('network') || 
           message.includes('timeout') ||
           message.includes('404') ||
-          message.includes('not found')) {
+          message.includes('not found') ||
+          message.includes('failed to load') ||
+          message.includes('media error')) {
         return true;
       }
+    }
+    
+    // Ignoruj chyby bez konkrétní zprávy (běžné při načítání zdrojů)
+    if (!event.error || !event.error.message) {
+      return true;
     }
     
     return false;
