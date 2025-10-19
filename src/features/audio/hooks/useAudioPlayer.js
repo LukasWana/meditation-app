@@ -163,7 +163,7 @@ export const useAudioPlayer = (audioUrl, albumTracks = null, currentTrackIndex =
 
     // Fallback na cache podle URL
     const cachedDuration = audioUrl ? cacheService.getDuration(audioUrl) : null;
-    
+
     if (durationFromMetadata) {
       setPlaybackState(prev => ({ ...prev, duration: durationFromMetadata, isLoading: false })); // Duration už je známá
     } else {
