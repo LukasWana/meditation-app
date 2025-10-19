@@ -306,16 +306,17 @@ const AudioPlayer = ({
     fadeOutAndClose,
   } = useAudioPlayer(audioUrl, albumTracks, currentTrackIndex, onTrackChange, autoplayEnabled);
 
-  // Automatické spuštění při prvním otevření přehrávače
+  // Automatické spuštění při prvním otevření přehrávače - pouze jednou
   useEffect(() => {
-    if (audioUrl && !isPlaying && window.audioActivated) {
+    if (audioUrl && window.audioActivated && !window.autoPlayTriggered) {
       console.log('🎵 PRVNÍ SPUŠTĚNÍ: Spouštím přehrávání automaticky...');
+      window.autoPlayTriggered = true; // Značka, že už se automatické spuštění stalo
       // Malé zpoždění pro připravení audio elementu
       setTimeout(() => {
         togglePlayPause();
       }, 1000);
     }
-  }, [audioUrl, isPlaying, togglePlayPause]);
+  }, [audioUrl, togglePlayPause]); // Odstranil jsem isPlaying z dependencies
 
   return (
     <motion.div
