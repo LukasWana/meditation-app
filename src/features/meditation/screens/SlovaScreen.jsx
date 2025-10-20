@@ -91,12 +91,25 @@ const SlovaScreen = ({
         onTouchMove={activeAudio ? undefined : onTouchMove}
         onTouchEnd={activeAudio ? undefined : onTouchEnd}
       >
-        <BackButton
-          onClick={() => onNavigateToScreen('home')}
-          className={activeAudio ? 'pointer-events-none opacity-50' : ''}
-        />
+        {/* Top row with Back Button, Dropdowns and Settings */}
+        <div className="absolute top-4 left-4 right-4 flex items-center justify-between z-10 px-2">
+          {/* Left - Back Button */}
+          <div className="flex-shrink-0">
+            <button
+              onClick={() => onNavigateToScreen('home')}
+              className={`w-12 h-12 rounded-full bg-white/20 backdrop-blur-sm border border-black/10 hover:bg-white/30 flex items-center justify-center p-0 transition-colors ${
+                activeAudio ? 'pointer-events-none opacity-50' : ''
+              }`}
+            >
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="m12 19-7-7 7-7"/>
+                <path d="M19 12H5"/>
+              </svg>
+            </button>
+          </div>
+        </div>
 
-        <div className="max-w-md w-full mt-16">
+        <div className="max-w-md w-full mt-24">
           <FramerSection
             className="text-center mb-8"
             animationType="fadeIn"
@@ -108,6 +121,34 @@ const SlovaScreen = ({
             <p className="text-xl text-center text-gray-700 mb-8" style={{fontFamily: 'Playfair Display'}}>
               {t('mluvene')}
             </p>
+
+
+            {/* Gender selector
+            <div className="flex justify-center mb-8">
+              <div className="flex bg-white/20 backdrop-blur rounded-lg border border-white/30">
+                <button
+                  className={`px-3 py-2 rounded-l-lg text-sm font-medium text-gray-700 transition-colors ${
+                    gender === 'male'
+                      ? 'bg-white/30'
+                      : 'hover:bg-white/10'
+                  }`}
+                  onClick={() => onNavigateToScreen('slova', 'male')}
+                >
+                  {t('jsemMuz')}
+                </button>
+                <button
+                  className={`px-3 py-2 rounded-r-lg text-sm font-medium text-gray-700 transition-colors ${
+                    gender === 'female'
+                      ? 'bg-white/30'
+                      : 'hover:bg-white/10'
+                  }`}
+                  onClick={() => onNavigateToScreen('slova', 'female')}
+                >
+                  {t('jsemZena')}
+                </button>
+              </div>
+            </div>
+            */}
 
             {/* Zobraz statistiky pro uživatele - ZAKOMENTOVÁNO kvůli poskakování */}
             {/* {userStats && (

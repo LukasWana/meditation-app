@@ -9,8 +9,16 @@ export const useAppState = () => {
   const [breathPhase, setBreathPhase] = useState('in');
 
   // User preferences
-  const [gender, setGender] = useState('none'); // 'male', 'female', 'none'
-  const [voicePreference, setVoicePreference] = useState('auto'); // 'male', 'female', 'auto'
+  const [gender, setGender] = useState(() => {
+    // Načti gender z localStorage nebo použij default
+    const savedGender = localStorage.getItem('meditation-app-gender');
+    return savedGender || 'none';
+  });
+  const [voicePreference, setVoicePreference] = useState(() => {
+    // Načti voice preference z localStorage nebo použij default
+    const savedVoice = localStorage.getItem('meditation-app-voice');
+    return savedVoice || 'auto';
+  });
 
   // Audio player state
   const [isPlayerActive, setIsPlayerActive] = useState(false);
@@ -36,10 +44,12 @@ export const useAppState = () => {
   // Handlers pro user preferences
   const handleGenderChange = useCallback((selectedGender) => {
     setGender(selectedGender);
+    localStorage.setItem('meditation-app-gender', selectedGender);
   }, []);
 
   const handleVoicePreferenceChange = useCallback((selectedVoice) => {
     setVoicePreference(selectedVoice);
+    localStorage.setItem('meditation-app-voice', selectedVoice);
   }, []);
 
   // Handlers pro audio player

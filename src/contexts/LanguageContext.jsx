@@ -57,7 +57,11 @@ export const LanguageProvider = ({ children }) => {
       // Autoplay
       autoplay: 'automatické prehrávanie',
       autoplayEnabled: 'automatické prehrávanie zapnuté',
-      autoplayDisabled: 'automatické prehrávanie vypnuté'
+      autoplayDisabled: 'automatické prehrávanie vypnuté',
+
+      // Gender
+      jsemMuz: 'jsem Muž',
+      jsemZena: 'jsem Žena'
     },
     CZ: {
       // Hlavní navigace
@@ -98,7 +102,11 @@ export const LanguageProvider = ({ children }) => {
       // Autoplay
       autoplay: 'automatické přehrávání',
       autoplayEnabled: 'automatické přehrávání zapnuto',
-      autoplayDisabled: 'automatické přehrávání vypnuto'
+      autoplayDisabled: 'automatické přehrávání vypnuto',
+
+      // Gender
+      jsemMuz: 'jsem Muž',
+      jsemZena: 'jsem Žena'
     },
     EN: {
       // Main navigation
@@ -139,7 +147,11 @@ export const LanguageProvider = ({ children }) => {
       // Autoplay
       autoplay: 'autoplay',
       autoplayEnabled: 'autoplay enabled',
-      autoplayDisabled: 'autoplay disabled'
+      autoplayDisabled: 'autoplay disabled',
+
+      // Gender
+      jsemMuz: 'I am Male',
+      jsemZena: 'I am Female'
     }
   });
 
