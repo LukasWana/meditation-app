@@ -9,6 +9,10 @@ import globalMetadataPreloader from '@services/globalMetadataPreloader';
 export const useFirebaseAudioFilter = (userGender, userLanguage = 'sk') => {
   // Debug: zobraz přijaté parametry
   console.log(`🔍 useFirebaseAudioFilter - userGender: ${userGender}, userLanguage: ${userLanguage}`);
+
+  // State pro sledování načtení metadata
+  const [metadataLoaded, setMetadataLoaded] = useState(false);
+
   // Použij CDN scanner pro dynamické načítání
   const {
     availableFiles,
@@ -81,6 +85,33 @@ export const useFirebaseAudioFilter = (userGender, userLanguage = 'sk') => {
     return languageFiltered;
   }, [userGender, userLanguage, availableFiles, getFilesByGender]);
 
+  // Sleduj načtení metadata a aktualizuj state
+  useEffect(() => {
+    const checkMetadataLoaded = () => {
+      if (globalMetadataPreloader.isReady()) {
+        setMetadataLoaded(true);
+        console.log('✅ Metadata loaded, updating durations');
+      } else if (!globalMetadataPreloader.isLoading && !globalMetadataPreloader.isInitialized) {
+        // Inicializuj metadata preloader pokud ještě není spuštěn
+        globalMetadataPreloader.initialize().then(() => {
+          setMetadataLoaded(true);
+          console.log('✅ Metadata initialized and loaded');
+        }).catch(error => {
+          console.warn('❌ Failed to initialize metadata:', error);
+        });
+      }
+    };
+
+    // Zkontroluj ihned
+    checkMetadataLoaded();
+
+    // Nastav interval pro kontrolu každých 500ms
+    const interval = setInterval(checkMetadataLoaded, 500);
+
+    // Cleanup
+    return () => clearInterval(interval);
+  }, []);
+
   // Získej názvy souborů pro kompatibilitu s useAudioFilter
   const audioFileNames = availableFiles.map(file => file.fileName);
 
@@ -141,6 +172,9 @@ export const useFirebaseAudioFilter = (userGender, userLanguage = 'sk') => {
             const minutes = Math.floor(cachedDuration / 60);
             const seconds = Math.floor(cachedDuration % 60);
             actualDuration = `${minutes}:${seconds.toString().padStart(2, '0')}`;
+          } else if (metadataLoaded) {
+            // Pokud jsou metadata načtená, ale duration není dostupná, zobraz "Načítám..."
+            actualDuration = 'Načítám...';
           }
         }
 
@@ -164,7 +198,7 @@ export const useFirebaseAudioFilter = (userGender, userLanguage = 'sk') => {
     };
 
     return getTroubleItems();
-  }, [filteredFiles, availableFiles]);
+  }, [filteredFiles, availableFiles, metadataLoaded]);
 
   // Získej statistiky pro uživatele
   const getUserStats = () => {
