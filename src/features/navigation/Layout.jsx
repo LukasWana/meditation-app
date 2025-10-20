@@ -23,6 +23,22 @@ const Layout = ({
     changeLanguage(newLanguage);
   };
 
+  // Helpery pro mobilní režim
+  const getFlagUrl = (lang) => {
+    switch (lang) {
+      case 'SK': return SlovakiaFlagUrl;
+      case 'CZ': return CzechFlagUrl;
+      case 'EN': return UKFlagUrl;
+      default: return SlovakiaFlagUrl;
+    }
+  };
+
+  const cycleLanguage = () => {
+    const order = ['SK', 'CZ', 'EN'];
+    const currentIndex = order.indexOf(language);
+    const next = order[(currentIndex + 1) % order.length];
+    changeLanguage(next);
+  };
 
 
 
@@ -34,9 +50,9 @@ const Layout = ({
       {/* Top Right Controls - Hidden when player is active, only show on slova page */}
       {!isPlayerActive && currentScreen === 'slova' && (
         <div className="fixed top-6 right-6 z-50 flex items-center space-x-3">
-          {/* Language Switcher */}
+          {/* Language Switcher - desktop/tablet */}
           <motion.div
-            className="flex bg-white/90 backdrop-blur-sm border border-gray-200 rounded-full p-1 shadow-sm"
+            className="hidden sm:flex bg-white/90 backdrop-blur-sm border border-gray-200 rounded-full p-1 shadow-sm"
             initial={{ opacity: 0, scale: 0.9 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ duration: 0.3, ease: "easeOut" }}
@@ -82,9 +98,22 @@ const Layout = ({
             </motion.button>
           </motion.div>
 
-          {/* Gender Switcher */}
+          {/* Language Switcher - mobile (one flag, cycles on tap) */}
+          <motion.button
+            onClick={cycleLanguage}
+            className="sm:hidden flex bg-gray-800 backdrop-blur-sm border border-gray-200 rounded-full p-1 shadow-sm items-center justify-center"
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ duration: 0.3, ease: "easeOut" }}
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.9 }}
+          >
+            <img src={getFlagUrl(language)} alt={language} className="w-6 h-6" />
+          </motion.button>
+
+          {/* Gender Switcher - desktop/tablet */}
           <motion.div
-            className="flex bg-white/90 backdrop-blur-sm border border-gray-200 rounded-full p-1 shadow-sm"
+            className="hidden sm:flex bg-white/90 backdrop-blur-sm border border-gray-200 rounded-full p-1 shadow-sm"
             initial={{ opacity: 0, scale: 0.9 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ duration: 0.3, ease: "easeOut" }}
@@ -117,13 +146,18 @@ const Layout = ({
             </motion.button>
           </motion.div>
 
-          {/* Hamburger Menu Button - COMMENTED OUT */}
-          {/* <button
-            onClick={toggleMenu}
-            className="w-12 h-12 rounded-full bg-red-500 border-2 border-red-600 flex items-center justify-center shadow-lg hover:bg-red-600 transition-colors duration-200"
+          {/* Gender Switcher - mobile (show only current selection, tap toggles) */}
+          <motion.button
+            onClick={() => handleGenderSelect(gender === 'male' ? 'female' : 'male')}
+            className="sm:hidden px-3 py-2 bg-gray-800 backdrop-blur-sm border border-gray-200 rounded-full shadow-sm text-sm font-medium text-white"
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ duration: 0.3, ease: "easeOut" }}
+            whileHover={{ scale: 1.02 }}
+            whileTap={{ scale: 0.95 }}
           >
-            {isMenuOpen ? <X size={18} className="text-white" /> : <Menu size={18} className="text-white" />}
-          </button> */}
+            {gender === 'female' ? t('jsemZena') : t('jsemMuz')}
+          </motion.button>
         </div>
       )}
 
