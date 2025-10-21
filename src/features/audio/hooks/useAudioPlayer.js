@@ -4,35 +4,13 @@ import log from '@services/logger';
 import globalMetadataPreloader from '@services/globalMetadataPreloader';
 import { useAudioContextManager } from './useAudioContextManager';
 import { useAudioPlayback } from './useAudioPlayback';
+import { extractFileNameFromUrl } from '@utils/audioUrlUtils';
+import { useFadeEffects } from '@hooks/useFadeEffects';
+import { useAudioElementState } from '@hooks/useAudioElementState';
 
 export const useAudioPlayer = (audioUrl, albumTracks = null, currentTrackIndex = 0, onTrackChange = null, autoplayEnabled = true) => {
 
-  // Pomocná funkce pro extrakci názvu souboru z URL
-  const extractFileNameFromUrl = (url) => {
-    if (!url || typeof url !== 'string') return null;
-
-    // Pokud už je to název souboru (ne URL), vrať ho
-    if (!url.startsWith('http')) {
-      return url; // Vrať celou cestu, ne jen název souboru
-    }
-
-    try {
-      // Pro Firebase Storage URL: https://firebasestorage.googleapis.com/v0/b/.../o/filename.mp3?alt=media
-      const match = url.match(/\/o\/([^?]+)/);
-      if (match) {
-        const fullPath = decodeURIComponent(match[1]);
-        // Vrať celou cestu k souboru (např. "hudba/ambient-journey/filename.mp3")
-        return fullPath;
-      }
-
-      // Fallback pro běžné URL
-      const pathname = new URL(url).pathname;
-      return pathname.startsWith('/') ? pathname.substring(1) : pathname;
-    } catch (error) {
-      // Pokud to není validní URL, zkusíme to jako název souboru
-      return url.includes('/') ? url : url;
-    }
-  };
+  // extractFileNameFromUrl je nyní importován z @utils/audioUrlUtils
 
   // Use new modular hooks - nahrazují starý state management
   const { activateAudioContext } = useAudioContextManager();
@@ -66,9 +44,9 @@ export const useAudioPlayer = (audioUrl, albumTracks = null, currentTrackIndex =
     errorMessage: null
   });
 
-  const fadeTimeoutRef = useRef(null);
-  const fadeOutIntervalRef = useRef(null);
-  const fadeInIntervalRef = useRef(null);
+  // Use new modular hooks
+  const { fadeOut, fadeOutAndClose, cleanup: cleanupFadeEffects } = useFadeEffects(audioRef);
+  const { fixAudioElementState } = useAudioElementState(audioRef, audioUrl);
 
   // Aktivuj audio při změně skladby - delegováno na useAudioPlayback
   useEffect(() => {
@@ -437,102 +415,13 @@ export const useAudioPlayer = (audioUrl, albumTracks = null, currentTrackIndex =
     }
   }, [currentTrackIndex, albumTracks, audioState.hasInteracted]);
 
-  // Fade out funkce
-  const fadeOut = (audio, duration = 1000, callback) => {
-    if (!audio) return;
-
-    log.audio(`🎵 Starting fadeOut with duration: ${duration}ms`);
-    try {
-      // Vyčisti předchozí fade interval pokud existuje
-      if (fadeOutIntervalRef.current) {
-        clearInterval(fadeOutIntervalRef.current);
-      }
-
-      const startVolume = audio.volume;
-      const fadeStep = duration > 50 ? startVolume / (duration / 50) : startVolume / 10; // Ochrana proti division by zero
-      let currentVolume = startVolume;
-
-      fadeOutIntervalRef.current = setInterval(() => {
-        try {
-          currentVolume -= fadeStep;
-          if (currentVolume <= 0) {
-            currentVolume = 0;
-            audio.volume = currentVolume;
-            log.audio('🎵 FadeOut completed, pausing audio');
-            audio.pause();
-            log.audio('🎵 Audio paused after fadeOut');
-            audio.volume = startVolume; // Obnov původní hlasitost
-            if (fadeOutIntervalRef.current) {
-              clearInterval(fadeOutIntervalRef.current);
-              fadeOutIntervalRef.current = null;
-            }
-            if (callback) callback();
-          } else {
-            audio.volume = currentVolume;
-          }
-        } catch (error) {
-          log.error('Error in fadeOut interval:', error);
-          if (fadeOutIntervalRef.current) {
-            clearInterval(fadeOutIntervalRef.current);
-            fadeOutIntervalRef.current = null;
-          }
-        }
-      }, 50);
-
-      return fadeOutIntervalRef.current;
-    } catch (error) {
-      log.error('Error in fadeOut:', error);
-      if (callback) callback();
-    }
-  };
+  // fadeOut je nyní z useFadeEffects hooku - odstraněna duplicita
 
   // fadeIn funkce odstraněna - nevyužívá se
 
   // Tyto funkce nejsou používány - odstraněny pro zjednodušení
 
-  // Oprava stavu audio elementu po načtení - zajistí že je audio připravené k přehrávání
-  const fixAudioElementState = (audio) => {
-    if (!audio) return Promise.resolve();
-
-    log.audio('🎵 Fixing audio element state after load');
-
-    return new Promise((resolve) => {
-      // Zkontroluj jestli je audio element v dobrém stavu
-      if (audio.readyState >= 2) { // HAVE_CURRENT_DATA nebo vyšší
-        log.audio('🎵 Audio element is ready, fixing state');
-
-        // Zkontroluj jestli je audio paused ale mělo by hrát
-        if (audio.paused && audioState.isPlaying) {
-          log.audio('🎵 Audio is paused but should be playing, attempting to resume');
-          audio.play().then(() => {
-            log.audio('✅ Audio resumed successfully');
-            resolve();
-          }).catch((error) => {
-            log.error('Failed to resume audio:', error);
-            resolve(); // Pokračuj i při chybě
-          });
-        } else {
-          log.audio('🎵 Audio element state is correct');
-          resolve();
-        }
-      } else {
-        log.audio('🎵 Audio element not ready, waiting for canplay event');
-        const handleCanPlay = () => {
-          audio.removeEventListener('canplay', handleCanPlay);
-          log.audio('🎵 Audio can play, fixing state');
-          resolve();
-        };
-        audio.addEventListener('canplay', handleCanPlay);
-
-        // Timeout pro případ že se canplay event nespustí
-        setTimeout(() => {
-          audio.removeEventListener('canplay', handleCanPlay);
-          log.audio('🎵 Canplay timeout, proceeding anyway');
-          resolve();
-        }, 3000);
-      }
-    });
-  };
+  // fixAudioElementState je nyní z useAudioElementState hooku - odstraněna duplicita
 
   // Centrální funkce pro audio playback - používá se ve všech funkcích
   const playAudio = (context = 'unknown') => {
@@ -701,21 +590,7 @@ export const useAudioPlayer = (audioUrl, albumTracks = null, currentTrackIndex =
 
 
 
-  // Funkce pro fade out při zavření přehrávače
-  const fadeOutAndClose = (onClose, duration = 3000) => {
-    const audio = audioRef.current;
-
-    // Zavři přehrávač okamžitě
-    onClose();
-
-    // Pokud je audio a přehrává se, spusť fade out na pozadí
-    if (audio && audioState.isPlaying) {
-      fadeOut(audio, duration, () => {
-        // Po dokončení fade out nic nedělej - přehrávač už je zavřený
-        log.audio('Background fade out completed');
-      });
-    }
-  };
+  // fadeOutAndClose je nyní z useFadeEffects hooku - odstraněna duplicita
 
   // Autoplay hook pro automatické spuštění
   useAutoplay(audioUrl, audioState.isPlaying, togglePlayPause, audioState.userPaused, playbackState.shouldAutoplay);
@@ -723,17 +598,9 @@ export const useAudioPlayer = (audioUrl, albumTracks = null, currentTrackIndex =
   // Cleanup effect - vyčisti timeouty při unmount
   useEffect(() => {
     return () => {
-      if (fadeTimeoutRef.current) {
-        clearTimeout(fadeTimeoutRef.current);
-      }
-      if (fadeOutIntervalRef.current) {
-        clearInterval(fadeOutIntervalRef.current);
-      }
-      if (fadeInIntervalRef.current) {
-        clearInterval(fadeInIntervalRef.current);
-      }
+      cleanupFadeEffects();
     };
-  }, []);
+  }, [cleanupFadeEffects]);
 
   return {
     audioRef,
