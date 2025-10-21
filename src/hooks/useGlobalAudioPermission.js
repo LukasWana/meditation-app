@@ -1,10 +1,6 @@
 import { useState, useCallback, useRef, useEffect } from 'react';
-import { log } from '@services/logger';
+import log from '@services/logger';
 
-/**
- * Globální hook pro správu audio povolení
- * Aktivuje AudioContext při prvním user interaction
- */
 export const useGlobalAudioPermission = () => {
   const [isAudioEnabled, setIsAudioEnabled] = useState(false);
   const [showPermissionOverlay, setShowPermissionOverlay] = useState(false);

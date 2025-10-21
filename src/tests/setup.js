@@ -1,6 +1,4 @@
-/**
- * Test setup pro Jest/Vitest
- */
+
 
 import { expect, afterEach, vi } from 'vitest';
 import { cleanup } from '@testing-library/react';

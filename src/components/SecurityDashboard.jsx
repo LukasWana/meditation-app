@@ -1,10 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import securityMonitor from '../services/securityMonitor';
-
-/**
- * Security Dashboard - zobrazuje bezpečnostní statistiky
- * Pouze pro development a admin účely
- */
+import securityMonitor from '../services/securityMonitor';
 const SecurityDashboard = () => {
   const [stats, setStats] = useState(null);
   const [isVisible, setIsVisible] = useState(false);

@@ -1,8 +1,4 @@
-/**
- * Parser pro hudební soubory s formátem: 00--00--00--79-mediatacie-002.mp3
- * Formát: XX--XX--XX--XX-name-YYY.mp3
- * kde XX--XX--XX--XX je číslování, name je název, YYY je verze (volitelná)
- */
+
 
 export const parseHudbaFileName = (fileName) => {
   if (!fileName || typeof fileName !== 'string') {
@@ -28,17 +24,11 @@ export const parseHudbaFileName = (fileName) => {
     console.error(`Chyba při parsování hudebního souboru ${fileName}:`, error);
     return null;
   }
-};
-
-/**
- * Parser pro album soubory s novým formátem: "Album Name - Track Number Track Name.mp3"
- * Např: "Ambient Journey - 02 Haluly.mp3"
- */
+};
 export const parseAlbumFileName = (fileName) => {
   if (!fileName || typeof fileName !== 'string') {
     return null;
   }
-
 
   try {
     // Nový formát: "Album Name - Track Number Track Name.mp3"
@@ -65,12 +55,7 @@ export const parseAlbumFileName = (fileName) => {
     console.error(`Chyba při parsování album souboru ${fileName}:`, error);
     return null;
   }
-};
-
-/**
- * Parser pro slova soubory s formátem: muzsky4FSK-uzkost-osamelost.mp3
- * Formát: (muzsky|zensky)(číslo)(typ)-(téma).mp3
- */
+};
 export const parseSlovaFileName = (fileName) => {
   if (!fileName || typeof fileName !== 'string') {
     return null;
@@ -115,11 +100,7 @@ export const parseSlovaFileName = (fileName) => {
     console.warn(`Chyba při parsování slova souboru: ${fileName}`, error);
     return null;
   }
-};
-
-/**
- * Univerzální parser - zkusí všechny formáty
- */
+};
 export const parseAudioFileName = (fileName) => {
   if (!fileName || typeof fileName !== 'string') {
     return null;

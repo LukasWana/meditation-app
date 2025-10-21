@@ -1,7 +1,4 @@
-/**
- * Script pro inicializaci Firestore databáze s metadaty
- * Spustí se v konzoli prohlížeče pro naplnění databáze
- */
+
 
 import { collection, doc, setDoc, getDocs, query, orderBy } from 'firebase/firestore';
 import { db } from '@services/firebase';
@@ -45,9 +42,6 @@ const sampleMetadata = {
   }
 };
 
-/**
- * Inicializuje Firestore kolekci s metadaty
- */
 export const initializeFirestoreMetadata = async () => {
   try {
     console.log('🚀 Initializing Firestore metadata collection...');
@@ -68,8 +62,14 @@ export const initializeFirestoreMetadata = async () => {
     console.log('📝 Creating sample metadata...');
 
     for (const [fileName, metadata] of Object.entries(sampleMetadata)) {
-      const docRef = doc(db, collectionName, fileName);
-      await setDoc(docRef, metadata);
+      // Nahraď lomítka v názvu souboru, aby vytvořil platný document ID
+      const safeFileName = fileName.replace(/\//g, '_');
+      const docRef = doc(db, collectionName, safeFileName);
+      const metadataDoc = {
+        fileName, // Původní název souboru s lomítky
+        ...metadata
+      };
+      await setDoc(docRef, metadataDoc);
       console.log(`✅ Created metadata for ${fileName}`);
     }
 
@@ -81,9 +81,6 @@ export const initializeFirestoreMetadata = async () => {
   }
 };
 
-/**
- * Načte skutečná metadata z Firebase Storage a uloží do Firestore
- */
 export const loadRealMetadataToFirestore = async () => {
   try {
     console.log('🔄 Loading real metadata from Firebase Storage...');
@@ -115,9 +112,14 @@ export const loadRealMetadataToFirestore = async () => {
           updated: metadata.updated
         };
 
-        // Ulož do Firestore
-        const docRef = doc(db, collectionName, itemRef.name);
-        await setDoc(docRef, audioMetadata);
+        // Ulož do Firestore - nahraď lomítka v názvu souboru
+        const safeFileName = itemRef.name.replace(/\//g, '_');
+        const docRef = doc(db, collectionName, safeFileName);
+        const metadataDoc = {
+          fileName: itemRef.name, // Původní název souboru s lomítky
+          ...audioMetadata
+        };
+        await setDoc(docRef, metadataDoc);
 
         console.log(`✅ Saved metadata for ${itemRef.name}`);
 
@@ -134,9 +136,6 @@ export const loadRealMetadataToFirestore = async () => {
   }
 };
 
-/**
- * Odhadne délku na základě velikosti souboru
- */
 const estimateDuration = (sizeInBytes, contentType) => {
   if (!sizeInBytes || !contentType) return 'N/A';
 
@@ -150,9 +149,6 @@ const estimateDuration = (sizeInBytes, contentType) => {
   return `${minutes}:${seconds.toString().padStart(2, '0')}`;
 };
 
-/**
- * Odhadne délku v sekundách
- */
 const estimateDurationInSeconds = (sizeInBytes, contentType) => {
   if (!sizeInBytes || !contentType) return 0;
 

@@ -1,8 +1,4 @@
-import { useState, useRef, useEffect } from 'react';
-
-/**
- * Zjednodušený audio player - pouze nutné funkce
- */
+import { useState, useRef, useEffect } from 'react';
 export const useAudioPlayerSimple = (audioUrl, albumTracks = null, currentTrackIndex = 0, onTrackChange = null) => {
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);

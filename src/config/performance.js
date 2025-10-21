@@ -1,6 +1,4 @@
-/**
- * Performance konfigurace pro různé prostředí
- */
+
 
 export const performanceConfig = {
   development: {
@@ -32,11 +30,7 @@ export const performanceConfig = {
     errorMonitoring: false,
     yieldTimeout: 0
   }
-};
-
-/**
- * Získá aktuální konfiguraci na základě NODE_ENV
- */
+};
 export const getCurrentConfig = () => {
   const env = import.meta.env.MODE || 'development';
 
@@ -46,11 +40,7 @@ export const getCurrentConfig = () => {
   }
 
   return performanceConfig[env] || performanceConfig.development;
-};
-
-/**
- * Dynamická konfigurace pro různé komponenty
- */
+};
 export const getComponentConfig = (componentName) => {
   const baseConfig = getCurrentConfig();
 

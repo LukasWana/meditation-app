@@ -1,8 +1,6 @@
-/**
- * Unit testy pro Logger service
- */
 
-import logger, { log } from '@services/logger';
+
+import logger from '@services/logger';
 import { vi } from 'vitest';
 
 // Mock console methods

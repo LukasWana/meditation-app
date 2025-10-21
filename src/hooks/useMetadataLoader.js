@@ -1,12 +1,8 @@
 import { useState, useEffect, useRef } from 'react';
 import { ref, getMetadata } from 'firebase/storage';
 import { storage } from '@services/firebase';
-import cacheService from '@services/cacheService';
+import cacheService from '@services/cacheServiceRefactored';
 
-/**
- * Hook pro načítání pouze metadat MP3 souborů bez stahování celého souboru
- * Používá HTTP HEAD requesty pro získání informací o souboru
- */
 export const useMetadataLoader = (audioFileName, options = {}) => {
   const {
     enabled = true,
@@ -105,9 +101,6 @@ export const useMetadataLoader = (audioFileName, options = {}) => {
   return { metadata, loading, error, refetch: loadMetadata };
 };
 
-/**
- * Hook pro batch načítání metadat více souborů
- */
 export const useBatchMetadataLoader = (fileNames, options = {}) => {
   const {
     enabled = true,
@@ -218,10 +211,6 @@ export const useBatchMetadataLoader = (fileNames, options = {}) => {
   return { metadata, loading, error, progress, refetch: loadBatchMetadata };
 };
 
-/**
- * Odhad délky audio souboru na základě velikosti
- * Toto je pouze přibližný odhad
- */
 function estimateDurationFromSize(sizeInBytes, contentType) {
   if (!sizeInBytes || !contentType) return null;
 

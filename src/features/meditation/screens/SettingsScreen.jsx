@@ -43,20 +43,6 @@ const SettingsScreen = ({
               </div>
             </FramerSection>
 
-            {/* Placeholder for future settings */}
-            <FramerSection
-              animationType="slideInUp"
-              delay={0.3}
-            >
-              <div className="w-full p-6 bg-white/30 backdrop-blur rounded-none border border-black/10">
-                <h3 className="text-2xl font-light mb-4" style={{fontFamily: 'Playfair Display'}}>
-                  {t('dalsieNastavenie')}
-                </h3>
-                <p className="text-lg text-gray-600">
-                  {t('dalsieFunkcie')}
-                </p>
-              </div>
-            </FramerSection>
 
             {/* Placeholder for future settings */}
             <FramerSection

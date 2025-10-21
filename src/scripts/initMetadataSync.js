@@ -1,14 +1,8 @@
-/**
- * Script pro inicializaci synchronizace metadat s Firestore
- * Spustí extrakci metadat z MP3 souborů a uloží je do Firestore
- */
+
 
 import { metadataSyncService } from '@services/metadataSyncService';
-import { log } from '@services/logger';
+import log from '@services/logger';
 
-/**
- * Inicializuje synchronizaci metadat
- */
 export const initMetadataSync = async () => {
   try {
     log.info('🚀 Starting metadata synchronization initialization...');
@@ -59,9 +53,6 @@ export const initMetadataSync = async () => {
   }
 };
 
-/**
- * Spustí inicializaci (použij v konzoli nebo jako samostatný script)
- */
 if (typeof window !== 'undefined') {
   // Browser environment
   window.initMetadataSync = initMetadataSync;

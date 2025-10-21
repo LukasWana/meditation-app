@@ -1,13 +1,4 @@
-/**
- * Parser pro názvy MP3 souborů
- * Formát: "muzsky4FSK-uzkost-osamelost.mp3"
- *
- * Struktura:
- * - muzsky/zensky = hlas
- * - 4F/4M/4N = cílová skupina (F=female, M=male, N=none/general)
- * - SK/CZ/EN = jazyk
- * - zbytek = téma (např. "uzkost-osamelost" = "Uzkost osamelost")
- */
+
 
 export const parseAudioFileName = (fileName) => {
   if (!fileName || typeof fileName !== 'string') {
@@ -75,9 +66,6 @@ export const parseAudioFileName = (fileName) => {
   };
 };
 
-/**
- * Najde nejlepší audio soubor pro uživatele
- */
 export const findBestAudioForUser = (audioFiles, userGender, userLanguage = 'sk', topic = null) => {
   if (!audioFiles || audioFiles.length === 0) return null;
 
@@ -151,9 +139,6 @@ export const findBestAudioForUser = (audioFiles, userGender, userLanguage = 'sk'
   return filesToSearch[0]?.file || null;
 };
 
-/**
- * Seskupí audio soubory podle témat
- */
 export const groupAudioByTopic = (audioFiles) => {
   const grouped = {};
 
@@ -175,9 +160,6 @@ export const groupAudioByTopic = (audioFiles) => {
   return grouped;
 };
 
-/**
- * Získá seznam všech témat z audio souborů
- */
 export const getAvailableTopics = (audioFiles) => {
   const topics = new Set();
 

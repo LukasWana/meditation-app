@@ -1,11 +1,6 @@
-/**
- * Static Cache Service
- *
- * Načítá a spravuje statickou cache s metadaty skladeb
- * pro okamžité zobrazení bez čekání na Firebase.
- */
 
-import { log } from './logger';
+
+import log from './logger';
 
 class StaticCacheService {
   constructor() {
@@ -15,9 +10,6 @@ class StaticCacheService {
     this.cacheUrl = '/audio-metadata-cache.json';
   }
 
-  /**
-   * Načte cache při startu aplikace
-   */
   async loadCache() {
     if (this.isLoaded) {
       return this.cache;
@@ -31,9 +23,6 @@ class StaticCacheService {
     return this.loadPromise;
   }
 
-  /**
-   * Načte cache ze souboru
-   */
   async _loadCacheFromFile() {
     try {
       log.cache('🔄 Načítám statickou cache...');
@@ -73,9 +62,6 @@ class StaticCacheService {
     }
   }
 
-  /**
-   * Vytvoří prázdnou cache strukturu
-   */
   _createEmptyCache() {
     return {
       generatedAt: new Date().toISOString(),
@@ -100,9 +86,6 @@ class StaticCacheService {
     };
   }
 
-  /**
-   * Validuje strukturu cache
-   */
   _validateCacheStructure(cacheData) {
     return (
       cacheData &&
@@ -115,9 +98,6 @@ class StaticCacheService {
     );
   }
 
-  /**
-   * Získá všechny skladby z kategorie
-   */
   getSongsByCategory(category) {
     if (!this.isLoaded) {
       log.cache('⚠️ Cache není načtena, vracím prázdný seznam');
@@ -133,9 +113,6 @@ class StaticCacheService {
     return categoryData.songs || [];
   }
 
-  /**
-   * Získá skladbu podle ID
-   */
   getSongById(songId) {
     if (!this.isLoaded) {
       return null;
@@ -152,9 +129,6 @@ class StaticCacheService {
     return null;
   }
 
-  /**
-   * Vyhledá skladby podle názvu
-   */
   searchSongs(query, category = null) {
     if (!this.isLoaded) {
       return [];
@@ -184,9 +158,6 @@ class StaticCacheService {
     return results;
   }
 
-  /**
-   * Získá skladby podle alba
-   */
   getSongsByAlbum(albumName, category = null) {
     if (!this.isLoaded) {
       return [];
@@ -211,9 +182,6 @@ class StaticCacheService {
     return results;
   }
 
-  /**
-   * Získá skladby podle tagu
-   */
   getSongsByTag(tag, category = null) {
     if (!this.isLoaded) {
       return [];
@@ -238,9 +206,6 @@ class StaticCacheService {
     return results;
   }
 
-  /**
-   * Získá všechny dostupné tagy
-   */
   getAllTags() {
     if (!this.isLoaded) {
       return [];
@@ -259,9 +224,6 @@ class StaticCacheService {
     return Array.from(tags).sort();
   }
 
-  /**
-   * Získá všechna dostupná alba
-   */
   getAllAlbums() {
     if (!this.isLoaded) {
       return [];
@@ -280,9 +242,6 @@ class StaticCacheService {
     return Array.from(albums).sort();
   }
 
-  /**
-   * Získá statistiky cache
-   */
   getCacheStats() {
     if (!this.isLoaded) {
       return {
@@ -306,16 +265,10 @@ class StaticCacheService {
     };
   }
 
-  /**
-   * Zkontroluje, zda je cache načtena
-   */
   isCacheLoaded() {
     return this.isLoaded;
   }
 
-  /**
-   * Vynutí reload cache
-   */
   async reloadCache() {
     this.isLoaded = false;
     this.loadPromise = null;

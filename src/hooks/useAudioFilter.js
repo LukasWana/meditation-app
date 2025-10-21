@@ -1,9 +1,5 @@
 import { useState, useMemo } from 'react';
-import { parseAudioFileName, findBestAudioForUser, groupAudioByTopic, getAvailableTopics } from '@utils/audioParser';
-
-/**
- * Hook pro filtrování audio souborů na základě uživatelských preferencí
- */
+import { parseAudioFileName, findBestAudioForUser, groupAudioByTopic, getAvailableTopics } from '@utils/audioParser';
 export const useAudioFilter = (userGender, userLanguage = 'sk') => {
   const [audioFiles, setAudioFiles] = useState([]);
 
@@ -33,48 +29,24 @@ export const useAudioFilter = (userGender, userLanguage = 'sk') => {
   // Dostupné témata
   const availableTopics = useMemo(() => {
     return getAvailableTopics(filteredFiles);
-  }, [filteredFiles]);
-
-  /**
-   * Najde nejlepší audio soubor pro dané téma
-   */
+  }, [filteredFiles]);
   const getAudioForTopic = (topic) => {
     return findBestAudioForUser(audioFiles, userGender, userLanguage, topic);
-  };
-
-  /**
-   * Najde nejlepší audio soubor bez ohledu na téma
-   */
+  };
   const getBestAudio = () => {
     return findBestAudioForUser(audioFiles, userGender, userLanguage);
-  };
-
-  /**
-   * Získá všechny soubory pro dané téma
-   */
+  };
   const getFilesForTopic = (topic) => {
     return filesByTopic[topic] || [];
-  };
-
-  /**
-   * Získá informace o audio souboru
-   */
+  };
   const getAudioInfo = (fileName) => {
     return parseAudioFileName(fileName);
-  };
-
-  /**
-   * Zkontroluje, zda je soubor vhodný pro uživatele
-   */
+  };
   const isAudioSuitableForUser = (fileName) => {
     const parsed = parseAudioFileName(fileName);
     if (!parsed) return false;
     return parsed.isForUser(userGender);
-  };
-
-  /**
-   * Získá doporučené soubory pro uživatele
-   */
+  };
   const getRecommendedFiles = (limit = 5) => {
     const recommendations = [];
 

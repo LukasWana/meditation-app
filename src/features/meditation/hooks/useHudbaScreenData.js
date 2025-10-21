@@ -1,12 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { useFirebaseHudbaFilter } from '@features/audio/hooks/useFirebaseHudbaFilter';
-import { log } from '@services/logger';
+import log from '@services/logger';
 import cacheService from '@services/cacheServiceRefactored';
-
-/**
- * Hook pro management dat HudbaScreen
- * Obsahuje logiku pro načítání duration, cache management a statistiky
- */
 
 // Vylepšená funkce pro načtení duration s retry logikou
 const getAudioDuration = (audioSrc, retries = 3) => {

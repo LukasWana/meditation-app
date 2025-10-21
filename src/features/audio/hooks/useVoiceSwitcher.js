@@ -2,9 +2,6 @@ import { useState, useEffect, useMemo, useCallback } from 'react';
 import { parseAudioFileName as parseSpeechFileName } from '@utils/audioParser';
 import { parseAudioFileName as parseMusicFileName } from '@utils/hudbaParser';
 
-/**
- * Hook pro management přepínání hlasů mezi mužským a ženským
- */
 export const useVoiceSwitcher = (currentAudioFile, allFiles) => {
   const [selectedVoice, setSelectedVoice] = useState('male'); // 'male', 'female'
 

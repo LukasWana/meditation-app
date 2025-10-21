@@ -1,9 +1,4 @@
-import { useEffect } from 'react';
-
-/**
- * Hook pro management globálního AudioContext
- * Zajišťuje správnou inicializaci a aktivaci AudioContext
- */
+import { useEffect } from 'react';
 export const useAudioContext = (audioUrl) => {
   // Automatická aktivace audio při načtení stránky a při změně skladby
   useEffect(() => {

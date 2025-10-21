@@ -1,9 +1,4 @@
-import { useEffect } from 'react';
-
-/**
- * Hook pro management autoplay funkcionality
- * Zajišťuje automatické spuštění při každém otevření přehrávače
- */
+import { useEffect } from 'react';
 export const useAutoplay = (audioUrl, isPlaying, togglePlayPause, userPaused = false, shouldAutoplay = false) => {
   // Automatické spuštění při každém otevření přehrávače
   useEffect(() => {

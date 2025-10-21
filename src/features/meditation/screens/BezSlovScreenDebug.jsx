@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { FramerButton, FramerSection, FramerPageTransition, BackButton } from '@components';
 import { AudioPlayer } from '@features/audio';
 import { useFirebaseHudbaFilter } from '@features/audio/hooks/useFirebaseHudbaFilter';
-import { log } from '@services/logger';
+import log from '@services/logger';
 import { captureError } from '@services/errorMonitoring';
 
 const HudbaScreenDebug = ({

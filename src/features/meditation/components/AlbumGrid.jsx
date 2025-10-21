@@ -1,9 +1,5 @@
 import React from 'react';
-import { AlbumCard } from './AlbumCard';
-
-/**
- * Komponenta pro mřížku alb a skladeb v HudbaScreen
- */
+import { AlbumCard } from './AlbumCard';
 export const AlbumGrid = ({
   hudbaItems,
   activeAudio,

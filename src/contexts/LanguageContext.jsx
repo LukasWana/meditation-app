@@ -17,7 +17,7 @@ export const LanguageProvider = ({ children }) => {
     return savedLanguage || 'SK';
   });
 
-  const [translations, setTranslations] = useState({
+  const [translations] = useState({
     SK: {
       // Hlavná navigácia
       hudba: 'hudba',
@@ -169,7 +169,7 @@ export const LanguageProvider = ({ children }) => {
     return translations[language]?.[key] || key;
   };
 
-  const getLanguageFlag = (lang) => {
+  const getLanguageFlag = () => {
     // Tato funkce se už nepoužívá - vlajky se načítají z SVG souborů
     return null;
   };

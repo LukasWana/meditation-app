@@ -1,6 +1,4 @@
-/**
- * Unit testy pro useTimer hook
- */
+
 
 import { renderHook, act } from '@testing-library/react';
 import { useTimer } from '@hooks/useTimer';

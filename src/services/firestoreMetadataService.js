@@ -9,9 +9,6 @@ class FirestoreMetadataService {
     this.cacheExpiry = 24 * 60 * 60 * 1000; // 24 hodin
   }
 
-  /**
-   * Načte metadata ze localStorage (offline cache)
-   */
   loadFromLocalCache() {
     try {
       const cached = localStorage.getItem(this.localStorageKey);
@@ -35,9 +32,6 @@ class FirestoreMetadataService {
     return false;
   }
 
-  /**
-   * Uloží metadata do localStorage (offline cache)
-   */
   saveToLocalCache() {
     try {
       const data = Object.fromEntries(this.cache);
@@ -52,9 +46,6 @@ class FirestoreMetadataService {
     }
   }
 
-  /**
-   * Načte všechna metadata z Firestore
-   */
   async loadAllMetadata() {
     try {
       console.log('Loading metadata from Firestore...');
@@ -100,9 +91,6 @@ class FirestoreMetadataService {
     }
   }
 
-  /**
-   * Načte metadata pro konkrétní soubor
-   */
   async getMetadata(fileName) {
     // Nejdříve zkontroluj memory cache
     if (this.cache.has(fileName)) {
@@ -115,8 +103,9 @@ class FirestoreMetadataService {
     }
 
     try {
-      // Načti z Firestore
-      const docRef = doc(db, this.collectionName, fileName);
+      // Načti z Firestore - nahraď lomítka v názvu souboru
+      const safeFileName = fileName.replace(/\//g, '_');
+      const docRef = doc(db, this.collectionName, safeFileName);
       const docSnap = await getDoc(docRef);
 
       if (docSnap.exists()) {
@@ -133,14 +122,13 @@ class FirestoreMetadataService {
     }
   }
 
-  /**
-   * Uloží metadata do Firestore
-   */
   async saveMetadata(fileName, metadata) {
     try {
-      const docRef = doc(db, this.collectionName, fileName);
+      // Nahraď lomítka v názvu souboru, aby vytvořil platný document ID
+      const safeFileName = fileName.replace(/\//g, '_');
+      const docRef = doc(db, this.collectionName, safeFileName);
       const metadataDoc = {
-        fileName,
+        fileName, // Původní název souboru s lomítky
         ...metadata,
         updated: new Date().toISOString()
       };
@@ -158,9 +146,6 @@ class FirestoreMetadataService {
     }
   }
 
-  /**
-   * Batch uložení metadat
-   */
   async saveBatchMetadata(metadataArray) {
     try {
       console.log(`Saving batch of ${metadataArray.length} metadata records...`);
@@ -181,32 +166,20 @@ class FirestoreMetadataService {
     }
   }
 
-  /**
-   * Vyčistí cache
-   */
   clearCache() {
     this.cache.clear();
     localStorage.removeItem(this.localStorageKey);
     console.log('Metadata cache cleared');
   }
 
-  /**
-   * Získá všechny metadata z cache (bez síťového requestu)
-   */
   getAllFromCache() {
     return Object.fromEntries(this.cache);
   }
 
-  /**
-   * Zkontroluje, jestli máme metadata v cache
-   */
   hasInCache(fileName) {
     return this.cache.has(fileName);
   }
 
-  /**
-   * Inicializace - načte cache při startu
-   */
   async initialize() {
     console.log('Initializing FirestoreMetadataService...');
 

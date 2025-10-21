@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
-import cacheService from '@services/cacheService';
-import { log } from '@services/logger';
+import cacheService from '@services/cacheServiceRefactored';
+import log from '@services/logger';
 import globalMetadataPreloader from '@services/globalMetadataPreloader';
 import { useAutoplay } from './useAutoplay';
 

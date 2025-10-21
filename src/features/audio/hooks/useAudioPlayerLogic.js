@@ -2,12 +2,7 @@ import { useState, useEffect, useMemo, useCallback } from 'react';
 import { useFirebaseAudio } from './useFirebaseAudio';
 import { useAudioContext } from './useAudioContext';
 import { useAutoplay } from './useAutoplay';
-import { useVoiceSwitcher } from './useVoiceSwitcher';
-
-/**
- * Hlavní hook pro logiku AudioPlayer komponenty
- * Spojuje všechny potřebné hooky a poskytuje jednotné API
- */
+import { useVoiceSwitcher } from './useVoiceSwitcher';
 export const useAudioPlayerLogic = ({
   audioSrc,
   albumTracks,

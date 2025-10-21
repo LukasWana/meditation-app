@@ -1,10 +1,6 @@
-import { log } from './logger.js';
+import log from './logger.js';
 import { getCurrentConfig } from '@config/performance';
 
-/**
- * Optimalizovaný Performance Monitor
- * Snižuje noise a zaměřuje se pouze na skutečné problémy
- */
 class PerformanceMonitor {
   constructor() {
     this.isInitialized = false;
@@ -17,9 +13,6 @@ class PerformanceMonitor {
     this.observers = new Map();
   }
 
-  /**
-   * Inicializace performance monitoringu
-   */
   initialize() {
     if (this.isInitialized || typeof window === 'undefined') return;
 
@@ -40,9 +33,6 @@ class PerformanceMonitor {
     }
   }
 
-  /**
-   * Monitoring dlouhých úkolů - optimalizovaný
-   */
   setupLongTaskMonitoring() {
     if (!('PerformanceObserver' in window)) return;
 
@@ -68,9 +58,6 @@ class PerformanceMonitor {
     }
   }
 
-  /**
-   * Zpracování dlouhého úkolu
-   */
   handleLongTask(entry) {
     const severity = entry.duration > 200 ? 'high' : 'medium';
 
@@ -87,9 +74,6 @@ class PerformanceMonitor {
     }
   }
 
-  /**
-   * Memory monitoring - pouze v production
-   */
   setupMemoryMonitoring() {
     if (!('memory' in performance) || import.meta.env.MODE !== 'production') return;
 
@@ -109,9 +93,6 @@ class PerformanceMonitor {
     }
   }
 
-  /**
-   * Network monitoring - pouze pro velmi pomalé requesty
-   */
   setupNetworkMonitoring() {
     if (!('PerformanceObserver' in window)) return;
 
@@ -138,9 +119,6 @@ class PerformanceMonitor {
     }
   }
 
-  /**
-   * Reportování do error monitoring služby
-   */
   reportToErrorMonitoring(entry) {
     // Pouze pokud je error monitoring dostupný
     if (typeof window !== 'undefined' && window.errorMonitoring) {
@@ -154,9 +132,6 @@ class PerformanceMonitor {
     }
   }
 
-  /**
-   * Manuální měření performance
-   */
   measurePerformance(name, fn) {
     const start = performance.now();
     try {
@@ -175,9 +150,6 @@ class PerformanceMonitor {
     }
   }
 
-  /**
-   * Cleanup
-   */
   cleanup() {
     this.observers.forEach((observer, type) => {
       try {

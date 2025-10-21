@@ -1,12 +1,8 @@
 import { useState, useEffect, useMemo } from 'react';
 import { firestoreMetadataService } from '@services/firestoreMetadataService';
 import { staticMetadataService } from '@services/staticMetadataService';
-import { log } from '@services/logger';
+import log from '@services/logger';
 
-/**
- * Optimalizovaný hook pro načítání hudba dat z Firestore
- * Místo pomalého Firebase Storage používá rychlou Firestore databázi
- */
 export const useOptimizedHudbaFilter = () => {
   const [hudbaItems, setHudbaItems] = useState([]);
   const [isLoading, setIsLoading] = useState(true);

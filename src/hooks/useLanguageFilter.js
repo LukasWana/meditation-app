@@ -1,17 +1,6 @@
-import { useLanguage } from '@contexts/LanguageContext';
-
-/**
- * Hook pro filtraci audio souborů podle vybraného jazyka
- */
+import { useLanguage } from '@contexts/LanguageContext';
 export const useLanguageFilter = () => {
-  const { language } = useLanguage();
-
-  /**
-   * Filtruje audio soubory podle jazyka
-   * @param {Array} audioFiles - Array audio souborů
-   * @param {string} section - Sekce ('hudba' nebo 'slova')
-   * @returns {Array} Filtrované audio soubory
-   */
+  const { language } = useLanguage();
   const filterAudioByLanguage = (audioFiles, section = 'slova') => {
     if (!audioFiles || audioFiles.length === 0) {
       return [];
@@ -49,13 +38,7 @@ export const useLanguageFilter = () => {
     }
 
     return audioFiles;
-  };
-
-  /**
-   * Získá cestu k podsložce podle jazyka
-   * @param {string} basePath - Základní cesta
-   * @returns {string} Cesta s jazykovou podsložkou
-   */
+  };
   const getLanguagePath = (basePath) => {
     if (!basePath) return '';
 
@@ -65,13 +48,7 @@ export const useLanguageFilter = () => {
     }
 
     return basePath;
-  };
-
-  /**
-   * Zkontroluje, jestli je soubor pro aktuální jazyk
-   * @param {string} fileName - Název souboru
-   * @returns {boolean} True pokud je soubor pro aktuální jazyk
-   */
+  };
   const isFileForCurrentLanguage = (fileName) => {
     if (!fileName) return false;
 

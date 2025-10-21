@@ -1,10 +1,6 @@
 import { useState, useCallback, useRef, useEffect } from 'react';
-import { log } from '@services/logger';
+import log from '@services/logger';
 
-/**
- * Hook pro globální správu povolení audia
- * Řeší autoplay policy prohlížečů - vyžaduje user interaction
- */
 export const useAudioPermission = () => {
   const [isAudioEnabled, setIsAudioEnabled] = useState(false);
   const [isPermissionRequested, setIsPermissionRequested] = useState(false);

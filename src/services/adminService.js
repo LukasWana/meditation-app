@@ -1,7 +1,4 @@
-/**
- * Admin Service - pro server-side operace s Firebase Admin SDK
- * POZOR: Tento soubor je pouze pro Cloud Functions, ne pro klientský kód!
- */
+
 
 // Toto by mělo běžet pouze v Cloud Functions prostředí
 if (typeof window === 'undefined') {
@@ -15,10 +12,7 @@ if (typeof window === 'undefined') {
     });
   }
 
-  class AdminService {
-    /**
-     * Synchronizuje metadata z Storage do Firestore
-     */
+  class AdminService {
     static async syncStorageToFirestore() {
       try {
         const bucket = admin.storage().bucket();
@@ -67,11 +61,7 @@ if (typeof window === 'undefined') {
         console.error('❌ Sync failed:', error);
         return { success: false, error: error.message };
       }
-    }
-
-    /**
-     * Vyčistí neexistující soubory z Firestore
-     */
+    }
     static async cleanupOrphanedMetadata() {
       try {
         const bucket = admin.storage().bucket();
@@ -110,11 +100,7 @@ if (typeof window === 'undefined') {
         console.error('❌ Cleanup failed:', error);
         return { success: false, error: error.message };
       }
-    }
-
-    /**
-     * Generuje statistiky o souborech
-     */
+    }
     static async generateFileStats() {
       try {
         const bucket = admin.storage().bucket();
@@ -149,11 +135,7 @@ if (typeof window === 'undefined') {
         console.error('❌ Stats generation failed:', error);
         return { success: false, error: error.message };
       }
-    }
-
-    /**
-     * Nastaví uživatelské oprávnění
-     */
+    }
     static async setUserRole(uid, role) {
       try {
         await admin.auth().setCustomUserClaims(uid, { role });
@@ -163,11 +145,7 @@ if (typeof window === 'undefined') {
         console.error('❌ Failed to set user role:', error);
         return { success: false, error: error.message };
       }
-    }
-
-    /**
-     * Získá informace o uživateli
-     */
+    }
     static async getUserInfo(uid) {
       try {
         const user = await admin.auth().getUser(uid);
@@ -191,10 +169,7 @@ if (typeof window === 'undefined') {
   module.exports = AdminService;
 } else {
   // Klientský kód - pouze API volání
-  class AdminService {
-    /**
-     * Volá Cloud Function pro synchronizaci
-     */
+  class AdminService {
     static async syncStorage() {
       try {
         const response = await fetch('/api/admin/sync-storage', {
@@ -211,11 +186,7 @@ if (typeof window === 'undefined') {
         console.error('❌ Sync request failed:', error);
         return { success: false, error: error.message };
       }
-    }
-
-    /**
-     * Volá Cloud Function pro cleanup
-     */
+    }
     static async cleanupMetadata() {
       try {
         const response = await fetch('/api/admin/cleanup-metadata', {
@@ -232,11 +203,7 @@ if (typeof window === 'undefined') {
         console.error('❌ Cleanup request failed:', error);
         return { success: false, error: error.message };
       }
-    }
-
-    /**
-     * Volá Cloud Function pro statistiky
-     */
+    }
     static async getFileStats() {
       try {
         const response = await fetch('/api/admin/file-stats', {

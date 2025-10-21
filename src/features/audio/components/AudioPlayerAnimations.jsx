@@ -1,10 +1,5 @@
 import React from 'react';
-import { motion } from 'framer-motion';
-
-/**
- * Komponenta pro animace AudioPlayer
- * Obsahuje všechny animační definice a styly
- */
+import { motion } from 'framer-motion';
 export const AudioPlayerAnimations = ({
   children,
   albumCover,

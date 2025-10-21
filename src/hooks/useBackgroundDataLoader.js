@@ -1,6 +1,4 @@
-/**
- * Custom hook pro načítání dat v pozadí během intro animace
- */
+
 
 import { useEffect } from 'react';
 
@@ -14,7 +12,7 @@ export const useBackgroundDataLoader = (showIntro) => {
           const { staticMetadataService } = await import('@services/staticMetadataService');
           const { fastMetadataService } = await import('@services/fastMetadataService');
           const globalMetadataPreloader = (await import('@services/globalMetadataPreloader')).default;
-          const cacheService = (await import('@services/cacheService')).default;
+          const cacheService = (await import('@services/cacheServiceRefactored')).default;
 
           // Inicializuj metadata službu (rychlá verze)
           await staticMetadataService.initialize();

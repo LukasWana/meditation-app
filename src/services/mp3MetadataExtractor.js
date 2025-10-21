@@ -1,20 +1,11 @@
-import { log } from './logger';
+import log from './logger';
 
-/**
- * Služba pro extrakci metadata z MP3 souborů
- */
 class MP3MetadataExtractor {
   constructor() {
     this.metadataCache = new Map();
     this.loadingPromises = new Map();
   }
 
-  /**
-   * Načte metadata z MP3 souboru včetně délky
-   * @param {string} audioUrl - URL audio souboru
-   * @param {string} fileName - Název souboru pro cache
-   * @returns {Promise<Object>} Metadata objekt
-   */
   async extractMetadata(audioUrl, fileName) {
     // Zkontroluj cache
     if (this.metadataCache.has(fileName)) {
@@ -41,10 +32,6 @@ class MP3MetadataExtractor {
     }
   }
 
-  /**
-   * Vnitřní metoda pro načítání metadata
-   * @private
-   */
   async _loadMetadata(audioUrl, fileName) {
     return new Promise((resolve, reject) => {
       const audio = new Audio();
@@ -106,10 +93,6 @@ class MP3MetadataExtractor {
     });
   }
 
-  /**
-   * Extrahuje název skladby z názvu souboru
-   * @private
-   */
   _extractTitleFromFileName(fileName) {
     // Odstraň .mp3 příponu
     const nameWithoutExt = fileName.replace(/\.mp3$/i, '');
@@ -123,10 +106,6 @@ class MP3MetadataExtractor {
     return nameWithoutExt;
   }
 
-  /**
-   * Formátuje délku z sekund na MM:SS
-   * @private
-   */
   _formatDuration(seconds) {
     if (!seconds || isNaN(seconds)) return 'N/A';
 
@@ -135,12 +114,6 @@ class MP3MetadataExtractor {
     return `${mins}:${secs.toString().padStart(2, '0')}`;
   }
 
-  /**
-   * Načte metadata pro více souborů paralelně
-   * @param {Array} files - Pole souborů s {fileName, downloadURL}
-   * @param {number} batchSize - Velikost batch pro paralelní načítání
-   * @returns {Promise<Array>} Pole metadata objektů
-   */
   async loadMetadataBatch(files, batchSize = 3) {
     log.info(`🎵 Loading metadata for ${files.length} files in batches of ${batchSize}`);
 
@@ -167,28 +140,16 @@ class MP3MetadataExtractor {
     return results;
   }
 
-  /**
-   * Získá metadata z cache
-   * @param {string} fileName - Název souboru
-   * @returns {Object|null} Metadata nebo null
-   */
   getCachedMetadata(fileName) {
     return this.metadataCache.get(fileName) || null;
   }
 
-  /**
-   * Vymaže cache
-   */
   clearCache() {
     this.metadataCache.clear();
     this.loadingPromises.clear();
     log.info('🧹 MP3 metadata cache cleared');
   }
 
-  /**
-   * Získá statistiky cache
-   * @returns {Object} Statistiky
-   */
   getCacheStats() {
     return {
       cachedFiles: this.metadataCache.size,

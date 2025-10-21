@@ -1,6 +1,4 @@
-/**
- * Cache test utility pro testování localStorage cache
- */
+
 
 import fastMetadataService from '@services/fastMetadataService';
 

@@ -1,9 +1,7 @@
-/**
- * Služba pro sběr dat z UI aplikace a vytvoření strukturovaného JSON
- */
+
 
 import { staticMetadataService } from './staticMetadataService';
-import cacheService from './cacheService';
+import cacheService from './cacheServiceRefactored';
 
 class UIDataCollector {
   constructor() {
@@ -16,9 +14,6 @@ class UIDataCollector {
     };
   }
 
-  /**
-   * Načte všechna data z UI aplikace a vytvoří strukturovaný JSON
-   */
   async collectAllUIData() {
     try {
       console.log('🔄 Collecting all UI data...');
@@ -56,9 +51,6 @@ class UIDataCollector {
     }
   }
 
-  /**
-   * Extrahuje slova data z metadat
-   */
   extractSlovaData(metadata) {
     const slovaItems = [];
 
@@ -84,9 +76,6 @@ class UIDataCollector {
     return slovaItems;
   }
 
-  /**
-   * Extrahuje hudba data z metadat
-   */
   extractHudbaData(metadata) {
     const hudbaItems = [];
 
@@ -113,9 +102,6 @@ class UIDataCollector {
     return hudbaItems;
   }
 
-  /**
-   * Vytvoří alba z hudba dat
-   */
   createAlbumsFromHudba(hudbaItems) {
     const albumsMap = new Map();
 
@@ -148,9 +134,6 @@ class UIDataCollector {
     return Array.from(albumsMap.values());
   }
 
-  /**
-   * Parsuje název slova souboru
-   */
   parseSlovaFileName(fileName) {
     // Formát: muzsky4FSK-uzkost-osamelost.mp3
     const match = fileName.match(/^(muzsky|zensky)(\d+)([A-Z]+)-(.+)\.mp3$/);
@@ -167,9 +150,6 @@ class UIDataCollector {
     };
   }
 
-  /**
-   * Parsuje název hudba souboru
-   */
   parseHudbaFileName(fileName) {
     // Formát: 00--00--00--00- - Ambient Journey - 01 Zhooliox.mp3
     const match = fileName.match(/^00--00--00--00-\s*-\s*(.+?)\s*-\s*(\d+)\s+(.+)\.mp3$/);
@@ -185,9 +165,6 @@ class UIDataCollector {
     };
   }
 
-  /**
-   * Vypočítá celkovou délku z pole délek
-   */
   calculateTotalDuration(durations) {
     let totalSeconds = 0;
 
@@ -211,9 +188,6 @@ class UIDataCollector {
     }
   }
 
-  /**
-   * Uloží strukturovaná data do localStorage
-   */
   saveStructuredData() {
     try {
       const dataToSave = {
@@ -232,9 +206,6 @@ class UIDataCollector {
     }
   }
 
-  /**
-   * Načte strukturovaná data z localStorage
-   */
   loadStructuredData() {
     try {
       const savedData = localStorage.getItem('ui_structured_data');
@@ -251,9 +222,6 @@ class UIDataCollector {
     }
   }
 
-  /**
-   * Získá skutečnou délku z cache (z přehrávače)
-   */
   getRealDuration(data) {
     if (data.downloadURL) {
       const realDuration = cacheService.getDuration(data.downloadURL);
@@ -266,9 +234,6 @@ class UIDataCollector {
     return null;
   }
 
-  /**
-   * Získá aktuální strukturovaná data
-   */
   getStructuredData() {
     return this.collectedData;
   }

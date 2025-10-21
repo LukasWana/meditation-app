@@ -1,11 +1,8 @@
-/**
- * Optimalizovaná služba pro metadata
- * Načítá metadata z rychlé databáze místo preloadování MP3 souborů
- */
+
 
 import { collection, doc, getDoc, getDocs, query, orderBy } from 'firebase/firestore';
 import { db } from './firebase';
-import { log } from './logger';
+import log from './logger';
 
 class OptimizedMetadataService {
   constructor() {
@@ -14,11 +11,6 @@ class OptimizedMetadataService {
     this.lastSync = null;
   }
 
-  /**
-   * Načte metadata pro konkrétní soubor
-   * @param {string} fileName - Název souboru
-   * @returns {Promise<Object|null>} Metadata objekt
-   */
   async getMetadata(fileName) {
     try {
       // 1. Zkontroluj lokální cache
@@ -56,11 +48,6 @@ class OptimizedMetadataService {
     }
   }
 
-  /**
-   * Načte metadata pro všechny soubory v složce
-   * @param {string} folder - Název složky ('hudba' nebo 'slova')
-   * @returns {Promise<Array>} Pole metadata objektů
-   */
   async getMetadataForFolder(folder) {
     try {
       log.debug(`📁 Loading metadata for folder: ${folder}`);
@@ -92,10 +79,6 @@ class OptimizedMetadataService {
     }
   }
 
-  /**
-   * Načte všechna metadata (pro inicializaci)
-   * @returns {Promise<Map>} Mapa fileName -> metadata
-   */
   async getAllMetadata() {
     try {
       log.info('🚀 Loading all metadata from database...');
@@ -122,10 +105,6 @@ class OptimizedMetadataService {
     }
   }
 
-  /**
-   * Zkontroluje, jestli jsou metadata aktuální
-   * @returns {Promise<boolean>} True pokud jsou aktuální
-   */
   async checkMetadataFreshness() {
     try {
       // Zkontroluj timestamp poslední synchronizace
@@ -145,17 +124,11 @@ class OptimizedMetadataService {
     }
   }
 
-  /**
-   * Vymaže lokální cache
-   */
   clearCache() {
     this.localCache.clear();
     log.debug('🗑️ Local metadata cache cleared');
   }
 
-  /**
-   * Vrátí statistiky cache
-   */
   getCacheStats() {
     return {
       size: this.localCache.size,

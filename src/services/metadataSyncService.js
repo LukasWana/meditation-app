@@ -1,13 +1,10 @@
-/**
- * Služba pro synchronizaci MP3 metadat s Firestore
- * Zajišťuje rychlé načítání UI z databáze místo Firebase Storage
- */
+
 
 import { firestoreMetadataService } from './firestoreMetadataService';
 import { mp3MetadataExtractor } from './mp3MetadataExtractor';
 import { ref, listAll, getMetadata } from 'firebase/storage';
 import { storage } from './firebase';
-import { log } from './logger';
+import log from './logger';
 
 class MetadataSyncService {
   constructor() {
@@ -17,9 +14,6 @@ class MetadataSyncService {
     this.syncInterval = 24 * 60 * 60 * 1000; // 24 hodin
   }
 
-  /**
-   * Inicializuje službu a načte metadata
-   */
   async initialize() {
     if (this.isInitialized) {
       return;
@@ -49,9 +43,6 @@ class MetadataSyncService {
     }
   }
 
-  /**
-   * Zkontroluje, jestli je potřeba synchronizace
-   */
   async checkIfSyncNeeded() {
     try {
       // Zkontroluj, jestli máme metadata v cache
@@ -87,9 +78,6 @@ class MetadataSyncService {
     }
   }
 
-  /**
-   * Zkontroluje, jestli se změnily soubory v Firebase Storage
-   */
   async checkForStorageChanges() {
     try {
       // Načti seznam souborů z Firebase Storage
@@ -158,9 +146,6 @@ class MetadataSyncService {
     }
   }
 
-  /**
-   * Spustí synchronizaci metadat v pozadí
-   */
   async syncMetadataInBackground() {
     if (this.syncInProgress) {
       log.warn('Sync already in progress');
@@ -184,9 +169,6 @@ class MetadataSyncService {
     }
   }
 
-  /**
-   * Provede skutečnou synchronizaci metadat
-   */
   async performSync() {
     try {
       log.info('🔄 Starting metadata synchronization...');
@@ -228,9 +210,6 @@ class MetadataSyncService {
     }
   }
 
-  /**
-   * Načte všechny MP3 soubory z Firebase Storage
-   */
   async getAllMP3Files() {
     const mp3Files = [];
 
@@ -280,9 +259,6 @@ class MetadataSyncService {
     }
   }
 
-  /**
-   * Uloží metadata do Firestore
-   */
   async saveMetadataToFirestore(metadataArray) {
     try {
       // Přidej Firebase Storage metadata (velikost, čas vytvoření)
@@ -319,32 +295,20 @@ class MetadataSyncService {
     }
   }
 
-  /**
-   * Získá metadata pro soubor (rychlé načítání z cache)
-   */
   getMetadata(fileName) {
     return firestoreMetadataService.getMetadata(fileName);
   }
 
-  /**
-   * Získá všechna metadata (rychlé načítání z cache)
-   */
   getAllMetadata() {
     return firestoreMetadataService.getAllFromCache();
   }
 
-  /**
-   * Vynutí novou synchronizaci
-   */
   async forceSync() {
     log.info('🔄 Forcing metadata synchronization...');
     this.lastSyncTime = null;
     await this.performSync();
   }
 
-  /**
-   * Zkontroluje stav synchronizace
-   */
   getSyncStatus() {
     return {
       isInitialized: this.isInitialized,

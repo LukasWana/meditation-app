@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { ref, getDownloadURL } from 'firebase/storage';
 import { storage } from '@services/firebase';
-import cacheService from '@services/cacheService';
+import cacheService from '@services/cacheServiceRefactored';
 
 export const useFirebaseAudio = (audioFileName) => {
   // console.log('🔗 useFirebaseAudio called with:', audioFileName);

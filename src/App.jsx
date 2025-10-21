@@ -1,27 +1,39 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
+import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { PageManager } from '@features/navigation';
-import { useNavigation, useTouchNavigation, useAppState, useBackgroundDataLoader, useTimer, useBreathPhase, useOptimizedPreloader } from '@hooks';
-import IntroScreen from '@features/meditation/screens/IntroScreen';
-import { firestoreMetadataService } from '@services/firestoreMetadataService';
+import { useNavigation, useTouchNavigation, useAppState, useBackgroundDataLoader, useTimer, useBreathPhase } from '@hooks';
+import { LazyIntroScreen } from '@components/LazyWrapper';
 import { LanguageProvider } from '@contexts/LanguageContext';
+import MonitoringDashboard from '@components/MonitoringDashboard';
 
+import ErrorBoundary from '@components/ErrorBoundary';
+import { register } from '@services/serviceWorker';
+import DatabaseAdminScreen from '@features/meditation/screens/DatabaseAdminScreen';
 
-export default function MeditationApp() {
+// Hlavní aplikace s routingem
+export default function App() {
+  return (
+    <BrowserRouter>
+      <Routes>
+        <Route path="/admin" element={<AdminApp />} />
+        <Route path="/admin/*" element={<AdminApp />} />
+        <Route path="/*" element={<MeditationApp />} />
+      </Routes>
+    </BrowserRouter>
+  );
+}
+
+// Meditační aplikace
+function MeditationApp() {
   // Intro state
   const [showIntro, setShowIntro] = useState(true);
+
+  // Monitoring state
+  const [showMonitoring, setShowMonitoring] = useState(false);
 
   // Navigation state
   const { currentScreen, navigateToScreen } = useNavigation('intro');
 
-
-  // Navigation history odstraněn - nepoužívaný
-
-  // Preloading odstraněn - data se načítají v pozadí během animace
-
-  // Prediktivní preloading odstraněn - data se načítají při startu
-
-  // Initialize metadata service and preloader
-  const { isPreloading, preloadProgress, preloadError } = useOptimizedPreloader();
 
   // App state
   const {
@@ -64,7 +76,6 @@ export default function MeditationApp() {
     }
   });
 
-  // Navigation history tracking odstraněn - nepoužívaný
 
   // Timer logika
   useTimer(isPlaying, time, setTime, setIsPlaying);
@@ -75,6 +86,21 @@ export default function MeditationApp() {
   // Načti data v pozadí během intro animace
   useBackgroundDataLoader(showIntro);
 
+  // Service Worker registrace
+  React.useEffect(() => {
+    // Registruj Service Worker pouze v produkci nebo když je připraven
+    if (import.meta.env.MODE === 'production' || window.location.protocol === 'https:') {
+      register();
+    }
+
+    // Načti database viewer pro development
+    if (import.meta.env.MODE === 'development') {
+      import('./scripts/consoleDbViewer.js').then(() => {
+        console.log('🔍 Database viewer je k dispozici v konzoli');
+      });
+    }
+  }, []);
+
   // Intro completion handler
   const handleIntroComplete = () => {
     setShowIntro(false);
@@ -82,11 +108,12 @@ export default function MeditationApp() {
   };
 
   return (
-    <LanguageProvider>
-      <div className="min-h-screen w-full bg-[#f4ddc4] overflow-x-hidden">
+    <ErrorBoundary>
+      <LanguageProvider>
+        <div className="min-h-screen w-full bg-[#f4ddc4] overflow-x-hidden">
       {/* Intro animace s písmem "Meditácia" */}
       {showIntro && (
-        <IntroScreen onIntroComplete={handleIntroComplete} />
+        <LazyIntroScreen onIntroComplete={handleIntroComplete} />
       )}
 
       {/* Hlavní aplikace - zobrazí se až po intro */}
@@ -126,9 +153,35 @@ export default function MeditationApp() {
         />
       )}
 
-
+      {/* Monitoring Dashboard */}
+      {import.meta.env.MODE === 'development' && (
+        <>
+          <button
+            onClick={() => setShowMonitoring(!showMonitoring)}
+            className="fixed top-4 right-4 bg-blue-500 text-white px-3 py-2 rounded-lg text-sm shadow-lg hover:bg-blue-600 transition-colors z-50"
+          >
+            📊 Monitor
+          </button>
+          <MonitoringDashboard
+            isVisible={showMonitoring}
+            onClose={() => setShowMonitoring(false)}
+          />
+        </>
+      )}
 
       </div>
-    </LanguageProvider>
+      </LanguageProvider>
+    </ErrorBoundary>
+  );
+}
+
+// Admin aplikace - jednoduchá verze
+export function AdminApp() {
+  return (
+    <ErrorBoundary>
+      <LanguageProvider>
+        <DatabaseAdminScreen />
+      </LanguageProvider>
+    </ErrorBoundary>
   );
 }

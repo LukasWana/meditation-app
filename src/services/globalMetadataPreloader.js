@@ -1,11 +1,8 @@
-import { log } from './logger';
+import log from './logger';
 import mp3MetadataExtractor from './mp3MetadataExtractor';
 import { storage } from './firebase';
 import { ref, listAll, getDownloadURL } from 'firebase/storage';
 
-/**
- * Globální preloader pro načítání metadata všech audio souborů
- */
 class GlobalMetadataPreloader {
   constructor() {
     this.isInitialized = false;
@@ -14,11 +11,6 @@ class GlobalMetadataPreloader {
     this.loadingPromise = null;
   }
 
-  /**
-   * Inicializuje preloader a načte metadata pro všechny audio soubory
-   * @param {boolean} forceReload - Vynutí nové načtení i když už je inicializováno
-   * @returns {Promise<boolean>} Úspěch inicializace
-   */
   async initialize(forceReload = false) {
     if (this.isInitialized && !forceReload) {
       log.debug('🔄 Global metadata preloader already initialized');
@@ -43,10 +35,6 @@ class GlobalMetadataPreloader {
     }
   }
 
-  /**
-   * Vnitřní metoda pro načítání všech metadata
-   * @private
-   */
   async _loadAllMetadata() {
     try {
       log.info('🚀 Starting global metadata preloading...');
@@ -85,10 +73,6 @@ class GlobalMetadataPreloader {
     }
   }
 
-  /**
-   * Skenuje všechny audio soubory v Firebase Storage
-   * @private
-   */
   async _scanAllAudioFiles() {
     const audioFiles = [];
 
@@ -110,10 +94,6 @@ class GlobalMetadataPreloader {
     return audioFiles;
   }
 
-  /**
-   * Skenuje konkrétní složku v Firebase Storage
-   * @private
-   */
   async _scanFolder(folderName) {
     const files = [];
 
@@ -151,10 +131,6 @@ class GlobalMetadataPreloader {
     return files;
   }
 
-  /**
-   * Skenuje podsložku
-   * @private
-   */
   async _scanSubFolder(folderName, subFolderName) {
     const files = [];
 
@@ -185,20 +161,10 @@ class GlobalMetadataPreloader {
     return files;
   }
 
-  /**
-   * Získá metadata pro konkrétní soubor
-   * @param {string} fileName - Název souboru
-   * @returns {Object|null} Metadata nebo null
-   */
   getMetadata(fileName) {
     return this.metadata.get(fileName) || null;
   }
 
-  /**
-   * Získá metadata pro všechny soubory ve složce
-   * @param {string} folder - Název složky (slova/hudba)
-   * @returns {Array} Pole metadata objektů
-   */
   getMetadataByFolder(folder) {
     const results = [];
     for (const [fileName, metadata] of this.metadata) {
@@ -209,12 +175,6 @@ class GlobalMetadataPreloader {
     return results;
   }
 
-  /**
-   * Získá metadata pro soubory v podsložce
-   * @param {string} folder - Název složky
-   * @param {string} subFolder - Název podsložky
-   * @returns {Array} Pole metadata objektů
-   */
   getMetadataBySubFolder(folder, subFolder) {
     const results = [];
     for (const [fileName, metadata] of this.metadata) {
@@ -225,26 +185,14 @@ class GlobalMetadataPreloader {
     return results;
   }
 
-  /**
-   * Zkontroluje, jestli je preloader inicializován
-   * @returns {boolean}
-   */
   isReady() {
     return this.isInitialized && !this.isLoading;
   }
 
-  /**
-   * Zkontroluje, jestli se právě načítá
-   * @returns {boolean}
-   */
   isLoading() {
     return this.isLoading;
   }
 
-  /**
-   * Získá statistiky
-   * @returns {Object}
-   */
   getStats() {
     const slovaFiles = this.getMetadataByFolder('slova');
     const hudbaFiles = this.getMetadataByFolder('hudba');
@@ -260,9 +208,6 @@ class GlobalMetadataPreloader {
     };
   }
 
-  /**
-   * Vymaže všechna metadata
-   */
   clear() {
     this.metadata.clear();
     this.isInitialized = false;

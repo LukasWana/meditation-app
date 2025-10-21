@@ -1,7 +1,4 @@
-/**
- * Jednoduchá služba pro načítání metadat z statického JSON souboru
- * Rychlé řešení bez Firestore chyb
- */
+
 
 class StaticMetadataService {
   constructor() {
@@ -10,11 +7,7 @@ class StaticMetadataService {
     this.cache = new Map();
     this.localStorageKey = 'audio-metadata-cache';
     this.cacheExpiry = 24 * 60 * 60 * 1000; // 24 hodin
-  }
-
-  /**
-   * Načte metadata ze localStorage (offline cache) - optimalizováno pro rychlost
-   */
+  }
   loadFromLocalCache() {
     try {
       const cached = localStorage.getItem(this.localStorageKey);
@@ -37,11 +30,7 @@ class StaticMetadataService {
       console.warn('Failed to load from local cache:', error);
     }
     return false;
-  }
-
-  /**
-   * Uloží metadata do localStorage (offline cache)
-   */
+  }
   saveToLocalCache() {
     try {
       const data = Object.fromEntries(this.cache);
@@ -54,11 +43,7 @@ class StaticMetadataService {
     } catch (error) {
       console.warn('Failed to save to local cache:', error);
     }
-  }
-
-  /**
-   * Načte metadata z JSON souboru - optimalizováno pro non-blocking načítání
-   */
+  }
   async loadMetadata() {
     if (this.isLoading) {
       return this.metadata;
@@ -113,11 +98,7 @@ class StaticMetadataService {
     } finally {
       this.isLoading = false;
     }
-  }
-
-  /**
-   * Získá metadata pro konkrétní soubor
-   */
+  }
   getMetadata(fileName) {
     // Nejdříve zkontroluj memory cache
     if (this.cache.has(fileName)) {
@@ -130,35 +111,19 @@ class StaticMetadataService {
     }
 
     return null;
-  }
-
-  /**
-   * Získá všechna metadata z cache (bez síťového requestu)
-   */
+  }
   getAllFromCache() {
     return Object.fromEntries(this.cache);
-  }
-
-  /**
-   * Zkontroluje, jestli máme metadata v cache
-   */
+  }
   hasInCache(fileName) {
     return this.cache.has(fileName);
-  }
-
-  /**
-   * Vyčistí cache
-   */
+  }
   clearCache() {
     this.cache.clear();
     this.metadata = null;
     localStorage.removeItem(this.localStorageKey);
     console.log('Metadata cache cleared');
-  }
-
-  /**
-   * Inicializace - načte cache při startu
-   */
+  }
   async initialize() {
     console.log('Initializing StaticMetadataService...');
 

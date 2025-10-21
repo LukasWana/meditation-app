@@ -1,11 +1,8 @@
-/**
- * Rychlá služba pro metadata založená na Firebase struktuře a názvech souborů
- * Místo extrakce z MP3 tagů parsuje názvy a strukturu složek
- */
+
 
 import { ref, listAll, getDownloadURL } from 'firebase/storage';
 import { storage } from './firebase';
-import { log } from './logger';
+import log from './logger';
 import { parseAudioFileName } from '@utils/hudbaParser';
 
 class FastMetadataService {
@@ -17,9 +14,6 @@ class FastMetadataService {
     this.cacheExpiry = 7 * 24 * 60 * 60 * 1000; // 7 dní - delší cache pro lepší performance
   }
 
-  /**
-   * Načte metadata z localStorage cache
-   */
   loadFromCache() {
     try {
       const cached = localStorage.getItem(this.cacheKey);
@@ -42,9 +36,6 @@ class FastMetadataService {
     return false;
   }
 
-  /**
-   * Uloží metadata do localStorage cache
-   */
   saveToCache() {
     try {
       const data = Object.fromEntries(this.metadata);
@@ -59,9 +50,6 @@ class FastMetadataService {
     }
   }
 
-  /**
-   * Vymaže cache (při změnách v Firebase)
-   */
   clearCache() {
     try {
       localStorage.removeItem(this.cacheKey);
@@ -73,9 +61,6 @@ class FastMetadataService {
     }
   }
 
-  /**
-   * Zkontroluje, jestli je cache stále platná
-   */
   isCacheValid() {
     try {
       const cached = localStorage.getItem(this.cacheKey);
@@ -90,9 +75,6 @@ class FastMetadataService {
     return false;
   }
 
-  /**
-   * Načte všechna metadata z Firebase Storage (rychlá verze)
-   */
   async loadAllMetadata() {
     if (this.isLoading) {
       return this.metadata;
@@ -198,9 +180,6 @@ class FastMetadataService {
     }
   }
 
-  /**
-   * Zpracuje soubory a vytvoří metadata z názvů a struktury
-   */
   async processFiles(files) {
     log.debug(`🔍 Processing ${files.length} total files:`, files.map(f => ({
       name: f.name,
@@ -258,9 +237,6 @@ class FastMetadataService {
     }
   }
 
-  /**
-   * Vytvoří metadata pro MP3 soubor z názvu a struktury
-   */
   async createMetadataFromFile(file) {
     const fileName = file.name;
     const fileNameOnly = fileName.split('/').pop();
@@ -337,9 +313,6 @@ class FastMetadataService {
     return metadata;
   }
 
-  /**
-   * Získá download URL s retry mechanismem
-   */
   async _getDownloadURLWithRetry(file, retries = 3) {
     const fileName = file.name;
 
@@ -373,9 +346,6 @@ class FastMetadataService {
     return null;
   }
 
-  /**
-   * Vytvoří metadata pro obrázek
-   */
   async createImageMetadata(file) {
     const fileName = file.name;
     const fileNameOnly = fileName.split('/').pop();
@@ -406,10 +376,6 @@ class FastMetadataService {
     return metadata;
   }
 
-
-  /**
-   * Načte délky audio souborů z audio elementů
-   */
   async loadAudioDurations() {
     const audioFiles = Array.from(this.metadata.values()).filter(meta =>
       (meta.type === 'audio' || meta.type === 'album_track') && meta.downloadURL
@@ -428,9 +394,6 @@ class FastMetadataService {
     log.success(`✅ Audio durations set to N/A for ${audioFiles.length} files (CORS issue with Firebase Storage)`);
   }
 
-  /**
-   * Získá délku audio souboru s retry mechanismem
-   */
   async getAudioDuration(audioSrc, retries = 2) {
     for (let attempt = 0; attempt <= retries; attempt++) {
       try {
@@ -453,9 +416,6 @@ class FastMetadataService {
     return null;
   }
 
-  /**
-   * Vnitřní metoda pro načítání délky audio souboru
-   */
   _loadAudioDuration(audioSrc) {
     return new Promise((resolve, reject) => {
       const audio = new Audio();
@@ -494,9 +454,6 @@ class FastMetadataService {
     });
   }
 
-  /**
-   * Formátuje délku v sekundách do čitelného formátu
-   */
   formatDuration(seconds) {
     if (!seconds || !isFinite(seconds) || seconds <= 0) {
       return 'N/A';
@@ -507,9 +464,6 @@ class FastMetadataService {
     return `${minutes}:${remainingSeconds.toString().padStart(2, '0')}`;
   }
 
-  /**
-   * Získá content type pro obrázek
-   */
   getImageContentType(fileName) {
     const ext = fileName.toLowerCase().split('.').pop();
     switch (ext) {
@@ -527,41 +481,26 @@ class FastMetadataService {
     }
   }
 
-  /**
-   * Získá metadata pro soubor
-   */
   getMetadata(fileName) {
     return this.metadata.get(fileName);
   }
 
-  /**
-   * Získá všechna metadata
-   */
   getAllMetadata() {
     return Object.fromEntries(this.metadata);
   }
 
-  /**
-   * Získá metadata pro hudba soubory
-   */
   getHudbaMetadata() {
     return Array.from(this.metadata.values()).filter(meta =>
       meta.isHudba && meta.type === 'audio'
     );
   }
 
-  /**
-   * Získá metadata pro slova soubory
-   */
   getSlovaMetadata() {
     return Array.from(this.metadata.values()).filter(meta =>
       meta.isSlova && meta.type === 'audio'
     );
   }
 
-  /**
-   * Získá cover obrázky
-   */
   getCoverImages() {
     const covers = new Map();
     Array.from(this.metadata.values())
@@ -574,9 +513,6 @@ class FastMetadataService {
     return covers;
   }
 
-  /**
-   * Inicializace
-   */
   async initialize(forceReload = false) {
     log.info('Initializing FastMetadataService...');
 
@@ -598,9 +534,6 @@ class FastMetadataService {
     }
   }
 
-  /**
-   * Vynutí nové načtení
-   */
   async refresh() {
     this.metadata.clear();
     localStorage.removeItem(this.cacheKey);

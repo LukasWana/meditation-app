@@ -1,9 +1,5 @@
 import React from 'react';
-import { FramerButton, FramerSection } from '@components';
-
-/**
- * Komponenta pro kartu alba nebo skladby v HudbaScreen
- */
+import { FramerButton, FramerSection } from '@components';
 export const AlbumCard = ({
   item,
   idx,

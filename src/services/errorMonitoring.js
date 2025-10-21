@@ -1,445 +1,182 @@
-/**
- * Error monitoring service pro production
- * Sleduje chyby a odesílá je na monitoring služby
- */
-
-import { log } from './logger.js';
-import { performanceMonitor } from './performanceMonitor.js';
+import log from './logger';
 
 class ErrorMonitoringService {
   constructor() {
-    this.isProduction = import.meta.env.MODE === 'production';
+    this.isEnabled = import.meta.env.MODE === 'production';
     this.errorQueue = [];
     this.maxQueueSize = 50;
     this.flushInterval = 30000; // 30 sekund
-    this.isInitialized = false;
 
-    this.initialize();
-  }
-
-  /**
-   * Inicializace error monitoring
-   */
-  initialize() {
-    if (this.isInitialized) return;
-
-    try {
-      // Nastavení globálního error handleru
-      this.setupGlobalErrorHandlers();
-
-      // Nastavení performance monitoring - delegováno na performanceMonitor
-      this.setupPerformanceMonitoring();
-
-      // Nastavení periodic flush
-      this.setupPeriodicFlush();
-
-      this.isInitialized = true;
-      log.info('Error monitoring service initialized');
-
-    } catch (error) {
-      console.error('Failed to initialize error monitoring:', error);
+    // Nastav interval pro odesílání chyb
+    if (this.isEnabled) {
+      setInterval(() => this.flushErrors(), this.flushInterval);
     }
   }
 
-  /**
-   * Nastavení globálních error handlerů
-   */
-  setupGlobalErrorHandlers() {
-    if (typeof window === 'undefined') return;
-
-    // Unhandled promise rejections
-    window.addEventListener('unhandledrejection', (event) => {
-      this.captureError('Unhandled Promise Rejection', {
-        reason: event.reason,
-        promise: event.promise
-      });
-    });
-
-    // JavaScript errors
-    window.addEventListener('error', (event) => {
-      this.captureError('JavaScript Error', {
-        message: event.message,
-        filename: event.filename,
-        lineno: event.lineno,
-        colno: event.colno,
-        error: event.error
-      });
-    });
-
-    // Resource loading errors - pouze pro kritické chyby
-    const handleResourceError = (event) => {
-      if (event.target !== window) {
-        // Filtruj běžné chyby při načítání zdrojů
-        if (this._shouldIgnoreResourceError(event)) {
-          return;
-        }
-
-        this.captureError('Resource Loading Error', {
-          type: event.target.tagName,
-          src: event.target.src || event.target.href,
-          error: event.error
-        });
-      }
-    };
-
-    window.addEventListener('error', handleResourceError, true);
-  }
-
-  /**
-   * Zkontroluje, jestli by se měla ignorovat chyba při načítání zdroje
-   * @private
-   */
-  _shouldIgnoreResourceError(event) {
-    // Ignoruj chyby pro audio soubory (běžné při CORS nebo chybějících souborech)
-    if (event.target.tagName === 'AUDIO') {
-      return true;
-    }
-
-    // Ignoruj chyby pro obrázky (běžné při chybějících obrázcích)
-    if (event.target.tagName === 'IMG') {
-      return true;
-    }
-
-    // Ignoruj chyby pro Firebase Storage soubory (běžné při network problémech)
-    const src = event.target.src || event.target.href || '';
-    if (src.includes('firebasestorage.googleapis.com')) {
-      return true;
-    }
-
-    // Ignoruj chyby pro lokální media soubory
-    if (src.includes('/media/') || src.includes('/public/')) {
-      return true;
-    }
-
-    // Ignoruj chyby s konkrétními chybovými zprávami
-    if (event.error && event.error.message) {
-      const message = event.error.message.toLowerCase();
-      if (message.includes('cors') ||
-          message.includes('network') ||
-          message.includes('timeout') ||
-          message.includes('404') ||
-          message.includes('not found') ||
-          message.includes('failed to load') ||
-          message.includes('media error')) {
-        return true;
-      }
-    }
-
-    // Ignoruj chyby bez konkrétní zprávy (běžné při načítání zdrojů)
-    if (!event.error || !event.error.message) {
-      return true;
-    }
-
-    return false;
-  }
-
-  /**
-   * Nastavení performance monitoring
-   */
-  setupPerformanceMonitoring() {
-    if (typeof window === 'undefined' || !window.performance) return;
-
-    // Monitorování Core Web Vitals
-    this.monitorWebVitals();
-
-    // Monitorování long tasks
-    this.monitorLongTasks();
-  }
-
-  /**
-   * Monitorování Core Web Vitals
-   */
-  monitorWebVitals() {
-    try {
-      // Largest Contentful Paint (LCP)
-      if ('PerformanceObserver' in window) {
-        const lcpObserver = new PerformanceObserver((list) => {
-          const entries = list.getEntries();
-          const lastEntry = entries[entries.length - 1];
-
-          if (lastEntry && lastEntry.startTime > 3000) {
-            this.captureError('Performance Issue', {
-              type: 'LCP',
-              value: lastEntry.startTime,
-              threshold: 3000
-            });
-          }
-        });
-
-        lcpObserver.observe({ entryTypes: ['largest-contentful-paint'] });
-      }
-
-      // First Input Delay (FID)
-      if ('PerformanceObserver' in window) {
-        const fidObserver = new PerformanceObserver((list) => {
-          const entries = list.getEntries();
-          entries.forEach(entry => {
-            if (entry.processingStart - entry.startTime > 100) {
-              this.captureError('Performance Issue', {
-                type: 'FID',
-                value: entry.processingStart - entry.startTime,
-                threshold: 100
-              });
-            }
-          });
-        });
-
-        fidObserver.observe({ entryTypes: ['first-input'] });
-      }
-
-    } catch (error) {
-      log.warn('Failed to setup Web Vitals monitoring:', error);
-    }
-  }
-
-  /**
-   * Monitorování long tasks - DELEGOVÁNO na performanceMonitor
-   */
-  monitorLongTasks() {
-    // Long task monitoring je nyní delegováno na performanceMonitor
-    // který má lepší optimalizace a méně noise
-    log.debug('Long task monitoring delegated to performanceMonitor');
-  }
-
-  /**
-   * Nastavení periodic flush
-   */
-  setupPeriodicFlush() {
-    if (typeof window === 'undefined') return;
-
-    setInterval(() => {
-      this.flushErrors();
-    }, this.flushInterval);
-
-    // Flush při unload stránky
-    window.addEventListener('beforeunload', () => {
-      this.flushErrors();
-    });
-  }
-
-  /**
-   * Zachycení erroru
-   */
-  captureError(message, error, context = {}) {
+  captureError(error, context = {}) {
     const errorData = {
-      id: this.generateErrorId(),
+      message: error.message || 'Unknown error',
+      stack: error.stack || '',
       timestamp: new Date().toISOString(),
-      message,
-      error: this.sanitizeError(error),
-      context: this.sanitizeContext(context),
-      userAgent: typeof window !== 'undefined' ? window.navigator.userAgent : 'Unknown',
-      url: typeof window !== 'undefined' ? window.location.href : 'Unknown',
-      userId: this.getUserId(),
-      sessionId: this.getSessionId()
+      url: window.location.href,
+      userAgent: navigator.userAgent,
+      context: {
+        ...context,
+        screen: {
+          width: window.screen.width,
+          height: window.screen.height,
+          colorDepth: window.screen.colorDepth
+        },
+        viewport: {
+          width: window.innerWidth,
+          height: window.innerHeight
+        }
+      }
     };
 
-    // Přidat do queue
+    // Log do konzole
+    log.error('Error captured:', errorData);
+
+    // Přidej do fronty
+    if (this.isEnabled) {
+      this.addToQueue(errorData);
+    }
+
+    return errorData;
+  }
+
+  captureReactError(error, errorInfo) {
+    const errorData = {
+      message: error.message || 'React Error',
+      stack: error.stack || '',
+      componentStack: errorInfo.componentStack || '',
+      timestamp: new Date().toISOString(),
+      url: window.location.href,
+      type: 'react-error',
+      context: {
+        errorBoundary: true
+      }
+    };
+
+    log.error('React Error captured:', errorData);
+
+    if (this.isEnabled) {
+      this.addToQueue(errorData);
+    }
+
+    return errorData;
+  }
+
+  capturePerformanceIssue(metric, value, threshold) {
+    const issueData = {
+      message: `Performance issue: ${metric}`,
+      metric,
+      value,
+      threshold,
+      timestamp: new Date().toISOString(),
+      url: window.location.href,
+      type: 'performance',
+      context: {
+        performance: true
+      }
+    };
+
+    log.warn('Performance issue captured:', issueData);
+
+    if (this.isEnabled) {
+      this.addToQueue(issueData);
+    }
+
+    return issueData;
+  }
+
+  addToQueue(errorData) {
     this.errorQueue.push(errorData);
 
-    // Omezení velikosti queue
+    // Omezení velikosti fronty
     if (this.errorQueue.length > this.maxQueueSize) {
       this.errorQueue.shift();
     }
 
-    // Log lokálně
-    log.error(message, error, context);
-
-    // V production módu odeslat okamžitě pro kritické chyby
-    if (this.isProduction && this.isCriticalError(errorData)) {
-      this.sendErrorToServices(errorData);
+    // Okamžité odeslání pro kritické chyby
+    if (errorData.type === 'react-error' || errorData.message.includes('Critical')) {
+      this.flushErrors();
     }
   }
 
-  /**
-   * Sanitizace error objektu
-   */
-  sanitizeError(error) {
-    if (!error) return null;
-
-    if (error instanceof Error) {
-      return {
-        name: error.name,
-        message: error.message,
-        stack: error.stack,
-        cause: error.cause
-      };
-    }
-
-    if (typeof error === 'object') {
-      return JSON.parse(JSON.stringify(error));
-    }
-
-    return String(error);
-  }
-
-  /**
-   * Sanitizace context objektu
-   */
-  sanitizeContext(context) {
-    try {
-      // Odstraň citlivé údaje
-      const sanitized = { ...context };
-      delete sanitized.password;
-      delete sanitized.token;
-      delete sanitized.apiKey;
-      delete sanitized.secret;
-
-      return sanitized;
-    } catch {
-      return { context: 'Unable to sanitize context' };
-    }
-  }
-
-  /**
-   * Kontrola kritické chyby
-   */
-  isCriticalError(errorData) {
-    const criticalMessages = [
-      'Unhandled Promise Rejection',
-      'JavaScript Error',
-      'Network Error',
-      'Authentication Error'
-    ];
-
-    return criticalMessages.some(msg =>
-      errorData.message.includes(msg)
-    );
-  }
-
-  /**
-   * Odeslání erroru na monitoring služby
-   */
-  sendErrorToServices(errorData) {
-    try {
-      // Google Analytics
-      this.sendToGoogleAnalytics(errorData);
-
-      // Custom endpoint (pokud je nakonfigurován)
-      this.sendToCustomEndpoint(errorData);
-
-      // Console v development módu
-      if (!this.isProduction) {
-        console.error('Error captured:', errorData);
-      }
-
-    } catch (error) {
-      console.error('Failed to send error to monitoring services:', error);
-    }
-  }
-
-  /**
-   * Odeslání na Google Analytics
-   */
-  sendToGoogleAnalytics(errorData) {
-    if (typeof window !== 'undefined' && window.gtag) {
-      window.gtag('event', 'exception', {
-        description: errorData.message,
-        fatal: this.isCriticalError(errorData),
-        custom_map: {
-          error_id: errorData.id,
-          error_type: errorData.error?.name || 'Unknown',
-          user_id: errorData.userId,
-          session_id: errorData.sessionId
-        }
-      });
-    }
-  }
-
-  /**
-   * Odeslání na custom endpoint
-   */
-  async sendToCustomEndpoint(errorData) {
-    // TODO: Implementovat odeslání na vlastní error tracking endpoint
-    // const response = await fetch('/api/errors', {
-    //   method: 'POST',
-    //   headers: { 'Content-Type': 'application/json' },
-    //   body: JSON.stringify(errorData)
-    // });
-  }
-
-  /**
-   * Flush všech errorů z queue
-   */
-  flushErrors() {
+  async flushErrors() {
     if (this.errorQueue.length === 0) return;
 
     const errorsToSend = [...this.errorQueue];
     this.errorQueue = [];
 
-    errorsToSend.forEach(error => {
-      this.sendErrorToServices(error);
+    try {
+      // Simulace odeslání do externího systému
+      // V produkci by se zde použil skutečný error tracking service
+      await this.sendToExternalService(errorsToSend);
+      log.info(`Sent ${errorsToSend.length} errors to monitoring service`);
+    } catch (error) {
+      log.error('Failed to send errors to monitoring service:', error);
+      // Vrať chyby zpět do fronty
+      this.errorQueue.unshift(...errorsToSend);
+    }
+  }
+
+  async sendToExternalService(errors) {
+    // Simulace API volání
+    // V produkci by se zde použil skutečný error tracking service (Sentry, LogRocket, atd.)
+
+    const response = await fetch('/api/errors', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        errors,
+        appVersion: import.meta.env.VITE_APP_VERSION || '1.0.0',
+        environment: import.meta.env.MODE
+      })
     });
 
-    log.debug(`Flushed ${errorsToSend.length} errors to monitoring services`);
-  }
-
-  /**
-   * Generování error ID
-   */
-  generateErrorId() {
-    return `err_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-  }
-
-  /**
-   * Získání user ID
-   */
-  getUserId() {
-    // TODO: Implementovat získání skutečného user ID
-    return localStorage.getItem('userId') || 'anonymous';
-  }
-
-  /**
-   * Získání session ID
-   */
-  getSessionId() {
-    let sessionId = sessionStorage.getItem('sessionId');
-    if (!sessionId) {
-      sessionId = `sess_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-      sessionStorage.setItem('sessionId', sessionId);
+    if (!response.ok) {
+      throw new Error(`Failed to send errors: ${response.status}`);
     }
-    return sessionId;
+
+    return response.json();
   }
 
-  /**
-   * Manuální zachycení erroru
-   */
-  captureException(error, context = {}) {
-    this.captureError('Manual Exception', error, context);
+  getErrorStats() {
+    return {
+      queueSize: this.errorQueue.length,
+      isEnabled: this.isEnabled,
+      lastFlush: this.lastFlushTime
+    };
   }
 
-  /**
-   * Zachycení custom erroru
-   */
-  captureMessage(message, level = 'info', context = {}) {
-    this.captureError(`Custom Message [${level.toUpperCase()}]`, message, context);
-  }
-
-  /**
-   * Získání error queue
-   */
-  getErrorQueue() {
-    return [...this.errorQueue];
-  }
-
-  /**
-   * Vyčištění error queue
-   */
-  clearErrorQueue() {
+  clearQueue() {
     this.errorQueue = [];
+    log.info('Error queue cleared');
   }
 }
 
 // Singleton instance
 const errorMonitoring = new ErrorMonitoringService();
 
+// Global error handler
+window.addEventListener('error', (event) => {
+  errorMonitoring.captureError(event.error, {
+    filename: event.filename,
+    lineno: event.lineno,
+    colno: event.colno
+  });
+});
+
+// Unhandled promise rejection handler
+window.addEventListener('unhandledrejection', (event) => {
+  errorMonitoring.captureError(new Error(event.reason), {
+    type: 'unhandled-promise-rejection',
+    reason: event.reason
+  });
+});
+
 export default errorMonitoring;
-
-// Export utility functions
-export const captureError = (message, error, context) =>
-  errorMonitoring.captureError(message, error, context);
-
-export const captureException = (error, context) =>
-  errorMonitoring.captureException(error, context);
-
-export const captureMessage = (message, level, context) =>
-  errorMonitoring.captureMessage(message, level, context);

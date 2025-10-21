@@ -1,6 +1,4 @@
-/**
- * Jednoduchá loading komponenta pro preloading
- */
+
 
 import React from 'react';
 

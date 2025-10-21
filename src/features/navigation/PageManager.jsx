@@ -13,6 +13,8 @@ const HudbaScreen = lazy(() => import('@features/meditation/screens/HudbaScreen'
 const SlovaScreen = lazy(() => import('@features/meditation/screens/SlovaScreen'));
 const AlbumDetailScreen = lazy(() => import('@features/meditation/screens/AlbumDetailScreen'));
 const AudioPlayer = lazy(() => import('@features/audio/AudioPlayer'));
+const DatabaseManagementScreen = lazy(() => import('@features/meditation/screens/DatabaseManagementScreen'));
+const DatabaseAdminScreen = lazy(() => import('@features/meditation/screens/DatabaseAdminScreen'));
 
 
 // Registry stránek s jejich konfigurací
@@ -112,6 +114,26 @@ const SCREEN_REGISTRY = {
     transition: {
       type: 'modal',
       duration: 0.4
+    }
+  },
+  'database-management': {
+    component: DatabaseManagementScreen,
+    requiresLayout: true,
+    props: ['onNavigateToScreen'],
+    transition: {
+      type: 'slide',
+      direction: 'up',
+      duration: 0.6
+    }
+  },
+  'database-admin': {
+    component: DatabaseAdminScreen,
+    requiresLayout: false,
+    props: [],
+    transition: {
+      type: 'slide',
+      direction: 'up',
+      duration: 0.6
     }
   }
 };

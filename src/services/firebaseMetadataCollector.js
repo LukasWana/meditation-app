@@ -1,12 +1,10 @@
-/**
- * Služba pro načítání a ukládání metadat z Firebase MP3 souborů
- */
+
 
 import { ref, listAll, getMetadata, getDownloadURL } from 'firebase/storage';
 import { storage } from './firebase';
 import { parseAudioFileName } from '@utils/audioParser';
 import { parseAudioFileName as parseHudbaFileName } from '@utils/hudbaParser';
-import cacheService from './cacheService';
+import cacheService from './cacheServiceRefactored';
 
 class FirebaseMetadataCollector {
   constructor() {
@@ -18,9 +16,6 @@ class FirebaseMetadataCollector {
     };
   }
 
-  /**
-   * Načte všechna metadata z Firebase Storage a roztřídí je
-   */
   async collectAllFirebaseMetadata() {
     try {
       console.log('🔄 Collecting metadata from Firebase Storage...');
@@ -61,9 +56,6 @@ class FirebaseMetadataCollector {
     }
   }
 
-  /**
-   * Skenuje Firebase Storage a vrátí všechny soubory
-   */
   async scanFirebaseStorage() {
     try {
       const listRef = ref(storage, '');
@@ -95,9 +87,6 @@ class FirebaseMetadataCollector {
     }
   }
 
-  /**
-   * Načte metadata pro konkrétní soubor
-   */
   async collectFileMetadata(file) {
     try {
       // Vytvoř správnou Firebase Storage reference
@@ -160,9 +149,6 @@ class FirebaseMetadataCollector {
     }
   }
 
-  /**
-   * Parsuje název souboru a určí typ
-   */
   parseFileName(fileName) {
     // Zkus slova parser (muzsky/zensky prefix)
     if (fileName.startsWith('muzsky') || fileName.startsWith('zensky')) {
@@ -203,9 +189,6 @@ class FirebaseMetadataCollector {
     return null;
   }
 
-  /**
-   * Roztřídí metadata podle typu
-   */
   categorizeMetadata(metadataResults) {
     metadataResults.forEach(result => {
       if (result.status === 'fulfilled' && result.value.success) {
@@ -220,9 +203,6 @@ class FirebaseMetadataCollector {
     });
   }
 
-  /**
-   * Vytvoří alba z hudba dat
-   */
   createAlbumsFromHudba() {
     const albumsMap = new Map();
 
@@ -258,18 +238,12 @@ class FirebaseMetadataCollector {
     this.collectedMetadata.albums = albumsMap;
   }
 
-  /**
-   * Získá cestu k cover obrázku
-   */
   getCoverImagePath(albumName) {
     // Předpokládáme, že cover obrázky jsou ve složce s názvem alba
     const folderName = albumName.toLowerCase().replace(/\s+/g, '-');
     return `${folderName}/${albumName} - cover.jpg`;
   }
 
-  /**
-   * Odhadne délku audio na základě velikosti souboru
-   */
   estimateDuration(fileSizeBytes) {
     // Předpokládáme 128kbps bitrate pro MP3
     const bitrateKbps = 128;
@@ -282,9 +256,6 @@ class FirebaseMetadataCollector {
     return `${minutes}:${seconds.toString().padStart(2, '0')}`;
   }
 
-  /**
-   * Vypočítá celkovou délku z pole délek
-   */
   calculateTotalDuration(durations) {
     let totalSeconds = 0;
 
@@ -308,9 +279,6 @@ class FirebaseMetadataCollector {
     }
   }
 
-  /**
-   * Uloží metadata do cache
-   */
   saveToCache() {
     try {
       // Ulož slova metadata
@@ -335,9 +303,6 @@ class FirebaseMetadataCollector {
     }
   }
 
-  /**
-   * Uloží metadata do localStorage
-   */
   saveToLocalStorage() {
     try {
       const dataToSave = {
@@ -359,9 +324,6 @@ class FirebaseMetadataCollector {
     }
   }
 
-  /**
-   * Načte metadata z localStorage
-   */
   loadFromLocalStorage() {
     try {
       const savedData = localStorage.getItem('firebase_metadata');
@@ -383,9 +345,6 @@ class FirebaseMetadataCollector {
     }
   }
 
-  /**
-   * Získá aktuální metadata
-   */
   getMetadata() {
     return this.collectedMetadata;
   }

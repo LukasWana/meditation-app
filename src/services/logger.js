@@ -1,241 +1,134 @@
-/**
- * Centralizovaný logging service
- * Nahrazuje všechny console.log statements v aplikaci
- */
+
 
 class Logger {
   constructor() {
     this.isDevelopment = import.meta.env.MODE === 'development';
-    this.logLevel = this.isDevelopment ? 'debug' : 'error';
-    this.logHistory = [];
-    this.maxHistorySize = 100;
+    this.isProduction = import.meta.env.MODE === 'production';
   }
 
-  /**
-   * Debug logging - pouze v development módu (SKRYTO)
-   */
-  debug(message, ...args) {
-    if (this.isDevelopment) {
-      // console.log(`🔍 [DEBUG] ${message}`, ...args);
-      this.addToHistory('debug', message, args);
-    }
-  }
-
-  /**
-   * Info logging - pouze v development módu
-   */
   info(message, ...args) {
     if (this.isDevelopment) {
       console.log(`ℹ️ [INFO] ${message}`, ...args);
-      this.addToHistory('info', message, args);
     }
   }
 
-  /**
-   * Warning logging - vždy se zobrazí
-   */
   warn(message, ...args) {
-    console.warn(`⚠️ [WARN] ${message}`, ...args);
-    this.addToHistory('warn', message, args);
-  }
-
-  /**
-   * Error logging - vždy se zobrazí
-   */
-  error(message, error = null, ...args) {
-    // Lepší zobrazení error objektů
-    let errorDisplay = error;
-    if (error && typeof error === 'object') {
-      if (error.message) {
-        errorDisplay = error.message;
-      } else if (error.toString && error.toString() !== '[object Object]') {
-        errorDisplay = error.toString();
-      } else {
-        errorDisplay = JSON.stringify(error, null, 2);
-      }
-    }
-
-    console.error(`❌ [ERROR] ${message}`, errorDisplay, ...args);
-    this.addToHistory('error', message, args, error);
-
-    // V production módu odeslat error na monitoring service
-    if (!this.isDevelopment) {
-      this.sendErrorToMonitoring(message, error);
+    if (this.isDevelopment) {
+      console.warn(`⚠️ [WARN] ${message}`, ...args);
     }
   }
 
-  /**
-   * Success logging - pouze v development módu
-   */
+  error(message, ...args) {
+    console.error(`❌ [ERROR] ${message}`, ...args);
+  }
+
   success(message, ...args) {
     if (this.isDevelopment) {
       console.log(`✅ [SUCCESS] ${message}`, ...args);
-      this.addToHistory('success', message, args);
     }
   }
 
-  /**
-   * Audio specifické logging
-   */
-  audio(message, ...args) {
+  debug(message, ...args) {
     if (this.isDevelopment) {
-      // console.log(`🎵 [AUDIO] ${message}`, ...args);
-      this.addToHistory('audio', message, args);
+      console.debug(`🐛 [DEBUG] ${message}`, ...args);
     }
   }
 
-  /**
-   * Cache specifické logging (SKRYTO)
-   */
-  cache(message, ...args) {
+  performance(metric, value, unit = 'ms') {
     if (this.isDevelopment) {
-      // console.log(`💾 [CACHE] ${message}`, ...args);
-      this.addToHistory('cache', message, args);
+      console.log(`⚡ [PERF] ${metric}: ${value}${unit}`);
     }
   }
 
-  /**
-   * Firebase specifické logging (SKRYTO)
-   */
-  firebase(message, ...args) {
+  api(method, url, status, duration) {
     if (this.isDevelopment) {
-      // console.log(`🔥 [FIREBASE] ${message}`, ...args);
-      this.addToHistory('firebase', message, args);
+      const statusIcon = status >= 200 && status < 300 ? '✅' : '❌';
+      console.log(`${statusIcon} [API] ${method} ${url} - ${status} (${duration}ms)`);
     }
   }
 
-  /**
-   * Performance logging (SKRYTO)
-   */
-  performance(message, duration, ...args) {
+  cache(operation, key, hit = null) {
     if (this.isDevelopment) {
-      // const color = duration > 1000 ? '🔴' : duration > 500 ? '🟡' : '🟢';
-      // console.log(`${color} [PERF] ${message} (${duration}ms)`, ...args);
-      this.addToHistory('performance', message, args, { duration });
+      const hitIcon = hit === true ? '🎯' : hit === false ? '💾' : '📦';
+      console.log(`${hitIcon} [CACHE] ${operation}: ${key}`);
     }
   }
 
-  /**
-   * Přidání do log historie
-   */
-  addToHistory(level, message, args, error = null) {
-    const logEntry = {
-      timestamp: new Date().toISOString(),
-      level,
-      message,
-      args: args.length > 0 ? args : null,
-      error: error ? {
-        name: error.name,
-        message: error.message,
-        stack: error.stack
-      } : null
-    };
-
-    this.logHistory.push(logEntry);
-
-    // Omezení velikosti historie
-    if (this.logHistory.length > this.maxHistorySize) {
-      this.logHistory.shift();
+  firebase(operation, collection, docId = null) {
+    if (this.isDevelopment) {
+      console.log(`🔥 [FIREBASE] ${operation} ${collection}${docId ? `/${docId}` : ''}`);
     }
   }
 
-  /**
-   * Odeslání erroru na monitoring service
-   */
-  sendErrorToMonitoring(message, error) {
-    // Implementace pro production error monitoring
-    // Může používat služby jako Sentry, LogRocket, atd.
-
-    if (typeof window !== 'undefined' && window.gtag) {
-      // Google Analytics error tracking
-      window.gtag('event', 'exception', {
-        description: message,
-        fatal: false,
-        custom_map: {
-          error_name: error?.name || 'Unknown',
-          error_message: error?.message || message
-        }
-      });
+  sw(operation, details = '') {
+    if (this.isDevelopment) {
+      console.log(`🔧 [SW] ${operation} ${details}`);
     }
-
-    // TODO: Implementovat další monitoring služby
-    // - Sentry
-    // - LogRocket
-    // - Custom error endpoint
   }
 
-  /**
-   * Získání log historie
-   */
-  getHistory(filter = null) {
-    if (filter) {
-      return this.logHistory.filter(entry => entry.level === filter);
+  metadata(operation, fileName, details = '') {
+    if (this.isDevelopment) {
+      console.log(`📊 [METADATA] ${operation}: ${fileName} ${details}`);
     }
-    return [...this.logHistory];
   }
 
-  /**
-   * Vyčištění log historie
-   */
-  clearHistory() {
-    this.logHistory = [];
+  audio(operation, fileName, details = '') {
+    if (this.isDevelopment) {
+      console.log(`🎵 [AUDIO] ${operation}: ${fileName} ${details}`);
+    }
   }
 
-  /**
-   * Export logů pro debugging
-   */
-  exportLogs() {
-    const logs = {
-      timestamp: new Date().toISOString(),
-      environment: process.env.NODE_ENV,
-      userAgent: typeof window !== 'undefined' ? window.navigator.userAgent : 'Unknown',
-      logs: this.logHistory
-    };
-
-    return JSON.stringify(logs, null, 2);
+  ui(operation, component, details = '') {
+    if (this.isDevelopment) {
+      console.log(`🎨 [UI] ${operation}: ${component} ${details}`);
+    }
   }
 
-  /**
-   * Stáhnout logy jako soubor
-   */
-  downloadLogs() {
-    if (typeof window === 'undefined') return;
+  navigation(from, to, method = 'click') {
+    if (this.isDevelopment) {
+      console.log(`🧭 [NAV] ${from} → ${to} (${method})`);
+    }
+  }
 
-    const logs = this.exportLogs();
-    const blob = new Blob([logs], { type: 'application/json' });
-    const url = URL.createObjectURL(blob);
+  errorWithStack(error, context = '') {
+    console.error(`❌ [ERROR] ${context}`, error);
+    if (error.stack) {
+      console.error('Stack trace:', error.stack);
+    }
+  }
 
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `meditation-app-logs-${new Date().toISOString().split('T')[0]}.json`;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
+  group(name, fn) {
+    if (this.isDevelopment) {
+      console.group(`📁 ${name}`);
+      fn();
+      console.groupEnd();
+    } else {
+      fn();
+    }
+  }
+
+  table(data, title = 'Data') {
+    if (this.isDevelopment) {
+      console.log(`📋 ${title}:`);
+      console.table(data);
+    }
+  }
+
+  time(label) {
+    if (this.isDevelopment) {
+      console.time(`⏱️ ${label}`);
+    }
+  }
+
+  timeEnd(label) {
+    if (this.isDevelopment) {
+      console.timeEnd(`⏱️ ${label}`);
+    }
   }
 }
 
 // Singleton instance
-const logger = new Logger();
+const log = new Logger();
 
-export default logger;
-
-// Export utility functions pro snadné použití
-export const log = {
-  debug: (message, ...args) => logger.debug(message, ...args),
-  info: (message, ...args) => logger.info(message, ...args),
-  warn: (message, ...args) => logger.warn(message, ...args),
-  error: (message, error, ...args) => logger.error(message, error, ...args),
-  success: (message, ...args) => logger.success(message, ...args),
-  audio: (message, ...args) => logger.audio(message, ...args),
-  cache: (message, ...args) => logger.cache(message, ...args),
-  firebase: (message, ...args) => logger.firebase(message, ...args),
-  performance: (message, duration, ...args) => logger.performance(message, duration, ...args)
-};
-
-// Export pro development debugging
-if (process.env.NODE_ENV === 'development' && typeof window !== 'undefined') {
-  window.logger = logger;
-  window.downloadLogs = () => logger.downloadLogs();
-}
-
+export default log;
+export { Logger };

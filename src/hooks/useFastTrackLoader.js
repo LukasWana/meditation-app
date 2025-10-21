@@ -1,11 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { useMetadataLoader, useBatchMetadataLoader } from './useMetadataLoader';
-import cacheService from '@services/cacheService';
+import cacheService from '@services/cacheServiceRefactored';
 
-/**
- * Hook pro rychlé načítání metadat s prioritizací
- * Načítá pouze hlavičky souborů pro okamžité zobrazení informací
- */
 export const useFastTrackLoader = (items, options = {}) => {
   const {
     enabled = true,
@@ -173,9 +169,6 @@ export const useFastTrackLoader = (items, options = {}) => {
   };
 };
 
-/**
- * Hook pro lazy loading metadat při scroll
- */
 export const useLazyMetadataLoader = (items, containerRef, options = {}) => {
   const {
     enabled = true,
@@ -290,9 +283,6 @@ export const useLazyMetadataLoader = (items, containerRef, options = {}) => {
   return { loadedMetadata, loading, visibleItems };
 };
 
-/**
- * Odhad délky audio souboru na základě velikosti
- */
 function estimateDurationFromSize(sizeInBytes, contentType) {
   if (!sizeInBytes || !contentType) return null;
 

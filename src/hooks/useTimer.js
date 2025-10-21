@@ -1,6 +1,4 @@
-/**
- * Custom hook pro timer logiku
- */
+
 
 import { useEffect, useRef } from 'react';
 

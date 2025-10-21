@@ -1,7 +1,4 @@
-/**
- * Security Monitor - sledování bezpečnostních událostí
- * Implementuje monitoring pro detekci podezřelé aktivity
- */
+
 
 class SecurityMonitor {
   constructor() {
@@ -9,14 +6,7 @@ class SecurityMonitor {
     this.maxEvents = 100; // Limit pro paměť
     this.suspiciousThreshold = 5; // Počet podezřelých událostí za minutu
     this.lastMinuteEvents = [];
-  }
-
-  /**
-   * Loguje bezpečnostní událost
-   * @param {string} event - Typ události
-   * @param {string} severity - Závažnost (info, warning, error, critical)
-   * @param {Object} metadata - Dodatečné informace
-   */
+  }
   logEvent(event, severity = 'info', metadata = {}) {
     const logEntry = {
       timestamp: new Date().toISOString(),
@@ -58,11 +48,7 @@ class SecurityMonitor {
     if (import.meta.env.MODE === 'production') {
       this.sendToMonitoringService(logEntry);
     }
-  }
-
-  /**
-   * Získá emoji pro závažnost
-   */
+  }
   getSeverityEmoji(severity) {
     const emojis = {
       info: 'ℹ️',
@@ -71,11 +57,7 @@ class SecurityMonitor {
       critical: '🚨'
     };
     return emojis[severity] || '📝';
-  }
-
-  /**
-   * Kontroluje podezřelou aktivitu
-   */
+  }
   checkSuspiciousActivity() {
     const recentEvents = this.lastMinuteEvents;
     const suspiciousEvents = recentEvents.filter(
@@ -89,11 +71,7 @@ class SecurityMonitor {
         events: suspiciousEvents.map(e => e.event)
       });
     }
-  }
-
-  /**
-   * Odesílá událost do monitoring service
-   */
+  }
   async sendToMonitoringService(logEntry) {
     try {
       // V produkci by se zde odeslalo do skutečného monitoring service
@@ -111,54 +89,34 @@ class SecurityMonitor {
     } catch (error) {
       console.error('❌ Failed to send security event to monitoring service:', error);
     }
-  }
-
-  /**
-   * Loguje pokus o neoprávněný přístup
-   */
+  }
   logUnauthorizedAccess(resource, reason) {
     this.logEvent('unauthorized_access_attempt', 'warning', {
       resource,
       reason,
       ip: 'client-side' // V reálné aplikaci by se získalo ze serveru
     });
-  }
-
-  /**
-   * Loguje podezřelé Firebase operace
-   */
+  }
   logSuspiciousFirebaseOperation(operation, details) {
     this.logEvent('suspicious_firebase_operation', 'warning', {
       operation,
       details,
       timestamp: Date.now()
     });
-  }
-
-  /**
-   * Loguje chyby autentifikace
-   */
+  }
   logAuthError(error, context) {
     this.logEvent('authentication_error', 'error', {
       error: error.message,
       context,
       stack: error.stack
     });
-  }
-
-  /**
-   * Loguje úspěšné bezpečnostní operace
-   */
+  }
   logSecuritySuccess(operation, details) {
     this.logEvent('security_success', 'info', {
       operation,
       details
     });
-  }
-
-  /**
-   * Získá statistiky bezpečnostních událostí
-   */
+  }
   getSecurityStats() {
     const now = new Date();
     const last24Hours = new Date(now.getTime() - 24 * 60 * 60 * 1000);
@@ -184,11 +142,7 @@ class SecurityMonitor {
     });
 
     return stats;
-  }
-
-  /**
-   * Exportuje bezpečnostní logy pro analýzu
-   */
+  }
   exportLogs() {
     return {
       timestamp: new Date().toISOString(),

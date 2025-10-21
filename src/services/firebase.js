@@ -1,6 +1,11 @@
+// DEPRECATED: Use ../config/secure-firebase.js instead
+// This file is kept for backward compatibility
+
 import { initializeApp } from 'firebase/app';
 import { getStorage } from 'firebase/storage';
 import { getFirestore } from 'firebase/firestore';
+import { getDatabase } from 'firebase/database';
+import { getAuth } from 'firebase/auth';
 import { initializeAppCheck, ReCaptchaV3Provider } from 'firebase/app-check';
 
 // Validace Firebase konfigurace
@@ -46,7 +51,11 @@ const validateFirebaseConfig = () => {
 
 const firebaseConfig = validateFirebaseConfig();
 
-const app = initializeApp(firebaseConfig);
+// Inicializace Firebase App
+export const app = initializeApp(firebaseConfig);
+export const storage = getStorage(app);
+export const db = getFirestore(app);
+export const auth = getAuth(app);
 
 // Inicializace Firebase App Check pro ochranu proti abuse
 let appCheck = null;
@@ -66,19 +75,35 @@ if (import.meta.env.VITE_RECAPTCHA_SITE_KEY) {
   }
 } else {
   if (import.meta.env.MODE === 'development') {
-    // console.warn('⚠️ VITE_RECAPTCHA_SITE_KEY není nastaven - App Check není aktivní');
-    // console.warn('   Pro produkci doporučujeme nastavit reCAPTCHA v3');
+    console.log('ℹ️ App Check je vypnutý - můžete nastavit VITE_RECAPTCHA_SITE_KEY pro aktivaci');
   }
 }
 
-export const storage = getStorage(app);
-export const db = getFirestore(app);
+// Realtime Database - nyní dostupná s správným regionem!
+let database;
+try {
+  if (import.meta.env.MODE === 'development') {
+    // V development módu zkus emulator, pokud nefunguje, použij produkci
+    database = getDatabase(app, 'http://127.0.0.1:9002?ns=meditations-audio-default-rtdb');
+    console.log('🗄️ Realtime Database: Using emulator');
+  } else {
+    // V produkci použij skutečnou databázi
+    database = getDatabase(app, 'https://meditations-audio-default-rtdb.europe-west1.firebasedatabase.app');
+    console.log('🗄️ Realtime Database: Using production');
+  }
+} catch (error) {
+  console.warn('⚠️ Realtime Database emulator not available, using production:', error.message);
+  // Fallback na produkci
+  database = getDatabase(app, 'https://meditations-audio-default-rtdb.europe-west1.firebasedatabase.app');
+}
+export { database };
 
 // Debug Firebase připojení - pouze v development módu a bez citlivých dat
 if (import.meta.env.MODE === 'development') {
   console.log('🔥 Firebase initialized successfully');
   console.log('📁 Project ID:', firebaseConfig.projectId);
   console.log('📦 Storage Bucket:', firebaseConfig.storageBucket);
+  console.log('🗄️ Realtime Database URL:', database.app.options.databaseURL);
   console.log('🛡️ App Check:', appCheck ? 'Active' : 'Disabled');
   // Nezobrazujeme API klíče ani jiné citlivé údaje
 }

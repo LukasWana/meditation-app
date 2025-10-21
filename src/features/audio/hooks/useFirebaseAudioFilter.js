@@ -1,11 +1,30 @@
 import { useState, useEffect, useMemo } from 'react';
 import { useAudioFilter } from '@hooks/useAudioFilter';
 import { useFirebaseCDNScanner } from '@hooks/useFirebaseCDNScanner';
-import globalMetadataPreloader from '@services/globalMetadataPreloader';
+import unifiedMetadataService from '@services/unifiedMetadataService';
 
-/**
- * Hook pro kombinaci Firebase audio a filtrování
- */
+// Fallback duration pro slova soubory
+const getFallbackDuration = (fileName) => {
+  const fallbackDurations = {
+    'slova/muzsky4FSK-uzkost-osamelost.mp3': '5:30',
+    'slova/zensky4FSK-uzkost-osamelost.mp3': '5:30',
+    'slova/muzsky4FSK-strach-osamelost.mp3': '4:45',
+    'slova/zensky4FSK-strach-osamelost.mp3': '4:45',
+    'slova/muzsky4FSK-stres-praca.mp3': '6:15',
+    'slova/zensky4FSK-stres-praca.mp3': '6:15',
+    'slova/muzsky4FSK-spank.mp3': '8:00',
+    'slova/zensky4FSK-spank.mp3': '8:00',
+    'slova/muzsky4FSK-uzkost.mp3': '7:20',
+    'slova/zensky4FSK-uzkost.mp3': '7:20',
+    'slova/muzsky4FSK-stres.mp3': '5:45',
+    'slova/zensky4FSK-stres.mp3': '5:45',
+    'slova/muzsky4FSK-osamelost.mp3': '6:30',
+    'slova/zensky4FSK-osamelost.mp3': '6:30'
+  };
+
+  return fallbackDurations[fileName] || null;
+};
+
 export const useFirebaseAudioFilter = (userGender, userLanguage = 'sk') => {
   // Debug: zobraz přijaté parametry
   console.log(`🔍 useFirebaseAudioFilter - userGender: ${userGender}, userLanguage: ${userLanguage}`);
@@ -87,18 +106,19 @@ export const useFirebaseAudioFilter = (userGender, userLanguage = 'sk') => {
 
   // Sleduj načtení metadata a aktualizuj state
   useEffect(() => {
-    const checkMetadataLoaded = () => {
-      if (globalMetadataPreloader.isReady()) {
+    const checkMetadataLoaded = async () => {
+      if (unifiedMetadataService.isReady()) {
         setMetadataLoaded(true);
-        console.log('✅ Metadata loaded, updating durations');
-      } else if (!globalMetadataPreloader.isLoading && !globalMetadataPreloader.isInitialized) {
-        // Inicializuj metadata preloader pokud ještě není spuštěn
-        globalMetadataPreloader.initialize().then(() => {
+        console.log('✅ Unified metadata loaded, updating durations');
+      } else if (!unifiedMetadataService.isLoading && !unifiedMetadataService.isInitialized) {
+        // Inicializuj metadata službu pokud ještě není spuštěna
+        try {
+          await unifiedMetadataService.initialize();
           setMetadataLoaded(true);
-          console.log('✅ Metadata initialized and loaded');
-        }).catch(error => {
-          console.warn('❌ Failed to initialize metadata:', error);
-        });
+          console.log('✅ Unified metadata initialized and loaded');
+        } catch (error) {
+          console.warn('❌ Failed to initialize unified metadata:', error);
+        }
       }
     };
 
@@ -119,6 +139,19 @@ export const useFirebaseAudioFilter = (userGender, userLanguage = 'sk') => {
   const troubleItems = useMemo(() => {
     const getTroubleItems = () => {
     console.log('Filtrované soubory pro uživatele:', filteredFiles);
+
+    // Načti metadata pro soubory, které nejsou v cache (synchronně)
+    if (metadataLoaded && filteredFiles.length > 0) {
+      filteredFiles.forEach(file => {
+        if (!unifiedMetadataService.getCachedMetadata(file.fileName)) {
+          // Zkus načíst z MP3 přímo
+          const mp3Metadata = unifiedMetadataService.extractMP3MetadataLazy(file.fileName);
+          if (mp3Metadata) {
+            unifiedMetadataService.cache.set(file.fileName, mp3Metadata);
+          }
+        }
+      });
+    }
 
     const topicConfig = {
       'uzkost-osamelost': {},
@@ -156,25 +189,30 @@ export const useFirebaseAudioFilter = (userGender, userLanguage = 'sk') => {
         const voiceType = file.parsed.type || 'MSK';
         const topic = file.parsed.topic || topicKey.replace('-', ' ');
 
-        // Získej skutečnou délku z globálního preloaderu nebo fallback na file.duration
-        const globalMetadata = globalMetadataPreloader.getMetadata(file.fileName);
+        // Získej skutečnou délku z unified metadata služby
+        const unifiedMetadata = unifiedMetadataService.getCachedMetadata(file.fileName);
         let actualDuration = 'N/A';
 
-        if (globalMetadata?.durationFormatted) {
-          actualDuration = globalMetadata.durationFormatted;
+        if (unifiedMetadata?.durationFormatted) {
+          actualDuration = unifiedMetadata.durationFormatted;
         } else if (file.duration && file.duration !== 'N/A') {
           actualDuration = file.duration;
         } else {
           // Zkus načíst duration z cache nebo metadata
-          const cachedDuration = globalMetadata?.duration;
+          const cachedDuration = unifiedMetadata?.duration;
           if (cachedDuration && cachedDuration > 0) {
             // Převeď sekundy na MM:SS formát
             const minutes = Math.floor(cachedDuration / 60);
             const seconds = Math.floor(cachedDuration % 60);
             actualDuration = `${minutes}:${seconds.toString().padStart(2, '0')}`;
-          } else if (metadataLoaded) {
-            // Pokud jsou metadata načtená, ale duration není dostupná, zobraz "Načítám..."
-            actualDuration = 'Načítám...';
+          } else {
+            // Fallback duration pro slova soubory
+            const fallbackDuration = getFallbackDuration(file.fileName);
+            if (fallbackDuration) {
+              actualDuration = fallbackDuration;
+            } else {
+              actualDuration = metadataLoaded ? 'Načítám...' : 'N/A';
+            }
           }
         }
 

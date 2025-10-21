@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import cacheService from '@services/cacheService';
-import { log } from '@services/logger';
+import cacheService from '@services/cacheServiceRefactored';
+import log from '@services/logger';
 
 const DurationPersistenceTest = () => {
   const [testResults, setTestResults] = useState([]);

@@ -1,10 +1,7 @@
-/**
- * Služba pro migraci z preloadování na databázové metadata
- * Postupně nahradí globalMetadataPreloader a fastMetadataService
- */
+
 
 import optimizedMetadataService from './optimizedMetadataService';
-import { log } from './logger';
+import log from './logger';
 
 class MetadataMigrationService {
   constructor() {
@@ -12,9 +9,6 @@ class MetadataMigrationService {
     this.fallbackMode = false;
   }
 
-  /**
-   * Inicializuje službu a zkontroluje dostupnost databázových metadat
-   */
   async initialize() {
     try {
       log.info('🔄 Initializing metadata migration service...');
@@ -40,11 +34,6 @@ class MetadataMigrationService {
     }
   }
 
-  /**
-   * Načte metadata pro soubor (optimalizovaná verze)
-   * @param {string} fileName - Název souboru
-   * @returns {Promise<Object|null>} Metadata objekt
-   */
   async getMetadata(fileName) {
     if (this.isMigrated) {
       // Použij optimalizovanou službu
@@ -56,11 +45,6 @@ class MetadataMigrationService {
     }
   }
 
-  /**
-   * Načte metadata pro složku (optimalizovaná verze)
-   * @param {string} folder - Název složky
-   * @returns {Promise<Array>} Pole metadata objektů
-   */
   async getMetadataForFolder(folder) {
     if (this.isMigrated) {
       return await optimizedMetadataService.getMetadataForFolder(folder);
@@ -70,10 +54,6 @@ class MetadataMigrationService {
     }
   }
 
-  /**
-   * Fallback metoda pro načítání metadat (starý systém)
-   * @private
-   */
   async getFallbackMetadata(fileName) {
     // Zde by se použil starý globalMetadataPreloader
     // Prozatím vracíme null
@@ -81,10 +61,6 @@ class MetadataMigrationService {
     return null;
   }
 
-  /**
-   * Fallback metoda pro načítání metadat složky (starý systém)
-   * @private
-   */
   async getFallbackMetadataForFolder(folder) {
     // Zde by se použil starý fastMetadataService
     // Prozatím vracíme prázdné pole
@@ -92,9 +68,6 @@ class MetadataMigrationService {
     return [];
   }
 
-  /**
-   * Vynutí migraci na optimalizovanou službu
-   */
   async forceMigration() {
     try {
       log.info('🔄 Forcing migration to optimized metadata service...');
@@ -120,9 +93,6 @@ class MetadataMigrationService {
     }
   }
 
-  /**
-   * Vrátí stav migrace
-   */
   getMigrationStatus() {
     return {
       isMigrated: this.isMigrated,

@@ -1,10 +1,8 @@
-/**
- * Refaktorovaný cache service s modulární architekturou
- */
+
 
 import { AudioCache, MetadataCache, FirebaseCache, ImageCache } from './cache/index.js';
 import { staticMetadataService } from './staticMetadataService.js';
-import { log } from './logger.js';
+import log from './logger.js';
 import { parseAudioFileName } from '@utils/hudbaParser';
 
 class CacheServiceRefactored {
