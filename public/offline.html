@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="sk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Offline - Meditation App</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Playfair Display', serif;
+            background: #f4ddc4;
+            color: #333;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 500px;
+        }
+
+        .icon {
+            font-size: 4rem;
+            margin-bottom: 2rem;
+            opacity: 0.7;
+        }
+
+        h1 {
+            font-size: 2.5rem;
+            font-weight: 300;
+            margin-bottom: 1rem;
+            color: #555;
+        }
+
+        p {
+            font-size: 1.2rem;
+            margin-bottom: 2rem;
+            line-height: 1.6;
+            color: #666;
+        }
+
+        .retry-btn {
+            background: #333;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: background 0.3s ease;
+        }
+
+        .retry-btn:hover {
+            background: #555;
+        }
+
+        .features {
+            margin-top: 3rem;
+            text-align: left;
+        }
+
+        .feature {
+            display: flex;
+            align-items: center;
+            margin-bottom: 1rem;
+            font-size: 1rem;
+            color: #666;
+        }
+
+        .feature-icon {
+            margin-right: 1rem;
+            font-size: 1.2rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="icon">📱</div>
+        <h1>Jste offline</h1>
+        <p>Připojení k internetu není dostupné. Některé funkce mohou být omezené.</p>
+
+        <button class="retry-btn" onclick="window.location.reload()">
+            Zkusit znovu
+        </button>
+
+        <div class="features">
+            <div class="feature">
+                <span class="feature-icon">🎵</span>
+                <span>Hudba a meditace jsou dostupné offline</span>
+            </div>
+            <div class="feature">
+                <span class="feature-icon">⏱️</span>
+                <span>Meditační timer funguje bez internetu</span>
+            </div>
+            <div class="feature">
+                <span class="feature-icon">🌬️</span>
+                <span>Dýchací cvičení je plně offline</span>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Zkontroluj připojení
+        function checkConnection() {
+            if (navigator.onLine) {
+                window.location.reload();
+            }
+        }
+
+        // Poslouchej změny připojení
+        window.addEventListener('online', checkConnection);
+
+        // Zkontroluj každých 5 sekund
+        setInterval(checkConnection, 5000);
+    </script>
+</body>
+</html>
+
+
+
+

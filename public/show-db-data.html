@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="sk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Firestore Data Viewer</title>
+    <style>
+        body {
+            font-family: 'Courier New', monospace;
+            background: #f4ddc4;
+            margin: 20px;
+            color: #333;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        .section {
+            background: white;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .document {
+            background: #f8f9fa;
+            padding: 15px;
+            margin: 10px 0;
+            border-left: 4px solid #007bff;
+            border-radius: 4px;
+        }
+        .field {
+            margin: 5px 0;
+            padding: 2px 0;
+        }
+        .field-name {
+            font-weight: bold;
+            color: #495057;
+        }
+        .field-value {
+            color: #6c757d;
+            margin-left: 10px;
+        }
+        .empty {
+            color: #dc3545;
+            font-style: italic;
+        }
+        .success {
+            color: #28a745;
+        }
+        .error {
+            color: #dc3545;
+        }
+        button {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 10px 5px;
+        }
+        button:hover {
+            background: #0056b3;
+        }
+        .loading {
+            color: #6c757d;
+            font-style: italic;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔍 Firestore Database Viewer</h1>
+
+        <div class="section">
+            <h2>📊 Audio-metadata Collection</h2>
+            <button onclick="loadAudioMetadata()">Načti audio-metadata</button>
+            <div id="audio-metadata-content">
+                <p class="loading">Klikněte na tlačítko pro načtení dat...</p>
+            </div>
+        </div>
+
+        <div class="section">
+            <h2>🔧 System Collection</h2>
+            <button onclick="loadSystemData()">Načti system data</button>
+            <div id="system-content">
+                <p class="loading">Klikněte na tlačítko pro načtení dat...</p>
+            </div>
+        </div>
+
+        <div class="section">
+            <h2>💾 Cache Collection</h2>
+            <button onclick="loadCacheData()">Načti cache data</button>
+            <div id="cache-content">
+                <p class="loading">Klikněte na tlačítko pro načtení dat...</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Firebase SDK -->
+    <script type="module">
+        import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
+        import { getFirestore, collection, getDocs, query, orderBy, limit } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
+
+        // Firebase konfigurace
+        const firebaseConfig = {
+            apiKey: "AIzaSyBvQZvQZvQZvQZvQZvQZvQZvQZvQZvQZvQ",
+            authDomain: "meditations-audio.firebaseapp.com",
+            projectId: "meditations-audio",
+            storageBucket: "meditations-audio.appspot.com",
+            messagingSenderId: "123456789",
+            appId: "1:123456789:web:abcdef123456789"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+
+        // Načti audio-metadata
+        window.loadAudioMetadata = async () => {
+            const content = document.getElementById('audio-metadata-content');
+            content.innerHTML = '<p class="loading">Načítám audio-metadata...</p>';
+
+            try {
+                const audioRef = collection(db, 'audio-metadata');
+                const audioQuery = query(audioRef, orderBy('fileName'), limit(20));
+                const snapshot = await getDocs(audioQuery);
+
+                if (snapshot.empty) {
+                    content.innerHTML = '<p class="empty">❌ Kolekce audio-metadata je prázdná</p>';
+                } else {
+                    let html = `<p class="success">✅ Načteno ${snapshot.size} záznamů:</p>`;
+
+                    snapshot.forEach((doc) => {
+                        const data = doc.data();
+                        html += `
+                            <div class="document">
+                                <div class="field">
+                                    <span class="field-name">Document ID:</span>
+                                    <span class="field-value">${doc.id}</span>
+                                </div>
+                                <div class="field">
+                                    <span class="field-name">FileName:</span>
+                                    <span class="field-value">${data.fileName || 'N/A'}</span>
+                                </div>
+                                <div class="field">
+                                    <span class="field-name">Duration:</span>
+                                    <span class="field-value">${data.duration || 'N/A'}</span>
+                                </div>
+                                <div class="field">
+                                    <span class="field-name">DurationFormatted:</span>
+                                    <span class="field-value">${data.durationFormatted || 'N/A'}</span>
+                                </div>
+                                <div class="field">
+                                    <span class="field-name">Title:</span>
+                                    <span class="field-value">${data.title || 'N/A'}</span>
+                                </div>
+                                <div class="field">
+                                    <span class="field-name">Folder:</span>
+                                    <span class="field-value">${data.folder || 'N/A'}</span>
+                                </div>
+                                <div class="field">
+                                    <span class="field-name">Updated:</span>
+                                    <span class="field-value">${data.updated || 'N/A'}</span>
+                                </div>
+                            </div>
+                        `;
+                    });
+
+                    content.innerHTML = html;
+                }
+            } catch (error) {
+                content.innerHTML = `<p class="error">❌ Chyba: ${error.message}</p>`;
+            }
+        };
+
+        // Načti system data
+        window.loadSystemData = async () => {
+            const content = document.getElementById('system-content');
+            content.innerHTML = '<p class="loading">Načítám system data...</p>';
+
+            try {
+                const systemRef = collection(db, 'system');
+                const snapshot = await getDocs(systemRef);
+
+                if (snapshot.empty) {
+                    content.innerHTML = '<p class="empty">❌ Kolekce system je prázdná</p>';
+                } else {
+                    let html = `<p class="success">✅ Načteno ${snapshot.size} záznamů:</p>`;
+
+                    snapshot.forEach((doc) => {
+                        const data = doc.data();
+                        html += `
+                            <div class="document">
+                                <div class="field">
+                                    <span class="field-name">Document ID:</span>
+                                    <span class="field-value">${doc.id}</span>
+                                </div>
+                                <div class="field">
+                                    <span class="field-name">Data:</span>
+                                    <span class="field-value">${JSON.stringify(data, null, 2)}</span>
+                                </div>
+                            </div>
+                        `;
+                    });
+
+                    content.innerHTML = html;
+                }
+            } catch (error) {
+                content.innerHTML = `<p class="error">❌ Chyba: ${error.message}</p>`;
+            }
+        };
+
+        // Načti cache data
+        window.loadCacheData = async () => {
+            const content = document.getElementById('cache-content');
+            content.innerHTML = '<p class="loading">Načítám cache data...</p>';
+
+            try {
+                const cacheRef = collection(db, 'cache');
+                const snapshot = await getDocs(cacheRef);
+
+                if (snapshot.empty) {
+                    content.innerHTML = '<p class="empty">❌ Kolekce cache je prázdná</p>';
+                } else {
+                    let html = `<p class="success">✅ Načteno ${snapshot.size} záznamů:</p>`;
+
+                    snapshot.forEach((doc) => {
+                        const data = doc.data();
+                        html += `
+                            <div class="document">
+                                <div class="field">
+                                    <span class="field-name">Document ID:</span>
+                                    <span class="field-value">${doc.id}</span>
+                                </div>
+                                <div class="field">
+                                    <span class="field-name">Type:</span>
+                                    <span class="field-value">${data.type || 'N/A'}</span>
+                                </div>
+                                <div class="field">
+                                    <span class="field-name">Key:</span>
+                                    <span class="field-value">${data.key || 'N/A'}</span>
+                                </div>
+                                <div class="field">
+                                    <span class="field-name">Timestamp:</span>
+                                    <span class="field-value">${data.timestamp || 'N/A'}</span>
+                                </div>
+                            </div>
+                        `;
+                    });
+
+                    content.innerHTML = html;
+                }
+            } catch (error) {
+                content.innerHTML = `<p class="error">❌ Chyba: ${error.message}</p>`;
+            }
+        };
+    </script>
+</body>
+</html>
+
+
+
+

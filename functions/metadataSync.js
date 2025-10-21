@@ -5,23 +5,44 @@
 
 const functions = require('firebase-functions');
 const admin = require('firebase-admin');
+const cors = require('cors')({ origin: true });
 
-// Inicializace Firebase Admin
-admin.initializeApp();
+// Inicializace Firebase Admin pouze pokud ještě není inicializován
+if (!admin.apps.length) {
+  admin.initializeApp();
+}
+
 const db = admin.firestore();
+const rtdb = admin.database();
 
 // Exportuj základní funkce pro testování
 exports.helloWorld = functions.https.onRequest((req, res) => {
+  // CORS headers
+  res.set('Access-Control-Allow-Origin', '*');
+  res.set('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+  res.set('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+
+  if (req.method === 'OPTIONS') {
+    res.status(204).send('');
+    return;
+  }
+
   res.send('Hello from Firebase Functions!');
 });
 
-exports.testMetadata = functions.https.onCall(async (data, context) => {
-  return {
-    success: true,
-    message: 'Metadata service is working',
-    timestamp: new Date().toISOString()
-  };
-});
+exports.testMetadata = functions
+  .runWith({
+    timeoutSeconds: 30,
+    memory: '128MB'
+  })
+  .https
+  .onCall(async (data, context) => {
+    return {
+      success: true,
+      message: 'Metadata service is working',
+      timestamp: new Date().toISOString()
+    };
+  });
 
 /**
  * Extrahuje metadata z MP3 souboru
@@ -62,11 +83,55 @@ async function extractMP3Metadata(fileName) {
  */
 async function updateMetadataDatabase(fileName, metadata) {
   try {
+    // Uložit do Firestore
     await db.collection('metadata').doc(fileName).set(metadata, { merge: true });
-    console.log(`✅ Metadata updated for ${fileName}`);
+    console.log(`✅ Metadata updated in Firestore for ${fileName}`);
+
+    // Uložit také do Realtime Database pro rychlý přístup
+    await updateRealtimeDatabase(fileName, metadata);
+
   } catch (error) {
     console.error(`❌ Failed to update metadata for ${fileName}:`, error);
   }
+}
+
+/**
+ * Aktualizuje metadata v Realtime Database
+ * @param {string} fileName - Název souboru
+ * @param {Object} metadata - Metadata objekt
+ */
+async function updateRealtimeDatabase(fileName, metadata) {
+  try {
+    // Sanitizuj cestu pro Realtime Database
+    const safePath = sanitizePath(fileName);
+
+    const rtdbRef = rtdb.ref(`audio-metadata/${safePath}`);
+    await rtdbRef.set({
+      ...metadata,
+      lastUpdated: new Date().toISOString(),
+      source: 'firebase-storage'
+    });
+
+    console.log(`✅ Metadata updated in Realtime Database for ${safePath}`);
+  } catch (error) {
+    console.error(`❌ Failed to update metadata in Realtime Database for ${fileName}:`, error);
+  }
+}
+
+/**
+ * Sanitizuje cestu pro Realtime Database
+ * @param {string} path - Původní cesta
+ * @returns {string} - Bezpečná cesta
+ */
+function sanitizePath(path) {
+  return path
+    .replace(/\./g, '_DOT_')      // . -> _DOT_
+    .replace(/#/g, '_HASH_')      // # -> _HASH_
+    .replace(/\$/g, '_DOLLAR_')   // $ -> _DOLLAR_
+    .replace(/\[/g, '_LBRACKET_') // [ -> _LBRACKET_
+    .replace(/\]/g, '_RBRACKET_') // ] -> _RBRACKET_
+    .replace(/\//g, '_SLASH_')    // / -> _SLASH_
+    .replace(/\\/g, '_BACKSLASH_'); // \ -> _BACKSLASH_
 }
 
 /**
@@ -87,114 +152,224 @@ async function updateLastSync() {
  * Sleduje změny ve Firebase Storage
  * Spouští se při každé změně souboru
  */
-exports.monitorStorageChanges = functions.storage.object().onFinalize(async (object) => {
-  const fileName = object.name;
+exports.onFileUpload = functions
+  .runWith({
+    timeoutSeconds: 60,
+    memory: '256MB'
+  })
+  .storage
+  .object()
+  .onFinalize(async (object) => {
+    const fileName = object.name;
 
-  console.log(`📁 Storage change detected: ${fileName}`);
+    console.log(`📁 Storage change detected: ${fileName}`);
 
-  // Zpracuj pouze MP3 soubory
-  if (!fileName.toLowerCase().endsWith('.mp3')) {
-    console.log(`⏭️ Skipping non-MP3 file: ${fileName}`);
-    return;
-  }
-
-  // Zpracuj pouze soubory v hudba/ nebo slova/ složkách
-  if (!fileName.startsWith('hudba/') && !fileName.startsWith('slova/')) {
-    console.log(`⏭️ Skipping file outside target folders: ${fileName}`);
-    return;
-  }
-
-  try {
-    // Extrahuj metadata
-    const metadata = await extractMP3Metadata(fileName);
-
-    if (metadata) {
-      // Ulož do databáze
-      await updateMetadataDatabase(fileName, metadata);
-
-      // Aktualizuj timestamp synchronizace
-      await updateLastSync();
-
-      console.log(`✅ Metadata sync completed for ${fileName}`);
+    // Zpracuj pouze MP3 soubory
+    if (!fileName.toLowerCase().endsWith('.mp3')) {
+      console.log(`⏭️ Skipping non-MP3 file: ${fileName}`);
+      return null;
     }
-  } catch (error) {
-    console.error(`❌ Failed to sync metadata for ${fileName}:`, error);
-  }
-});
+
+    // Zpracuj pouze soubory v hudba/ nebo slova/ složkách
+    if (!fileName.startsWith('hudba/') && !fileName.startsWith('slova/')) {
+      console.log(`⏭️ Skipping file outside target folders: ${fileName}`);
+      return null;
+    }
+
+    try {
+      // Extrahuj metadata
+      const metadata = await extractMP3Metadata(fileName);
+
+      if (metadata) {
+        // Ulož do databáze
+        await updateMetadataDatabase(fileName, metadata);
+
+        // Aktualizuj timestamp synchronizace
+        await updateLastSync();
+
+        console.log(`✅ Metadata sync completed for ${fileName}`);
+      }
+    } catch (error) {
+      console.error(`❌ Failed to sync metadata for ${fileName}:`, error);
+    }
+
+    return null;
+  });
 
 /**
  * Manuální synchronizace všech MP3 souborů
- * Spustí se pomocí: firebase functions:shell
  */
-exports.syncAllMetadata = functions.https.onCall(async (data, context) => {
-  try {
-    console.log('🚀 Starting manual metadata sync...');
+exports.syncStorage = functions
+  .runWith({
+    timeoutSeconds: 300,
+    memory: '512MB'
+  })
+  .https
+  .onCall(async (data, context) => {
+    try {
+      console.log('🚀 Starting manual metadata sync...');
 
-    // Pro testování vytvoříme několik testovacích souborů
-    const testFiles = [
-      'hudba/generator.mp3',
-      'hudba/meditacie.mp3',
-      'hudba/noise-generator.mp3',
-      'hudba/ambient-journey/01-track.mp3',
-      'hudba/ambient-journey/02-track.mp3',
-      'slova/muzsky4FSK-uzkost-osamelost.mp3',
-      'slova/zensky4FSK-uzkost-osamelost.mp3'
-    ];
+      // Pro testování vytvoříme několik testovacích souborů
+      const testFiles = [
+        'hudba/generator.mp3',
+        'hudba/meditacie.mp3',
+        'hudba/noise-generator.mp3',
+        'hudba/ambient-journey/01-track.mp3',
+        'hudba/ambient-journey/02-track.mp3',
+        'slova/muzsky4FSK-uzkost-osamelost.mp3',
+        'slova/zensky4FSK-uzkost-osamelost.mp3'
+      ];
 
-    console.log(`📊 Processing ${testFiles.length} test files`);
+      console.log(`📊 Processing ${testFiles.length} test files`);
 
-    // Zpracuj všechny soubory
-    for (const fileName of testFiles) {
-      try {
-        const metadata = await extractMP3Metadata(fileName);
-        if (metadata) {
-          await updateMetadataDatabase(fileName, metadata);
+      let processedCount = 0;
+
+      // Zpracuj soubory postupně
+      for (const fileName of testFiles) {
+        try {
+          const metadata = await extractMP3Metadata(fileName);
+          if (metadata) {
+            await updateMetadataDatabase(fileName, metadata);
+            processedCount++;
+          }
+        } catch (error) {
+          console.error(`❌ Failed to sync ${fileName}:`, error);
         }
-      } catch (error) {
-        console.error(`❌ Failed to sync ${fileName}:`, error);
       }
+
+      // Aktualizuj timestamp
+      await updateLastSync();
+
+      console.log('✅ Manual metadata sync completed');
+      return {
+        success: true,
+        filesProcessed: processedCount,
+        totalFiles: testFiles.length
+      };
+
+    } catch (error) {
+      console.error('❌ Manual metadata sync failed:', error);
+      return { success: false, error: error.message };
     }
-
-    // Aktualizuj timestamp
-    await updateLastSync();
-
-    console.log('✅ Manual metadata sync completed');
-    return { success: true, filesProcessed: testFiles.length };
-
-  } catch (error) {
-    console.error('❌ Manual metadata sync failed:', error);
-    return { success: false, error: error.message };
-  }
-});
+  });
 
 /**
  * Získá statistiky metadat
  */
-exports.getMetadataStats = functions.https.onCall(async (data, context) => {
-  try {
-    const snapshot = await db.collection('metadata').get();
-    const stats = {
-      totalFiles: snapshot.size,
-      byFolder: {},
-      lastSync: null
-    };
+exports.getFileStats = functions
+  .runWith({
+    timeoutSeconds: 30,
+    memory: '128MB'
+  })
+  .https
+  .onCall(async (data, context) => {
+    try {
+      const snapshot = await db.collection('audio-metadata').limit(1000).get();
+      const stats = {
+        totalFiles: snapshot.size,
+        byFolder: {},
+        lastSync: null
+      };
 
-    // Spočítej podle složek
-    snapshot.forEach(doc => {
-      const data = doc.data();
-      const folder = data.folder || 'unknown';
-      stats.byFolder[folder] = (stats.byFolder[folder] || 0) + 1;
-    });
+      // Spočítej podle složek
+      const folderCounts = {};
+      snapshot.forEach(doc => {
+        const docData = doc.data();
+        const folder = docData.folder || 'unknown';
+        folderCounts[folder] = (folderCounts[folder] || 0) + 1;
+      });
 
-    // Získej timestamp poslední synchronizace
-    const syncDoc = await db.collection('system').doc('lastSync').get();
-    if (syncDoc.exists()) {
-      stats.lastSync = syncDoc.data().timestamp;
+      stats.byFolder = folderCounts;
+
+      // Získej timestamp poslední synchronizace
+      try {
+        const syncDoc = await db.collection('system').doc('lastSync').get();
+        if (syncDoc.exists()) {
+          stats.lastSync = syncDoc.data().timestamp;
+        }
+      } catch (error) {
+        console.warn('⚠️ Could not fetch last sync timestamp:', error);
+      }
+
+      return stats;
+    } catch (error) {
+      console.error('❌ Failed to get metadata stats:', error);
+      return { error: error.message };
     }
+  });
 
-    return stats;
-  } catch (error) {
-    console.error('❌ Failed to get metadata stats:', error);
-    return { error: error.message };
-  }
-});
+/**
+ * Uloží metadata do databáze
+ */
+exports.saveScrapedMetadata = functions
+  .runWith({
+    timeoutSeconds: 30,
+    memory: '256MB'
+  })
+  .https
+  .onCall(async (data, context) => {
+    try {
+      const { fileName, metadata } = data || {};
+
+      if (!fileName || !metadata) {
+        return { error: 'fileName and metadata are required' };
+      }
+
+      await updateMetadataDatabase(fileName, metadata);
+
+      return {
+        success: true,
+        message: `Metadata saved for ${fileName}`
+      };
+
+    } catch (error) {
+      console.error('❌ Failed to save metadata:', error);
+      return { error: error.message };
+    }
+  });
+
+/**
+ * Vyčistí stará metadata
+ */
+exports.cleanupMetadata = functions
+  .runWith({
+    timeoutSeconds: 60,
+    memory: '256MB'
+  })
+  .https
+  .onCall(async (data, context) => {
+    try {
+      console.log('🧹 Starting metadata cleanup...');
+
+      // Najdi dokumenty starší než 30 dní
+      const thirtyDaysAgo = new Date();
+      thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+
+      const snapshot = await db.collection('audio-metadata')
+        .where('lastModified', '<', thirtyDaysAgo.toISOString())
+        .get();
+
+      let deletedCount = 0;
+      const batch = db.batch();
+
+      snapshot.forEach(doc => {
+        batch.delete(doc.ref);
+        deletedCount++;
+      });
+
+      if (deletedCount > 0) {
+        await batch.commit();
+      }
+
+      console.log(`✅ Cleaned up ${deletedCount} old metadata records`);
+
+      return {
+        success: true,
+        deletedCount
+      };
+
+    } catch (error) {
+      console.error('❌ Failed to cleanup metadata:', error);
+      return { error: error.message };
+    }
+  });

@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Panel - Meditace App</title>
+    <script type="module" crossorigin src="/src/admin.jsx"></script>
+    <link rel="stylesheet" crossorigin href="/src/index.css">
+    <link rel="icon" type="image/svg+xml" href="/icon-192x192.svg">
+    <meta name="description" content="Admin panel pro správu meditační aplikace">
+    <meta name="theme-color" content="#f4ddc4">
+</head>
+<body>
+    <div id="admin-root"></div>
+    <script>
+        // Nastavíme admin mód
+        window.ADMIN_MODE = true;
+
+        // Přesměrujeme na admin screen
+        window.addEventListener('DOMContentLoaded', () => {
+            // Počkáme na načtení aplikace a pak přesměrujeme
+            setTimeout(() => {
+                if (window.navigateToScreen) {
+                    window.navigateToScreen('database-admin');
+                }
+            }, 1000);
+        });
+    </script>
+</body>
+</html>

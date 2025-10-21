@@ -32,14 +32,70 @@ export default defineConfig({
     sourcemap: false,
     minify: 'esbuild',
     rollupOptions: {
+      input: {
+        main: './index.html',
+        admin: './src/admin.jsx'
+      },
       output: {
-        manualChunks: {
-          vendor: ['react', 'react-dom'],
-          framer: ['framer-motion'],
-          firebase: ['firebase/app', 'firebase/storage']
-        }
+        manualChunks: (id) => {
+          // React a React DOM
+          if (id.includes('react') || id.includes('react-dom')) {
+            return 'react';
+          }
+
+          // Framer Motion
+          if (id.includes('framer-motion')) {
+            return 'framer';
+          }
+
+          // Firebase
+          if (id.includes('firebase')) {
+            return 'firebase';
+          }
+
+          // Lucide React (ikony)
+          if (id.includes('lucide-react')) {
+            return 'icons';
+          }
+
+          // Komponenty
+          if (id.includes('/src/components/')) {
+            return 'components';
+          }
+
+          // Features
+          if (id.includes('/src/features/')) {
+            return 'features';
+          }
+
+          // Services
+          if (id.includes('/src/services/')) {
+            return 'services';
+          }
+
+          // Hooks
+          if (id.includes('/src/hooks/')) {
+            return 'hooks';
+          }
+
+          // Node modules (ostatní)
+          if (id.includes('node_modules')) {
+            return 'vendor';
+          }
+        },
+        chunkFileNames: (chunkInfo) => {
+          const facadeModuleId = chunkInfo.facadeModuleId ? chunkInfo.facadeModuleId.split('/').pop().replace('.jsx', '').replace('.js', '') : 'chunk';
+          return `assets/[name]-[hash].js`;
+        },
+        entryFileNames: 'assets/[name]-[hash].js',
+        assetFileNames: 'assets/[name]-[hash].[ext]'
       }
-    }
+    },
+    // Optimalizace pro produkci
+    target: 'es2015',
+    cssCodeSplit: true,
+    reportCompressedSize: true,
+    chunkSizeWarningLimit: 1000
   },
   server: {
     port: 3000,

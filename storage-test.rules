@@ -1,0 +1,16 @@
+rules_version = '2';
+
+service firebase.storage {
+  match /b/{bucket}/o {
+    // DOČASNÁ PRAVIDLA PRO TESTOVÁNÍ - BEZPEČNOSTNÍ RIZIKO!
+    // POUŽÍVEJTE POUZE PRO VÝVOJ!
+    
+    // Povolit vše pro testování
+    match /{allPaths=**} {
+      allow read, write: if true;
+    }
+  }
+}
+
+
+

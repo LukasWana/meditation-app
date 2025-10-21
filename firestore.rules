@@ -3,9 +3,9 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    // Pravidla pro metadata kolekci
-    match /metadata/{docId} {
-      // Veřejné čtení pro všechny
+    // Pravidla pro audio-metadata kolekci
+    match /audio-metadata/{docId} {
+      // Veřejné čtení pro všechny (meditační data jsou veřejná)
       allow read: if true;
 
       // Zápis POUZE pro autentifikované admin uživatele
@@ -16,11 +16,10 @@ service cloud.firestore {
       allow create, update: if request.auth != null &&
                                request.auth.token.admin == true &&
                                // Validace struktury dat
-                               request.resource.data.keys().hasAll(['title', 'duration', 'url']) &&
+                               request.resource.data.keys().hasAll(['fileName', 'duration']) &&
                                // Validace typů
-                               request.resource.data.title is string &&
-                               request.resource.data.duration is number &&
-                               request.resource.data.url is string;
+                               request.resource.data.fileName is string &&
+                               request.resource.data.duration is string;
     }
 
     // Pravidla pro cache kolekci
