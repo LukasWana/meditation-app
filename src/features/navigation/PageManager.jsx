@@ -13,8 +13,7 @@ const HudbaScreen = lazy(() => import('@features/meditation/screens/HudbaScreen'
 const SlovaScreen = lazy(() => import('@features/meditation/screens/SlovaScreen'));
 const AlbumDetailScreen = lazy(() => import('@features/meditation/screens/AlbumDetailScreen'));
 const AudioPlayer = lazy(() => import('@features/audio/AudioPlayer'));
-const DatabaseManagementScreen = lazy(() => import('@features/meditation/screens/DatabaseManagementScreen'));
-const DatabaseAdminScreen = lazy(() => import('@features/meditation/screens/DatabaseAdminScreen'));
+const NewAdminScreen = lazy(() => import('@features/meditation/screens/NewAdminScreen'));
 
 
 // Registry stránek s jejich konfigurací
@@ -90,7 +89,7 @@ const SCREEN_REGISTRY = {
   'slova': {
     component: SlovaScreen,
     requiresLayout: true,
-    props: ['onNavigateToScreen', 'onTouchStart', 'onTouchMove', 'onTouchEnd', 'gender', 'onPlayerStateChange'],
+    props: ['onNavigateToScreen', 'onTouchStart', 'onTouchMove', 'onTouchEnd', 'gender', 'onPlayerStateChange', 'onGenderChange'],
     transition: {
       type: 'slide',
       direction: 'up',
@@ -116,18 +115,8 @@ const SCREEN_REGISTRY = {
       duration: 0.4
     }
   },
-  'database-management': {
-    component: DatabaseManagementScreen,
-    requiresLayout: true,
-    props: ['onNavigateToScreen'],
-    transition: {
-      type: 'slide',
-      direction: 'up',
-      duration: 0.6
-    }
-  },
   'database-admin': {
-    component: DatabaseAdminScreen,
+    component: NewAdminScreen,
     requiresLayout: false,
     props: [],
     transition: {
@@ -254,6 +243,9 @@ const PageManager = ({
         case 'onPlayerStateChange':
           props.onPlayerStateChange = onPlayerStateChange;
           break;
+        case 'onGenderChange':
+          props.onGenderChange = onGenderChange;
+          break;
         case 'onAlbumSelect':
           props.onAlbumSelect = onAlbumSelect;
           break;
@@ -301,7 +293,7 @@ const PageManager = ({
     return props;
   }, [
     onNavigateToScreen, onTouchStart, onTouchMove, onTouchEnd,
-    gender, onPlayerStateChange, time, selectedDuration, isPlaying,
+    gender, onPlayerStateChange, onGenderChange, time, selectedDuration, isPlaying,
     onDurationChange, onPlayPause, onReset, breathPhase,
     activeAudio, onCloseAudio
   ]);

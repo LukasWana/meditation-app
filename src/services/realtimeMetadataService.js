@@ -48,8 +48,44 @@ class RealtimeMetadataService {
 
       if (snapshot.exists()) {
         const data = snapshot.val();
-        log.debug(`✅ All metadata loaded from Realtime Database: ${Object.keys(data).length} files`);
-        return data;
+
+        // Debug: zobraz strukturu dat
+        log.debug('🔍 Realtime Database data structure:', {
+          hasFiles: !!data.files,
+          hasMetadata: !!data.metadata,
+          filesIsArray: Array.isArray(data.files),
+          filesLength: data.files ? data.files.length : 0,
+          dataKeys: Object.keys(data),
+          sampleData: data.files ? data.files.slice(0, 2) : Object.keys(data).slice(0, 2)
+        });
+
+        // Pokud jsou data ve struktuře { metadata: {...}, files: [...] }, extrahuj files
+        if (data.files && Array.isArray(data.files)) {
+          log.debug(`✅ All metadata loaded from Realtime Database: ${data.files.length} files`);
+          // Převeď array na object s fileName jako klíč
+          const metadataObject = {};
+          data.files.forEach(file => {
+            if (file.fileName) {
+              metadataObject[file.fileName] = file;
+            }
+          });
+          log.debug(`✅ Converted to object: ${Object.keys(metadataObject).length} files`);
+
+          // Debug: zobraz ukázku převedených dat
+          const sampleKeys = Object.keys(metadataObject).slice(0, 3);
+          log.debug('🔍 Sample converted data:', sampleKeys.map(key => ({
+            key: key,
+            fileName: metadataObject[key].fileName,
+            folder: metadataObject[key].folder,
+            displayName: metadataObject[key].displayName
+          })));
+
+          return metadataObject;
+        } else {
+          // Pokud jsou data už ve správné struktuře
+          log.debug(`✅ All metadata loaded from Realtime Database: ${Object.keys(data).length} files`);
+          return data;
+        }
       } else {
         log.debug('📭 No metadata found in Realtime Database');
         return {};

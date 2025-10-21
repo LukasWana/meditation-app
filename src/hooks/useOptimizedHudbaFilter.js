@@ -1,4 +1,5 @@
 import { useState, useEffect, useMemo } from 'react';
+import { realtimeMetadataService } from '@services/realtimeMetadataService';
 import { firestoreMetadataService } from '@services/firestoreMetadataService';
 import { staticMetadataService } from '@services/staticMetadataService';
 import log from '@services/logger';
@@ -26,22 +27,36 @@ export const useOptimizedHudbaFilter = () => {
 
         let allMetadata = {};
 
-        // Nejdříve zkus Firestore
+        // Nejdříve zkus Realtime Database (nejrychlejší)
         try {
-          log.info('📊 Trying Firestore database...');
-          allMetadata = await firestoreMetadataService.loadAllMetadata();
-          log.success('✅ Firestore metadata loaded successfully');
-        } catch (firestoreError) {
-          log.warn('⚠️ Firestore failed, falling back to static metadata:', firestoreError.message);
+          log.info('📊 Trying Realtime Database...');
+          allMetadata = await realtimeMetadataService.getAllMetadata();
+          if (allMetadata && Object.keys(allMetadata).length > 0) {
+            log.success(`✅ Realtime Database metadata loaded successfully: ${Object.keys(allMetadata).length} files`);
+          } else {
+            log.warn('⚠️ Realtime Database is empty, trying Firestore...');
+            throw new Error('No metadata in Realtime Database');
+          }
+        } catch (realtimeError) {
+          log.warn('⚠️ Realtime Database failed, trying Firestore:', realtimeError.message);
 
-          // Fallback na statická metadata
+          // Fallback na Firestore
           try {
-            await staticMetadataService.loadMetadata();
-            allMetadata = staticMetadataService.getAllMetadata();
-            log.success('✅ Static metadata loaded successfully');
-          } catch (staticError) {
-            log.error('❌ Both Firestore and static metadata failed:', staticError.message);
-            throw new Error('Failed to load metadata from any source');
+            log.info('📊 Trying Firestore database...');
+            allMetadata = await firestoreMetadataService.loadAllMetadata();
+            log.success('✅ Firestore metadata loaded successfully');
+          } catch (firestoreError) {
+            log.warn('⚠️ Firestore failed, falling back to static metadata:', firestoreError.message);
+
+            // Fallback na statická metadata
+            try {
+              await staticMetadataService.loadMetadata();
+              allMetadata = staticMetadataService.getAllMetadata();
+              log.success('✅ Static metadata loaded successfully');
+            } catch (staticError) {
+              log.error('❌ All metadata sources failed:', staticError.message);
+              throw new Error('Failed to load metadata from any source');
+            }
           }
         }
 

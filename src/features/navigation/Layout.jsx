@@ -47,8 +47,8 @@ const Layout = ({
       {/* Hlavní obsah */}
       {children}
 
-      {/* Top Right Controls - Hidden when player is active, only show on slova page */}
-      {!isPlayerActive && currentScreen === 'slova' && (
+      {/* Top Right Controls - Hidden when player is active, show on all pages */}
+      {!isPlayerActive && (
         <div className="fixed top-6 right-6 z-50 flex items-center space-x-3">
           {/* Language Switcher - desktop/tablet */}
           <motion.div

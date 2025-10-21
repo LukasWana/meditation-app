@@ -1,11 +1,11 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { AnimatePresence } from 'framer-motion';
 import { FramerButton, FramerSection, FramerPageTransition, BackButton } from '@components';
 import { useLanguage } from '@contexts/LanguageContext';
 // Odstraněny skeleton loadery
 import { AudioPlayer } from '@features/audio';
 // Preloadery odstraněny - data se načítají při startu
-import { useFirebaseAudioFilter } from '@features/audio/hooks/useFirebaseAudioFilter';
+import { useRealtimeSlovaFilter } from '@hooks/useRealtimeSlovaFilter';
 
 const SlovaScreen = ({
   onNavigateToScreen,
@@ -13,16 +13,21 @@ const SlovaScreen = ({
   onTouchMove,
   onTouchEnd,
   gender = 'none', // Přidáme gender prop pro filtrování
-  onPlayerStateChange // Callback pro předání stavu přehrávače
+  onPlayerStateChange, // Callback pro předání stavu přehrávače
+  onGenderChange // Callback pro změnu pohlaví
 }) => {
   const [activeAudio, setActiveAudio] = useState(null);
   const { t, language } = useLanguage();
 
-  // Debug: zobraz aktuální jazyk
+  // Debug: zobraz aktuální jazyk a gender
   console.log(`🔍 SlovaScreen - Current language: ${language}`);
+  console.log(`🔍 SlovaScreen - Current gender: ${gender}`);
 
-  // Použij nový filtrovací systém s jazykovým filtrováním
-  const { troubleItems: slovaItems, isLoading, error, audioFiles } = useFirebaseAudioFilter(gender, language.toLowerCase());
+  // Stabilizuj language hodnotu
+  const normalizedLanguage = useMemo(() => language.toLowerCase(), [language]);
+
+  // Použij nový Realtime Database filtrovací systém
+  const { slovaItems, isLoading, error, audioFiles } = useRealtimeSlovaFilter(gender, normalizedLanguage);
 
   // Preloading odstraněn - data se načítají při startu aplikace
 
@@ -40,7 +45,8 @@ const SlovaScreen = ({
           trackName: item.title,
           fileName: item.fileName || item.audioSrc
         }],
-        currentTrackIndex: 0
+        currentTrackIndex: 0,
+        allFiles: item.allFiles || [] // Předaj všechny soubory pro dané téma
       });
       onPlayerStateChange?.(true); // Informuj o aktivním přehrávači
     }
@@ -123,32 +129,6 @@ const SlovaScreen = ({
             </p>
 
 
-            {/* Gender selector
-            <div className="flex justify-center mb-8">
-              <div className="flex bg-white/20 backdrop-blur rounded-lg border border-white/30">
-                <button
-                  className={`px-3 py-2 rounded-l-lg text-sm font-medium text-gray-700 transition-colors ${
-                    gender === 'male'
-                      ? 'bg-white/30'
-                      : 'hover:bg-white/10'
-                  }`}
-                  onClick={() => onNavigateToScreen('slova', 'male')}
-                >
-                  {t('jsemMuz')}
-                </button>
-                <button
-                  className={`px-3 py-2 rounded-r-lg text-sm font-medium text-gray-700 transition-colors ${
-                    gender === 'female'
-                      ? 'bg-white/30'
-                      : 'hover:bg-white/10'
-                  }`}
-                  onClick={() => onNavigateToScreen('slova', 'female')}
-                >
-                  {t('jsemZena')}
-                </button>
-              </div>
-            </div>
-            */}
 
             {/* Zobraz statistiky pro uživatele - ZAKOMENTOVÁNO kvůli poskakování */}
             {/* {userStats && (
@@ -240,7 +220,7 @@ const SlovaScreen = ({
                   });
                 }
               }}
-              allFiles={audioFiles}
+              allFiles={activeAudio.allFiles || []}
               autoplayEnabled={true}
             />
           )}

@@ -56,6 +56,10 @@ class CacheServiceRefactored {
     return this.metadataCache.getMetadata(key);
   }
 
+  getAllMetadata() {
+    return this.metadataCache.getAllMetadata();
+  }
+
   // ===== FIREBASE CACHE DELEGATION =====
   setFirebaseQuery(queryKey, result) {
     this.firebaseCache.setQuery(queryKey, result);
@@ -290,7 +294,7 @@ class CacheServiceRefactored {
       for (const folderRef of result.prefixes) {
         try {
           const folderResult = await listAll(folderRef);
-          
+
           // Pokud je to slova/ složka, prohledej i jazykové podsložky
           if (folderRef.name === 'slova') {
             folderResult.items.forEach(item => {
@@ -300,7 +304,7 @@ class CacheServiceRefactored {
                 folder: folderRef.name
               });
             });
-            
+
             // Prohledej jazykové podsložky v slova/
             for (const langFolderRef of folderResult.prefixes) {
               try {
@@ -345,9 +349,9 @@ class CacheServiceRefactored {
         .filter(item => {
           const name = item.name.toLowerCase();
           const isMp3 = name.endsWith('.mp3');
-          const isSlova = item.folder === 'slova' || 
-                         item.folder === 'slova/CZ' || 
-                         item.folder === 'slova/SK' || 
+          const isSlova = item.folder === 'slova' ||
+                         item.folder === 'slova/CZ' ||
+                         item.folder === 'slova/SK' ||
                          item.folder === 'slova/EN';
           return isMp3 && isSlova; // Načti MP3 soubory ze slova/ a jazykových podsložek
         })

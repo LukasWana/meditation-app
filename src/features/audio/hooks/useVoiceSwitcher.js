@@ -129,7 +129,9 @@ export const useVoiceSwitcher = (currentAudioFile, allFiles) => {
       }
 
       console.log('Full path to new file:', fullPath);
+      console.log('New file name:', newFileName);
       console.log('Current file info:', currentFileInfo);
+      console.log('All files available:', allFiles.map(f => ({ fileName: f.fileName, audioSrc: f.audioSrc })));
 
       // Zkontroluj, jestli alternativní soubor existuje v allFiles
       const alternativeFile = allFiles.find(file =>

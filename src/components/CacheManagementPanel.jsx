@@ -359,6 +359,17 @@ const CacheManagementPanel = () => {
         <p className="text-gray-600">
           Správa a příprava cache v Realtime Database. Zde můžete zobrazit všechny cache data a vytvořit nové.
         </p>
+        <div className="mt-2 flex gap-4 text-xs text-gray-500">
+          <span className="bg-green-100 text-green-800 px-2 py-1 rounded font-mono">
+            v{import.meta.env.VITE_APP_VERSION || 'dev'}
+          </span>
+          <span className="bg-gray-100 text-gray-800 px-2 py-1 rounded font-mono">
+            Build: {new Date().toLocaleDateString('cs-CZ')} {new Date().toLocaleTimeString('cs-CZ', { hour: '2-digit', minute: '2-digit' })}
+          </span>
+          <span className="bg-purple-100 text-purple-800 px-2 py-1 rounded font-mono">
+            Commit: 14d3007
+          </span>
+        </div>
       </div>
 
       {(cacheError || error) && (
