@@ -1,13 +1,15 @@
 import React, { useState, useEffect } from 'react';
 import { ref, get, child } from 'firebase/database';
-import { realtimeDatabase } from '../config/secure-firebase';
+import { useAuthState } from 'react-firebase-hooks/auth';
+import { realtimeDatabase, auth } from '../config/secure-firebase';
 import { extractAudioMetadata } from '../utils/audioMetadataExtractor';
 import audioMetadataStorageService from '../services/audioMetadataStorageService';
 import log from '@services/logger';
 
 const CacheManagementPanel = () => {
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState(null);
+  const [user, loading, error] = useAuthState(auth);
+  const [cacheLoading, setCacheLoading] = useState(false);
+  const [cacheError, setCacheError] = useState(null);
   const [cacheData, setCacheData] = useState({
     audio_metadata: null,
     audio_stats: null,
@@ -19,15 +21,22 @@ const CacheManagementPanel = () => {
   const [creatingCache, setCreatingCache] = useState(false);
   const [scanProgress, setScanProgress] = useState({ current: 0, total: 0 });
 
-  // Načtení všech cache dat při mount
+  // Načtení všech cache dat při mount a po autentifikaci
   useEffect(() => {
-    loadAllCacheData();
-  }, []);
+    if (user && !loading) {
+      loadAllCacheData();
+    }
+  }, [user, loading]);
 
   const loadAllCacheData = async () => {
+    if (!user) {
+      setCacheError('User not authenticated');
+      return;
+    }
+
     try {
-      setLoading(true);
-      setError(null);
+      setCacheLoading(true);
+      setCacheError(null);
       log.info('🔄 Loading all cache data from Realtime Database...');
 
       const dbRef = ref(realtimeDatabase);
@@ -66,19 +75,19 @@ const CacheManagementPanel = () => {
       log.success(`✅ Loaded cache data: ${totalFiles} files, ${formatBytes(totalSize)}, ${formatDuration(totalDuration)}`);
     } catch (error) {
       log.error('Failed to load cache data:', error);
-      setError(`Error loading cache: ${error.message}`);
+      setCacheError(`Error loading cache: ${error.message}`);
     } finally {
-      setLoading(false);
+      setCacheLoading(false);
     }
   };
 
   const scanAndCreateCache = async () => {
-    if (creatingCache) return;
+    if (creatingCache || !user) return;
     
     try {
       setCreatingCache(true);
       setScanningFiles(true);
-      setError(null);
+      setCacheError(null);
       
       log.info('🔄 Starting cache creation process...');
       
@@ -198,7 +207,7 @@ const CacheManagementPanel = () => {
       
     } catch (error) {
       log.error('Failed to create cache:', error);
-      setError(`Error creating cache: ${error.message}`);
+      setCacheError(`Error creating cache: ${error.message}`);
       alert(`❌ Chyba při vytváření cache: ${error.message}`);
     } finally {
       setCreatingCache(false);
@@ -352,10 +361,19 @@ const CacheManagementPanel = () => {
         </p>
       </div>
 
-      {error && (
+      {(cacheError || error) && (
         <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-6">
           <h3 className="text-lg font-semibold text-red-800 mb-2">❌ Chyba</h3>
-          <p className="text-red-700">{error}</p>
+          <p className="text-red-700">{cacheError || error?.message}</p>
+        </div>
+      )}
+
+      {!user && !loading && (
+        <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-6">
+          <h3 className="text-lg font-semibold text-yellow-800 mb-2">🔐 Vyžaduje přihlášení</h3>
+          <p className="text-yellow-700">
+            Pro přístup k cache managementu se musíte nejdříve přihlásit.
+          </p>
         </div>
       )}
 
@@ -363,15 +381,15 @@ const CacheManagementPanel = () => {
       <div className="flex gap-4 flex-wrap mb-6">
         <button
           onClick={loadAllCacheData}
-          disabled={loading}
+          disabled={cacheLoading || !user}
           className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
         >
-          {loading ? '🔄 Loading...' : '🔄 Refresh Cache Data'}
+          {cacheLoading ? '🔄 Loading...' : '🔄 Refresh Cache Data'}
         </button>
         
         <button
           onClick={scanAndCreateCache}
-          disabled={creatingCache || loading}
+          disabled={creatingCache || cacheLoading || !user}
           className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed"
         >
           {creatingCache ? '🔄 Creating Cache...' : '⚡ Create/Update Cache'}

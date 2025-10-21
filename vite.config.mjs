@@ -2,6 +2,7 @@ import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 import svgr from 'vite-plugin-svgr'
 import path from 'path'
+import { fileURLToPath, URL } from 'node:url'
 
 // https://vitejs.dev/config/
 export default defineConfig({
@@ -15,15 +16,15 @@ export default defineConfig({
   ],
   resolve: {
     alias: {
-      '@': path.resolve(__dirname, './src'),
-      '@components': path.resolve(__dirname, './src/components'),
-      '@features': path.resolve(__dirname, './src/features'),
-      '@services': path.resolve(__dirname, './src/services'),
-      '@hooks': path.resolve(__dirname, './src/hooks'),
-      '@utils': path.resolve(__dirname, './src/utils'),
-      '@assets': path.resolve(__dirname, './src/assets'),
-      '@config': path.resolve(__dirname, './src/config'),
-      '@contexts': path.resolve(__dirname, './src/contexts'),
+      '@': fileURLToPath(new URL('./src', import.meta.url)),
+      '@components': fileURLToPath(new URL('./src/components', import.meta.url)),
+      '@features': fileURLToPath(new URL('./src/features', import.meta.url)),
+      '@services': fileURLToPath(new URL('./src/services', import.meta.url)),
+      '@hooks': fileURLToPath(new URL('./src/hooks', import.meta.url)),
+      '@utils': fileURLToPath(new URL('./src/utils', import.meta.url)),
+      '@assets': fileURLToPath(new URL('./src/assets', import.meta.url)),
+      '@config': fileURLToPath(new URL('./src/config', import.meta.url)),
+      '@contexts': fileURLToPath(new URL('./src/contexts', import.meta.url)),
     },
   },
   build: {
