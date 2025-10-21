@@ -31,14 +31,14 @@ const HudbaFilesViewer = () => {
       // Načti soubory z kořenové složky a prohledej všechny podsložky
       const rootRef = ref(storage, '');
       const rootResult = await listAll(rootRef);
-      
+
       const hudbaFiles = [];
 
       // Prohledej všechny podsložky pro hudbu
       for (const folderRef of rootResult.prefixes) {
         try {
           const folderResult = await listAll(folderRef);
-          
+
           // Pokud je to hudba/ složka nebo obsahuje hudební soubory
           if (folderRef.name === 'hudba' || folderRef.name.toLowerCase().includes('hudba')) {
             // Přidej soubory přímo z hudba složky
@@ -46,7 +46,7 @@ const HudbaFilesViewer = () => {
               try {
                 const metadata = await getMetadata(itemRef);
                 const downloadURL = await getDownloadURL(itemRef);
-                
+
                 hudbaFiles.push({
                   name: itemRef.name,
                   fullPath: itemRef.fullPath,
@@ -69,12 +69,12 @@ const HudbaFilesViewer = () => {
             for (const subFolderRef of folderResult.prefixes) {
               try {
                 const subFolderResult = await listAll(subFolderRef);
-                
+
                 for (const itemRef of subFolderResult.items) {
                   try {
                     const metadata = await getMetadata(itemRef);
                     const downloadURL = await getDownloadURL(itemRef);
-                    
+
                     hudbaFiles.push({
                       name: itemRef.name,
                       fullPath: itemRef.fullPath,
@@ -108,11 +108,11 @@ const HudbaFilesViewer = () => {
           const name = itemRef.name.toLowerCase();
           const isAudioFile = name.endsWith('.mp3') || name.endsWith('.wav') || name.endsWith('.m4a');
           const looksLikeMusic = name.includes('hudba') || name.includes('music') || name.startsWith('00--00--00--');
-          
+
           if (isAudioFile && looksLikeMusic) {
             const metadata = await getMetadata(itemRef);
             const downloadURL = await getDownloadURL(itemRef);
-            
+
             hudbaFiles.push({
               name: itemRef.name,
               fullPath: itemRef.fullPath,
@@ -207,13 +207,13 @@ const HudbaFilesViewer = () => {
 
   const saveToRealtimeDatabase = async () => {
     if (savingToDB) return;
-    
+
     try {
       setSavingToDB(true);
       log.info('🔄 Saving hudba metadata to Realtime Database...');
 
       const allFiles = files.hudba;
-      
+
       // Připrav data pro uložení
       const filesData = allFiles.map(file => ({
         name: file.name,
@@ -230,7 +230,7 @@ const HudbaFilesViewer = () => {
       }));
 
       const result = await audioMetadataStorageService.saveBatchMetadata(filesData);
-      
+
       if (result.success) {
         log.success(`✅ Successfully saved ${result.savedCount}/${result.totalCount} hudba files to Realtime Database`);
         alert(`✅ Úspěšně uloženo ${result.savedCount}/${result.totalCount} hudba souborů do Realtime Database!`);
@@ -358,7 +358,7 @@ const HudbaFilesViewer = () => {
         >
           {loading ? '🔄 Loading...' : '🔄 Refresh Files'}
         </button>
-        
+
         <button
           onClick={loadAudioDurations}
           disabled={loadingDurations || loading}
@@ -366,7 +366,7 @@ const HudbaFilesViewer = () => {
         >
           {loadingDurations ? '⏱️ Loading Durations...' : '⏱️ Load Durations'}
         </button>
-        
+
         <button
           onClick={saveToRealtimeDatabase}
           disabled={savingToDB || loading || files.totalFiles === 0}

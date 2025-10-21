@@ -174,13 +174,13 @@ const SlovaFilesViewer = () => {
 
   const saveToRealtimeDatabase = async () => {
     if (savingToDB) return;
-    
+
     try {
       setSavingToDB(true);
       log.info('🔄 Saving slova metadata to Realtime Database...');
 
       const allFiles = [...files.slova, ...files.slovaCZ, ...files.slovaSK, ...files.slovaEN];
-      
+
       // Připrav data pro uložení
       const filesData = allFiles.map(file => ({
         name: file.name,
@@ -197,7 +197,7 @@ const SlovaFilesViewer = () => {
       }));
 
       const result = await audioMetadataStorageService.saveBatchMetadata(filesData);
-      
+
       if (result.success) {
         log.success(`✅ Successfully saved ${result.savedCount}/${result.totalCount} slova files to Realtime Database`);
         alert(`✅ Úspěšně uloženo ${result.savedCount}/${result.totalCount} slova souborů do Realtime Database!`);
@@ -320,7 +320,7 @@ const SlovaFilesViewer = () => {
         >
           {loading ? '🔄 Loading...' : '🔄 Refresh Files'}
         </button>
-        
+
         <button
           onClick={loadAudioDurations}
           disabled={loadingDurations || loading}
@@ -328,7 +328,7 @@ const SlovaFilesViewer = () => {
         >
           {loadingDurations ? '⏱️ Loading Durations...' : '⏱️ Load Durations'}
         </button>
-        
+
         <button
           onClick={saveToRealtimeDatabase}
           disabled={savingToDB || loading || files.totalFiles === 0}

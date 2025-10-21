@@ -10,25 +10,69 @@
  */
 export const getAudioDuration = (audioUrl) => {
   return new Promise((resolve, reject) => {
+    // Kontrola platnosti URL
+    if (!audioUrl || typeof audioUrl !== 'string') {
+      console.warn('Invalid audio URL:', audioUrl);
+      resolve(0);
+      return;
+    }
+
     const audio = new Audio();
-
-    audio.addEventListener('loadedmetadata', () => {
+    let resolved = false;
+    
+    const cleanup = () => {
+      audio.removeEventListener('loadedmetadata', onLoadedMetadata);
+      audio.removeEventListener('error', onError);
+      audio.src = '';
+    };
+    
+    const onLoadedMetadata = () => {
+      if (resolved) return;
+      resolved = true;
+      cleanup();
+      
       const duration = Math.round(audio.duration);
-      resolve(duration);
-    });
-
-    audio.addEventListener('error', (e) => {
-      console.warn('Failed to load audio metadata:', e);
+      if (isNaN(duration) || duration <= 0) {
+        console.warn('Invalid audio duration:', audio.duration, 'URL:', audioUrl);
+        resolve(0);
+      } else {
+        resolve(duration);
+      }
+    };
+    
+    const onError = (e) => {
+      if (resolved) return;
+      resolved = true;
+      cleanup();
+      
+      const errorMessage = e.target?.error?.message || e.message || 'Unknown audio loading error';
+      console.warn('Failed to load audio metadata:', errorMessage, 'URL:', audioUrl);
       resolve(0); // Return 0 if failed to load
-    });
-
+    };
+    
+    audio.addEventListener('loadedmetadata', onLoadedMetadata);
+    audio.addEventListener('error', onError);
+    
     // Set timeout to prevent hanging
     setTimeout(() => {
+      if (resolved) return;
+      resolved = true;
+      cleanup();
+      console.warn('Audio metadata loading timeout for URL:', audioUrl);
       resolve(0);
     }, 10000); // 10 second timeout
-
-    audio.src = audioUrl;
-    audio.load();
+    
+    try {
+      audio.crossOrigin = 'anonymous';
+      audio.src = audioUrl;
+      audio.load();
+    } catch (error) {
+      if (resolved) return;
+      resolved = true;
+      cleanup();
+      console.warn('Error setting audio source:', error.message, 'URL:', audioUrl);
+      resolve(0);
+    }
   });
 };
 
@@ -86,7 +130,8 @@ export const extractAudioMetadata = async (audioUrl) => {
       isValid: duration > 0
     };
   } catch (error) {
-    console.warn('Failed to extract audio metadata:', error);
+    const errorMessage = error.message || error.toString() || 'Unknown error';
+    console.warn('Failed to extract audio metadata:', errorMessage, 'URL:', audioUrl);
     return {
       duration: 0,
       durationFormatted: 'N/A',
@@ -112,7 +157,8 @@ export const extractBatchAudioMetadata = async (audioUrls) => {
         ...metadata
       });
     } catch (error) {
-      console.warn(`Failed to extract metadata for ${url}:`, error);
+      const errorMessage = error.message || error.toString() || 'Unknown error';
+      console.warn(`Failed to extract metadata for ${url}:`, errorMessage);
       results.push({
         url,
         duration: 0,

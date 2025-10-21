@@ -106,12 +106,12 @@ const UnifiedFilesOverview = () => {
 
       // Načti soubory z hudba složky a všech možných umístění
       const hudbaFiles = [];
-      
+
       // Prohledej všechny podsložky pro hudbu
       for (const folderRef of rootResult.prefixes) {
         try {
           const folderResult = await listAll(folderRef);
-          
+
           // Pokud je to hudba/ složka nebo obsahuje hudební soubory
           if (folderRef.name === 'hudba' || folderRef.name.toLowerCase().includes('hudba')) {
             // Přidej soubory přímo z hudba složky
@@ -119,7 +119,7 @@ const UnifiedFilesOverview = () => {
               try {
                 const metadata = await getMetadata(itemRef);
                 const downloadURL = await getDownloadURL(itemRef);
-                
+
                 hudbaFiles.push({
                   name: itemRef.name,
                   fullPath: itemRef.fullPath,
@@ -143,12 +143,12 @@ const UnifiedFilesOverview = () => {
             for (const subFolderRef of folderResult.prefixes) {
               try {
                 const subFolderResult = await listAll(subFolderRef);
-                
+
                 for (const itemRef of subFolderResult.items) {
                   try {
                     const metadata = await getMetadata(itemRef);
                     const downloadURL = await getDownloadURL(itemRef);
-                    
+
                     hudbaFiles.push({
                       name: itemRef.name,
                       fullPath: itemRef.fullPath,
@@ -183,11 +183,11 @@ const UnifiedFilesOverview = () => {
           const name = itemRef.name.toLowerCase();
           const isAudioFile = name.endsWith('.mp3') || name.endsWith('.wav') || name.endsWith('.m4a');
           const looksLikeMusic = name.includes('hudba') || name.includes('music') || name.startsWith('00--00--00--');
-          
+
           if (isAudioFile && looksLikeMusic) {
             const metadata = await getMetadata(itemRef);
             const downloadURL = await getDownloadURL(itemRef);
-            
+
             hudbaFiles.push({
               name: itemRef.name,
               fullPath: itemRef.fullPath,
@@ -288,13 +288,13 @@ const UnifiedFilesOverview = () => {
 
   const saveToRealtimeDatabase = async () => {
     if (savingToDB) return;
-    
+
     try {
       setSavingToDB(true);
       log.info('🔄 Saving audio metadata to Realtime Database...');
 
       const allFiles = [...files.slova, ...files.slovaCZ, ...files.slovaSK, ...files.slovaEN, ...files.hudba];
-      
+
       // Připrav data pro uložení
       const filesData = allFiles.map(file => ({
         name: file.name,
@@ -311,7 +311,7 @@ const UnifiedFilesOverview = () => {
       }));
 
       const result = await audioMetadataStorageService.saveBatchMetadata(filesData);
-      
+
       if (result.success) {
         log.success(`✅ Successfully saved ${result.savedCount}/${result.totalCount} files to Realtime Database`);
         alert(`✅ Úspěšně uloženo ${result.savedCount}/${result.totalCount} souborů do Realtime Database!`);
@@ -499,7 +499,7 @@ const UnifiedFilesOverview = () => {
         >
           {loading ? '🔄 Loading...' : '🔄 Refresh All Files'}
         </button>
-        
+
         <button
           onClick={loadAudioDurations}
           disabled={loadingDurations || loading}
@@ -507,7 +507,7 @@ const UnifiedFilesOverview = () => {
         >
           {loadingDurations ? '⏱️ Loading Durations...' : '⏱️ Load All Durations'}
         </button>
-        
+
         <button
           onClick={saveToRealtimeDatabase}
           disabled={savingToDB || loading || files.totalFiles === 0}

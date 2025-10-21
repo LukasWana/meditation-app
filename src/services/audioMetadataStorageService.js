@@ -32,7 +32,7 @@ class AudioMetadataStorageService {
     try {
       const fileKey = this.generateFileKey(fileData.fullPath);
       const fileRef = ref(this.db, `audio_metadata/${fileKey}`);
-      
+
       const metadata = {
         name: fileData.name,
         fullPath: fileData.fullPath,
@@ -51,7 +51,7 @@ class AudioMetadataStorageService {
 
       await set(fileRef, metadata);
       log.success(`✅ Saved metadata for ${fileData.name}`);
-      
+
       return { success: true, fileKey };
     } catch (error) {
       log.error(`❌ Failed to save metadata for ${fileData.name}:`, error);
@@ -66,7 +66,7 @@ class AudioMetadataStorageService {
   async saveBatchMetadata(filesData) {
     try {
       log.info(`🔄 Saving metadata for ${filesData.length} files to Realtime Database...`);
-      
+
       const results = [];
       const batch = {};
       const stats = {
@@ -95,7 +95,7 @@ class AudioMetadataStorageService {
           };
 
           batch[fileKey] = metadata;
-          
+
           // Aktualizuj statistiky
           const category = fileData.category || 'unknown';
           if (stats[category]) {
@@ -103,7 +103,7 @@ class AudioMetadataStorageService {
             stats[category].totalDuration += fileData.duration || 0;
             stats[category].totalSize += fileData.size || 0;
           }
-          
+
           stats.total.files++;
           stats.total.totalDuration += fileData.duration || 0;
           stats.total.totalSize += fileData.size || 0;
@@ -129,7 +129,7 @@ class AudioMetadataStorageService {
 
       const successCount = results.filter(r => r.success).length;
       log.success(`✅ Saved metadata for ${successCount}/${filesData.length} files to Realtime Database`);
-      
+
       return {
         success: true,
         results,
@@ -149,13 +149,13 @@ class AudioMetadataStorageService {
   async loadAllMetadata() {
     try {
       log.info('🔄 Loading audio metadata from Realtime Database...');
-      
+
       const snapshot = await get(this.metadataRef);
-      
+
       if (snapshot.exists()) {
         const metadata = snapshot.val();
         const files = Object.values(metadata);
-        
+
         log.success(`✅ Loaded ${files.length} files metadata from Realtime Database`);
         return { success: true, files, metadata };
       } else {
@@ -174,7 +174,7 @@ class AudioMetadataStorageService {
   async loadStats() {
     try {
       const snapshot = await get(this.statsRef);
-      
+
       if (snapshot.exists()) {
         const stats = snapshot.val();
         log.success('✅ Loaded audio stats from Realtime Database');
@@ -197,10 +197,10 @@ class AudioMetadataStorageService {
     try {
       const fileKey = this.generateFileKey(filePath);
       const fileRef = ref(this.db, `audio_metadata/${fileKey}`);
-      
+
       await remove(fileRef);
       log.success(`✅ Deleted metadata for ${filePath}`);
-      
+
       return { success: true };
     } catch (error) {
       log.error(`❌ Failed to delete metadata for ${filePath}:`, error);
@@ -215,7 +215,7 @@ class AudioMetadataStorageService {
     try {
       await set(this.metadataRef, null);
       await set(this.statsRef, null);
-      
+
       log.success('✅ Cleared all audio metadata from Realtime Database');
       return { success: true };
     } catch (error) {
@@ -246,7 +246,7 @@ class AudioMetadataStorageService {
     try {
       const fileKey = this.generateFileKey(filePath);
       const fileRef = ref(this.db, `audio_metadata/${fileKey}`);
-      
+
       const updates = {
         duration: duration,
         durationFormatted: this.formatDuration(duration),
@@ -256,7 +256,7 @@ class AudioMetadataStorageService {
 
       await update(fileRef, updates);
       log.success(`✅ Updated duration for ${filePath}: ${duration}s`);
-      
+
       return { success: true };
     } catch (error) {
       log.error(`❌ Failed to update duration for ${filePath}:`, error);
@@ -271,10 +271,10 @@ class AudioMetadataStorageService {
    */
   formatDuration(seconds) {
     if (!seconds || seconds === 0) return 'N/A';
-    
+
     const minutes = Math.floor(seconds / 60);
     const remainingSeconds = seconds % 60;
-    
+
     return `${minutes}:${remainingSeconds.toString().padStart(2, '0')}`;
   }
 
@@ -285,11 +285,11 @@ class AudioMetadataStorageService {
    */
   formatDurationDetailed(seconds) {
     if (!seconds || seconds === 0) return 'N/A';
-    
+
     const hours = Math.floor(seconds / 3600);
     const minutes = Math.floor((seconds % 3600) / 60);
     const remainingSeconds = seconds % 60;
-    
+
     let result = '';
     if (hours > 0) {
       result += `${hours}h `;
@@ -298,7 +298,7 @@ class AudioMetadataStorageService {
       result += `${minutes}m `;
     }
     result += `${remainingSeconds}s`;
-    
+
     return result.trim();
   }
 }
