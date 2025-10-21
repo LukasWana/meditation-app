@@ -37,8 +37,8 @@ class SlovaDataService {
     const parts = nameWithoutExt.split('/');
     const lastPart = parts[parts.length - 1];
 
-    // Odstraň prefixy jako "muzsky4FSK-", "zensky4FSK-"
-    const cleanName = lastPart.replace(/^(muzsky|zensky)\d*FSK?-?/i, '');
+    // Odstraň prefixy jako "muzsky4FSK-", "zensky4MSK-", "zensky4FSK-", "muzsky4MSK-"
+    const cleanName = lastPart.replace(/^(muzsky|zensky)\d*[A-Z]+-?/i, '');
 
     // Nahraď pomlčky mezerami a velkými písmeny
     return cleanName
@@ -222,14 +222,15 @@ class SlovaDataService {
       if (userGender === 'all' || !userGender || userGender === 'none') {
         genderMatch = true;
       } else if (userGender === 'male') {
-        genderMatch = item.gender === 'male' || item.mediaType === '4M';
+        // Pro muže: preferuj 4M mediaType, pak male gender
+        genderMatch = item.mediaType === '4M' || (item.gender === 'male' && item.mediaType !== '4F');
       } else if (userGender === 'female') {
-        genderMatch = item.gender === 'female' || item.mediaType === '4F';
+        // Pro ženy: preferuj 4F mediaType, pak female gender
+        genderMatch = item.mediaType === '4F' || (item.gender === 'female' && item.mediaType !== '4M');
       } else {
         genderMatch = true;
       }
 
-      console.log(`🔍 Filtering: ${fileName}, languageMatch: ${languageMatch}, genderMatch: ${genderMatch}, userLang: ${normalizedUserLang}, userGender: ${userGender}, gender: ${item.gender}, mediaType: ${item.mediaType}`);
 
       return languageMatch && genderMatch;
     });
@@ -252,13 +253,25 @@ class SlovaDataService {
       let selectedFile = topicFiles[0]; // fallback na první soubor
 
       if (userGender === 'male') {
-        // Pro muže: preferuj male gender nebo 4M mediaType
-        const maleFile = topicFiles.find(f => f.gender === 'male' || f.mediaType === '4M');
-        if (maleFile) selectedFile = maleFile;
+        // Pro muže: preferuj 4M mediaType (pro muže), pak male gender
+        const maleFile = topicFiles.find(f => f.mediaType === '4M');
+        if (maleFile) {
+          selectedFile = maleFile;
+        } else {
+          // Fallback na male gender pokud není 4M
+          const maleGenderFile = topicFiles.find(f => f.gender === 'male');
+          if (maleGenderFile) selectedFile = maleGenderFile;
+        }
       } else if (userGender === 'female') {
-        // Pro ženy: preferuj female gender nebo 4F mediaType
-        const femaleFile = topicFiles.find(f => f.gender === 'female' || f.mediaType === '4F');
-        if (femaleFile) selectedFile = femaleFile;
+        // Pro ženy: preferuj 4F mediaType (pro ženy), pak female gender
+        const femaleFile = topicFiles.find(f => f.mediaType === '4F');
+        if (femaleFile) {
+          selectedFile = femaleFile;
+        } else {
+          // Fallback na female gender pokud není 4F
+          const femaleGenderFile = topicFiles.find(f => f.gender === 'female');
+          if (femaleGenderFile) selectedFile = femaleGenderFile;
+        }
       }
 
       if (selectedFile && selectedFile.parsed) {

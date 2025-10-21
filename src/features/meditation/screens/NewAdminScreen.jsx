@@ -247,8 +247,8 @@ const NewAdminScreen = () => {
     const parts = nameWithoutExt.split('/');
     const lastPart = parts[parts.length - 1];
 
-    // Odstraň prefixy jako "muzsky4FSK-", "zensky4FSK-"
-    const cleanName = lastPart.replace(/^(muzsky|zensky)\d*FSK?-?/i, '');
+    // Odstraň prefixy jako "muzsky4FSK-", "zensky4MSK-", "zensky4FSK-", "muzsky4MSK-"
+    const cleanName = lastPart.replace(/^(muzsky|zensky)\d*[A-Z]+-?/i, '');
 
     // Nahraď pomlčky mezerami a velkými písmeny
     return cleanName
