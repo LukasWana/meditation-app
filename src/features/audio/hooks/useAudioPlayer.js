@@ -2,9 +2,8 @@ import { useState, useRef, useEffect } from 'react';
 import cacheService from '@services/cacheServiceRefactored';
 import log from '@services/logger';
 import globalMetadataPreloader from '@services/globalMetadataPreloader';
-import { useAutoplay } from './useAutoplay';
-import { useAudioPlayback } from './useAudioPlayback';
 import { useAudioContextManager } from './useAudioContextManager';
+import { useAudioPlayback } from './useAudioPlayback';
 
 export const useAudioPlayer = (audioUrl, albumTracks = null, currentTrackIndex = 0, onTrackChange = null, autoplayEnabled = true) => {
 
@@ -53,7 +52,22 @@ export const useAudioPlayer = (audioUrl, albumTracks = null, currentTrackIndex =
     errorMessage: null,
     durationStable: false // Flag pro stabilní duration
   });
-  const audioRef = useRef(null);
+  // Use new modular hooks
+  const { activateAudioContext } = useAudioContextManager();
+  const {
+    audioRef,
+    isPlaying: newIsPlaying,
+    currentTime: newCurrentTime,
+    duration: newDuration,
+    durationStable: newDurationStable,
+    progress: newProgress,
+    togglePlayPause: newTogglePlayPause,
+    skipBackward: newSkipBackward,
+    skipForward: newSkipForward,
+    handleSeek: newHandleSeek,
+    formatTime: newFormatTime,
+  } = useAudioPlayback(audioUrl);
+
   const fadeTimeoutRef = useRef(null);
   const fadeOutIntervalRef = useRef(null);
   const fadeInIntervalRef = useRef(null);
@@ -493,49 +507,7 @@ export const useAudioPlayer = (audioUrl, albumTracks = null, currentTrackIndex =
     }
   };
 
-  // Fade in funkce
-  const fadeIn = (audio, duration = 1000) => {
-    if (!audio) return;
-
-    log.audio(`🎵 Starting fadeIn with duration: ${duration}ms`);
-    try {
-      // Vyčisti předchozí fade interval pokud existuje
-      if (fadeInIntervalRef.current) {
-        clearInterval(fadeInIntervalRef.current);
-      }
-
-      audio.volume = 0;
-      const fadeStep = duration > 50 ? 1 / (duration / 50) : 1 / 10; // Ochrana proti division by zero
-      let currentVolume = 0;
-
-      fadeInIntervalRef.current = setInterval(() => {
-        try {
-          currentVolume += fadeStep;
-          if (currentVolume >= 1) {
-            currentVolume = 1;
-            audio.volume = currentVolume;
-            log.audio('🎵 FadeIn completed');
-            if (fadeInIntervalRef.current) {
-              clearInterval(fadeInIntervalRef.current);
-              fadeInIntervalRef.current = null;
-            }
-          } else {
-            audio.volume = currentVolume;
-          }
-        } catch (error) {
-          log.error('Error in fadeIn interval:', error);
-          if (fadeInIntervalRef.current) {
-            clearInterval(fadeInIntervalRef.current);
-            fadeInIntervalRef.current = null;
-          }
-        }
-      }, 50);
-
-      return fadeInIntervalRef.current;
-    } catch (error) {
-      log.error('Error in fadeIn:', error);
-    }
-  };
+  // fadeIn funkce odstraněna - nevyužívá se
 
   // Tyto funkce nejsou používány - odstraněny pro zjednodušení
 
@@ -975,6 +947,21 @@ export const useAudioPlayer = (audioUrl, albumTracks = null, currentTrackIndex =
 
   // Autoplay hook pro automatické spuštění
   useAutoplay(audioUrl, audioState.isPlaying, togglePlayPause, audioState.userPaused, playbackState.shouldAutoplay);
+
+  // Cleanup effect - vyčisti timeouty při unmount
+  useEffect(() => {
+    return () => {
+      if (fadeTimeoutRef.current) {
+        clearTimeout(fadeTimeoutRef.current);
+      }
+      if (fadeOutIntervalRef.current) {
+        clearInterval(fadeOutIntervalRef.current);
+      }
+      if (fadeInIntervalRef.current) {
+        clearInterval(fadeInIntervalRef.current);
+      }
+    };
+  }, []);
 
   return {
     audioRef,

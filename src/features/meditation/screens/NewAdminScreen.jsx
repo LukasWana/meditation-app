@@ -254,7 +254,8 @@ const NewAdminScreen = () => {
     return cleanName
       .split('-')
       .map(word => word.charAt(0).toUpperCase() + word.slice(1))
-      .join(' ');
+      .join(' ')
+      .replace(/[<>]/g, ''); // Remove potential XSS characters
   };
 
   // Připravení dat pro Realtime Database
@@ -325,6 +326,7 @@ const NewAdminScreen = () => {
 
   // Odhad délky audio souboru na základě velikosti (přibližně 1MB = 1 minuta)
   const estimateDuration = (sizeInBytes) => {
+    if (!sizeInBytes || sizeInBytes <= 0) return 0;
     const sizeInMB = sizeInBytes / (1024 * 1024);
     return Math.round(sizeInMB * 60); // sekundy
   };

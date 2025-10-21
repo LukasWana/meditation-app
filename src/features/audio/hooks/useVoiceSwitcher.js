@@ -1,9 +1,10 @@
-import { useState, useEffect, useMemo, useCallback } from 'react';
+import { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import { parseAudioFileName as parseSpeechFileName } from '@utils/audioParser';
 import { parseAudioFileName as parseMusicFileName } from '@utils/hudbaParser';
 
 export const useVoiceSwitcher = (currentAudioFile, allFiles) => {
   const [selectedVoice, setSelectedVoice] = useState('male'); // 'male', 'female'
+  const debounceTimeoutRef = useRef(null);
 
   // Pomocná funkce pro extrakci názvu souboru z URL
   const extractFileNameFromUrl = useCallback((url) => {
@@ -109,26 +110,43 @@ export const useVoiceSwitcher = (currentAudioFile, allFiles) => {
     );
   }, []);
 
-  // Funkce pro přepínání hlasů
+  // Funkce pro přepínání hlasů (s debouncing)
   const handleVoiceChange = useCallback((voice) => {
-    setSelectedVoice(voice);
+    // Clear existing timeout
+    if (debounceTimeoutRef.current) {
+      clearTimeout(debounceTimeoutRef.current);
+    }
 
-    if (!currentFileInfo || !currentTopic) return null;
+    // Set new timeout
+    debounceTimeoutRef.current = setTimeout(() => {
+      setSelectedVoice(voice);
 
-    const currentVoiceType = currentFileInfo.gender;
-    if (currentVoiceType === voice) return null;
+      if (!currentFileInfo || !currentTopic) return null;
 
-    const newFileName = buildAlternativeFileName(voice, currentFileInfo, currentTopic);
+      const currentVoiceType = currentFileInfo.gender;
+      if (currentVoiceType === voice) return null;
 
-    // Sestav full path
-    const fullPath = currentAudioFile.includes('/')
-      ? currentAudioFile.substring(0, currentAudioFile.lastIndexOf('/') + 1) + newFileName
-      : newFileName;
+      const newFileName = buildAlternativeFileName(voice, currentFileInfo, currentTopic);
 
-    const alternativeFile = findAlternativeFile(fullPath, allFiles);
+      // Sestav full path
+      const fullPath = currentAudioFile.includes('/')
+        ? currentAudioFile.substring(0, currentAudioFile.lastIndexOf('/') + 1) + newFileName
+        : newFileName;
 
-    return alternativeFile?.audioSrc || alternativeFile?.fileName || null;
+      const alternativeFile = findAlternativeFile(fullPath, allFiles);
+
+      return alternativeFile?.audioSrc || alternativeFile?.fileName || null;
+    }, 300); // 300ms debounce
   }, [currentFileInfo, currentTopic, currentAudioFile, allFiles, buildAlternativeFileName, findAlternativeFile]);
+
+  // Cleanup timeout on unmount
+  useEffect(() => {
+    return () => {
+      if (debounceTimeoutRef.current) {
+        clearTimeout(debounceTimeoutRef.current);
+      }
+    };
+  }, []);
 
   return {
     selectedVoice,

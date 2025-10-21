@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, Suspense } from 'react';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { PageManager } from '@features/navigation';
 import { useNavigation, useTouchNavigation, useAppState, useBackgroundDataLoader, useTimer, useBreathPhase } from '@hooks';
@@ -8,7 +8,8 @@ import MonitoringDashboard from '@components/MonitoringDashboard';
 
 import ErrorBoundary from '@components/ErrorBoundary';
 import { register } from '@services/serviceWorker';
-import NewAdminScreen from '@features/meditation/screens/NewAdminScreen';
+import { lazy } from 'react';
+const NewAdminScreen = lazy(() => import('@features/meditation/screens/NewAdminScreen'));
 
 // Hlavní aplikace s routingem
 export default function App() {
@@ -165,7 +166,14 @@ export function AdminApp() {
   return (
     <ErrorBoundary>
       <LanguageProvider>
-        <NewAdminScreen />
+        <Suspense fallback={<div className="min-h-screen bg-[#f4ddc4] flex items-center justify-center">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-gray-700 mx-auto mb-4"></div>
+            <p className="text-xl text-gray-700">Načítám admin panel...</p>
+          </div>
+        </div>}>
+          <NewAdminScreen />
+        </Suspense>
 
         {/* Monitoring Dashboard - pouze v admin */}
         {import.meta.env.MODE === 'development' && (

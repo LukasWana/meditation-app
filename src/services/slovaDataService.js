@@ -44,7 +44,8 @@ class SlovaDataService {
     return cleanName
       .split('-')
       .map(word => word.charAt(0).toUpperCase() + word.slice(1))
-      .join(' ');
+      .join(' ')
+      .replace(/[<>]/g, ''); // Remove potential XSS characters
   }
 
   // Helper funkce pro formátování velikosti
@@ -78,9 +79,22 @@ class SlovaDataService {
     try {
       console.log('🔄 Initializing slova data service...');
 
-      // Import cache service
-      const cacheService = (await import('./cacheServiceRefactored')).default;
-      const allMetadata = cacheService.getAllMetadata();
+      // Import cache service with error handling
+      let cacheService;
+      try {
+        cacheService = (await import('./cacheServiceRefactored')).default;
+      } catch (importError) {
+        console.error('❌ Failed to import cache service:', importError);
+        throw new Error(`Cache service import failed: ${importError.message}`);
+      }
+
+      let allMetadata;
+      try {
+        allMetadata = cacheService.getAllMetadata();
+      } catch (metadataError) {
+        console.error('❌ Failed to get metadata from cache:', metadataError);
+        throw new Error(`Metadata retrieval failed: ${metadataError.message}`);
+      }
 
       console.log('🔍 Cache service loaded, checking metadata...');
       console.log('🔍 All metadata keys count:', Object.keys(allMetadata).length);
@@ -248,30 +262,38 @@ class SlovaDataService {
     const finalItems = [];
     Object.keys(filesByTopic).forEach(topicKey => {
       const topicFiles = filesByTopic[topicKey];
+      
+      // Optimalizace O(n²) → O(n): Předpřiprav kategorizované soubory
+      const filesByType = {
+        male4M: null,
+        maleGender: null,
+        female4F: null,
+        femaleGender: null,
+        fallback: topicFiles[0]
+      };
 
-      // Najdi soubor vhodný pro aktuální pohlaví
-      let selectedFile = topicFiles[0]; // fallback na první soubor
+      // Jedno procházení pro kategorizaci
+      topicFiles.forEach(file => {
+        if (file.mediaType === '4M') {
+          filesByType.male4M = file;
+        } else if (file.gender === 'male') {
+          filesByType.maleGender = file;
+        } else if (file.mediaType === '4F') {
+          filesByType.female4F = file;
+        } else if (file.gender === 'female') {
+          filesByType.femaleGender = file;
+        }
+      });
+      
+      // Najdi soubor vhodný pro aktuální pohlaví - O(1) lookup
+      let selectedFile = filesByType.fallback;
 
       if (userGender === 'male') {
-        // Pro muže: preferuj 4M mediaType (pro muže), pak male gender
-        const maleFile = topicFiles.find(f => f.mediaType === '4M');
-        if (maleFile) {
-          selectedFile = maleFile;
-        } else {
-          // Fallback na male gender pokud není 4M
-          const maleGenderFile = topicFiles.find(f => f.gender === 'male');
-          if (maleGenderFile) selectedFile = maleGenderFile;
-        }
+        // Pro muže: preferuj 4M mediaType, pak male gender
+        selectedFile = filesByType.male4M || filesByType.maleGender || filesByType.fallback;
       } else if (userGender === 'female') {
-        // Pro ženy: preferuj 4F mediaType (pro ženy), pak female gender
-        const femaleFile = topicFiles.find(f => f.mediaType === '4F');
-        if (femaleFile) {
-          selectedFile = femaleFile;
-        } else {
-          // Fallback na female gender pokud není 4F
-          const femaleGenderFile = topicFiles.find(f => f.gender === 'female');
-          if (femaleGenderFile) selectedFile = femaleGenderFile;
-        }
+        // Pro ženy: preferuj 4F mediaType, pak female gender
+        selectedFile = filesByType.female4F || filesByType.femaleGender || filesByType.fallback;
       }
 
       if (selectedFile && selectedFile.parsed) {

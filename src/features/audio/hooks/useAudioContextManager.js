@@ -1,53 +1,50 @@
-import { useRef, useEffect } from 'react';
+import { useRef, useCallback } from 'react';
+import log from '@services/logger';
 
-/**
- * Hook pro správu AudioContext
- * Centralizuje logiku pro vytváření a aktivaci AudioContext
- */
 export const useAudioContextManager = () => {
   const audioContextRef = useRef(null);
+  const hasInteractedRef = useRef(false);
 
-  // Vytvoř nebo získej existující AudioContext
-  const getAudioContext = () => {
+  const initializeAudioContext = useCallback(() => {
     if (!audioContextRef.current) {
       audioContextRef.current = new (window.AudioContext || window.webkitAudioContext)();
+      log.audio('🎵 AudioContext initialized');
     }
     return audioContextRef.current;
-  };
+  }, []);
 
-  // Aktivuj AudioContext
-  const activateAudioContext = async () => {
-    try {
-      const audioContext = getAudioContext();
-
-      if (audioContext.state === 'suspended') {
+  const activateAudioContext = useCallback(async () => {
+    const audioContext = initializeAudioContext();
+    if (audioContext.state === 'suspended') {
+      try {
         await audioContext.resume();
+        log.audio('🎵 AudioContext resumed');
+        hasInteractedRef.current = true;
+      } catch (error) {
+        log.error('❌ Failed to resume AudioContext:', error);
+        throw error;
       }
-
-      return audioContext;
-    } catch (error) {
-      console.error('Failed to activate AudioContext:', error);
-      return null;
+    } else if (audioContext.state === 'running') {
+      log.audio('🎵 AudioContext is already running');
+      hasInteractedRef.current = true;
     }
-  };
+    return audioContext;
+  }, [initializeAudioContext]);
 
-  // Zkontroluj, jestli je AudioContext aktivní
-  const isAudioContextActive = () => {
-    return audioContextRef.current && audioContextRef.current.state === 'running';
-  };
+  const getAudioContext = useCallback(() => {
+    return audioContextRef.current;
+  }, []);
 
-  // Cleanup při unmount
-  useEffect(() => {
-    return () => {
-      if (audioContextRef.current && audioContextRef.current.state !== 'closed') {
-        audioContextRef.current.close();
-      }
-    };
+  const hasUserInteracted = useCallback(() => {
+    return hasInteractedRef.current;
   }, []);
 
   return {
-    getAudioContext,
+    audioContext: audioContextRef.current,
+    initializeAudioContext,
     activateAudioContext,
-    isAudioContextActive
+    getAudioContext,
+    hasUserInteracted,
+    hasInteracted: hasInteractedRef.current,
   };
 };
