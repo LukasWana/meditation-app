@@ -31,16 +31,20 @@ const UnifiedFilesOverview = () => {
 
       log.info('🔄 Loading all files from Firebase Storage...');
 
+      // Načti soubory z kořenové složky
+      const rootRef = ref(storage, '');
+      const rootResult = await listAll(rootRef);
+
       // Načti soubory ze slova složky
       const slovaRef = ref(storage, 'slova');
       const slovaResult = await listAll(slovaRef);
-      
+
       const slovaFiles = [];
       for (const itemRef of slovaResult.items) {
         try {
           const metadata = await getMetadata(itemRef);
           const downloadURL = await getDownloadURL(itemRef);
-          
+
           slovaFiles.push({
             name: itemRef.name,
             fullPath: itemRef.fullPath,
@@ -68,12 +72,12 @@ const UnifiedFilesOverview = () => {
         try {
           const langRef = ref(storage, `slova/${lang}`);
           const langResult = await listAll(langRef);
-          
+
           for (const itemRef of langResult.items) {
             try {
               const metadata = await getMetadata(itemRef);
               const downloadURL = await getDownloadURL(itemRef);
-              
+
               languageFiles[lang].push({
                 name: itemRef.name,
                 fullPath: itemRef.fullPath,
@@ -98,30 +102,105 @@ const UnifiedFilesOverview = () => {
         }
       }
 
-      // Načti soubory z hudba složky
-      const hudbaRef = ref(storage, 'hudba');
-      const hudbaResult = await listAll(hudbaRef);
-      
+      // Načti soubory z hudba složky a všech možných umístění
       const hudbaFiles = [];
-      for (const itemRef of hudbaResult.items) {
+      
+      // Prohledej všechny podsložky pro hudbu
+      for (const folderRef of rootResult.prefixes) {
         try {
-          const metadata = await getMetadata(itemRef);
-          const downloadURL = await getDownloadURL(itemRef);
+          const folderResult = await listAll(folderRef);
           
-          hudbaFiles.push({
-            name: itemRef.name,
-            fullPath: itemRef.fullPath,
-            size: metadata.size,
-            contentType: metadata.contentType,
-            timeCreated: metadata.timeCreated,
-            updated: metadata.updated,
-            downloadURL: downloadURL,
-            folder: 'hudba',
-            category: 'hudba',
-            duration: 0,
-            durationFormatted: 'N/A',
-            durationDetailed: 'N/A'
-          });
+          // Pokud je to hudba/ složka nebo obsahuje hudební soubory
+          if (folderRef.name === 'hudba' || folderRef.name.toLowerCase().includes('hudba')) {
+            // Přidej soubory přímo z hudba složky
+            for (const itemRef of folderResult.items) {
+              try {
+                const metadata = await getMetadata(itemRef);
+                const downloadURL = await getDownloadURL(itemRef);
+                
+                hudbaFiles.push({
+                  name: itemRef.name,
+                  fullPath: itemRef.fullPath,
+                  size: metadata.size,
+                  contentType: metadata.contentType,
+                  timeCreated: metadata.timeCreated,
+                  updated: metadata.updated,
+                  downloadURL: downloadURL,
+                  folder: folderRef.name,
+                  category: 'hudba',
+                  duration: 0,
+                  durationFormatted: 'N/A',
+                  durationDetailed: 'N/A'
+                });
+              } catch (metaError) {
+                log.warn(`Failed to get metadata for ${itemRef.name}:`, metaError.message);
+              }
+            }
+
+            // Prohledej podsložky v hudba/ (alba)
+            for (const subFolderRef of folderResult.prefixes) {
+              try {
+                const subFolderResult = await listAll(subFolderRef);
+                
+                for (const itemRef of subFolderResult.items) {
+                  try {
+                    const metadata = await getMetadata(itemRef);
+                    const downloadURL = await getDownloadURL(itemRef);
+                    
+                    hudbaFiles.push({
+                      name: itemRef.name,
+                      fullPath: itemRef.fullPath,
+                      size: metadata.size,
+                      contentType: metadata.contentType,
+                      timeCreated: metadata.timeCreated,
+                      updated: metadata.updated,
+                      downloadURL: downloadURL,
+                      folder: `${folderRef.name}/${subFolderRef.name}`,
+                      category: 'hudba',
+                      duration: 0,
+                      durationFormatted: 'N/A',
+                      durationDetailed: 'N/A'
+                    });
+                  } catch (metaError) {
+                    log.warn(`Failed to get metadata for ${itemRef.name}:`, metaError.message);
+                  }
+                }
+              } catch (subError) {
+                log.warn(`Failed to scan subfolder ${subFolderRef.name}:`, subError.message);
+              }
+            }
+          }
+        } catch (folderError) {
+          log.warn(`Failed to scan folder ${folderRef.name}:`, folderError.message);
+        }
+      }
+
+      // Také zkontroluj soubory přímo v kořenové složce, které vypadají jako hudba
+      for (const itemRef of rootResult.items) {
+        try {
+          const name = itemRef.name.toLowerCase();
+          const isAudioFile = name.endsWith('.mp3') || name.endsWith('.wav') || name.endsWith('.m4a');
+          const looksLikeMusic = name.includes('hudba') || name.includes('music') || name.startsWith('00--00--00--');
+          
+          if (isAudioFile && looksLikeMusic) {
+            const metadata = await getMetadata(itemRef);
+            const downloadURL = await getDownloadURL(itemRef);
+            
+            hudbaFiles.push({
+              name: itemRef.name,
+              fullPath: itemRef.fullPath,
+              size: metadata.size,
+              contentType: metadata.contentType,
+              timeCreated: metadata.timeCreated,
+              updated: metadata.updated,
+              downloadURL: downloadURL,
+              folder: 'root',
+              category: 'hudba',
+              duration: 0,
+              durationFormatted: 'N/A',
+              durationDetailed: 'N/A'
+            });
+          }
         } catch (metaError) {
           log.warn(`Failed to get metadata for ${itemRef.name}:`, metaError.message);
         }
@@ -170,7 +249,7 @@ const UnifiedFilesOverview = () => {
 
   const loadAudioDurations = async () => {
     if (loadingDurations) return;
-    
+
     try {
       setLoadingDurations(true);
       log.info('🔄 Loading audio durations for all files...');
@@ -208,17 +287,17 @@ const UnifiedFilesOverview = () => {
   const groupFilesByVariants = () => {
     const allFiles = [...files.slova, ...files.slovaCZ, ...files.slovaSK, ...files.slovaEN, ...files.hudba];
     const variants = {};
-    
+
     allFiles.forEach(file => {
       // Extrahuj základní název (bez jazyka a přípony)
       const baseName = file.name.replace(/\.[^/.]+$/, "").replace(/_(CZ|SK|EN)$/i, '');
-      
+
       if (!variants[baseName]) {
         variants[baseName] = [];
       }
       variants[baseName].push(file);
     });
-    
+
     return variants;
   };
 
@@ -260,7 +339,7 @@ const UnifiedFilesOverview = () => {
 
   const renderDetailedView = () => {
     const allFiles = [...files.slova, ...files.slovaCZ, ...files.slovaSK, ...files.slovaEN, ...files.hudba];
-    
+
     return (
       <div className="space-y-4">
         <div className="bg-gray-50 p-4 rounded-lg">
@@ -276,7 +355,7 @@ const UnifiedFilesOverview = () => {
                   <div><strong>Složka:</strong> {file.folder}</div>
                   <div><strong>Jazyk:</strong> {file.language || 'N/A'}</div>
                   <div><strong>Vytvořeno:</strong> {formatDate(file.timeCreated)}</div>
-                  <div><strong>URL:</strong> 
+                  <div><strong>URL:</strong>
                     <a href={file.downloadURL} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:text-blue-800 underline ml-1">
                       Stáhnout
                     </a>
@@ -292,7 +371,7 @@ const UnifiedFilesOverview = () => {
 
   const renderVariantsView = () => {
     const variants = groupFilesByVariants();
-    
+
     return (
       <div className="space-y-4">
         <div className="bg-gray-50 p-4 rounded-lg">
@@ -340,8 +419,8 @@ const UnifiedFilesOverview = () => {
         <button
           onClick={() => setViewMode('summary')}
           className={`px-4 py-2 rounded-lg transition-colors ${
-            viewMode === 'summary' 
-              ? 'bg-blue-500 text-white' 
+            viewMode === 'summary'
+              ? 'bg-blue-500 text-white'
               : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
           }`}
         >
@@ -350,8 +429,8 @@ const UnifiedFilesOverview = () => {
         <button
           onClick={() => setViewMode('detailed')}
           className={`px-4 py-2 rounded-lg transition-colors ${
-            viewMode === 'detailed' 
-              ? 'bg-blue-500 text-white' 
+            viewMode === 'detailed'
+              ? 'bg-blue-500 text-white'
               : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
           }`}
         >
@@ -360,8 +439,8 @@ const UnifiedFilesOverview = () => {
         <button
           onClick={() => setViewMode('variants')}
           className={`px-4 py-2 rounded-lg transition-colors ${
-            viewMode === 'variants' 
-              ? 'bg-blue-500 text-white' 
+            viewMode === 'variants'
+              ? 'bg-blue-500 text-white'
               : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
           }`}
         >
@@ -378,7 +457,7 @@ const UnifiedFilesOverview = () => {
         >
           {loading ? '🔄 Loading...' : '🔄 Refresh All Files'}
         </button>
-        
+
         <button
           onClick={loadAudioDurations}
           disabled={loadingDurations || loading}

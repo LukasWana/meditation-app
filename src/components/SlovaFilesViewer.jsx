@@ -32,13 +32,13 @@ const SlovaFilesViewer = () => {
       // Načti soubory z kořenové slova složky
       const slovaRef = ref(storage, 'slova');
       const slovaResult = await listAll(slovaRef);
-      
+
       const slovaFiles = [];
       for (const itemRef of slovaResult.items) {
         try {
           const metadata = await getMetadata(itemRef);
           const downloadURL = await getDownloadURL(itemRef);
-          
+
           slovaFiles.push({
             name: itemRef.name,
             fullPath: itemRef.fullPath,
@@ -65,12 +65,12 @@ const SlovaFilesViewer = () => {
         try {
           const langRef = ref(storage, `slova/${lang}`);
           const langResult = await listAll(langRef);
-          
+
           for (const itemRef of langResult.items) {
             try {
               const metadata = await getMetadata(itemRef);
               const downloadURL = await getDownloadURL(itemRef);
-              
+
               languageFiles[lang].push({
                 name: itemRef.name,
                 fullPath: itemRef.fullPath,
@@ -135,7 +135,7 @@ const SlovaFilesViewer = () => {
 
   const loadAudioDurations = async () => {
     if (loadingDurations) return;
-    
+
     try {
       setLoadingDurations(true);
       log.info('🔄 Loading audio durations...');
@@ -183,7 +183,7 @@ const SlovaFilesViewer = () => {
           </span>
         )}
       </h3>
-      
+
       {files.length === 0 ? (
         <p className="text-gray-500 italic">Žádné soubory v této složce</p>
       ) : (
@@ -220,10 +220,10 @@ const SlovaFilesViewer = () => {
                 </div>
               </div>
               <div className="mt-2">
-                <strong>URL:</strong> 
-                <a 
-                  href={file.downloadURL} 
-                  target="_blank" 
+                <strong>URL:</strong>
+                <a
+                  href={file.downloadURL}
+                  target="_blank"
                   rel="noopener noreferrer"
                   className="ml-2 text-blue-600 hover:text-blue-800 underline break-all"
                 >
@@ -278,7 +278,7 @@ const SlovaFilesViewer = () => {
         >
           {loading ? '🔄 Loading...' : '🔄 Refresh Files'}
         </button>
-        
+
         <button
           onClick={loadAudioDurations}
           disabled={loadingDurations || loading}

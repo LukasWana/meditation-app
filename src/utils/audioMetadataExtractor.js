@@ -11,22 +11,22 @@
 export const getAudioDuration = (audioUrl) => {
   return new Promise((resolve, reject) => {
     const audio = new Audio();
-    
+
     audio.addEventListener('loadedmetadata', () => {
       const duration = Math.round(audio.duration);
       resolve(duration);
     });
-    
+
     audio.addEventListener('error', (e) => {
       console.warn('Failed to load audio metadata:', e);
       resolve(0); // Return 0 if failed to load
     });
-    
+
     // Set timeout to prevent hanging
     setTimeout(() => {
       resolve(0);
     }, 10000); // 10 second timeout
-    
+
     audio.src = audioUrl;
     audio.load();
   });
@@ -39,10 +39,10 @@ export const getAudioDuration = (audioUrl) => {
  */
 export const formatDuration = (seconds) => {
   if (!seconds || seconds === 0) return 'N/A';
-  
+
   const minutes = Math.floor(seconds / 60);
   const remainingSeconds = seconds % 60;
-  
+
   return `${minutes}:${remainingSeconds.toString().padStart(2, '0')}`;
 };
 
@@ -53,11 +53,11 @@ export const formatDuration = (seconds) => {
  */
 export const formatDurationDetailed = (seconds) => {
   if (!seconds || seconds === 0) return 'N/A';
-  
+
   const hours = Math.floor(seconds / 3600);
   const minutes = Math.floor((seconds % 3600) / 60);
   const remainingSeconds = seconds % 60;
-  
+
   let result = '';
   if (hours > 0) {
     result += `${hours}h `;
@@ -66,7 +66,7 @@ export const formatDurationDetailed = (seconds) => {
     result += `${minutes}m `;
   }
   result += `${remainingSeconds}s`;
-  
+
   return result.trim();
 };
 
@@ -78,7 +78,7 @@ export const formatDurationDetailed = (seconds) => {
 export const extractAudioMetadata = async (audioUrl) => {
   try {
     const duration = await getAudioDuration(audioUrl);
-    
+
     return {
       duration: duration,
       durationFormatted: formatDuration(duration),
@@ -103,7 +103,7 @@ export const extractAudioMetadata = async (audioUrl) => {
  */
 export const extractBatchAudioMetadata = async (audioUrls) => {
   const results = [];
-  
+
   for (const url of audioUrls) {
     try {
       const metadata = await extractAudioMetadata(url);
@@ -122,7 +122,7 @@ export const extractBatchAudioMetadata = async (audioUrls) => {
       });
     }
   }
-  
+
   return results;
 };
 

@@ -26,29 +26,105 @@ const HudbaFilesViewer = () => {
 
       log.info('🔄 Loading hudba files from Firebase Storage...');
 
-      // Načti soubory z hudba složky
-      const hudbaRef = ref(storage, 'hudba');
-      const hudbaResult = await listAll(hudbaRef);
+      // Načti soubory z kořenové složky a prohledej všechny podsložky
+      const rootRef = ref(storage, '');
+      const rootResult = await listAll(rootRef);
       
       const hudbaFiles = [];
-      for (const itemRef of hudbaResult.items) {
+
+      // Prohledej všechny podsložky pro hudbu
+      for (const folderRef of rootResult.prefixes) {
         try {
-          const metadata = await getMetadata(itemRef);
-          const downloadURL = await getDownloadURL(itemRef);
+          const folderResult = await listAll(folderRef);
           
-          hudbaFiles.push({
-            name: itemRef.name,
-            fullPath: itemRef.fullPath,
-            size: metadata.size,
-            contentType: metadata.contentType,
-            timeCreated: metadata.timeCreated,
-            updated: metadata.updated,
-            downloadURL: downloadURL,
-            folder: 'hudba',
-            duration: 0,
-            durationFormatted: 'N/A',
-            durationDetailed: 'N/A'
-          });
+          // Pokud je to hudba/ složka nebo obsahuje hudební soubory
+          if (folderRef.name === 'hudba' || folderRef.name.toLowerCase().includes('hudba')) {
+            // Přidej soubory přímo z hudba složky
+            for (const itemRef of folderResult.items) {
+              try {
+                const metadata = await getMetadata(itemRef);
+                const downloadURL = await getDownloadURL(itemRef);
+                
+                hudbaFiles.push({
+                  name: itemRef.name,
+                  fullPath: itemRef.fullPath,
+                  size: metadata.size,
+                  contentType: metadata.contentType,
+                  timeCreated: metadata.timeCreated,
+                  updated: metadata.updated,
+                  downloadURL: downloadURL,
+                  folder: folderRef.name,
+                  duration: 0,
+                  durationFormatted: 'N/A',
+                  durationDetailed: 'N/A'
+                });
+              } catch (metaError) {
+                log.warn(`Failed to get metadata for ${itemRef.name}:`, metaError.message);
+              }
+            }
+
+            // Prohledej podsložky v hudba/ (alba)
+            for (const subFolderRef of folderResult.prefixes) {
+              try {
+                const subFolderResult = await listAll(subFolderRef);
+                
+                for (const itemRef of subFolderResult.items) {
+                  try {
+                    const metadata = await getMetadata(itemRef);
+                    const downloadURL = await getDownloadURL(itemRef);
+                    
+                    hudbaFiles.push({
+                      name: itemRef.name,
+                      fullPath: itemRef.fullPath,
+                      size: metadata.size,
+                      contentType: metadata.contentType,
+                      timeCreated: metadata.timeCreated,
+                      updated: metadata.updated,
+                      downloadURL: downloadURL,
+                      folder: `${folderRef.name}/${subFolderRef.name}`,
+                      duration: 0,
+                      durationFormatted: 'N/A',
+                      durationDetailed: 'N/A'
+                    });
+                  } catch (metaError) {
+                    log.warn(`Failed to get metadata for ${itemRef.name}:`, metaError.message);
+                  }
+                }
+              } catch (subError) {
+                log.warn(`Failed to scan subfolder ${subFolderRef.name}:`, subError.message);
+              }
+            }
+          }
+        } catch (folderError) {
+          log.warn(`Failed to scan folder ${folderRef.name}:`, folderError.message);
+        }
+      }
+
+      // Také zkontroluj soubory přímo v kořenové složce, které vypadají jako hudba
+      for (const itemRef of rootResult.items) {
+        try {
+          const name = itemRef.name.toLowerCase();
+          const isAudioFile = name.endsWith('.mp3') || name.endsWith('.wav') || name.endsWith('.m4a');
+          const looksLikeMusic = name.includes('hudba') || name.includes('music') || name.startsWith('00--00--00--');
+          
+          if (isAudioFile && looksLikeMusic) {
+            const metadata = await getMetadata(itemRef);
+            const downloadURL = await getDownloadURL(itemRef);
+            
+            hudbaFiles.push({
+              name: itemRef.name,
+              fullPath: itemRef.fullPath,
+              size: metadata.size,
+              contentType: metadata.contentType,
+              timeCreated: metadata.timeCreated,
+              updated: metadata.updated,
+              downloadURL: downloadURL,
+              folder: 'root',
+              duration: 0,
+              durationFormatted: 'N/A',
+              durationDetailed: 'N/A'
+            });
+          }
         } catch (metaError) {
           log.warn(`Failed to get metadata for ${itemRef.name}:`, metaError.message);
         }
@@ -92,7 +168,7 @@ const HudbaFilesViewer = () => {
 
   const loadAudioDurations = async () => {
     if (loadingDurations) return;
-    
+
     try {
       setLoadingDurations(true);
       log.info('🔄 Loading audio durations...');
@@ -145,7 +221,7 @@ const HudbaFilesViewer = () => {
           </span>
         )}
       </h3>
-      
+
       {files.length === 0 ? (
         <p className="text-gray-500 italic">Žádné soubory v této složce</p>
       ) : (
@@ -182,10 +258,10 @@ const HudbaFilesViewer = () => {
                 </div>
               </div>
               <div className="mt-2">
-                <strong>URL:</strong> 
-                <a 
-                  href={file.downloadURL} 
-                  target="_blank" 
+                <strong>URL:</strong>
+                <a
+                  href={file.downloadURL}
+                  target="_blank"
                   rel="noopener noreferrer"
                   className="ml-2 text-blue-600 hover:text-blue-800 underline break-all"
                 >
@@ -240,7 +316,7 @@ const HudbaFilesViewer = () => {
         >
           {loading ? '🔄 Loading...' : '🔄 Refresh Files'}
         </button>
-        
+
         <button
           onClick={loadAudioDurations}
           disabled={loadingDurations || loading}
