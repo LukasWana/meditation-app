@@ -28,9 +28,6 @@ function MeditationApp() {
   // Intro state
   const [showIntro, setShowIntro] = useState(true);
 
-  // Monitoring state
-  const [showMonitoring, setShowMonitoring] = useState(false);
-
   // Navigation state
   const { currentScreen, navigateToScreen } = useNavigation('intro');
 
@@ -153,21 +150,6 @@ function MeditationApp() {
         />
       )}
 
-      {/* Monitoring Dashboard */}
-      {import.meta.env.MODE === 'development' && (
-        <>
-          <button
-            onClick={() => setShowMonitoring(!showMonitoring)}
-            className="fixed top-4 right-4 bg-blue-500 text-white px-3 py-2 rounded-lg text-sm shadow-lg hover:bg-blue-600 transition-colors z-50"
-          >
-            📊 Monitor
-          </button>
-          <MonitoringDashboard
-            isVisible={showMonitoring}
-            onClose={() => setShowMonitoring(false)}
-          />
-        </>
-      )}
 
       </div>
       </LanguageProvider>
@@ -177,10 +159,29 @@ function MeditationApp() {
 
 // Admin aplikace - jednoduchá verze
 export function AdminApp() {
+  // Monitoring state
+  const [showMonitoring, setShowMonitoring] = useState(false);
+
   return (
     <ErrorBoundary>
       <LanguageProvider>
         <DatabaseAdminScreen />
+        
+        {/* Monitoring Dashboard - pouze v admin */}
+        {import.meta.env.MODE === 'development' && (
+          <>
+            <button
+              onClick={() => setShowMonitoring(!showMonitoring)}
+              className="fixed top-4 right-4 bg-blue-500 text-white px-3 py-2 rounded-lg text-sm shadow-lg hover:bg-blue-600 transition-colors z-50"
+            >
+              📊 Monitor
+            </button>
+            <MonitoringDashboard
+              isVisible={showMonitoring}
+              onClose={() => setShowMonitoring(false)}
+            />
+          </>
+        )}
       </LanguageProvider>
     </ErrorBoundary>
   );
