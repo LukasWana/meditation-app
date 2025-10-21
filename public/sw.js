@@ -79,8 +79,11 @@ self.addEventListener('fetch', (event) => {
   }
 
   // Strategie pro různé typy souborů (pouze GET requesty)
-  if (url.pathname.endsWith('.mp3') || url.pathname.includes('/media/') || url.hostname.includes('firebasestorage')) {
-    // Audio soubory - Network First s CORS podporou
+  if (url.hostname.includes('firebasestorage.googleapis.com')) {
+    // Firebase Storage soubory - úplně obchází Service Worker kvůli CORS problémům
+    event.respondWith(fetch(request));
+  } else if (url.pathname.endsWith('.mp3') || url.pathname.includes('/media/')) {
+    // Ostatní audio soubory - Network First s CORS podporou
     event.respondWith(networkFirstAudio(request, AUDIO_CACHE));
   } else if (url.pathname.endsWith('.js') || url.pathname.endsWith('.css')) {
     // Statické soubory - Stale While Revalidate
@@ -121,7 +124,7 @@ async function networkFirstAudio(request, cacheName) {
       mode: 'cors',
       credentials: 'omit'
     });
-    
+
     if (networkResponse.ok) {
       const cache = await caches.open(cacheName);
       cache.put(request, networkResponse.clone());
@@ -130,15 +133,15 @@ async function networkFirstAudio(request, cacheName) {
     return networkResponse;
   } catch (error) {
     console.error('❌ Service Worker: Audio fetch failed', error);
-    
+
     // Pokud network selže, zkus cache znovu
     const fallbackCache = await caches.match(request);
     if (fallbackCache) {
       console.log('🎵 Service Worker: Using cached audio as fallback', request.url);
       return fallbackCache;
     }
-    
-    return new Response('Audio not available offline', { 
+
+    return new Response('Audio not available offline', {
       status: 503,
       statusText: 'Audio not available'
     });
@@ -174,17 +177,17 @@ async function staleWhileRevalidate(request, cacheName) {
 async function networkFirst(request, cacheName) {
   try {
     const networkResponse = await fetch(request);
-    
+
     // Cache pouze GET requesty (POST, PUT, DELETE nelze cachovat)
     if (networkResponse.ok && request.method === 'GET') {
       const cache = await caches.open(cacheName);
       cache.put(request, networkResponse.clone());
     }
-    
+
     return networkResponse;
   } catch (error) {
     console.log('🌐 Service Worker: Network failed, trying cache', request.url);
-    
+
     // Pouze GET requesty lze načíst z cache
     if (request.method === 'GET') {
       const cachedResponse = await caches.match(request);
