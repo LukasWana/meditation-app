@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { ref, listAll, getDownloadURL, getMetadata } from 'firebase/storage';
 import { storage } from '../config/secure-firebase';
 import { extractAudioMetadata, formatDuration, formatDurationDetailed } from '../utils/audioMetadataExtractor';
+import audioMetadataStorageService from '../services/audioMetadataStorageService';
 import log from '@services/logger';
 
 /**
@@ -22,6 +23,7 @@ const UnifiedFilesOverview = () => {
     totalDuration: 0
   });
   const [loadingDurations, setLoadingDurations] = useState(false);
+  const [savingToDB, setSavingToDB] = useState(false);
   const [viewMode, setViewMode] = useState('summary'); // summary, detailed, variants
 
   const loadAllFiles = async () => {
@@ -284,6 +286,46 @@ const UnifiedFilesOverview = () => {
     }
   };
 
+  const saveToRealtimeDatabase = async () => {
+    if (savingToDB) return;
+    
+    try {
+      setSavingToDB(true);
+      log.info('🔄 Saving audio metadata to Realtime Database...');
+
+      const allFiles = [...files.slova, ...files.slovaCZ, ...files.slovaSK, ...files.slovaEN, ...files.hudba];
+      
+      // Připrav data pro uložení
+      const filesData = allFiles.map(file => ({
+        name: file.name,
+        fullPath: file.fullPath,
+        size: file.size,
+        contentType: file.contentType,
+        duration: file.duration,
+        durationFormatted: file.durationFormatted,
+        durationDetailed: file.durationDetailed,
+        folder: file.folder,
+        category: file.category,
+        language: file.language,
+        downloadURL: file.downloadURL
+      }));
+
+      const result = await audioMetadataStorageService.saveBatchMetadata(filesData);
+      
+      if (result.success) {
+        log.success(`✅ Successfully saved ${result.savedCount}/${result.totalCount} files to Realtime Database`);
+        alert(`✅ Úspěšně uloženo ${result.savedCount}/${result.totalCount} souborů do Realtime Database!`);
+      } else {
+        throw new Error('Failed to save to database');
+      }
+    } catch (error) {
+      log.error('Failed to save metadata to Realtime Database:', error);
+      alert(`❌ Chyba při ukládání do databáze: ${error.message}`);
+    } finally {
+      setSavingToDB(false);
+    }
+  };
+
   const groupFilesByVariants = () => {
     const allFiles = [...files.slova, ...files.slovaCZ, ...files.slovaSK, ...files.slovaEN, ...files.hudba];
     const variants = {};
@@ -457,13 +499,21 @@ const UnifiedFilesOverview = () => {
         >
           {loading ? '🔄 Loading...' : '🔄 Refresh All Files'}
         </button>
-
+        
         <button
           onClick={loadAudioDurations}
           disabled={loadingDurations || loading}
           className="bg-green-500 hover:bg-green-600 disabled:bg-gray-400 text-white px-4 py-2 rounded-lg transition-colors flex items-center"
         >
           {loadingDurations ? '⏱️ Loading Durations...' : '⏱️ Load All Durations'}
+        </button>
+        
+        <button
+          onClick={saveToRealtimeDatabase}
+          disabled={savingToDB || loading || files.totalFiles === 0}
+          className="bg-purple-500 hover:bg-purple-600 disabled:bg-gray-400 text-white px-4 py-2 rounded-lg transition-colors flex items-center"
+        >
+          {savingToDB ? '💾 Saving to DB...' : '💾 Save to Realtime DB'}
         </button>
       </div>
 

@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { ref, listAll, getDownloadURL, getMetadata } from 'firebase/storage';
 import { storage } from '../config/secure-firebase';
 import { extractAudioMetadata, formatDuration, formatDurationDetailed } from '../utils/audioMetadataExtractor';
+import audioMetadataStorageService from '../services/audioMetadataStorageService';
 import log from '@services/logger';
 
 /**
@@ -18,6 +19,7 @@ const HudbaFilesViewer = () => {
     totalDuration: 0
   });
   const [loadingDurations, setLoadingDurations] = useState(false);
+  const [savingToDB, setSavingToDB] = useState(false);
 
   const loadHudbaFiles = async () => {
     try {
@@ -203,6 +205,46 @@ const HudbaFilesViewer = () => {
     }
   };
 
+  const saveToRealtimeDatabase = async () => {
+    if (savingToDB) return;
+    
+    try {
+      setSavingToDB(true);
+      log.info('🔄 Saving hudba metadata to Realtime Database...');
+
+      const allFiles = files.hudba;
+      
+      // Připrav data pro uložení
+      const filesData = allFiles.map(file => ({
+        name: file.name,
+        fullPath: file.fullPath,
+        size: file.size,
+        contentType: file.contentType,
+        duration: file.duration,
+        durationFormatted: file.durationFormatted,
+        durationDetailed: file.durationDetailed,
+        folder: file.folder,
+        category: 'hudba',
+        language: null,
+        downloadURL: file.downloadURL
+      }));
+
+      const result = await audioMetadataStorageService.saveBatchMetadata(filesData);
+      
+      if (result.success) {
+        log.success(`✅ Successfully saved ${result.savedCount}/${result.totalCount} hudba files to Realtime Database`);
+        alert(`✅ Úspěšně uloženo ${result.savedCount}/${result.totalCount} hudba souborů do Realtime Database!`);
+      } else {
+        throw new Error('Failed to save to database');
+      }
+    } catch (error) {
+      log.error('Failed to save hudba metadata to Realtime Database:', error);
+      alert(`❌ Chyba při ukládání do databáze: ${error.message}`);
+    } finally {
+      setSavingToDB(false);
+    }
+  };
+
   const renderFileList = (files, title, folder) => (
     <div className="border rounded-lg p-4 mb-4">
       <h3 className="text-lg font-semibold mb-3 flex items-center">
@@ -316,13 +358,21 @@ const HudbaFilesViewer = () => {
         >
           {loading ? '🔄 Loading...' : '🔄 Refresh Files'}
         </button>
-
+        
         <button
           onClick={loadAudioDurations}
           disabled={loadingDurations || loading}
           className="bg-green-500 hover:bg-green-600 disabled:bg-gray-400 text-white px-4 py-2 rounded-lg transition-colors flex items-center"
         >
           {loadingDurations ? '⏱️ Loading Durations...' : '⏱️ Load Durations'}
+        </button>
+        
+        <button
+          onClick={saveToRealtimeDatabase}
+          disabled={savingToDB || loading || files.totalFiles === 0}
+          className="bg-orange-500 hover:bg-orange-600 disabled:bg-gray-400 text-white px-4 py-2 rounded-lg transition-colors flex items-center"
+        >
+          {savingToDB ? '💾 Saving to DB...' : '💾 Save to Realtime DB'}
         </button>
       </div>
 
