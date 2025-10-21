@@ -5,41 +5,38 @@ import { extractAudioMetadata, formatDuration, formatDurationDetailed } from '..
 import log from '@services/logger';
 
 /**
- * Slova Files Viewer Component
- * Zobrazuje detailní informace o souborech v sekci slova
+ * Hudba Files Viewer Component
+ * Zobrazuje detailní informace o hudebních souborech
  */
-const SlovaFilesViewer = () => {
+const HudbaFilesViewer = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [files, setFiles] = useState({
-    slova: [],
-    slovaCZ: [],
-    slovaSK: [],
-    slovaEN: [],
+    hudba: [],
     totalFiles: 0,
     totalSize: 0,
     totalDuration: 0
   });
   const [loadingDurations, setLoadingDurations] = useState(false);
 
-  const loadSlovaFiles = async () => {
+  const loadHudbaFiles = async () => {
     try {
       setLoading(true);
       setError(null);
 
-      log.info('🔄 Loading slova files from Firebase Storage...');
+      log.info('🔄 Loading hudba files from Firebase Storage...');
 
-      // Načti soubory z kořenové slova složky
-      const slovaRef = ref(storage, 'slova');
-      const slovaResult = await listAll(slovaRef);
+      // Načti soubory z hudba složky
+      const hudbaRef = ref(storage, 'hudba');
+      const hudbaResult = await listAll(hudbaRef);
       
-      const slovaFiles = [];
-      for (const itemRef of slovaResult.items) {
+      const hudbaFiles = [];
+      for (const itemRef of hudbaResult.items) {
         try {
           const metadata = await getMetadata(itemRef);
           const downloadURL = await getDownloadURL(itemRef);
           
-          slovaFiles.push({
+          hudbaFiles.push({
             name: itemRef.name,
             fullPath: itemRef.fullPath,
             size: metadata.size,
@@ -47,7 +44,7 @@ const SlovaFilesViewer = () => {
             timeCreated: metadata.timeCreated,
             updated: metadata.updated,
             downloadURL: downloadURL,
-            folder: 'slova',
+            folder: 'hudba',
             duration: 0,
             durationFormatted: 'N/A',
             durationDetailed: 'N/A'
@@ -57,60 +54,20 @@ const SlovaFilesViewer = () => {
         }
       }
 
-      // Načti soubory z jazykových podsložek
-      const languageFolders = ['CZ', 'SK', 'EN'];
-      const languageFiles = { CZ: [], SK: [], EN: [] };
-
-      for (const lang of languageFolders) {
-        try {
-          const langRef = ref(storage, `slova/${lang}`);
-          const langResult = await listAll(langRef);
-          
-          for (const itemRef of langResult.items) {
-            try {
-              const metadata = await getMetadata(itemRef);
-              const downloadURL = await getDownloadURL(itemRef);
-              
-              languageFiles[lang].push({
-                name: itemRef.name,
-                fullPath: itemRef.fullPath,
-                size: metadata.size,
-                contentType: metadata.contentType,
-                timeCreated: metadata.timeCreated,
-                updated: metadata.updated,
-                downloadURL: downloadURL,
-                folder: `slova/${lang}`,
-                duration: 0,
-                durationFormatted: 'N/A',
-                durationDetailed: 'N/A'
-              });
-            } catch (metaError) {
-              log.warn(`Failed to get metadata for ${itemRef.name}:`, metaError.message);
-            }
-          }
-        } catch (langError) {
-          log.warn(`Failed to scan slova/${lang}:`, langError.message);
-        }
-      }
-
       // Vypočti celkové statistiky
-      const allFiles = [...slovaFiles, ...languageFiles.CZ, ...languageFiles.SK, ...languageFiles.EN];
-      const totalSize = allFiles.reduce((sum, file) => sum + (file.size || 0), 0);
+      const totalSize = hudbaFiles.reduce((sum, file) => sum + (file.size || 0), 0);
 
       setFiles({
-        slova: slovaFiles,
-        slovaCZ: languageFiles.CZ,
-        slovaSK: languageFiles.SK,
-        slovaEN: languageFiles.EN,
-        totalFiles: allFiles.length,
+        hudba: hudbaFiles,
+        totalFiles: hudbaFiles.length,
         totalSize: totalSize,
         totalDuration: 0
       });
 
-      log.success(`✅ Loaded ${allFiles.length} slova files from Firebase Storage`);
+      log.success(`✅ Loaded ${hudbaFiles.length} hudba files from Firebase Storage`);
 
     } catch (error) {
-      log.error('Failed to load slova files:', error);
+      log.error('Failed to load hudba files:', error);
       setError(`Error loading files: ${error.message}`);
     } finally {
       setLoading(false);
@@ -140,7 +97,7 @@ const SlovaFilesViewer = () => {
       setLoadingDurations(true);
       log.info('🔄 Loading audio durations...');
 
-      const allFiles = [...files.slova, ...files.slovaCZ, ...files.slovaSK, ...files.slovaEN];
+      const allFiles = files.hudba;
       let totalDuration = 0;
 
       // Načti délky pro všechny soubory
@@ -180,6 +137,11 @@ const SlovaFilesViewer = () => {
         {files.length > 0 && (
           <span className="ml-2 text-sm bg-green-100 text-green-800 px-2 py-1 rounded">
             {formatBytes(files.reduce((sum, file) => sum + (file.size || 0), 0))}
+          </span>
+        )}
+        {files.length > 0 && (
+          <span className="ml-2 text-sm bg-purple-100 text-purple-800 px-2 py-1 rounded">
+            {formatDuration(files.reduce((sum, file) => sum + (file.duration || 0), 0))}
           </span>
         )}
       </h3>
@@ -238,18 +200,18 @@ const SlovaFilesViewer = () => {
   );
 
   useEffect(() => {
-    loadSlovaFiles();
+    loadHudbaFiles();
   }, []);
 
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="bg-blue-50 p-4 rounded-lg">
-        <h2 className="text-xl font-semibold text-blue-900 mb-2">
-          🗣️ Slova Files Viewer
+      <div className="bg-purple-50 p-4 rounded-lg">
+        <h2 className="text-xl font-semibold text-purple-900 mb-2">
+          🎵 Hudba Files Viewer
         </h2>
-        <p className="text-blue-700">
-          Detailní přehled všech souborů v sekci slova včetně jazykových variant
+        <p className="text-purple-700">
+          Detailní přehled všech hudebních souborů
         </p>
       </div>
 
@@ -272,9 +234,9 @@ const SlovaFilesViewer = () => {
       {/* Controls */}
       <div className="flex gap-4 flex-wrap">
         <button
-          onClick={loadSlovaFiles}
+          onClick={loadHudbaFiles}
           disabled={loading}
-          className="bg-blue-500 hover:bg-blue-600 disabled:bg-gray-400 text-white px-4 py-2 rounded-lg transition-colors flex items-center"
+          className="bg-purple-500 hover:bg-purple-600 disabled:bg-gray-400 text-white px-4 py-2 rounded-lg transition-colors flex items-center"
         >
           {loading ? '🔄 Loading...' : '🔄 Refresh Files'}
         </button>
@@ -302,8 +264,8 @@ const SlovaFilesViewer = () => {
       {loading && (
         <div className="flex items-center justify-center py-8">
           <div className="text-center">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500 mx-auto"></div>
-            <p className="mt-2 text-gray-600">Loading slova files...</p>
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-purple-500 mx-auto"></div>
+            <p className="mt-2 text-gray-600">Loading hudba files...</p>
           </div>
         </div>
       )}
@@ -311,14 +273,11 @@ const SlovaFilesViewer = () => {
       {/* File Lists */}
       {!loading && (
         <div className="space-y-4">
-          {renderFileList(files.slova, 'Slova (hlavní složka)', 'slova')}
-          {renderFileList(files.slovaCZ, 'Slova CZ (české soubory)', 'slova/CZ')}
-          {renderFileList(files.slovaSK, 'Slova SK (slovenské soubory)', 'slova/SK')}
-          {renderFileList(files.slovaEN, 'Slova EN (anglické soubory)', 'slova/EN')}
+          {renderFileList(files.hudba, 'Hudba (hudební soubory)', 'hudba')}
         </div>
       )}
     </div>
   );
 };
 
-export default SlovaFilesViewer;
+export default HudbaFilesViewer;

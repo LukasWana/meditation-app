@@ -4,18 +4,22 @@ import RealtimeDatabaseManager from '../../../components/RealtimeDatabaseManager
 import MetadataSyncManager from '../../../components/MetadataSyncManager';
 import DatabaseViewer from '../../../components/DatabaseViewer';
 import SlovaFilesViewer from '../../../components/SlovaFilesViewer';
+import HudbaFilesViewer from '../../../components/HudbaFilesViewer';
+import UnifiedFilesOverview from '../../../components/UnifiedFilesOverview';
 import AuthGate from '../../../components/AuthGate';
 
 const DatabaseAdminScreen = () => {
   const { t } = useLanguage();
-  const [activeTab, setActiveTab] = useState('realtime');
+  const [activeTab, setActiveTab] = useState('overview');
   const [user, setUser] = useState(null);
 
   const tabs = [
+    { id: 'overview', label: 'Files Overview', icon: '📁' },
+    { id: 'slova', label: 'Slova Files', icon: '🗣️' },
+    { id: 'hudba', label: 'Hudba Files', icon: '🎵' },
     { id: 'realtime', label: 'Realtime Database', icon: '🗄️' },
     { id: 'metadata', label: 'Metadata Sync', icon: '🔄' },
-    { id: 'viewer', label: 'Database Viewer', icon: '👁️' },
-    { id: 'slova', label: 'Slova Files', icon: '🗣️' }
+    { id: 'viewer', label: 'Database Viewer', icon: '👁️' }
   ];
 
   return (
@@ -74,6 +78,38 @@ const DatabaseAdminScreen = () => {
 
         {/* Content */}
         <div className="bg-white rounded-lg shadow-sm">
+          {activeTab === 'overview' && (
+            <div>
+              <div className="border-b border-gray-200 px-6 py-4">
+                <h2 className="text-xl font-semibold text-gray-900">
+                  📁 Unified Files Overview
+                </h2>
+                <p className="mt-1 text-sm text-gray-600">
+                  Kompletní přehled všech souborů - slova a hudba s detaily o čase a velikosti
+                </p>
+              </div>
+              <div className="p-6">
+                <UnifiedFilesOverview />
+              </div>
+            </div>
+          )}
+
+          {activeTab === 'hudba' && (
+            <div>
+              <div className="border-b border-gray-200 px-6 py-4">
+                <h2 className="text-xl font-semibold text-gray-900">
+                  🎵 Hudba Files Viewer
+                </h2>
+                <p className="mt-1 text-sm text-gray-600">
+                  Detailní přehled hudebních souborů s délkami a metadaty
+                </p>
+              </div>
+              <div className="p-6">
+                <HudbaFilesViewer />
+              </div>
+            </div>
+          )}
+
           {activeTab === 'realtime' && (
             <div>
               <div className="border-b border-gray-200 px-6 py-4">
