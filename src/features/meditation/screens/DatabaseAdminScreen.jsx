@@ -3,6 +3,7 @@ import { useLanguage } from '../../../contexts/LanguageContext';
 import RealtimeDatabaseManager from '../../../components/RealtimeDatabaseManager';
 import MetadataSyncManager from '../../../components/MetadataSyncManager';
 import DatabaseViewer from '../../../components/DatabaseViewer';
+import SlovaFilesViewer from '../../../components/SlovaFilesViewer';
 import AuthGate from '../../../components/AuthGate';
 
 const DatabaseAdminScreen = () => {
@@ -12,7 +13,9 @@ const DatabaseAdminScreen = () => {
 
   const tabs = [
     { id: 'realtime', label: 'Realtime Database', icon: '🗄️' },
-    { id: 'metadata', label: 'Metadata Sync', icon: '🔄' }
+    { id: 'metadata', label: 'Metadata Sync', icon: '🔄' },
+    { id: 'viewer', label: 'Database Viewer', icon: '👁️' },
+    { id: 'slova', label: 'Slova Files', icon: '🗣️' }
   ];
 
   return (
@@ -99,6 +102,38 @@ const DatabaseAdminScreen = () => {
               </div>
               <div className="p-6">
                 <MetadataSyncManager />
+              </div>
+            </div>
+          )}
+
+          {activeTab === 'viewer' && (
+            <div>
+              <div className="border-b border-gray-200 px-6 py-4">
+                <h2 className="text-xl font-semibold text-gray-900">
+                  👁️ Database Viewer
+                </h2>
+                <p className="mt-1 text-sm text-gray-600">
+                  Zobrazení obsahu všech Firebase databází - Firestore, Realtime Database, Storage
+                </p>
+              </div>
+              <div className="p-6">
+                <DatabaseViewer />
+              </div>
+            </div>
+          )}
+
+          {activeTab === 'slova' && (
+            <div>
+              <div className="border-b border-gray-200 px-6 py-4">
+                <h2 className="text-xl font-semibold text-gray-900">
+                  🗣️ Slova Files Viewer
+                </h2>
+                <p className="mt-1 text-sm text-gray-600">
+                  Detailní přehled souborů v sekci slova - zobrazuje všechny jazykové varianty
+                </p>
+              </div>
+              <div className="p-6">
+                <SlovaFilesViewer />
               </div>
             </div>
           )}

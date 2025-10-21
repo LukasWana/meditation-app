@@ -166,7 +166,7 @@ export function AdminApp() {
     <ErrorBoundary>
       <LanguageProvider>
         <DatabaseAdminScreen />
-        
+
         {/* Monitoring Dashboard - pouze v admin */}
         {import.meta.env.MODE === 'development' && (
           <>
