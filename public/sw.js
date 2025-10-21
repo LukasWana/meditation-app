@@ -71,7 +71,14 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  // Strategie pro různé typy souborů
+  // Ignoruj non-GET requesty pro cache strategie (POST, PUT, DELETE nelze cachovat)
+  if (request.method !== 'GET') {
+    // Pro non-GET requesty použij pouze fetch bez cachování
+    event.respondWith(fetch(request));
+    return;
+  }
+
+  // Strategie pro různé typy souborů (pouze GET requesty)
   if (url.pathname.endsWith('.mp3') || url.pathname.includes('/media/')) {
     // Audio soubory - Cache First strategie
     event.respondWith(cacheFirst(request, AUDIO_CACHE));
@@ -111,6 +118,11 @@ async function cacheFirst(request, cacheName) {
 
 // Stale While Revalidate strategie (pro statické soubory)
 async function staleWhileRevalidate(request, cacheName) {
+  // Pouze GET requesty lze cachovat
+  if (request.method !== 'GET') {
+    return fetch(request);
+  }
+
   const cache = await caches.open(cacheName);
   const cachedResponse = await cache.match(request);
 
@@ -128,21 +140,27 @@ async function staleWhileRevalidate(request, cacheName) {
 async function networkFirst(request, cacheName) {
   try {
     const networkResponse = await fetch(request);
-    if (networkResponse.ok) {
+    
+    // Cache pouze GET requesty (POST, PUT, DELETE nelze cachovat)
+    if (networkResponse.ok && request.method === 'GET') {
       const cache = await caches.open(cacheName);
       cache.put(request, networkResponse.clone());
     }
+    
     return networkResponse;
   } catch (error) {
     console.log('🌐 Service Worker: Network failed, trying cache', request.url);
-    const cachedResponse = await caches.match(request);
-
-    if (cachedResponse) {
-      return cachedResponse;
+    
+    // Pouze GET requesty lze načíst z cache
+    if (request.method === 'GET') {
+      const cachedResponse = await caches.match(request);
+      if (cachedResponse) {
+        return cachedResponse;
+      }
     }
 
-    // Fallback pro offline stránku
-    if (request.destination === 'document') {
+    // Fallback pro offline stránku (pouze GET requesty)
+    if (request.destination === 'document' && request.method === 'GET') {
       return caches.match('/offline.html');
     }
 
