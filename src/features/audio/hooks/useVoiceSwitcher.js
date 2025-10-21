@@ -35,27 +35,22 @@ export const useVoiceSwitcher = (currentAudioFile, allFiles) => {
 
   // Univerzální parser - zkusí oba formáty
   const parseAudioFileName = useCallback((fileNameOrUrl) => {
-    console.log('parseAudioFileName called with:', fileNameOrUrl);
     const fileName = extractFileNameFromUrl(fileNameOrUrl);
-    console.log('Extracted fileName:', fileName);
 
     if (!fileName) return null;
 
     // Nejdřív zkusíme hudební formát (hudba/alba)
     const musicResult = parseMusicFileName(fileName);
     if (musicResult) {
-      console.log('Parsed as music:', musicResult);
       return musicResult;
     }
 
     // Pak zkusíme mluvené slovo formát
     const speechResult = parseSpeechFileName(fileName);
     if (speechResult) {
-      console.log('Parsed as speech:', speechResult);
       return speechResult;
     }
 
-    console.log('Could not parse fileName:', fileName);
     return null;
   }, [extractFileNameFromUrl]);
 
@@ -75,7 +70,6 @@ export const useVoiceSwitcher = (currentAudioFile, allFiles) => {
     if (currentFileInfo && currentFileInfo.gender) {
       const voice = currentFileInfo.gender; // Už je 'male' nebo 'female'
       setSelectedVoice(voice);
-      console.log('Initialized selectedVoice to:', voice, 'based on file gender:', currentFileInfo.gender);
     }
   }, [currentFileInfo]);
 
@@ -86,83 +80,55 @@ export const useVoiceSwitcher = (currentAudioFile, allFiles) => {
     ) && currentTopic && currentFileInfo.number && currentFileInfo.type; // Musí mít téma a typ pro hledání alternativ
   }, [currentFileInfo, currentTopic]);
 
+  // Pomocná funkce pro sestavení názvu alternativního souboru
+  const buildAlternativeFileName = useCallback((voice, fileInfo, topic) => {
+    const targetVoice = voice === 'male' ? 'muzsky' : 'zensky';
+    const targetType = voice === 'male' ? 'MSK' : 'FSK';
+    const topicForFileName = topic.replace(/\s+/g, '-');
+    return `${targetVoice}${fileInfo.number}${targetType}-${topicForFileName}.mp3`;
+  }, []);
+
+  // Pomocná funkce pro hledání alternativního souboru
+  const findAlternativeFile = useCallback((fileName, allFiles) => {
+    if (!allFiles || !Array.isArray(allFiles)) return null;
+
+    // Přímé hledání podle názvu souboru
+    const directMatch = allFiles.find(file =>
+      file.fileName === fileName ||
+      file.fileName === fileName.split('/').pop()
+    );
+
+    if (directMatch) return directMatch;
+
+    // Hledání podle podobnosti (téma + hlas)
+    const topic = fileName.split('-').pop()?.replace('.mp3', '');
+    const voice = fileName.includes('muzsky') ? 'muzsky' : 'zensky';
+
+    return allFiles.find(file =>
+      file.fileName.includes(topic) && file.fileName.includes(voice)
+    );
+  }, []);
+
   // Funkce pro přepínání hlasů
   const handleVoiceChange = useCallback((voice) => {
     setSelectedVoice(voice);
-    console.log('Voice changed to:', voice);
 
-    // Najdi alternativní soubor s opačným hlasem
-    if (currentFileInfo && currentTopic) {
-      const targetVoice = voice === 'male' ? 'muzsky' : 'zensky';
-      const currentVoiceType = currentFileInfo.gender;
+    if (!currentFileInfo || !currentTopic) return null;
 
-      // Pokud už je vybraný správný hlas, nic nedělej
-      if (currentVoiceType === voice) {
-        console.log('Already playing correct voice');
-        return;
-      }
+    const currentVoiceType = currentFileInfo.gender;
+    if (currentVoiceType === voice) return null;
 
-      // Sestav název souboru s opačným hlasem
-      // Formát: "zensky4FSK-téma.mp3" nebo "muzsky4MSK-téma.mp3"
-      // Musíme změnit type podle targetVoice: FSK pro ženy, MSK pro muže
-      const targetType = voice === 'male' ? 'MSK' : 'FSK';
-      const topicForFileName = currentTopic.replace(/\s+/g, '-'); // Nahraď mezery pomlčkami
-      const newFileName = `${targetVoice}${currentFileInfo.number}${targetType}-${topicForFileName}.mp3`;
-      console.log('Switching to file:', newFileName);
-      console.log('Current file components:', {
-        targetVoice,
-        number: currentFileInfo.number,
-        originalType: currentFileInfo.type,
-        targetType,
-        topic: currentTopic
-      });
+    const newFileName = buildAlternativeFileName(voice, currentFileInfo, currentTopic);
 
-      // Najdi původní cestu k souboru (složku)
-      // Pokud currentAudioFile obsahuje cestu, použij ji, jinak použij jen název souboru
-      let fullPath;
-      if (currentAudioFile.includes('/')) {
-        const originalPath = currentAudioFile.substring(0, currentAudioFile.lastIndexOf('/') + 1);
-        fullPath = originalPath + newFileName;
-      } else {
-        // Pokud je to jen název souboru, použij jen nový název
-        fullPath = newFileName;
-      }
+    // Sestav full path
+    const fullPath = currentAudioFile.includes('/')
+      ? currentAudioFile.substring(0, currentAudioFile.lastIndexOf('/') + 1) + newFileName
+      : newFileName;
 
-      console.log('Full path to new file:', fullPath);
-      console.log('New file name:', newFileName);
-      console.log('Current file info:', currentFileInfo);
-      console.log('All files available:', allFiles.map(f => ({ fileName: f.fileName, audioSrc: f.audioSrc })));
+    const alternativeFile = findAlternativeFile(fullPath, allFiles);
 
-      // Zkontroluj, jestli alternativní soubor existuje v allFiles
-      const alternativeFile = allFiles.find(file =>
-        file.fileName === fullPath || file.fileName === newFileName
-      );
-
-      if (alternativeFile) {
-        console.log('Alternative file found:', alternativeFile);
-        // Přepni na nový soubor
-        return alternativeFile.audioSrc || fullPath;
-      } else {
-        console.warn('Alternative file not found:', fullPath);
-        // Zkus najít soubor s podobným názvem
-        const similarFile = allFiles.find(file =>
-          file.fileName.includes(topicForFileName) &&
-          file.fileName.includes(targetVoice)
-        );
-
-        if (similarFile) {
-          console.log('Similar file found:', similarFile);
-          return similarFile.audioSrc || similarFile.fileName;
-        } else {
-          console.error('No alternative file found for voice switch');
-          return null;
-        }
-      }
-    } else {
-      console.log('Cannot switch voice - missing file info or topic:', { currentFileInfo, currentTopic });
-      return null;
-    }
-  }, [currentFileInfo, currentTopic, currentAudioFile, allFiles]);
+    return alternativeFile?.audioSrc || alternativeFile?.fileName || null;
+  }, [currentFileInfo, currentTopic, currentAudioFile, allFiles, buildAlternativeFileName, findAlternativeFile]);
 
   return {
     selectedVoice,

@@ -31,7 +31,7 @@ const AudioControls = ({
   return (
     <div className={className}>
       {/* Title and Duration - Above Circular Progress with fixed height */}
-      <div className="mb-6 pointer-events-none z-10 w-full pl-10 pr-10 sm:pl-20 sm:pr-20 flex flex-col items-center space-y-0" style={{minHeight: '110px'}}>
+      <div className="mb-6 z-10 w-full pl-10 pr-10 sm:pl-20 sm:pr-20 flex flex-col items-center space-y-0" style={{minHeight: 'clamp(80px, 15vh, 120px)'}}>
         {/* Duration - Total Time - Above title - zobraz pouze když je stabilní */}
         {duration && duration > 0 && durationStable && (
           <div

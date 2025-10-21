@@ -9,3 +9,5 @@ export { useVoiceSwitcher } from './useVoiceSwitcher';
 export { useAudioContext } from './useAudioContext';
 export { useAutoplay } from './useAutoplay';
 export { useAudioPlayerLogic } from './useAudioPlayerLogic';
+export { useAudioPlayback } from './useAudioPlayback';
+export { useAudioContextManager } from './useAudioContextManager';

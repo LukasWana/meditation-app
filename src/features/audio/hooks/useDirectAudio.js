@@ -30,7 +30,6 @@ export const useDirectAudio = (audioKey) => {
           }
         })
         .catch(err => {
-          console.error('Chyba při načítání audio URL:', err);
           setError(err.message);
         })
         .finally(() => {

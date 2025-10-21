@@ -1,5 +1,4 @@
 import { useState, useEffect, useMemo } from 'react';
-import { useAudioFilter } from '@hooks/useAudioFilter';
 import { useFirebaseCDNScanner } from '@hooks/useFirebaseCDNScanner';
 import unifiedMetadataService from '@services/unifiedMetadataService';
 
@@ -27,7 +26,6 @@ const getFallbackDuration = (fileName) => {
 
 export const useFirebaseAudioFilter = (userGender, userLanguage = 'sk') => {
   // Debug: zobraz přijaté parametry
-  console.log(`🔍 useFirebaseAudioFilter - userGender: ${userGender}, userLanguage: ${userLanguage}`);
 
   // State pro sledování načtení metadata
   const [metadataLoaded, setMetadataLoaded] = useState(false);
@@ -47,18 +45,10 @@ export const useFirebaseAudioFilter = (userGender, userLanguage = 'sk') => {
   // Filtruj soubory tuy pohlaví uživatele a jazyka - reaguje na změnu gender a language
   const filteredFiles = useMemo(() => {
     const genderFiltered = getFilesByGender(userGender);
-    console.log(`🔍 Gender filtered files: ${genderFiltered.length} for gender: ${userGender}`);
 
-    // Debug: zobraz všechny dostupné soubory
-    console.log(`🔍 All available files:`, availableFiles.map(f => ({
-      fileName: f.fileName,
-      parsed: f.parsed,
-      language: f.parsed?.language
-    })));
 
     const languageFiltered = genderFiltered.filter(file => {
       if (!file.parsed) {
-        console.log(`🔍 File ${file.fileName} has no parsed data`);
         return false;
       }
 
@@ -85,16 +75,16 @@ export const useFirebaseAudioFilter = (userGender, userLanguage = 'sk') => {
 
       if (normalizedUserLang === 'sk') {
         // Pro SK zobraz soubory ze složky "slova/", "slova/SK/" a "SK/"
-        return fileName.startsWith('slova/') || 
-               fileName.startsWith('slova/SK/') || 
+        return fileName.startsWith('slova/') ||
+               fileName.startsWith('slova/SK/') ||
                fileName.startsWith('SK/');
       } else if (normalizedUserLang === 'cz') {
         // Pro CZ zobraz soubory ze složky "slova/CZ/" a "CZ/"
-        return fileName.startsWith('slova/CZ/') || 
+        return fileName.startsWith('slova/CZ/') ||
                fileName.startsWith('CZ/');
       } else if (normalizedUserLang === 'en') {
         // Pro EN zobraz soubory ze složky "slova/EN/" a "EN/"
-        return fileName.startsWith('slova/EN/') || 
+        return fileName.startsWith('slova/EN/') ||
                fileName.startsWith('EN/');
       }
 

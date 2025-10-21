@@ -176,7 +176,7 @@ class SlovaDataService {
           }
           return false;
         });
-        
+
         // Pro kompatibilitu, ulož stejná data do male a female
         this.slovaData[lang].male = [...this.slovaData[lang].all];
         this.slovaData[lang].female = [...this.slovaData[lang].all];
@@ -293,7 +293,7 @@ class SlovaDataService {
 
     // Získej všechny slova soubory pro daný jazyk
     const allSlovaFiles = this.getAllSlovaFilesForLanguage(userLanguage);
-    
+
     // Filtruj podle pohlaví
     return this.filterSlovaItems(allSlovaFiles, userGender, userLanguage);
   }
@@ -302,13 +302,13 @@ class SlovaDataService {
   getAllSlovaFilesForLanguage(userLanguage) {
     const langKey = userLanguage.toLowerCase();
     const allFiles = [];
-    
+
     // Získej všechny soubory pro daný jazyk (male, female, all)
     ['male', 'female', 'all'].forEach(gender => {
       const files = this.slovaData[langKey]?.[gender] || [];
       allFiles.push(...files);
     });
-    
+
     return allFiles;
   }
 

@@ -3,6 +3,8 @@ import cacheService from '@services/cacheServiceRefactored';
 import log from '@services/logger';
 import globalMetadataPreloader from '@services/globalMetadataPreloader';
 import { useAutoplay } from './useAutoplay';
+import { useAudioPlayback } from './useAudioPlayback';
+import { useAudioContextManager } from './useAudioContextManager';
 
 export const useAudioPlayer = (audioUrl, albumTracks = null, currentTrackIndex = 0, onTrackChange = null, autoplayEnabled = true) => {
 
@@ -59,7 +61,6 @@ export const useAudioPlayer = (audioUrl, albumTracks = null, currentTrackIndex =
   // Aktivuj audio při změně skladby
   useEffect(() => {
     if (audioUrl) {
-      console.log('🎵 Track changed, activating audio...');
       try {
         // Použij globální AudioContext pokud existuje, jinak vytvoř nový
         let audioContext = window.globalAudioContext;
@@ -70,19 +71,15 @@ export const useAudioPlayer = (audioUrl, albumTracks = null, currentTrackIndex =
 
         if (audioContext.state === 'suspended') {
           audioContext.resume().then(() => {
-            console.log('🎵 Track audio activated!');
             window.audioActivated = true;
             setAudioState(prev => ({ ...prev, hasInteracted: true }));
           }).catch(() => {
-            console.log('🎵 Track audio activation failed');
           });
         } else {
-          console.log('🎵 Track audio already active');
           window.audioActivated = true;
           setAudioState(prev => ({ ...prev, hasInteracted: true }));
         }
       } catch {
-        console.log('🎵 Track audio activation error');
       }
     }
   }, [audioUrl]);

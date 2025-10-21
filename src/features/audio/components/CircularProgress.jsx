@@ -102,7 +102,6 @@ const CircularProgress = ({
 
   const handleSeek = (e) => {
     if (!svgRef.current || !onSeek) {
-      console.log('⚠️ CircularProgress: handleSeek blocked - no onSeek function');
       return;
     }
 
