@@ -4,7 +4,7 @@
  */
 
 /**
- * Získá délku MP3 souboru z URL
+ * Získá délku MP3 souboru z URL s CORS podporou
  * @param {string} audioUrl - URL MP3 souboru
  * @returns {Promise<number>} - Délka v sekundách
  */
@@ -60,11 +60,22 @@ export const getAudioDuration = (audioUrl) => {
       cleanup();
       console.warn('Audio metadata loading timeout for URL:', audioUrl);
       resolve(0);
-    }, 10000); // 10 second timeout
+    }, 15000); // 15 second timeout for CORS requests
     
     try {
+      // Try different CORS strategies
       audio.crossOrigin = 'anonymous';
-      audio.src = audioUrl;
+      audio.preload = 'metadata';
+      
+      // For Firebase Storage URLs, try to bypass Service Worker if needed
+      if (audioUrl.includes('firebasestorage.googleapis.com')) {
+        // Add cache busting parameter to avoid Service Worker cache
+        const separator = audioUrl.includes('?') ? '&' : '?';
+        audio.src = `${audioUrl}${separator}_cacheBust=${Date.now()}`;
+      } else {
+        audio.src = audioUrl;
+      }
+      
       audio.load();
     } catch (error) {
       if (resolved) return;
@@ -74,6 +85,43 @@ export const getAudioDuration = (audioUrl) => {
       resolve(0);
     }
   });
+};
+
+/**
+ * Alternativní metoda pro načítání audio metadat s fetch API
+ * @param {string} audioUrl - URL MP3 souboru
+ * @returns {Promise<number>} - Délka v sekundách
+ */
+export const getAudioDurationWithFetch = async (audioUrl) => {
+  try {
+    // Try to fetch audio file with CORS headers
+    const response = await fetch(audioUrl, {
+      method: 'HEAD', // Only get headers, not the full file
+      mode: 'cors',
+      credentials: 'omit'
+    });
+    
+    if (!response.ok) {
+      console.warn('Failed to fetch audio headers:', response.status, audioUrl);
+      return 0;
+    }
+    
+    // Try to get duration from Content-Length and estimate
+    const contentLength = response.headers.get('Content-Length');
+    if (contentLength) {
+      // Rough estimation: MP3 ~128kbps = 16KB/s
+      const estimatedDuration = Math.round(parseInt(contentLength) / 16000);
+      if (estimatedDuration > 0) {
+        console.log('Estimated audio duration:', estimatedDuration, 'seconds for', audioUrl);
+        return estimatedDuration;
+      }
+    }
+    
+    return 0;
+  } catch (error) {
+    console.warn('Failed to fetch audio with fetch API:', error.message, audioUrl);
+    return 0;
+  }
 };
 
 /**
@@ -121,7 +169,14 @@ export const formatDurationDetailed = (seconds) => {
  */
 export const extractAudioMetadata = async (audioUrl) => {
   try {
-    const duration = await getAudioDuration(audioUrl);
+    // Try primary method first
+    let duration = await getAudioDuration(audioUrl);
+    
+    // If primary method failed, try alternative method
+    if (duration === 0 && audioUrl.includes('firebasestorage.googleapis.com')) {
+      console.log('Primary method failed, trying alternative method for:', audioUrl);
+      duration = await getAudioDurationWithFetch(audioUrl);
+    }
 
     return {
       duration: duration,
@@ -174,6 +229,7 @@ export const extractBatchAudioMetadata = async (audioUrls) => {
 
 export default {
   getAudioDuration,
+  getAudioDurationWithFetch,
   formatDuration,
   formatDurationDetailed,
   extractAudioMetadata,

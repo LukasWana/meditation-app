@@ -79,9 +79,9 @@ self.addEventListener('fetch', (event) => {
   }
 
   // Strategie pro různé typy souborů (pouze GET requesty)
-  if (url.pathname.endsWith('.mp3') || url.pathname.includes('/media/')) {
-    // Audio soubory - Cache First strategie
-    event.respondWith(cacheFirst(request, AUDIO_CACHE));
+  if (url.pathname.endsWith('.mp3') || url.pathname.includes('/media/') || url.hostname.includes('firebasestorage')) {
+    // Audio soubory - Network First s CORS podporou
+    event.respondWith(networkFirstAudio(request, AUDIO_CACHE));
   } else if (url.pathname.endsWith('.js') || url.pathname.endsWith('.css')) {
     // Statické soubory - Stale While Revalidate
     event.respondWith(staleWhileRevalidate(request, STATIC_CACHE));
@@ -94,16 +94,34 @@ self.addEventListener('fetch', (event) => {
   }
 });
 
-// Cache First strategie (pro audio soubory)
-async function cacheFirst(request, cacheName) {
+// Network First strategie pro audio soubory s CORS podporou
+async function networkFirstAudio(request, cacheName) {
   try {
+    // Zkus cache nejdříve
     const cachedResponse = await caches.match(request);
     if (cachedResponse) {
       console.log('🎵 Service Worker: Audio from cache', request.url);
+      // Zkus aktualizovat cache na pozadí
+      fetch(request).then(networkResponse => {
+        if (networkResponse.ok) {
+          caches.open(cacheName).then(cache => {
+            cache.put(request, networkResponse.clone());
+            console.log('🎵 Service Worker: Audio cache updated', request.url);
+          });
+        }
+      }).catch(() => {
+        // Ignoruj chyby při aktualizaci cache
+      });
       return cachedResponse;
     }
 
-    const networkResponse = await fetch(request);
+    // Pokud není v cache, zkus network
+    console.log('🎵 Service Worker: Loading audio from network', request.url);
+    const networkResponse = await fetch(request, {
+      mode: 'cors',
+      credentials: 'omit'
+    });
+    
     if (networkResponse.ok) {
       const cache = await caches.open(cacheName);
       cache.put(request, networkResponse.clone());
@@ -112,8 +130,24 @@ async function cacheFirst(request, cacheName) {
     return networkResponse;
   } catch (error) {
     console.error('❌ Service Worker: Audio fetch failed', error);
-    return new Response('Audio not available offline', { status: 503 });
+    
+    // Pokud network selže, zkus cache znovu
+    const fallbackCache = await caches.match(request);
+    if (fallbackCache) {
+      console.log('🎵 Service Worker: Using cached audio as fallback', request.url);
+      return fallbackCache;
+    }
+    
+    return new Response('Audio not available offline', { 
+      status: 503,
+      statusText: 'Audio not available'
+    });
   }
+}
+
+// Cache First strategie (deprecated - používá se networkFirstAudio)
+async function cacheFirst(request, cacheName) {
+  return networkFirstAudio(request, cacheName);
 }
 
 // Stale While Revalidate strategie (pro statické soubory)
