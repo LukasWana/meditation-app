@@ -1,0 +1,235 @@
+📊 ARCHITEKTURA NÁČÍTÁNÍ DAT DO GUI
+==========================================
+
+🚀 APLIKACE START
+    ↓
+📱 App.jsx (showIntro = true)
+    ↓
+🔄 useBackgroundDataLoader() spuštěn
+    ↓
+⏰ setTimeout(loadDataInBackground, 1000)
+
+📋 BACKGROUND DATA LOADING
+==========================
+    ↓
+1️⃣ staticMetadataService.initialize()
+   ├── 📁 Načte lokální JSON soubory
+   ├── 💾 Uloží do localStorage cache
+   └── ✅ Okamžitá dostupnost
+
+    ↓
+2️⃣ fastMetadataService.initialize()
+   ├── 🔥 Načte Firebase Storage strukturu
+   ├── 📊 Získá názvy souborů a složky
+   └── 🗂️ Vytvoří hierarchii hudba/slova
+
+    ↓
+3️⃣ globalMetadataPreloader.initialize()
+   ├── 🎵 Načte skutečné délky MP3 souborů
+   ├── 📏 Extrahuje metadata z audio souborů
+   └── ⏱️ Aktualizuje duration informace
+
+    ↓
+4️⃣ cacheService.preloadCriticalData()
+   ├── 💾 Načte všechna metadata do cache
+   ├── 🎵 Preload hudba data
+   └── 🖼️ Preload cover images
+
+🎯 HIERARCHIE ZDROJŮ DAT
+========================
+
+1️⃣ 💾 LOCAL STORAGE CACHE (nejrychlejší)
+   ├── ✅ Okamžitá dostupnost
+   ├── 🔄 Offline funkčnost
+   └── ⚠️ Může být zastaralá
+
+    ↓ (pokud není dostupné)
+
+2️⃣ 📁 STATIC JSON FILES (rychlé)
+   ├── ✅ Rychlé načítání
+   ├── 🔄 Offline dostupnost
+   └── ⚠️ Musí být aktualizována
+
+    ↓ (pokud není dostupné)
+
+3️⃣ 🔥 FIRESTORE DATABASE (střední rychlost)
+   ├── ✅ Vždy aktuální data
+   ├── 📊 Rychlé dotazy
+   └── ⚠️ Vyžaduje internet
+
+    ↓ (pokud není dostupné)
+
+4️⃣ 🗄️ FIREBASE STORAGE (pomalé)
+   ├── ✅ Kompletní přehled souborů
+   ├── 📁 Struktura složek
+   └── ⚠️ Vysoké náklady
+
+🎵 HUDBASCREEN DATA FLOW
+=========================
+    ↓
+🔄 useOptimizedHudbaFilter() hook
+    ↓
+📊 loadMetadata() funkce
+    ↓
+🔄 Try Firestore first
+   ├── ✅ firestoreMetadataService.loadAllMetadata()
+   └── 📊 Collection: 'audio-metadata'
+
+    ↓ (pokud selže)
+
+🔄 Fallback to Static
+   ├── ✅ staticMetadataService.loadMetadata()
+   └── 📁 Lokální JSON soubory
+
+    ↓
+🔍 Filter hudba files
+   ├── 📂 folder === 'hudba'
+   ├── 🎵 Audio metadata
+   └── 🎨 Album information
+
+    ↓
+💾 Cache results
+   ├── 🧠 Memory cache
+   ├── 💾 localStorage
+   └── 📊 Performance metrics
+
+📝 SLOVASCREEN DATA FLOW
+=========================
+    ↓
+🔄 uiDataCollector.extractSlovaData()
+    ↓
+📊 Process all metadata
+    ↓
+🔍 Filter slova files
+   ├── 📂 folder === 'slova'
+   ├── 📝 Text metadata
+   └── 🏷️ Category information
+
+    ↓
+💾 Cache results
+   ├── 🧠 Memory cache
+   ├── 💾 localStorage
+   └── 📊 Performance metrics
+
+🎨 ALBUM DATA FLOW
+===================
+    ↓
+🔄 uiDataCollector.createAlbumsFromHudba()
+    ↓
+📊 Process hudba metadata
+    ↓
+🔍 Group by album
+   ├── 🎵 albumName grouping
+   ├── 📊 Songs in album
+   └── ⏱️ Total duration
+
+    ↓
+🖼️ Extract cover images
+   ├── 🎨 coverImage metadata
+   ├── 📷 Album artwork
+   └── 🎭 Visual representation
+
+💾 CACHE STRATEGIE
+===================
+
+🧠 MEMORY CACHE (nejrychlejší)
+   ├── ⚡ Okamžitý přístup
+   ├── 🔄 Dočasná data
+   └── 💾 RAM based
+
+    ↓
+
+💾 LOCAL STORAGE CACHE (rychlé)
+   ├── ⚡ Rychlý přístup
+   ├── 🔄 Perzistentní data
+   └── 💾 Disk based
+
+    ↓
+
+🔥 FIREBASE CACHE (střední)
+   ├── ⚡ Střední rychlost
+   ├── 🔄 Aktualizovaná data
+   └── ☁️ Cloud based
+
+    ↓
+
+🌐 NETWORK REQUEST (pomalé)
+   ├── ⚡ Pomalý přístup
+   ├── 🔄 Nejnovější data
+   └── 🌐 Internet required
+
+🛡️ FALLBACK MECHANISMUS
+========================
+
+🔄 Try Primary Source
+   ├── ✅ Success → Use data
+   └── ❌ Fail → Try fallback
+
+    ↓
+
+🔄 Try Fallback 1
+   ├── ✅ Success → Use data
+   └── ❌ Fail → Try fallback 2
+
+    ↓
+
+🔄 Try Fallback 2
+   ├── ✅ Success → Use data
+   └── ❌ Fail → Show error
+
+⚡ PERFORMANCE OPTIMALIZACE
+===========================
+
+🚀 Background Loading
+   ├── ⏰ Non-blocking UI
+   ├── 🎬 During intro animation
+   └── 🔄 Chunked loading (20 items)
+
+    ↓
+
+💾 Smart Caching
+   ├── 🧠 LRU cache algorithm
+   ├── ⏱️ TTL (Time To Live)
+   └── 🧹 Automatic cleanup
+
+    ↓
+
+🔄 Predictive Loading
+   ├── 🔮 Preload next screens
+   ├── 🦥 Lazy loading components
+   └── 📦 Dynamic imports
+
+📊 MONITORING & DEBUGGING
+==========================
+
+📈 Real-time Metrics
+   ├── 📊 Error statistics
+   ├── 💾 Cache performance
+   ├── ⚡ Memory usage
+   └── 🕐 Performance metrics
+
+    ↓
+
+📝 Logging System
+   ├── ℹ️ Info messages
+   ├── ✅ Success messages
+   ├── ⚠️ Warning messages
+   └── ❌ Error messages
+
+🎯 VÝSLEDEK
+===========
+
+✅ RYCHLOST
+   ├── ⚡ Okamžité načtení z cache
+   ├── 🔄 Background loading
+   └── 📊 Optimized queries
+
+✅ SPOLEHLIVOST
+   ├── 🛡️ Multiple fallbacks
+   ├── 🔄 Error recovery
+   └── 💾 Offline functionality
+
+✅ PERFORMANCE
+   ├── 🧠 Smart caching
+   ├── 🔮 Predictive loading
+   └── 📊 Real-time monitoring

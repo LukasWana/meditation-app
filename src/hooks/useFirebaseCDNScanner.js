@@ -51,6 +51,7 @@ export const useFirebaseCDNScanner = () => {
       for (const folderRef of result.prefixes) {
         try {
           const folderResult = await listAll(folderRef);
+          
           // Přidej soubory z podsložky s prefixem složky
           folderResult.items.forEach(item => {
             allFiles.push({
@@ -58,18 +59,39 @@ export const useFirebaseCDNScanner = () => {
               name: `${folderRef.name}/${item.name}` // Přidej cestu složky k názvu
             });
           });
+
+          // Pokud je to slova/ složka, prohledej i jazykové podsložky
+          if (folderRef.name === 'slova') {
+            for (const langFolderRef of folderResult.prefixes) {
+              try {
+                const langFolderResult = await listAll(langFolderRef);
+                langFolderResult.items.forEach(item => {
+                  allFiles.push({
+                    ...item,
+                    name: `${folderRef.name}/${langFolderRef.name}/${item.name}` // Přidej cestu s jazykem
+                  });
+                });
+              } catch (langErr) {
+                console.warn(`Nelze prohledat jazykovou složku ${langFolderRef.name}:`, langErr.message);
+              }
+            }
+          }
         } catch (err) {
           console.warn(`Nelze prohledat složku ${folderRef.name}:`, err.message);
         }
       }
 
-      // Filtruj pouze MP3 soubory pro mluvené slovo ze slova/ složky
+      // Filtruj pouze MP3 soubory pro mluvené slovo ze slova/ složky a jazykových podsložek
       const mp3Files = allFiles
         .filter(item => {
           const name = item.name;
           const isMp3 = name.toLowerCase().endsWith('.mp3');
-          // Pouze soubory ze slova/ složky nebo začínající "muzsky" nebo "zensky"
-          const isSlova = name.startsWith('slova/') || /^(muzsky|zensky)/.test(name);
+          // Soubory ze slova/ složky, jazykových podsložek (CZ/, SK/, EN/) nebo začínající "muzsky" nebo "zensky"
+          const isSlova = name.startsWith('slova/') || 
+                         name.startsWith('slova/CZ/') || 
+                         name.startsWith('slova/SK/') || 
+                         name.startsWith('slova/EN/') ||
+                         /^(muzsky|zensky)/.test(name);
           const isNotMusic = !name.startsWith('00--00--00--');
           console.log(`Filtering ${name}: isMp3=${isMp3}, isSlova=${isSlova}, isNotMusic=${isNotMusic}`);
           return isMp3 && isSlova && isNotMusic;

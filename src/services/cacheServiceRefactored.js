@@ -286,17 +286,46 @@ class CacheServiceRefactored {
       // Získej všechny soubory z podsložek (slova/ a hudba/)
       const allFiles = [];
 
-      // Prohledej podsložky (slova/ a hudba/)
+      // Prohledej podsložky (slova/, hudba/, CZ/, SK/, EN/)
       for (const folderRef of result.prefixes) {
         try {
           const folderResult = await listAll(folderRef);
-          folderResult.items.forEach(item => {
-            allFiles.push({
-              ...item,
-              name: `${folderRef.name}/${item.name}`,
-              folder: folderRef.name // Přidej informaci o složce
+          
+          // Pokud je to slova/ složka, prohledej i jazykové podsložky
+          if (folderRef.name === 'slova') {
+            folderResult.items.forEach(item => {
+              allFiles.push({
+                ...item,
+                name: `${folderRef.name}/${item.name}`,
+                folder: folderRef.name
+              });
             });
-          });
+            
+            // Prohledej jazykové podsložky v slova/
+            for (const langFolderRef of folderResult.prefixes) {
+              try {
+                const langFolderResult = await listAll(langFolderRef);
+                langFolderResult.items.forEach(item => {
+                  allFiles.push({
+                    ...item,
+                    name: `${folderRef.name}/${langFolderRef.name}/${item.name}`,
+                    folder: `${folderRef.name}/${langFolderRef.name}`
+                  });
+                });
+              } catch (langErr) {
+                log.warn(`Nelze prohledat jazykovou složku ${langFolderRef.name}:`, langErr.message);
+              }
+            }
+          } else {
+            // Pro ostatní složky (hudba/, atd.)
+            folderResult.items.forEach(item => {
+              allFiles.push({
+                ...item,
+                name: `${folderRef.name}/${item.name}`,
+                folder: folderRef.name
+              });
+            });
+          }
         } catch (err) {
           log.warn(`Nelze prohledat složku ${folderRef.name}:`, err.message);
         }
@@ -316,8 +345,11 @@ class CacheServiceRefactored {
         .filter(item => {
           const name = item.name.toLowerCase();
           const isMp3 = name.endsWith('.mp3');
-          const isSlova = item.folder === 'slova';
-          return isMp3 && isSlova; // Načti pouze MP3 soubory ze složky slova/
+          const isSlova = item.folder === 'slova' || 
+                         item.folder === 'slova/CZ' || 
+                         item.folder === 'slova/SK' || 
+                         item.folder === 'slova/EN';
+          return isMp3 && isSlova; // Načti MP3 soubory ze slova/ a jazykových podsložek
         })
         .map(item => item.name);
 

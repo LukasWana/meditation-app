@@ -84,14 +84,18 @@ export const useFirebaseAudioFilter = (userGender, userLanguage = 'sk') => {
       const fileName = file.fileName;
 
       if (normalizedUserLang === 'sk') {
-        // Pro SK zobraz soubory ze složky "slova/" (bez jazykové podsložky) a ze složky "SK/"
-        return fileName.startsWith('slova/') || fileName.startsWith('SK/');
+        // Pro SK zobraz soubory ze složky "slova/", "slova/SK/" a "SK/"
+        return fileName.startsWith('slova/') || 
+               fileName.startsWith('slova/SK/') || 
+               fileName.startsWith('SK/');
       } else if (normalizedUserLang === 'cz') {
-        // Pro CZ zobraz soubory ze složky "CZ/"
-        return fileName.startsWith('CZ/');
+        // Pro CZ zobraz soubory ze složky "slova/CZ/" a "CZ/"
+        return fileName.startsWith('slova/CZ/') || 
+               fileName.startsWith('CZ/');
       } else if (normalizedUserLang === 'en') {
-        // Pro EN zobraz soubory ze složky "EN/"
-        return fileName.startsWith('EN/');
+        // Pro EN zobraz soubory ze složky "slova/EN/" a "EN/"
+        return fileName.startsWith('slova/EN/') || 
+               fileName.startsWith('EN/');
       }
 
       // Fallback - zobraz všechny soubory

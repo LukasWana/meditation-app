@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useLanguage } from '../../../contexts/LanguageContext';
 import RealtimeDatabaseManager from '../../../components/RealtimeDatabaseManager';
 import MetadataSyncManager from '../../../components/MetadataSyncManager';
+import DatabaseViewer from '../../../components/DatabaseViewer';
 import AuthGate from '../../../components/AuthGate';
 
 const DatabaseAdminScreen = () => {
