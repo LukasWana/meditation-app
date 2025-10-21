@@ -59,7 +59,7 @@ const mockSlovaDataService = {
     const finalItems = [];
     Object.keys(filesByTopic).forEach(topicKey => {
       const topicFiles = filesByTopic[topicKey];
-      
+
       // Optimalizace O(n²) → O(n): Předpřiprav kategorizované soubory
       const filesByType = {
         male4M: null,
@@ -81,7 +81,7 @@ const mockSlovaDataService = {
           filesByType.femaleGender = file;
         }
       });
-      
+
       // Najdi soubor vhodný pro aktuální pohlaví - O(1) lookup
       let selectedFile = filesByType.fallback;
 
@@ -171,9 +171,9 @@ describe('slovaDataService', () => {
 
     test('should filter for male users - prefer 4M', () => {
       const result = mockSlovaDataService.filterSlovaItems(mockItems, 'male', 'sk');
-      
+
       expect(result).toHaveLength(2); // 2 topics
-      
+
       const uzkostItem = result.find(item => item.parsed.topic === 'uzkost');
       expect(uzkostItem.parsed.gender).toBe('male');
       expect(uzkostItem.parsed.title).toBe('Uzkost');
@@ -181,9 +181,9 @@ describe('slovaDataService', () => {
 
     test('should filter for female users - prefer 4F', () => {
       const result = mockSlovaDataService.filterSlovaItems(mockItems, 'female', 'sk');
-      
+
       expect(result).toHaveLength(2); // 2 topics
-      
+
       const uzkostItem = result.find(item => item.parsed.topic === 'uzkost');
       expect(uzkostItem.parsed.gender).toBe('female');
       expect(uzkostItem.parsed.title).toBe('Uzkost');
@@ -215,7 +215,7 @@ describe('slovaDataService', () => {
     test('should handle null/undefined input', () => {
       const result1 = mockSlovaDataService.filterSlovaItems(null, 'male', 'sk');
       const result2 = mockSlovaDataService.filterSlovaItems(undefined, 'male', 'sk');
-      
+
       expect(result1).toHaveLength(0);
       expect(result2).toHaveLength(0);
     });

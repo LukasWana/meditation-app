@@ -262,7 +262,7 @@ class SlovaDataService {
     const finalItems = [];
     Object.keys(filesByTopic).forEach(topicKey => {
       const topicFiles = filesByTopic[topicKey];
-      
+
       // Optimalizace O(n²) → O(n): Předpřiprav kategorizované soubory
       const filesByType = {
         male4M: null,
@@ -284,7 +284,7 @@ class SlovaDataService {
           filesByType.femaleGender = file;
         }
       });
-      
+
       // Najdi soubor vhodný pro aktuální pohlaví - O(1) lookup
       let selectedFile = filesByType.fallback;
 

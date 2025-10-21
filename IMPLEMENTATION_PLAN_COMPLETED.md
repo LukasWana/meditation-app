@@ -127,7 +127,7 @@
 
 ## 🏆 **ZÁVĚR**
 
-**Plán implementace byl úspěšně dokončen!** 
+**Plán implementace byl úspěšně dokončen!**
 
 Aplikace je nyní:
 - **5x stabilnější** díky error handling

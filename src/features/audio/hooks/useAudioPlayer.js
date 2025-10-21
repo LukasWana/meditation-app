@@ -34,67 +34,46 @@ export const useAudioPlayer = (audioUrl, albumTracks = null, currentTrackIndex =
     }
   };
 
-  // Zjednodušený state management - sloučené související stavy
+  // Use new modular hooks - nahrazují starý state management
+  const { activateAudioContext } = useAudioContextManager();
+  const {
+    audioRef,
+    isPlaying,
+    currentTime,
+    duration,
+    durationStable,
+    progress,
+    togglePlayPause,
+    skipBackward,
+    skipForward,
+    handleSeek,
+    formatTime,
+  } = useAudioPlayback(audioUrl);
+
+  // Legacy state pro kompatibilitu s existujícím kódem
   const [audioState, setAudioState] = useState({
-    isPlaying: false,
     isActivated: false,
     hasInteracted: false,
-    userPaused: false // Flag pro sledování, jestli uživatel explicitně vypnul přehrávání
+    userPaused: false,
+    volume: 1
   });
 
   const [playbackState, setPlaybackState] = useState({
-    currentTime: 0,
-    duration: 0,
     isLoading: true,
     shouldAutoplay: false,
     wasPlayingBeforeSwitch: false,
     hasError: false,
-    errorMessage: null,
-    durationStable: false // Flag pro stabilní duration
+    errorMessage: null
   });
-  // Use new modular hooks
-  const { activateAudioContext } = useAudioContextManager();
-  const {
-    audioRef,
-    isPlaying: newIsPlaying,
-    currentTime: newCurrentTime,
-    duration: newDuration,
-    durationStable: newDurationStable,
-    progress: newProgress,
-    togglePlayPause: newTogglePlayPause,
-    skipBackward: newSkipBackward,
-    skipForward: newSkipForward,
-    handleSeek: newHandleSeek,
-    formatTime: newFormatTime,
-  } = useAudioPlayback(audioUrl);
 
   const fadeTimeoutRef = useRef(null);
   const fadeOutIntervalRef = useRef(null);
   const fadeInIntervalRef = useRef(null);
 
-  // Aktivuj audio při změně skladby
+  // Aktivuj audio při změně skladby - delegováno na useAudioPlayback
   useEffect(() => {
     if (audioUrl) {
-      try {
-        // Použij globální AudioContext pokud existuje, jinak vytvoř nový
-        let audioContext = window.globalAudioContext;
-        if (!audioContext) {
-          audioContext = new (window.AudioContext || window.webkitAudioContext)();
-          window.globalAudioContext = audioContext;
-        }
-
-        if (audioContext.state === 'suspended') {
-          audioContext.resume().then(() => {
-            window.audioActivated = true;
-            setAudioState(prev => ({ ...prev, hasInteracted: true }));
-          }).catch(() => {
-          });
-        } else {
-          window.audioActivated = true;
-          setAudioState(prev => ({ ...prev, hasInteracted: true }));
-        }
-      } catch {
-      }
+      setAudioState(prev => ({ ...prev, hasInteracted: true }));
     }
   }, [audioUrl]);
 
@@ -708,224 +687,17 @@ export const useAudioPlayer = (audioUrl, albumTracks = null, currentTrackIndex =
     });
   };
 
-  const togglePlayPause = () => {
-    const audio = audioRef.current;
-    if (!audio) return;
+  // togglePlayPause je nyní z useAudioPlayback hooku - odstraněna duplicita
 
-    log.audio(`🎵 Toggle play/pause - currently playing: ${audioState.isPlaying}`);
+  // skipBackward je nyní z useAudioPlayback hooku - odstraněna duplicita
 
-    // Zkontroluj jestli je audio paused ale UI si myslí že hraje
-    if (audio.paused && audioState.isPlaying) {
-      log.audio('🎵 Audio is paused but UI thinks it\'s playing, syncing state');
-      setAudioState(prev => ({ ...prev, isPlaying: false }));
-    }
+  // skipForward je nyní z useAudioPlayback hooku - odstraněna duplicita
 
-    // Zkontroluj jestli audio hraje ale UI si myslí že je paused
-    if (!audio.paused && !audioState.isPlaying) {
-      log.audio('🎵 Audio is playing but UI thinks it\'s paused, syncing state');
-      setAudioState(prev => ({ ...prev, isPlaying: true, userPaused: false }));
-    }
+  // handleSeek je nyní z useAudioPlayback hooku - odstraněna duplicita
 
-    if (audioState.isPlaying) {
-      // Zjednodušené zastavení
-      audio.pause();
-      setAudioState(prev => ({ ...prev, isPlaying: false, userPaused: true }));
+  // formatTime je nyní z useAudioPlayback hooku - odstraněna duplicita
 
-      // Zastav autoplay pro album
-      setPlaybackState(prev => ({ ...prev, shouldAutoplay: false, wasPlayingBeforeSwitch: false }));
-      console.log('🎵 Audio paused by user - autoplay disabled');
-    } else {
-      // Fade in při spuštění
-      log.audio('🎵 Playing audio with fade in');
-
-      // Pokud uživatel ještě neaktivoval zvuk, zkus aktivovat automaticky
-      if (!audioState.hasInteracted) {
-        // Pokud je audio už aktivováno globálně, použij to
-        if (window.audioActivated) {
-          log.audio('🎵 PRVNÍ SPUŠTĚNÍ: Audio je už aktivováno globálně, pokračuji s přehráváním...');
-          setAudioState(prev => ({ ...prev, hasInteracted: true }));
-          audio.play().then(() => {
-            setAudioState(prev => ({ ...prev, isPlaying: true, userPaused: false }));
-            console.log('🎵 User interaction recorded - autoplay now enabled');
-          }).catch(() => {
-            console.log('🎵 Audio play failed');
-            setAudioState(prev => ({ ...prev, isPlaying: false }));
-          });
-          return;
-        }
-
-        log.audio('🎵 PRVNÍ SPUŠTĚNÍ: Zkouším aktivovat zvuk automaticky...');
-
-        // Zkus aktivovat audio automaticky
-        try {
-          // Použij globální AudioContext pokud existuje, jinak vytvoř nový
-          let audioContext = window.globalAudioContext;
-          if (!audioContext) {
-            audioContext = new (window.AudioContext || window.webkitAudioContext)();
-            window.globalAudioContext = audioContext;
-          }
-
-          if (audioContext.state === 'suspended') {
-            audioContext.resume().then(() => {
-              console.log('🎵 Audio aktivován automaticky, pokračuji s přehráváním...');
-              setAudioState(prev => ({ ...prev, hasInteracted: true }));
-              window.audioActivated = true;
-              audio.play().then(() => {
-                setAudioState(prev => ({ ...prev, isPlaying: true, userPaused: false }));
-                console.log('🎵 User interaction recorded - autoplay now enabled');
-              }).catch(() => {
-                console.log('🎵 Audio play failed');
-                setAudioState(prev => ({ ...prev, isPlaying: false }));
-              });
-            }).catch(() => {
-              console.log('🎵 PRVNÍ SPUŠTĚNÍ: Automatická aktivace selhala');
-            });
-          } else {
-            console.log('🎵 Audio už je aktivní, pokračuji s přehráváním...');
-            setAudioState(prev => ({ ...prev, hasInteracted: true }));
-            window.audioActivated = true;
-            audio.play().then(() => {
-              setAudioState(prev => ({ ...prev, isPlaying: true, userPaused: false }));
-              console.log('🎵 User interaction recorded - autoplay now enabled');
-            }).catch(() => {
-              console.log('🎵 Audio play failed');
-              setAudioState(prev => ({ ...prev, isPlaying: false }));
-            });
-          }
-        } catch {
-          console.log('🎵 PRVNÍ SPUŠTĚNÍ: Chyba při aktivaci');
-        }
-        return;
-      }
-
-      log.audio('🎵 SPUŠTĚNÍ: Zvuk je aktivován, spouštím audio...');
-
-      // Zjednodušený play - jen spusť audio
-      audio.play().then(() => {
-        setAudioState(prev => ({ ...prev, isPlaying: true, userPaused: false }));
-        setAudioState(prev => ({ ...prev, hasInteracted: true })); // Označ že uživatel už jednou klikl na play
-
-        // Pokud je to album a uživatel klikl na play, povol autoplay pro celé album
-        if (albumTracks && albumTracks.length > 1) {
-          setPlaybackState(prev => ({ ...prev, shouldAutoplay: true }));
-          console.log('🎵 Album autoplay enabled - will continue playing through album');
-        }
-
-        console.log('🎵 User interaction recorded - autoplay now enabled');
-      }).catch(() => {
-        console.log('🎵 Audio play failed');
-        setAudioState(prev => ({ ...prev, isPlaying: false }));
-      });
-    }
-  };
-
-  const skipBackward = () => {
-    const audio = audioRef.current;
-    if (!audio || !playbackState.duration || isNaN(playbackState.duration) || playbackState.duration <= 0) return;
-
-    const currentAudioTime = audio.currentTime;
-    const newTime = Math.max(0, currentAudioTime - 10);
-
-    log.audio('Skip backward:', { currentAudioTime, newTime, duration: playbackState.duration });
-
-    if (isFinite(newTime) && newTime >= 0) {
-      audio.currentTime = newTime;
-      setPlaybackState(prev => ({ ...prev, currentTime: newTime }));
-    }
-  };
-
-  const skipForward = () => {
-    const audio = audioRef.current;
-    if (!audio || !playbackState.duration || isNaN(playbackState.duration) || playbackState.duration <= 0) return;
-
-    const currentAudioTime = audio.currentTime;
-    const newTime = Math.min(playbackState.duration, currentAudioTime + 10);
-
-    log.audio('Skip forward:', { currentAudioTime, newTime, duration: playbackState.duration });
-
-    if (isFinite(newTime) && newTime >= 0) {
-      audio.currentTime = newTime;
-      setPlaybackState(prev => ({ ...prev, currentTime: newTime }));
-    }
-  };
-
-  const handleSeek = (progressValue) => {
-    const audio = audioRef.current;
-    if (!audio) {
-      log.audio('⚠️ handleSeek: No audio element');
-      return;
-    }
-
-    // Použij audio.duration jako fallback pokud playbackState.duration není validní
-    const duration = playbackState.duration && !isNaN(playbackState.duration) && playbackState.duration > 0
-      ? playbackState.duration
-      : audio.duration;
-
-    if (!duration || isNaN(duration) || duration <= 0) {
-      log.audio('⚠️ handleSeek: Invalid duration', {
-        hasAudio: !!audio,
-        playbackDuration: playbackState.duration,
-        audioDuration: audio.duration,
-        durationStable: playbackState.durationStable
-      });
-      return;
-    }
-
-    // Použij globální AudioContext místo vytváření nového
-    try {
-      let audioContext = window.globalAudioContext;
-      if (!audioContext) {
-        audioContext = new (window.AudioContext || window.webkitAudioContext)();
-        window.globalAudioContext = audioContext;
-      }
-      if (audioContext.state === 'suspended') {
-        audioContext.resume().then(() => {
-          log.audio('🎵 Global AudioContext resumed in handleSeek');
-        }).catch(() => {
-          log.audio('⚠️ Failed to resume AudioContext in handleSeek');
-        });
-      }
-    } catch (error) {
-      log.audio('⚠️ AudioContext error in handleSeek:', error);
-    }
-
-    try {
-      // progressValue is already in percentage (0-100)
-      const progress = Math.max(0, Math.min(1, progressValue / 100));
-      const newTime = progress * duration;
-
-      // Validate newTime is finite and within bounds
-      if (isFinite(newTime) && newTime >= 0 && newTime <= duration) {
-        log.audio(`🎵 Seeking to ${newTime}s (${progress.toFixed(2)})`);
-
-        // Zjednodušený seek bez fade efektů
-        audio.currentTime = newTime;
-        setPlaybackState(prev => ({ ...prev, currentTime: newTime }));
-
-        // NENASTAVUJ hasInteracted při seek - play se spustí pouze explicitně
-        // Pouze aktivuj audio context pro budoucí použití
-        if (!window.audioActivated) {
-          window.audioActivated = true;
-          setAudioState(prev => ({ ...prev, hasInteracted: true }));
-        }
-
-        log.audio('✅ Seek successful');
-      } else {
-        log.audio('⚠️ Invalid seek time:', { newTime, duration: playbackState.duration });
-      }
-    } catch (error) {
-      log.error('Error in handleSeek:', error);
-    }
-  };
-
-  const formatTime = (time) => {
-    if (!time || isNaN(time)) return '0:00';
-    const minutes = Math.floor(time / 60);
-    const seconds = Math.floor(time % 60);
-    return `${minutes}:${seconds.toString().padStart(2, '0')}`;
-  };
-
-  const progress = playbackState.duration > 0 ? (playbackState.currentTime / playbackState.duration) * 100 : 0;
+  // progress je nyní z useAudioPlayback hooku - odstraněna duplicita
 
 
 
@@ -965,11 +737,13 @@ export const useAudioPlayer = (audioUrl, albumTracks = null, currentTrackIndex =
 
   return {
     audioRef,
-    isPlaying: audioState.isPlaying,
-    currentTime: playbackState.currentTime,
-    duration: playbackState.duration,
+    isPlaying,
+    currentTime,
+    duration,
+    durationStable,
     isLoading: playbackState.isLoading,
-    durationStable: playbackState.durationStable,
+    hasError: playbackState.hasError,
+    errorMessage: playbackState.errorMessage,
     progress,
     togglePlayPause,
     skipBackward,
@@ -977,7 +751,6 @@ export const useAudioPlayer = (audioUrl, albumTracks = null, currentTrackIndex =
     handleSeek,
     formatTime,
     fadeOutAndClose,
-    hasError: playbackState.hasError,
-    errorMessage: playbackState.errorMessage
+    volume: audioState.volume
   };
 };
