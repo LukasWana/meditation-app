@@ -57,9 +57,9 @@ export const useAudioElementState = (audioRef, audioUrl) => {
   useEffect(() => {
     const audio = audioRef.current;
     if (!audio || !audioUrl) {
-      log.audio('🎵 Audio URL effect: skipping - no audio element or audioUrl:', { 
-        hasAudio: !!audio, 
-        audioUrl 
+      log.audio('🎵 Audio URL effect: skipping - no audio element or audioUrl:', {
+        hasAudio: !!audio,
+        audioUrl
       });
       return;
     }
