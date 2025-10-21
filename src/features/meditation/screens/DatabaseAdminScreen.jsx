@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useLanguage } from '../../../contexts/LanguageContext';
+import CacheManagementPanel from '../../../components/CacheManagementPanel';
 import RealtimeDatabaseManager from '../../../components/RealtimeDatabaseManager';
 import MetadataSyncManager from '../../../components/MetadataSyncManager';
 import DatabaseViewer from '../../../components/DatabaseViewer';
@@ -10,10 +11,11 @@ import AuthGate from '../../../components/AuthGate';
 
 const DatabaseAdminScreen = () => {
   const { t } = useLanguage();
-  const [activeTab, setActiveTab] = useState('overview');
+  const [activeTab, setActiveTab] = useState('cache');
   const [user, setUser] = useState(null);
 
   const tabs = [
+    { id: 'cache', label: 'Cache Management', icon: '🗄️' },
     { id: 'overview', label: 'Files Overview', icon: '📁' },
     { id: 'slova', label: 'Slova Files', icon: '🗣️' },
     { id: 'hudba', label: 'Hudba Files', icon: '🎵' },
@@ -31,10 +33,10 @@ const DatabaseAdminScreen = () => {
           <div className="flex items-center justify-between">
             <div>
               <h1 className="text-3xl font-bold text-gray-900">
-                🔧 Správa databází
+                🗄️ Cache Management Admin
               </h1>
               <p className="mt-2 text-gray-600">
-                Administrace Firebase databází a synchronizace metadat
+                Hlavní nástroj pro správu cache v Realtime Database - zobrazení, vytváření a aktualizace
               </p>
             </div>
             <div className="flex items-center space-x-4">
@@ -78,6 +80,22 @@ const DatabaseAdminScreen = () => {
 
         {/* Content */}
         <div className="bg-white rounded-lg shadow-sm">
+          {activeTab === 'cache' && (
+            <div>
+              <div className="border-b border-gray-200 px-6 py-4">
+                <h2 className="text-xl font-semibold text-gray-900">
+                  🗄️ Cache Management
+                </h2>
+                <p className="mt-1 text-sm text-gray-600">
+                  Hlavní funkce adminu - správa a příprava cache v Realtime Database
+                </p>
+              </div>
+              <div className="p-6">
+                <CacheManagementPanel />
+              </div>
+            </div>
+          )}
+
           {activeTab === 'overview' && (
             <div>
               <div className="border-b border-gray-200 px-6 py-4">
