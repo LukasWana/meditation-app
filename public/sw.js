@@ -71,17 +71,16 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
+  // IGNORUJ VŠECHNY Firebase Storage požadavky - nechte prohlížeč je zpracovat přímo
+  if (url.hostname.includes('firebasestorage.googleapis.com')) {
+    return;
+  }
+
   // Ignoruj non-GET requesty pro cache strategie (POST, PUT, DELETE nelze cachovat)
   if (request.method !== 'GET') {
     // Pro non-GET requesty použij pouze fetch bez cachování
     event.respondWith(fetch(request));
     return;
-  }
-
-  // Strategie pro různé typy souborů (pouze GET requesty)
-  if (url.hostname.includes('firebasestorage.googleapis.com')) {
-    // Firebase Storage soubory - zkus cache nejdříve, pak network
-    event.respondWith(cacheFirstFirebase(request, AUDIO_CACHE));
   } else if (url.pathname.endsWith('.mp3') || url.pathname.includes('/media/')) {
     // Ostatní audio soubory - Network First s CORS podporou
     event.respondWith(networkFirstAudio(request, AUDIO_CACHE));

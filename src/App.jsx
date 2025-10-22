@@ -9,7 +9,7 @@ import OfflineIndicator from '@components/OfflineIndicator';
 
 import ErrorBoundary from '@components/ErrorBoundary';
 import { register } from '@services/serviceWorker';
-import NewAdminScreen from '@features/meditation/screens/NewAdminScreen';
+import SimpleAdminScreen from '@features/meditation/screens/SimpleAdminScreen';
 
 // Hlavní aplikace s routingem
 export default function App() {
@@ -288,7 +288,7 @@ export function AdminApp() {
   return (
     <ErrorBoundary>
       <LanguageProvider>
-        <NewAdminScreen />
+        <SimpleAdminScreen />
 
         {/* Monitoring Dashboard - pouze v admin */}
         {import.meta.env.MODE === 'development' && (

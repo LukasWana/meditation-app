@@ -55,6 +55,11 @@ export const useFirebaseAudio = (audioFileName) => {
         const url = await getDownloadURL(audioRef);
         console.log('🔗 Download URL obtained:', url);
 
+        // Ověř, že URL je platné
+        if (!url || !url.startsWith('http')) {
+          throw new Error('Invalid download URL received');
+        }
+
         // Ulož do cache
         cacheService.setAudioUrl(audioFileName, url);
 

@@ -16,15 +16,8 @@
         // Nastavíme admin mód
         window.ADMIN_MODE = true;
 
-        // Přesměrujeme na admin screen
-        window.addEventListener('DOMContentLoaded', () => {
-            // Počkáme na načtení aplikace a pak přesměrujeme
-            setTimeout(() => {
-                if (window.navigateToScreen) {
-                    window.navigateToScreen('database-admin');
-                }
-            }, 1000);
-        });
+        // Admin aplikace se načte přímo s SimpleAdminScreen
+        console.log('Admin panel loading...');
     </script>
 </body>
 </html>

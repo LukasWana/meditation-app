@@ -562,7 +562,8 @@ export const useFirebaseHudbaScanner = () => {
               }
             }
           } catch (err) {
-            log.warn(`Cover obrázek ${imageName} není dostupný:`, err.message);
+            // Ignoruj chyby při načítání obrázků - neexistující soubory jsou běžné
+            log.debug(`Cover obrázek ${imageName} není dostupný (ignorováno):`, err.message);
           }
         }
 

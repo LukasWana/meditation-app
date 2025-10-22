@@ -148,8 +148,17 @@ class OfflineCacheService {
           fileName
         ];
 
+        // Pro každý klíč vytvoř nový fetch request, protože Response body může být použito pouze jednou
         for (const cacheKey of cacheKeys) {
-          await this.cache.put(cacheKey, response);
+          try {
+            const responseClone = await fetch(audioUrl, {
+              mode: 'no-cors',
+              credentials: 'omit'
+            });
+            await this.cache.put(cacheKey, responseClone);
+          } catch (cloneError) {
+            log.warn(`Failed to cache with key ${cacheKey}:`, cloneError.message);
+          }
         }
 
         log.cache(`✅ Cached ${fileName} (opaque response - size unknown)`);
