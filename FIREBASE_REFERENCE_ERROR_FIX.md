@@ -190,3 +190,4 @@ Aplikace nyní správně načítá metadata pro všechny soubory bez chyb! 🎉
 
 
 
+

@@ -86,7 +86,17 @@ dist
 
 # Gatsby files
 .cache/
-public
+
+# Public folder - ignore most files but keep essential ones
+public/*
+!public/offline.html
+!public/manifest.json
+!public/sw.js
+!public/icon-*.png
+!public/icon-*.svg
+
+# Debug files with sensitive data
+public/show-db-data.html
 
 # Storybook build outputs
 .out
