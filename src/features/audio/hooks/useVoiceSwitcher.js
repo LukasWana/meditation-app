@@ -1,10 +1,9 @@
-import { useState, useEffect, useMemo, useCallback, useRef } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
 import { parseAudioFileName as parseSpeechFileName } from '@utils/audioParser';
 import { parseAudioFileName as parseMusicFileName } from '@utils/hudbaParser';
 
 export const useVoiceSwitcher = (currentAudioFile, allFiles) => {
   const [selectedVoice, setSelectedVoice] = useState('male'); // 'male', 'female'
-  const debounceTimeoutRef = useRef(null);
 
   // Pomocná funkce pro extrakci názvu souboru z URL
   const extractFileNameFromUrl = useCallback((url) => {
@@ -74,13 +73,6 @@ export const useVoiceSwitcher = (currentAudioFile, allFiles) => {
     }
   }, [currentFileInfo]);
 
-  // Zobraz přepínač pouze pro mluvené slovo (hudební soubory nemají varianty)
-  const hasVariants = useMemo(() => {
-    return currentFileInfo && currentFileInfo.gender && (
-      currentFileInfo.gender === 'male' || currentFileInfo.gender === 'female'
-    ) && currentTopic && currentFileInfo.number && currentFileInfo.type; // Musí mít téma a typ pro hledání alternativ
-  }, [currentFileInfo, currentTopic]);
-
   // Pomocná funkce pro sestavení názvu alternativního souboru
   const buildAlternativeFileName = useCallback((voice, fileInfo, topic) => {
     const targetVoice = voice === 'male' ? 'muzsky' : 'zensky';
@@ -110,48 +102,69 @@ export const useVoiceSwitcher = (currentAudioFile, allFiles) => {
     );
   }, []);
 
-  // Funkce pro přepínání hlasů (s debouncing)
-  const handleVoiceChange = useCallback((voice) => {
-    // Clear existing timeout
-    if (debounceTimeoutRef.current) {
-      clearTimeout(debounceTimeoutRef.current);
+  // Zobraz přepínač pouze pro mluvené slovo (hudební soubory nemají varianty)
+  const hasVariants = useMemo(() => {
+    return currentFileInfo && currentFileInfo.gender && (
+      currentFileInfo.gender === 'male' || currentFileInfo.gender === 'female'
+    ) && currentTopic && currentFileInfo.number && currentFileInfo.type; // Musí mít téma a typ pro hledání alternativ
+  }, [currentFileInfo, currentTopic]);
+
+  // Zkontroluj dostupnost alternativních hlasů
+  const availableVoices = useMemo(() => {
+    if (!hasVariants || !currentFileInfo || !currentTopic) {
+      return { male: false, female: false };
     }
 
-    // Set new timeout
-    debounceTimeoutRef.current = setTimeout(() => {
-      setSelectedVoice(voice);
+    const voices = { male: false, female: false };
 
-      if (!currentFileInfo || !currentTopic) return null;
+    // Zkontroluj aktuální hlas
+    if (currentFileInfo.gender === 'male') {
+      voices.male = true;
+    } else if (currentFileInfo.gender === 'female') {
+      voices.female = true;
+    }
 
-      const currentVoiceType = currentFileInfo.gender;
-      if (currentVoiceType === voice) return null;
+    // Zkontroluj dostupnost alternativního hlasu
+    const alternativeVoice = currentFileInfo.gender === 'male' ? 'female' : 'male';
+    const alternativeFileName = buildAlternativeFileName(alternativeVoice, currentFileInfo, currentTopic);
 
-      const newFileName = buildAlternativeFileName(voice, currentFileInfo, currentTopic);
+    // Sestav full path pro alternativní soubor
+    const fullPath = currentAudioFile.includes('/')
+      ? currentAudioFile.substring(0, currentAudioFile.lastIndexOf('/') + 1) + alternativeFileName
+      : alternativeFileName;
 
-      // Sestav full path
-      const fullPath = currentAudioFile.includes('/')
-        ? currentAudioFile.substring(0, currentAudioFile.lastIndexOf('/') + 1) + newFileName
-        : newFileName;
+    const alternativeFile = findAlternativeFile(fullPath, allFiles);
+    voices[alternativeVoice] = !!alternativeFile;
 
-      const alternativeFile = findAlternativeFile(fullPath, allFiles);
+    return voices;
+  }, [hasVariants, currentFileInfo, currentTopic, currentAudioFile, allFiles, buildAlternativeFileName, findAlternativeFile]);
 
-      return alternativeFile?.audioSrc || alternativeFile?.fileName || null;
-    }, 300); // 300ms debounce
+  // Funkce pro přepínání hlasů
+  const handleVoiceChange = useCallback((voice) => {
+    setSelectedVoice(voice);
+
+    if (!currentFileInfo || !currentTopic) return null;
+
+    const currentVoiceType = currentFileInfo.gender;
+    if (currentVoiceType === voice) return null;
+
+    const newFileName = buildAlternativeFileName(voice, currentFileInfo, currentTopic);
+
+    // Sestav full path
+    const fullPath = currentAudioFile.includes('/')
+      ? currentAudioFile.substring(0, currentAudioFile.lastIndexOf('/') + 1) + newFileName
+      : newFileName;
+
+    const alternativeFile = findAlternativeFile(fullPath, allFiles);
+
+    return alternativeFile?.audioSrc || alternativeFile?.fileName || null;
   }, [currentFileInfo, currentTopic, currentAudioFile, allFiles, buildAlternativeFileName, findAlternativeFile]);
-
-  // Cleanup timeout on unmount
-  useEffect(() => {
-    return () => {
-      if (debounceTimeoutRef.current) {
-        clearTimeout(debounceTimeoutRef.current);
-      }
-    };
-  }, []);
 
   return {
     selectedVoice,
     currentVoice,
     hasVariants,
+    availableVoices,
     handleVoiceChange,
     currentFileInfo
   };

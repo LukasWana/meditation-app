@@ -2,7 +2,8 @@ import { useState, useEffect, useMemo, useCallback } from 'react';
 import { useFirebaseAudio } from './useFirebaseAudio';
 import { useAudioContext } from './useAudioContext';
 import { useAutoplay } from './useAutoplay';
-import { useVoiceSwitcher } from './useVoiceSwitcher';
+import { useVoiceSwitcher } from './useVoiceSwitcher';
+
 export const useAudioPlayerLogic = ({
   audioSrc,
   albumTracks,
@@ -18,6 +19,7 @@ export const useAudioPlayerLogic = ({
     selectedVoice,
     currentVoice,
     hasVariants,
+    availableVoices,
     handleVoiceChange,
     currentFileInfo
   } = useVoiceSwitcher(currentAudioFile, allFiles);
@@ -112,6 +114,7 @@ export const useAudioPlayerLogic = ({
     selectedVoice,
     currentVoice,
     hasVariants,
+    availableVoices,
     handleVoiceChange: handleVoiceChangeWithUpdate,
     currentFileInfo,
 

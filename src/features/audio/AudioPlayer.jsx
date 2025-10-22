@@ -26,6 +26,7 @@ const AudioPlayer = ({
     firebaseError,
     selectedVoice,
     hasVariants,
+    availableVoices,
     handleVoiceChange
   } = useAudioPlayerLogic({
     audioSrc,
@@ -97,6 +98,7 @@ const AudioPlayer = ({
           // Voice switcher props
           hasVariants={hasVariants}
           selectedVoice={selectedVoice}
+          availableVoices={availableVoices}
           onVoiceChange={handleVoiceChange}
           // Track switcher props
           albumTracks={albumTracks}

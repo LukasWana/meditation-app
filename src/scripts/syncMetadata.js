@@ -1,10 +1,10 @@
 
 
 import { getFunctions, httpsCallable } from 'firebase/functions';
-import { app } from '../services/firebase';
-import mp3MetadataExtractor from '../services/mp3MetadataExtractor';
-import { firestoreMetadataService } from '../services/firestoreMetadataService';
-import log from '../services/logger';
+import { app } from '../services/firebase.js';
+import mp3MetadataExtractor from '../services/mp3MetadataExtractor.js';
+import { firestoreMetadataService } from '../services/firestoreMetadataService.js';
+import log from '../services/logger.js';
 
 class MetadataSyncService {
   constructor() {

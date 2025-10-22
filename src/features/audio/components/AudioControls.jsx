@@ -21,6 +21,7 @@ const AudioControls = ({
   // Voice switcher props
   hasVariants,
   selectedVoice,
+  availableVoices,
   onVoiceChange,
   // Track switcher props
   albumTracks = null,
@@ -105,6 +106,7 @@ const AudioControls = ({
         <div className="mt-6 pointer-events-auto z-10">
           <VoiceSwitcher
             selectedVoice={selectedVoice}
+            availableVoices={availableVoices}
             onVoiceChange={onVoiceChange}
           />
         </div>
