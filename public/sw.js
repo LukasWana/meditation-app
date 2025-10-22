@@ -18,16 +18,16 @@ const STATIC_ASSETS = [
 
 // Instalace Service Worker
 self.addEventListener('install', (event) => {
-  console.log('🔧 Service Worker: Installing...');
+  // Service Worker installing...
 
   event.waitUntil(
     caches.open(STATIC_CACHE)
       .then((cache) => {
-        console.log('📦 Service Worker: Caching static assets');
+        // Caching static assets
         return cache.addAll(STATIC_ASSETS);
       })
       .then(() => {
-        console.log('✅ Service Worker: Installation complete');
+        // Installation complete
         return self.skipWaiting();
       })
       .catch((error) => {
@@ -38,7 +38,7 @@ self.addEventListener('install', (event) => {
 
 // Aktivace Service Worker
 self.addEventListener('activate', (event) => {
-  console.log('🚀 Service Worker: Activating...');
+
 
   event.waitUntil(
     caches.keys()
@@ -48,14 +48,14 @@ self.addEventListener('activate', (event) => {
             if (cacheName !== STATIC_CACHE &&
                 cacheName !== DYNAMIC_CACHE &&
                 cacheName !== AUDIO_CACHE) {
-              console.log('🗑️ Service Worker: Deleting old cache', cacheName);
+
               return caches.delete(cacheName);
             }
           })
         );
       })
       .then(() => {
-        console.log('✅ Service Worker: Activation complete');
+
         return self.clients.claim();
       })
   );
@@ -103,13 +103,13 @@ async function networkFirstAudio(request, cacheName) {
     // Zkus cache nejdříve
     const cachedResponse = await caches.match(request);
     if (cachedResponse) {
-      console.log('🎵 Service Worker: Audio from cache', request.url);
+
       // Zkus aktualizovat cache na pozadí
       fetch(request).then(networkResponse => {
         if (networkResponse.ok) {
           caches.open(cacheName).then(cache => {
             cache.put(request, networkResponse.clone());
-            console.log('🎵 Service Worker: Audio cache updated', request.url);
+
           });
         }
       }).catch(() => {
@@ -119,7 +119,7 @@ async function networkFirstAudio(request, cacheName) {
     }
 
     // Pokud není v cache, zkus network
-    console.log('🎵 Service Worker: Loading audio from network', request.url);
+
     const networkResponse = await fetch(request, {
       mode: 'cors',
       credentials: 'omit'
@@ -128,7 +128,7 @@ async function networkFirstAudio(request, cacheName) {
     if (networkResponse.ok) {
       const cache = await caches.open(cacheName);
       cache.put(request, networkResponse.clone());
-      console.log('🎵 Service Worker: Audio cached', request.url);
+
     }
     return networkResponse;
   } catch (error) {
@@ -137,7 +137,7 @@ async function networkFirstAudio(request, cacheName) {
     // Pokud network selže, zkus cache znovu
     const fallbackCache = await caches.match(request);
     if (fallbackCache) {
-      console.log('🎵 Service Worker: Using cached audio as fallback', request.url);
+
       return fallbackCache;
     }
 
@@ -154,12 +154,12 @@ async function cacheFirstFirebase(request, cacheName) {
     // Zkus cache nejdříve
     const cachedResponse = await caches.match(request);
     if (cachedResponse) {
-      console.log('🎵 Service Worker: Firebase audio from cache', request.url);
+
       return cachedResponse;
     }
 
     // Pokud není v cache, zkus network s no-cors mode
-    console.log('🎵 Service Worker: Loading Firebase audio from network', request.url);
+
     const networkResponse = await fetch(request, {
       mode: 'no-cors',
       credentials: 'omit'
@@ -168,7 +168,7 @@ async function cacheFirstFirebase(request, cacheName) {
     if (networkResponse.ok || networkResponse.type === 'opaque') {
       const cache = await caches.open(cacheName);
       cache.put(request, networkResponse.clone());
-      console.log('🎵 Service Worker: Firebase audio cached', request.url);
+
     }
     return networkResponse;
   } catch (error) {
@@ -177,7 +177,7 @@ async function cacheFirstFirebase(request, cacheName) {
     // Pokud network selže, zkus cache znovu
     const fallbackCache = await caches.match(request);
     if (fallbackCache) {
-      console.log('🎵 Service Worker: Using cached Firebase audio as fallback', request.url);
+
       return fallbackCache;
     }
 
@@ -226,7 +226,7 @@ async function networkFirst(request, cacheName) {
 
     return networkResponse;
   } catch (error) {
-    console.log('🌐 Service Worker: Network failed, trying cache', request.url);
+
 
     // Pouze GET requesty lze načíst z cache
     if (request.method === 'GET') {
@@ -247,7 +247,7 @@ async function networkFirst(request, cacheName) {
 
 // Background sync pro offline akce
 self.addEventListener('sync', (event) => {
-  console.log('🔄 Service Worker: Background sync', event.tag);
+
 
   if (event.tag === 'background-sync') {
     event.waitUntil(doBackgroundSync());
@@ -257,7 +257,7 @@ self.addEventListener('sync', (event) => {
 async function doBackgroundSync() {
   try {
     // Zde by se synchronizovaly offline akce
-    console.log('🔄 Service Worker: Performing background sync');
+
   } catch (error) {
     console.error('❌ Service Worker: Background sync failed', error);
   }
@@ -265,7 +265,7 @@ async function doBackgroundSync() {
 
 // Push notifikace (pro budoucí použití)
 self.addEventListener('push', (event) => {
-  console.log('📱 Service Worker: Push notification received');
+
 
   const options = {
     body: event.data ? event.data.text() : 'Nová meditace je dostupná!',
@@ -285,7 +285,7 @@ self.addEventListener('push', (event) => {
 
 // Notification click handler
 self.addEventListener('notificationclick', (event) => {
-  console.log('📱 Service Worker: Notification clicked');
+
 
   event.notification.close();
 
@@ -294,7 +294,7 @@ self.addEventListener('notificationclick', (event) => {
   );
 });
 
-console.log('🔧 Service Worker: Script loaded');
+
 
 
 
