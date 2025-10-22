@@ -3,11 +3,12 @@ import { motion } from 'framer-motion';
 
 const VoiceSwitcher = ({
   selectedVoice,
+  availableVoices = { male: true, female: true },
   onVoiceChange
 }) => {
   const voiceOptions = [
-    { value: 'male', label: 'Muž' },
-    { value: 'female', label: 'Žena' }
+    { value: 'male', label: 'Muž', available: availableVoices.male },
+    { value: 'female', label: 'Žena', available: availableVoices.female }
   ];
 
   return (
@@ -33,16 +34,19 @@ const VoiceSwitcher = ({
         {voiceOptions.map((option) => (
           <motion.button
             key={option.value}
-            onClick={() => onVoiceChange(option.value)}
+            onClick={() => option.available && onVoiceChange(option.value)}
+            disabled={!option.available}
             className={`
               px-4 py-2 rounded-full text-sm font-medium transition-all duration-200
               ${selectedVoice === option.value
                 ? 'bg-black text-white shadow-md'
-                : 'bg-black/7 text-black hover:bg-black/15'
+                : option.available
+                  ? 'bg-black/7 text-black hover:bg-black/15'
+                  : 'bg-gray-200 text-gray-400 cursor-not-allowed'
               }
             `}
-            whileHover={{ scale: 1.1 }}
-            whileTap={{ scale: 0.95 }}
+            whileHover={option.available ? { scale: 1.1 } : {}}
+            whileTap={option.available ? { scale: 0.95 } : {}}
             transition={{ type: "spring", stiffness: 300, damping: 20 }}
           >
             {option.label}

@@ -465,6 +465,68 @@ const NewAdminScreen = () => {
     }
   };
 
+  // Synchronizace z Firestore do Realtime Database
+  const syncFirestoreToRealtime = async () => {
+    setLoading(true);
+    try {
+      console.log('🔄 Starting Firestore to Realtime Database sync...');
+
+      // Načti všechna metadata z Firestore
+      const metadataCollection = collection(db, 'audio-metadata');
+      const q = query(metadataCollection, orderBy('fileName'));
+      const querySnapshot = await getDocs(q);
+
+      console.log(`📊 Found ${querySnapshot.size} documents in Firestore`);
+
+      const metadataArray = [];
+
+      querySnapshot.forEach((doc) => {
+        const data = doc.data();
+        metadataArray.push(data);
+      });
+
+      // Zobraz slova soubory
+      const slovaFiles = metadataArray.filter(file =>
+        file.fileName && file.fileName.includes('slova/')
+      );
+      console.log(`🎤 Found ${slovaFiles.length} slova files in Firestore`);
+
+      if (slovaFiles.length > 0) {
+        console.log('🎤 Sample slova files:');
+        slovaFiles.slice(0, 3).forEach(file => {
+          console.log(`   - ${file.fileName}`);
+          console.log(`     Title: ${file.title || 'N/A'}`);
+          console.log(`     Duration: ${file.duration || 'N/A'}`);
+          console.log(`     Folder: ${file.folder || 'N/A'}`);
+        });
+      }
+
+      // Ulož do Realtime Database ve formátu array
+      const realtimeRef = dbRef(database, 'audio-metadata');
+      await set(realtimeRef, {
+        files: metadataArray,
+        lastSync: new Date().toISOString(),
+        totalFiles: metadataArray.length,
+        slovaFiles: slovaFiles.length
+      });
+
+      console.log('✅ Successfully synced Firestore to Realtime Database');
+      console.log(`📊 Synced ${metadataArray.length} total files`);
+      console.log(`🎤 Synced ${slovaFiles.length} slova files`);
+
+      alert(`✅ Synchronizace dokončena!\n📊 Synchronizováno ${metadataArray.length} souborů\n🎤 Synchronizováno ${slovaFiles.length} slova souborů`);
+
+      // Aktualizuj statistiky
+      await checkForUpdates();
+
+    } catch (error) {
+      console.error('❌ Failed to sync Firestore to Realtime Database:', error);
+      alert('❌ Chyba při synchronizaci: ' + error.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   useEffect(() => {
     loadAudioStats();
   }, []);
@@ -807,6 +869,26 @@ const NewAdminScreen = () => {
               </div>
             </div>
           </div>
+        </motion.div>
+
+        {/* Synchronizace Firestore */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.55 }}
+          className={`p-6 rounded-lg border mb-6 ${cardClasses}`}
+        >
+          <h3 className="text-xl font-semibold mb-4">Synchronizace Firestore</h3>
+          <p className="text-gray-500 mb-4">
+            Synchronizuje data z Firestore do Realtime Database. Toto je potřeba udělat, když přidáte novou meditaci v adminu.
+          </p>
+          <button
+            onClick={syncFirestoreToRealtime}
+            disabled={loading}
+            className="w-full bg-purple-500 hover:bg-purple-600 disabled:bg-gray-400 text-white py-2 px-4 rounded-lg transition-colors"
+          >
+            {loading ? <RefreshCw className="animate-spin mx-auto" size={20} /> : '🔄 Synchronizovat Firestore → Realtime DB'}
+          </button>
         </motion.div>
 
         {/* Akce */}

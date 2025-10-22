@@ -73,13 +73,6 @@ export const useVoiceSwitcher = (currentAudioFile, allFiles) => {
     }
   }, [currentFileInfo]);
 
-  // Zobraz přepínač pouze pro mluvené slovo (hudební soubory nemají varianty)
-  const hasVariants = useMemo(() => {
-    return currentFileInfo && currentFileInfo.gender && (
-      currentFileInfo.gender === 'male' || currentFileInfo.gender === 'female'
-    ) && currentTopic && currentFileInfo.number && currentFileInfo.type; // Musí mít téma a typ pro hledání alternativ
-  }, [currentFileInfo, currentTopic]);
-
   // Pomocná funkce pro sestavení názvu alternativního souboru
   const buildAlternativeFileName = useCallback((voice, fileInfo, topic) => {
     const targetVoice = voice === 'male' ? 'muzsky' : 'zensky';
@@ -109,6 +102,43 @@ export const useVoiceSwitcher = (currentAudioFile, allFiles) => {
     );
   }, []);
 
+  // Zobraz přepínač pouze pro mluvené slovo (hudební soubory nemají varianty)
+  const hasVariants = useMemo(() => {
+    return currentFileInfo && currentFileInfo.gender && (
+      currentFileInfo.gender === 'male' || currentFileInfo.gender === 'female'
+    ) && currentTopic && currentFileInfo.number && currentFileInfo.type; // Musí mít téma a typ pro hledání alternativ
+  }, [currentFileInfo, currentTopic]);
+
+  // Zkontroluj dostupnost alternativních hlasů
+  const availableVoices = useMemo(() => {
+    if (!hasVariants || !currentFileInfo || !currentTopic) {
+      return { male: false, female: false };
+    }
+
+    const voices = { male: false, female: false };
+
+    // Zkontroluj aktuální hlas
+    if (currentFileInfo.gender === 'male') {
+      voices.male = true;
+    } else if (currentFileInfo.gender === 'female') {
+      voices.female = true;
+    }
+
+    // Zkontroluj dostupnost alternativního hlasu
+    const alternativeVoice = currentFileInfo.gender === 'male' ? 'female' : 'male';
+    const alternativeFileName = buildAlternativeFileName(alternativeVoice, currentFileInfo, currentTopic);
+
+    // Sestav full path pro alternativní soubor
+    const fullPath = currentAudioFile.includes('/')
+      ? currentAudioFile.substring(0, currentAudioFile.lastIndexOf('/') + 1) + alternativeFileName
+      : alternativeFileName;
+
+    const alternativeFile = findAlternativeFile(fullPath, allFiles);
+    voices[alternativeVoice] = !!alternativeFile;
+
+    return voices;
+  }, [hasVariants, currentFileInfo, currentTopic, currentAudioFile, allFiles, buildAlternativeFileName, findAlternativeFile]);
+
   // Funkce pro přepínání hlasů
   const handleVoiceChange = useCallback((voice) => {
     setSelectedVoice(voice);
@@ -134,6 +164,7 @@ export const useVoiceSwitcher = (currentAudioFile, allFiles) => {
     selectedVoice,
     currentVoice,
     hasVariants,
+    availableVoices,
     handleVoiceChange,
     currentFileInfo
   };
