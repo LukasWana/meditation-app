@@ -283,57 +283,19 @@ class CacheServiceRefactored {
       const { ref, listAll, getDownloadURL } = await import('firebase/storage');
       const { storage } = await import('./firebase.js');
 
-      const listRef = ref(storage, '');
-      log.firebase('📂 Listing Firebase Storage root...');
-      const result = await listAll(listRef);
+      // Místo root složky, načti přímo slova/ a hudba/ složky
+      log.firebase('📂 Listing Firebase Storage folders...');
 
-      // Získej všechny soubory z podsložek (slova/ a hudba/)
+      // ZAKÁZÁNO - způsobuje 403 Forbidden chybu
+      // const slovaRef = ref(storage, 'slova');
+      // const slovaResult = await listAll(slovaRef);
+      // const hudbaRef = ref(storage, 'hudba');
+      // const hudbaResult = await listAll(hudbaRef);
+
+      // ZAKÁZÁNO - způsobuje 403 Forbidden chybu při přístupu k root složce
+      // Místo toho se data načítají z Realtime Database
       const allFiles = [];
-
-      // Prohledej podsložky (slova/, hudba/, CZ/, SK/, EN/)
-      for (const folderRef of result.prefixes) {
-        try {
-          const folderResult = await listAll(folderRef);
-
-          // Pokud je to slova/ složka, prohledej i jazykové podsložky
-          if (folderRef.name === 'slova') {
-            folderResult.items.forEach(item => {
-              allFiles.push({
-                ...item,
-                name: `${folderRef.name}/${item.name}`,
-                folder: folderRef.name
-              });
-            });
-
-            // Prohledej jazykové podsložky v slova/
-            for (const langFolderRef of folderResult.prefixes) {
-              try {
-                const langFolderResult = await listAll(langFolderRef);
-                langFolderResult.items.forEach(item => {
-                  allFiles.push({
-                    ...item,
-                    name: `${folderRef.name}/${langFolderRef.name}/${item.name}`,
-                    folder: `${folderRef.name}/${langFolderRef.name}`
-                  });
-                });
-              } catch (langErr) {
-                log.warn(`Nelze prohledat jazykovou složku ${langFolderRef.name}:`, langErr.message);
-              }
-            }
-          } else {
-            // Pro ostatní složky (hudba/, atd.)
-            folderResult.items.forEach(item => {
-              allFiles.push({
-                ...item,
-                name: `${folderRef.name}/${item.name}`,
-                folder: folderRef.name
-              });
-            });
-          }
-        } catch (err) {
-          log.warn(`Nelze prohledat složku ${folderRef.name}:`, err.message);
-        }
-      }
+      log.warn('⚠️ Firebase Storage root access disabled to prevent 403 errors');
 
       // Filtruj MP3 soubory podle složky
       const hudbaFiles = allFiles

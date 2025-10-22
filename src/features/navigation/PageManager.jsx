@@ -13,7 +13,7 @@ const HudbaScreen = lazy(() => import('@features/meditation/screens/HudbaScreen'
 const SlovaScreen = lazy(() => import('@features/meditation/screens/SlovaScreen'));
 const AlbumDetailScreen = lazy(() => import('@features/meditation/screens/AlbumDetailScreen'));
 const AudioPlayer = lazy(() => import('@features/audio/AudioPlayer'));
-const NewAdminScreen = lazy(() => import('@features/meditation/screens/NewAdminScreen'));
+const SimpleAdminScreen = lazy(() => import('@features/meditation/screens/SimpleAdminScreen'));
 
 
 // Registry stránek s jejich konfigurací
@@ -116,7 +116,7 @@ const SCREEN_REGISTRY = {
     }
   },
   'database-admin': {
-    component: NewAdminScreen,
+    component: SimpleAdminScreen,
     requiresLayout: false,
     props: [],
     transition: {

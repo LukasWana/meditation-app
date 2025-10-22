@@ -179,44 +179,44 @@ function MeditationApp() {
         }
       };
 
-    // Funkce pro testování přehrávání
-    window.testAudioPlayback = async (fileName) => {
-      console.log('🎵 Testing audio playback for:', fileName);
-      try {
-        const { default: offlineCacheService } = await import('./services/offlineCacheService');
-        await offlineCacheService.initialize();
+      // Funkce pro testování přehrávání
+      window.testAudioPlayback = async (fileName) => {
+        console.log('🎵 Testing audio playback for:', fileName);
+        try {
+          const { default: offlineCacheService } = await import('./services/offlineCacheService');
+          await offlineCacheService.initialize();
 
-        const isCached = await offlineCacheService.isFileCached(fileName);
-        console.log('📊 Is cached:', isCached);
+          const isCached = await offlineCacheService.isFileCached(fileName);
+          console.log('📊 Is cached:', isCached);
 
-        if (isCached) {
-          const cachedFile = await offlineCacheService.getCachedFile(fileName);
-          console.log('📊 Cached file type:', cachedFile ? cachedFile.type : 'unknown');
-          console.log('📊 Cached file headers:', cachedFile ? [...cachedFile.headers.entries()] : []);
+          if (isCached) {
+            const cachedFile = await offlineCacheService.getCachedFile(fileName);
+            console.log('📊 Cached file type:', cachedFile ? cachedFile.type : 'unknown');
+            console.log('📊 Cached file headers:', cachedFile ? [...cachedFile.headers.entries()] : []);
+          }
+
+          return { isCached, fileName };
+        } catch (error) {
+          console.error('❌ Error testing audio playback:', error);
+          return null;
         }
+      };
 
-        return { isCached, fileName };
-      } catch (error) {
-        console.error('❌ Error testing audio playback:', error);
-        return null;
-      }
-    };
+      // Funkce pro nastavení log levelu
+      window.setLogLevel = async (level) => {
+        const { default: log } = await import('./services/logger');
+        log.setLogLevel(level);
+        console.log(`🔧 Log level nastaven na: ${level}`);
+        console.log('Dostupné úrovně: silent, error, warn, info, debug');
+      };
 
-    // Funkce pro nastavení log levelu
-    window.setLogLevel = async (level) => {
-      const { default: log } = await import('./services/logger');
-      log.setLogLevel(level);
-      console.log(`🔧 Log level nastaven na: ${level}`);
-      console.log('Dostupné úrovně: silent, error, warn, info, debug');
-    };
-
-    console.log('🔍 Debug funkce dostupné v konzoli:');
-    console.log('  - showDatabaseData() - zobrazí database viewer');
-    console.log('  - debugSlovaFiles() - zobrazí slova soubory v Realtime Database');
-    console.log('  - debugCache() - zobrazí detaily cache');
-    console.log('  - clearCache() - vymaže cache');
-    console.log('  - testAudioPlayback(fileName) - otestuje přehrávání konkrétního souboru');
-    console.log('  - setLogLevel(level) - nastaví úroveň logování (silent, error, warn, info, debug)');
+      console.log('🔍 Debug funkce dostupné v konzoli:');
+      console.log('  - showDatabaseData() - zobrazí database viewer');
+      console.log('  - debugSlovaFiles() - zobrazí slova soubory v Realtime Database');
+      console.log('  - debugCache() - zobrazí detaily cache');
+      console.log('  - clearCache() - vymaže cache');
+      console.log('  - testAudioPlayback(fileName) - otestuje přehrávání konkrétního souboru');
+      console.log('  - setLogLevel(level) - nastaví úroveň logování (silent, error, warn, info, debug)');
     }
   }, []);
 
@@ -230,52 +230,52 @@ function MeditationApp() {
     <ErrorBoundary>
       <LanguageProvider>
         <div className="min-h-screen w-full bg-[#f4ddc4] overflow-x-hidden">
-      {/* Intro animace s písmem "Meditácia" */}
-      {showIntro && (
-        <LazyIntroScreen onIntroComplete={handleIntroComplete} />
-      )}
+          {/* Intro animace s písmem "Meditácia" */}
+          {showIntro && (
+            <LazyIntroScreen onIntroComplete={handleIntroComplete} />
+          )}
 
-      {/* Hlavní aplikace - zobrazí se až po intro */}
-      {!showIntro && (
-        <PageManager
-        // Navigation
-        currentScreen={currentScreen}
-        onNavigateToScreen={navigateToScreen}
+          {/* Hlavní aplikace - zobrazí se až po intro */}
+          {!showIntro && (
+            <PageManager
+              // Navigation
+              currentScreen={currentScreen}
+              onNavigateToScreen={navigateToScreen}
 
-        // Touch handling
-        onTouchStart={handleTouchStart}
-        onTouchMove={handleTouchMove}
-        onTouchEnd={handleTouchEnd}
+              // Touch handling
+              onTouchStart={handleTouchStart}
+              onTouchMove={handleTouchMove}
+              onTouchEnd={handleTouchEnd}
 
-        // Global state
-        gender={gender}
-        onGenderChange={handleGenderChange}
-        voicePreference={voicePreference}
-        onVoicePreferenceChange={handleVoicePreferenceChange}
-        isPlayerActive={isPlayerActive}
+              // Global state
+              gender={gender}
+              onGenderChange={handleGenderChange}
+              voicePreference={voicePreference}
+              onVoicePreferenceChange={handleVoicePreferenceChange}
+              isPlayerActive={isPlayerActive}
 
-        // Meditace specifické
-        time={time}
-        selectedDuration={selectedDuration}
-        isPlaying={isPlaying}
-        onDurationChange={handleDurationChange}
-        onPlayPause={handlePlayPause}
-        onReset={handleReset}
-        breathPhase={breathPhase}
+              // Meditace specifické
+              time={time}
+              selectedDuration={selectedDuration}
+              isPlaying={isPlaying}
+              onDurationChange={handleDurationChange}
+              onPlayPause={handlePlayPause}
+              onReset={handleReset}
+              breathPhase={breathPhase}
 
-        // Audio player specifické
-        activeAudio={activeAudio}
-        selectedAlbum={selectedAlbum}
-        onPlayerStateChange={handlePlayerStateChange}
-        onCloseAudio={handleCloseAudio}
-        onAlbumClose={handleAlbumClose}
-        />
-      )}
+              // Audio player specifické
+              activeAudio={activeAudio}
+              selectedAlbum={selectedAlbum}
+              onPlayerStateChange={handlePlayerStateChange}
+              onCloseAudio={handleCloseAudio}
+              onAlbumClose={handleAlbumClose}
+            />
+          )}
 
-      {/* Offline Indicator */}
-      <OfflineIndicator />
+          {/* Offline Indicator */}
+          <OfflineIndicator />
 
-      </div>
+        </div>
       </LanguageProvider>
     </ErrorBoundary>
   );
@@ -299,21 +299,23 @@ export function AdminApp() {
         </Suspense>
 
         {/* Monitoring Dashboard - pouze v admin */}
-        {import.meta.env.MODE === 'development' && (
-          <>
-            <button
-              onClick={() => setShowMonitoring(!showMonitoring)}
-              className="fixed top-4 right-4 bg-blue-500 text-white px-3 py-2 rounded-lg text-sm shadow-lg hover:bg-blue-600 transition-colors z-50"
-            >
-              📊 Monitor
-            </button>
-            <MonitoringDashboard
-              isVisible={showMonitoring}
-              onClose={() => setShowMonitoring(false)}
-            />
-          </>
-        )}
-      </LanguageProvider>
-    </ErrorBoundary>
+        {
+          import.meta.env.MODE === 'development' && (
+            <>
+              <button
+                onClick={() => setShowMonitoring(!showMonitoring)}
+                className="fixed top-4 right-4 bg-blue-500 text-white px-3 py-2 rounded-lg text-sm shadow-lg hover:bg-blue-600 transition-colors z-50"
+              >
+                📊 Monitor
+              </button>
+              <MonitoringDashboard
+                isVisible={showMonitoring}
+                onClose={() => setShowMonitoring(false)}
+              />
+            </>
+          )
+        }
+      </LanguageProvider >
+    </ErrorBoundary >
   );
 }

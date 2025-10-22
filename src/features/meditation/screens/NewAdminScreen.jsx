@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Moon, Sun, Database, Upload, BarChart3, FileAudio, FileText, RefreshCw, Download, Wifi, WifiOff, HardDrive } from 'lucide-react';
-import { storage, db, database } from '@services/firebase';
+import { storage, db, database, auth } from '@services/firebase';
 import { ref, listAll, getMetadata, getDownloadURL } from 'firebase/storage';
-import { collection, getDocs, addDoc } from 'firebase/firestore';
+import { collection, getDocs, addDoc, query, orderBy } from 'firebase/firestore';
 import { ref as dbRef, set, get } from 'firebase/database';
+import { signInAnonymously } from 'firebase/auth';
 import offlineCacheService from '@services/offlineCacheService';
 
 const NewAdminScreen = () => {
@@ -472,6 +473,14 @@ const NewAdminScreen = () => {
     setLoading(true);
     try {
       console.log('🔄 Starting Firestore to Realtime Database sync...');
+
+      // Přihlásit se anonymně pro zápis do Realtime Database
+      try {
+        await signInAnonymously(auth);
+        console.log('✅ Anonymous authentication successful');
+      } catch (authError) {
+        console.warn('⚠️ Anonymous auth failed, trying without auth:', authError.message);
+      }
 
       // Načti všechna metadata z Firestore
       const metadataCollection = collection(db, 'audio-metadata');

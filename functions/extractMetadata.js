@@ -1,0 +1,191 @@
+const functions = require('firebase-functions');
+const admin = require('firebase-admin');
+const { Storage } = require('@google-cloud/storage');
+const { spawn } = require('child_process');
+const path = require('path');
+const os = require('os');
+const fs = require('fs');
+
+// Inicializace Firebase Admin
+admin.initializeApp();
+
+const storage = new Storage();
+
+/**
+ * Firebase Function pro extrakci metadat z MP3 souborů
+ * Spouští se při změně v Firebase Storage
+ */
+exports.extractMP3Metadata = functions.storage.object().onFinalize(async (object) => {
+  const filePath = object.name;
+  const contentType = object.contentType;
+
+  // Zkontroluj, jestli je to MP3 soubor
+  if (!contentType || !contentType.startsWith('audio/') || !filePath.endsWith('.mp3')) {
+    console.log('Skipping non-audio file:', filePath);
+    return null;
+  }
+
+  console.log('Processing MP3 file:', filePath);
+
+  try {
+    // Stáhni soubor do dočasné složky
+    const bucket = storage.bucket(object.bucket);
+    const tempFilePath = path.join(os.tmpdir(), path.basename(filePath));
+    await bucket.file(filePath).download({ destination: tempFilePath });
+
+    // Extrahuj metadata pomocí ffprobe
+    const metadata = await extractMetadataWithFFprobe(tempFilePath);
+
+    // Přidej dodatečné informace
+    const completeMetadata = {
+      fileName: filePath,
+      displayName: path.basename(filePath, '.mp3'),
+      folder: filePath.split('/')[0],
+      subFolder: filePath.split('/').length > 2 ? filePath.split('/')[1] : null,
+      downloadURL: `https://firebasestorage.googleapis.com/v0/b/${object.bucket}/o/${encodeURIComponent(filePath)}?alt=media`,
+      fullPath: filePath,
+      duration: metadata.duration,
+      durationFormatted: formatDuration(metadata.duration),
+      durationDetailed: formatDurationDetailed(metadata.duration),
+      isValid: metadata.duration > 0,
+      fileSize: parseInt(object.size),
+      contentType: contentType,
+      lastModified: new Date().toISOString(),
+      extracted: true,
+      // Dodatečné informace pro slova soubory
+      ...(filePath.startsWith('slova/') ? {
+        gender: extractGender(path.basename(filePath)),
+        topic: extractTopic(path.basename(filePath)),
+        type: extractType(path.basename(filePath))
+      } : {})
+    };
+
+    // Ulož do Firestore
+    await admin.firestore().collection('audio-metadata').add(completeMetadata);
+
+    // Ulož do Realtime Database
+    const realtimeRef = admin.database().ref('audio-metadata');
+    const snapshot = await realtimeRef.once('value');
+    const existingData = snapshot.val() || { files: [] };
+
+    // Přidej nový soubor do existujících dat
+    const files = existingData.files || [];
+    const existingIndex = files.findIndex(f => f.fileName === filePath);
+
+    if (existingIndex >= 0) {
+      files[existingIndex] = completeMetadata;
+    } else {
+      files.push(completeMetadata);
+    }
+
+    await realtimeRef.set({
+      ...existingData,
+      files: files,
+      lastSync: new Date().toISOString(),
+      totalFiles: files.length,
+      slovaFiles: files.filter(f => f.folder === 'slova').length,
+      hudbaFiles: files.filter(f => f.folder === 'hudba').length
+    });
+
+    console.log('Metadata extracted and saved for:', filePath);
+
+    // Smaž dočasný soubor
+    fs.unlinkSync(tempFilePath);
+
+    return null;
+  } catch (error) {
+    console.error('Error extracting metadata for', filePath, ':', error);
+    return null;
+  }
+});
+
+/**
+ * Extrahuje metadata pomocí ffprobe
+ */
+function extractMetadataWithFFprobe(filePath) {
+  return new Promise((resolve, reject) => {
+    const ffprobe = spawn('ffprobe', [
+      '-v', 'quiet',
+      '-print_format', 'json',
+      '-show_format',
+      filePath
+    ]);
+
+    let output = '';
+    let errorOutput = '';
+
+    ffprobe.stdout.on('data', (data) => {
+      output += data.toString();
+    });
+
+    ffprobe.stderr.on('data', (data) => {
+      errorOutput += data.toString();
+    });
+
+    ffprobe.on('close', (code) => {
+      if (code !== 0) {
+        reject(new Error(`ffprobe failed with code ${code}: ${errorOutput}`));
+        return;
+      }
+
+      try {
+        const result = JSON.parse(output);
+        const duration = parseFloat(result.format.duration) || 0;
+        resolve({ duration: Math.round(duration) });
+      } catch (parseError) {
+        reject(new Error(`Failed to parse ffprobe output: ${parseError.message}`));
+      }
+    });
+  });
+}
+
+/**
+ * Formátování délky
+ */
+function formatDuration(seconds) {
+  if (!seconds || seconds <= 0) return 'N/A';
+  const minutes = Math.floor(seconds / 60);
+  const secs = seconds % 60;
+  return `${minutes}:${secs.toString().padStart(2, '0')}`;
+}
+
+/**
+ * Detailní formátování délky
+ */
+function formatDurationDetailed(seconds) {
+  if (!seconds || seconds <= 0) return 'N/A';
+  const hours = Math.floor(seconds / 3600);
+  const minutes = Math.floor((seconds % 3600) / 60);
+  const secs = seconds % 60;
+
+  if (hours > 0) {
+    return `${hours}h ${minutes}m ${secs}s`;
+  }
+  return `${minutes}m ${secs}s`;
+}
+
+/**
+ * Extrahuje pohlaví ze jména souboru
+ */
+function extractGender(fileName) {
+  if (fileName.includes('muzsky') || fileName.includes('MSK')) return 'male';
+  if (fileName.includes('zensky') || fileName.includes('FSK')) return 'female';
+  return null;
+}
+
+/**
+ * Extrahuje téma ze jména souboru
+ */
+function extractTopic(fileName) {
+  const match = fileName.match(/-([^-]+)\.mp3$/i);
+  return match ? match[1] : null;
+}
+
+/**
+ * Extrahuje typ ze jména souboru
+ */
+function extractType(fileName) {
+  if (fileName.includes('MSK')) return 'MSK';
+  if (fileName.includes('FSK')) return 'FSK';
+  return null;
+}
