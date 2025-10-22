@@ -7,6 +7,8 @@ const FramerButton = ({
   className = '',
   variant = 'primary',
   disabled = false,
+  animationType, // FramerMotion specific props - ne předávat do DOM
+  delay,
   ...props
 }) => {
   const getVariantClasses = () => {

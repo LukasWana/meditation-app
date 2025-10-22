@@ -80,8 +80,8 @@ self.addEventListener('fetch', (event) => {
 
   // Strategie pro různé typy souborů (pouze GET requesty)
   if (url.hostname.includes('firebasestorage.googleapis.com')) {
-    // Firebase Storage soubory - úplně obchází Service Worker kvůli CORS problémům
-    event.respondWith(fetch(request));
+    // Firebase Storage soubory - zkus cache nejdříve, pak network
+    event.respondWith(cacheFirstFirebase(request, AUDIO_CACHE));
   } else if (url.pathname.endsWith('.mp3') || url.pathname.includes('/media/')) {
     // Ostatní audio soubory - Network First s CORS podporou
     event.respondWith(networkFirstAudio(request, AUDIO_CACHE));
@@ -138,6 +138,46 @@ async function networkFirstAudio(request, cacheName) {
     const fallbackCache = await caches.match(request);
     if (fallbackCache) {
       console.log('🎵 Service Worker: Using cached audio as fallback', request.url);
+      return fallbackCache;
+    }
+
+    return new Response('Audio not available offline', {
+      status: 503,
+      statusText: 'Audio not available'
+    });
+  }
+}
+
+// Cache First strategie pro Firebase Storage soubory
+async function cacheFirstFirebase(request, cacheName) {
+  try {
+    // Zkus cache nejdříve
+    const cachedResponse = await caches.match(request);
+    if (cachedResponse) {
+      console.log('🎵 Service Worker: Firebase audio from cache', request.url);
+      return cachedResponse;
+    }
+
+    // Pokud není v cache, zkus network s no-cors mode
+    console.log('🎵 Service Worker: Loading Firebase audio from network', request.url);
+    const networkResponse = await fetch(request, {
+      mode: 'no-cors',
+      credentials: 'omit'
+    });
+
+    if (networkResponse.ok || networkResponse.type === 'opaque') {
+      const cache = await caches.open(cacheName);
+      cache.put(request, networkResponse.clone());
+      console.log('🎵 Service Worker: Firebase audio cached', request.url);
+    }
+    return networkResponse;
+  } catch (error) {
+    console.error('❌ Service Worker: Firebase audio fetch failed', error);
+
+    // Pokud network selže, zkus cache znovu
+    const fallbackCache = await caches.match(request);
+    if (fallbackCache) {
+      console.log('🎵 Service Worker: Using cached Firebase audio as fallback', request.url);
       return fallbackCache;
     }
 

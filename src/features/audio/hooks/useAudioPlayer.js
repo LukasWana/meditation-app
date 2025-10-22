@@ -1,10 +1,9 @@
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useCallback } from 'react';
 import cacheService from '@services/cacheServiceRefactored';
 import log from '@services/logger';
 import globalMetadataPreloader from '@services/globalMetadataPreloader';
 import { useAudioContextManager } from './useAudioContextManager';
 import { useAudioPlayback } from './useAudioPlayback';
-import { extractFileNameFromUrl } from '@utils/audioUrlUtils';
 import { useFadeEffects } from '@hooks/useFadeEffects';
 import { useAudioElementState } from '@hooks/useAudioElementState';
 import { useLegacyPlayback } from '@hooks/useLegacyPlayback';
@@ -27,6 +26,8 @@ export const useAudioPlayer = (audioUrl, albumTracks = null, currentTrackIndex =
     skipForward,
     handleSeek,
     formatTime,
+    resolvedUrl,
+    isLoadingFromCache
   } = useAudioPlayback(audioUrl);
 
   // Legacy state pro kompatibilitu s existujícím kódem
@@ -54,7 +55,7 @@ export const useAudioPlayer = (audioUrl, albumTracks = null, currentTrackIndex =
   useAutoplayLogic(audioUrl, isPlaying, togglePlayPause, audioState.userPaused, playbackState.shouldAutoplay, albumTracks, currentTrackIndex, onTrackChange, audioState.hasInteracted);
   useAudioStateSync(audioRef, audioUrl, audioState, setAudioState, playbackState, setPlaybackState, albumTracks, currentTrackIndex, onTrackChange);
 
-  // Aktivuj audio při změně skladby - delegováno na useAudioPlayback
+  // Aktivuj audio při změně skladby
   useEffect(() => {
     if (audioUrl) {
       setAudioState(prev => ({ ...prev, hasInteracted: true }));
@@ -74,7 +75,7 @@ export const useAudioPlayer = (audioUrl, albumTracks = null, currentTrackIndex =
     currentTime,
     duration,
     durationStable,
-    isLoading: playbackState.isLoading,
+    isLoading: playbackState.isLoading || isLoadingFromCache,
     hasError: playbackState.hasError,
     errorMessage: playbackState.errorMessage,
     progress,
@@ -84,6 +85,8 @@ export const useAudioPlayer = (audioUrl, albumTracks = null, currentTrackIndex =
     handleSeek,
     formatTime,
     fadeOutAndClose,
-    volume: audioState.volume
+    volume: audioState.volume,
+    isCached: !!resolvedUrl && resolvedUrl.startsWith('blob:'),
+    isLoadingFromCache
   };
 };
