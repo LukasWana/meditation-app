@@ -19,9 +19,9 @@ export const useAudioStateSync = (
   useEffect(() => {
     const audio = audioRef.current;
     if (!audio || !audioUrl) {
-      log.audio('🎵 Audio URL effect: skipping - no audio element or audioUrl:', { 
-        hasAudio: !!audio, 
-        audioUrl 
+      log.audio('🎵 Audio URL effect: skipping - no audio element or audioUrl:', {
+        hasAudio: !!audio,
+        audioUrl
       });
       return;
     }
@@ -62,11 +62,11 @@ export const useAudioStateSync = (
     const handleLoadedMetadata = () => {
       const duration = audio.duration;
       if (duration && isFinite(duration) && duration > 0) {
-        setPlaybackState(prev => ({ 
-          ...prev, 
+        setPlaybackState(prev => ({
+          ...prev,
           duration: duration,
           durationStable: true,
-          isLoading: false 
+          isLoading: false
         }));
         log.audio(`🎵 Duration loaded: ${duration}s`);
       } else {
@@ -85,8 +85,8 @@ export const useAudioStateSync = (
     };
 
     const handleError = (event) => {
-      setPlaybackState(prev => ({ 
-        ...prev, 
+      setPlaybackState(prev => ({
+        ...prev,
         hasError: true,
         errorMessage: event.error?.message || 'Audio loading failed'
       }));
@@ -106,7 +106,7 @@ export const useAudioStateSync = (
     const handleEnded = () => {
       setAudioState(prev => ({ ...prev, isPlaying: false }));
       log.audio('🎵 Audio ended');
-      
+
       // Pokud je to album, přejdi na další track
       if (albumTracks && albumTracks.length > 1 && currentTrackIndex < albumTracks.length - 1) {
         const nextIndex = currentTrackIndex + 1;
