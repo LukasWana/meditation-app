@@ -28,7 +28,8 @@ const AudioPlayerPage = ({
     skipBackward,
     skipForward,
     handleSeek,
-    formatTime
+    formatTime,
+    cachedAudioUrl
   } = useAudioPlayer(audioUrl);
 
   return (
@@ -44,7 +45,7 @@ const AudioPlayerPage = ({
           {/* Audio Element */}
           <audio
             ref={audioRef}
-            src={audioUrl}
+            src={cachedAudioUrl || audioUrl}
             preload="metadata"
           />
 

@@ -5,6 +5,7 @@ import { useNavigation, useTouchNavigation, useAppState, useBackgroundDataLoader
 import { LazyIntroScreen } from '@components/LazyWrapper';
 import { LanguageProvider } from '@contexts/LanguageContext';
 import MonitoringDashboard from '@components/MonitoringDashboard';
+import OfflineIndicator from '@components/OfflineIndicator';
 
 import ErrorBoundary from '@components/ErrorBoundary';
 import { register } from '@services/serviceWorker';
@@ -95,6 +96,126 @@ function MeditationApp() {
       import('./scripts/consoleDbViewer.js').then(() => {
         console.log('🔍 Database viewer je k dispozici v konzoli');
       });
+
+      // Debug funkce pro slova soubory
+      window.debugSlovaFiles = async () => {
+        console.log('🔍 Debugging slova files...');
+        try {
+          const { realtimeMetadataService } = await import('./services/realtimeMetadataService');
+          const metadata = await realtimeMetadataService.getAllMetadata();
+
+          console.log('📊 All metadata keys:', Object.keys(metadata).length);
+          console.log('📊 All metadata:', metadata);
+
+          const slovaFiles = Object.values(metadata).filter(file =>
+            file.fileName && file.fileName.includes('slova/')
+          );
+          console.log('🎤 Slova files found:', slovaFiles.length);
+          console.log('🎤 Slova files:', slovaFiles);
+
+          return { totalFiles: Object.keys(metadata).length, slovaFiles: slovaFiles.length };
+        } catch (error) {
+          console.error('❌ Error debugging slova files:', error);
+          return null;
+        }
+      };
+
+      // Debug funkce pro cache
+      window.debugCache = async () => {
+        console.log('🔍 Debugging cache...');
+        try {
+          const { default: offlineCacheService } = await import('./services/offlineCacheService');
+          await offlineCacheService.initialize();
+
+          const keys = await offlineCacheService.cache.keys();
+          console.log('📊 All cache keys:', keys.length);
+          console.log('📊 Cache keys:', keys.map(k => k.url));
+
+          const audioKeys = keys.filter(key => key.url.includes('/audio/'));
+          console.log('🎵 Audio files in cache:', audioKeys.length);
+
+          // Zkontroluj první pár souborů
+          for (let i = 0; i < Math.min(3, audioKeys.length); i++) {
+            const key = audioKeys[i];
+            const response = await offlineCacheService.cache.match(key);
+            if (response) {
+              const contentLength = response.headers.get('content-length');
+              console.log(`📁 File ${i + 1}: ${key.url.split('/audio/')[1]}`);
+              console.log(`   Content-Length: ${contentLength}`);
+              console.log(`   Headers:`, [...response.headers.entries()]);
+
+              try {
+                const blob = await response.blob();
+                console.log(`   Blob size: ${blob.size} bytes`);
+              } catch (e) {
+                console.log(`   Blob error:`, e.message);
+              }
+            }
+          }
+
+          const stats = await offlineCacheService.getCacheStats();
+          console.log('📊 Cache stats:', stats);
+
+          return stats;
+        } catch (error) {
+          console.error('❌ Error debugging cache:', error);
+          return null;
+        }
+      };
+
+      // Funkce pro vymazání cache
+      window.clearCache = async () => {
+        console.log('🧹 Clearing cache...');
+        try {
+          const { default: offlineCacheService } = await import('./services/offlineCacheService');
+          await offlineCacheService.initialize();
+          const result = await offlineCacheService.clearCache();
+          console.log('✅ Cache cleared:', result);
+          return result;
+        } catch (error) {
+          console.error('❌ Error clearing cache:', error);
+          return false;
+        }
+      };
+
+    // Funkce pro testování přehrávání
+    window.testAudioPlayback = async (fileName) => {
+      console.log('🎵 Testing audio playback for:', fileName);
+      try {
+        const { default: offlineCacheService } = await import('./services/offlineCacheService');
+        await offlineCacheService.initialize();
+
+        const isCached = await offlineCacheService.isFileCached(fileName);
+        console.log('📊 Is cached:', isCached);
+
+        if (isCached) {
+          const cachedFile = await offlineCacheService.getCachedFile(fileName);
+          console.log('📊 Cached file type:', cachedFile ? cachedFile.type : 'unknown');
+          console.log('📊 Cached file headers:', cachedFile ? [...cachedFile.headers.entries()] : []);
+        }
+
+        return { isCached, fileName };
+      } catch (error) {
+        console.error('❌ Error testing audio playback:', error);
+        return null;
+      }
+    };
+
+    // Funkce pro nastavení log levelu
+    window.setLogLevel = async (level) => {
+      const { default: log } = await import('./services/logger');
+      log.setLogLevel(level);
+      console.log(`🔧 Log level nastaven na: ${level}`);
+      console.log('Dostupné úrovně: silent, error, warn, info, debug');
+    };
+
+    console.log('🔍 Debug funkce dostupné v konzoli:');
+    console.log('  - showDatabaseData() - zobrazí database viewer');
+    console.log('  - debugSlovaFiles() - zobrazí slova soubory v Realtime Database');
+    console.log('  - debugCache() - zobrazí detaily cache');
+    console.log('  - clearCache() - vymaže cache');
+    console.log('  - testAudioPlayback(fileName) - otestuje přehrávání konkrétního souboru');
+    console.log('  - setLogLevel(level) - nastaví úroveň logování (silent, error, warn, info, debug)');
     }
   }, []);
 
@@ -150,6 +271,8 @@ function MeditationApp() {
         />
       )}
 
+      {/* Offline Indicator */}
+      <OfflineIndicator />
 
       </div>
       </LanguageProvider>

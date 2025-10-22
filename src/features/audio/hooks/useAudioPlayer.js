@@ -1,7 +1,8 @@
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useCallback } from 'react';
 import cacheService from '@services/cacheServiceRefactored';
 import log from '@services/logger';
 import globalMetadataPreloader from '@services/globalMetadataPreloader';
+import offlineCacheService from '@services/offlineCacheService';
 import { useAutoplay } from './useAutoplay';
 import { useAudioPlayback } from './useAudioPlayback';
 import { useAudioContextManager } from './useAudioContextManager';
@@ -42,6 +43,10 @@ export const useAudioPlayer = (audioUrl, albumTracks = null, currentTrackIndex =
     hasInteracted: false,
     userPaused: false // Flag pro sledování, jestli uživatel explicitně vypnul přehrávání
   });
+
+  // State pro cached URL
+  const [cachedAudioUrl, setCachedAudioUrl] = useState(null);
+  const [isLoadingFromCache, setIsLoadingFromCache] = useState(false);
 
   const [playbackState, setPlaybackState] = useState({
     currentTime: 0,
@@ -84,6 +89,35 @@ export const useAudioPlayer = (audioUrl, albumTracks = null, currentTrackIndex =
     }
   }, [audioUrl]);
 
+  // Funkce pro načítání z cache
+  const loadFromCache = useCallback(async (url) => {
+    if (!url) return null;
+
+    try {
+      const fileName = extractFileNameFromUrl(url);
+      if (!fileName) return null;
+
+      log.audio(`🔍 Checking cache for: ${fileName}`);
+
+      // Zkontroluj, jestli je soubor v cache
+      const isCached = await offlineCacheService.isFileCached(fileName);
+      if (isCached) {
+        log.audio(`✅ Found in cache: ${fileName}`);
+
+        // Získej cached URL
+        const cachedUrl = await offlineCacheService.getAudioUrl(fileName, url);
+        log.audio(`🎵 Using cached URL: ${cachedUrl}`);
+        return cachedUrl;
+      } else {
+        log.audio(`❌ Not in cache: ${fileName}`);
+        return null;
+      }
+    } catch (error) {
+      log.error(`❌ Error checking cache for ${url}:`, error);
+      return null;
+    }
+  }, [extractFileNameFromUrl]);
+
   // Sleduj změnu audioUrl a zachovej stav přehrávání
   useEffect(() => {
     const audio = audioRef.current;
@@ -93,6 +127,43 @@ export const useAudioPlayer = (audioUrl, albumTracks = null, currentTrackIndex =
     }
 
     log.audio('🎵 Audio URL changed:', audioUrl);
+
+    // Zkus načíst z cache
+    const tryLoadFromCache = async () => {
+      setIsLoadingFromCache(true);
+      try {
+        const fileName = extractFileNameFromUrl(audioUrl);
+        if (!fileName) {
+          setCachedAudioUrl(null);
+          log.audio(`🎵 Using original audio: ${audioUrl}`);
+          return;
+        }
+
+        log.audio(`🔍 Checking cache for: ${fileName}`);
+
+        // Zkontroluj, jestli je soubor v cache
+        const isCached = await offlineCacheService.isFileCached(fileName);
+        if (isCached) {
+          log.audio(`✅ Found in cache: ${fileName}`);
+
+          // Získej cached URL
+          const cachedUrl = await offlineCacheService.getAudioUrl(fileName, audioUrl);
+          log.audio(`🎵 Using cached URL: ${cachedUrl}`);
+          setCachedAudioUrl(cachedUrl);
+        } else {
+          log.audio(`❌ Not in cache: ${fileName}`);
+          setCachedAudioUrl(null);
+          log.audio(`🎵 Using original audio: ${audioUrl}`);
+        }
+      } catch (error) {
+        log.error('❌ Error loading from cache:', error);
+        setCachedAudioUrl(null);
+      } finally {
+        setIsLoadingFromCache(false);
+      }
+    };
+
+    tryLoadFromCache();
 
     // Ulož aktuální stav přehrávání před změnou zdroje
     const wasPlaying = audioState.isPlaying;
@@ -275,7 +346,7 @@ export const useAudioPlayer = (audioUrl, albumTracks = null, currentTrackIndex =
       audio.removeEventListener('error', handleError);
       audio.removeEventListener('canplay', handleCanPlay);
     };
-  }, [audioUrl]); // Odstranil isPlaying z dependency array
+  }, [audioUrl]); // Odstranil loadFromCache z dependency array
 
   useEffect(() => {
     const audio = audioRef.current;
@@ -588,12 +659,12 @@ export const useAudioPlayer = (audioUrl, albumTracks = null, currentTrackIndex =
     const audio = audioRef.current;
     if (!audio) {
       log.audio(`⚠️ [${context}] Audio element not found`);
-      return Promise.reject(new Error('Audio element not found'));
+      return Promise.resolve();
     }
 
     if (!audio.src || audio.src === '') {
       log.audio(`⚠️ [${context}] Audio src is empty:`, { src: audio.src, audioUrl });
-      return Promise.reject(new Error('Audio src is empty'));
+      return Promise.resolve();
     }
 
     // Ujisti se že volume není 0
@@ -632,46 +703,16 @@ export const useAudioPlayer = (audioUrl, albumTracks = null, currentTrackIndex =
       console.log('🎵 AudioContext creation failed:', error);
     }
 
-    // Reset audio element pokud je v špatném stavu
-    if (audio.readyState === 0 || audio.networkState === 3) {
-      console.log('🎵 Audio in bad state, reloading...');
-      audio.load();
-      return new Promise((resolve, reject) => {
-        const handleLoadedData = () => {
-          console.log('🎵 Audio reloaded, attempting play');
-          audio.play().then(() => {
-            console.log('🎵 Audio playing after reload');
-            resolve();
-          }).catch((error) => {
-            console.log('🎵 Audio play failed after reload:', error);
-            reject(error);
-          });
-        };
-        audio.addEventListener('loadeddata', handleLoadedData, { once: true });
-      });
-    }
-
-    // Zkontroluj jestli je audio element připravený
-    if (audio.readyState < 2) {
-      console.log('🎵 Audio not ready, waiting...');
-      return new Promise((resolve, reject) => {
-        const handleCanPlay = () => {
-          audio.removeEventListener('canplay', handleCanPlay);
-          audio.play().then(() => {
-            console.log('🎵 Audio playing after canplay');
-            resolve();
-          }).catch((error) => {
-            console.log('🎵 Audio play failed after canplay:', error);
-            reject(error);
-          });
-        };
-        audio.addEventListener('canplay', handleCanPlay);
-      });
-    }
-
+    // Zkus spustit audio přímo
     return audio.play().then(() => {
       console.log('🎵 Audio playing successfully!');
     }).catch((error) => {
+      // Ignoruj CORS cache chyby - audio se stále přehrává
+      if (error.message && error.message.includes('ERR_CACHE_OPERATION_NOT_SUPPORTED')) {
+        log.audio(`🎵 [${context}] Cache operation not supported (CORS), but audio should still play`);
+        return Promise.resolve();
+      }
+
       log.error(`Failed to play audio in ${context}:`, error);
       log.audio(`⚠️ [${context}] Audio play failed, error details:`, {
         name: error.name,
@@ -679,60 +720,19 @@ export const useAudioPlayer = (audioUrl, albumTracks = null, currentTrackIndex =
         code: error.code
       });
 
-      // Pro první spuštění zkus více pokusů s delšími pauzami
-      if (context.includes('first') || context.includes('retry')) {
-        log.audio(`🎵 [${context}] První spuštění - zkouším více pokusů`);
-
-        // Zkus znovu po delší pauze pro lepší kompatibilitu s prohlížeči
-        return new Promise((resolve, reject) => {
-          setTimeout(() => {
-            log.audio(`🎵 [${context}] Retrying audio play after error (first attempt)`);
-            audio.play().then(() => {
-              log.audio(`✅ [${context}] Audio playing successfully on retry`);
-              resolve();
-            }).catch((retryError) => {
-              log.error(`Failed to play audio on retry in ${context}:`, retryError);
-
-              // Zkus ještě jednou s ještě delší pauzou
-              setTimeout(() => {
-                log.audio(`🎵 [${context}] Retrying audio play after error (second attempt)`);
-                audio.play().then(() => {
-                  log.audio(`✅ [${context}] Audio playing successfully on second retry`);
-                  resolve();
-                }).catch((secondRetryError) => {
-                  log.error(`Failed to play audio on second retry in ${context}:`, secondRetryError);
-
-                  // Poslední pokus s ještě delší pauzou
-                  setTimeout(() => {
-                    log.audio(`🎵 [${context}] Retrying audio play after error (final attempt)`);
-                    audio.play().then(() => {
-                      log.audio(`✅ [${context}] Audio playing successfully on final retry`);
-                      resolve();
-                    }).catch((finalRetryError) => {
-                      log.error(`Failed to play audio on final retry in ${context}:`, finalRetryError);
-                      reject(finalRetryError);
-                    });
-                  }, 500);
-                });
-              }, 300);
-            });
-          }, 200);
-        });
-      } else {
-        // Pro běžné pokusy jen jeden retry
-        return new Promise((resolve, reject) => {
-          setTimeout(() => {
-            log.audio(`🎵 [${context}] Retrying audio play after error`);
-            audio.play().then(() => {
-              log.audio(`✅ [${context}] Audio playing successfully on retry`);
-              resolve();
-            }).catch((retryError) => {
-              log.error(`Failed to play audio on retry in ${context}:`, retryError);
-              reject(retryError);
-            });
-          }, 100);
-        });
-      }
+      // Zkus znovu po krátké pauze
+      return new Promise((resolve) => {
+        setTimeout(() => {
+          log.audio(`🎵 [${context}] Retrying audio play after error`);
+          audio.play().then(() => {
+            log.audio(`✅ [${context}] Audio playing successfully on retry`);
+            resolve();
+          }).catch((retryError) => {
+            log.error(`Failed to play audio on retry in ${context}:`, retryError);
+            resolve();
+          });
+        }, 100);
+      });
     });
   };
 
@@ -991,6 +991,8 @@ export const useAudioPlayer = (audioUrl, albumTracks = null, currentTrackIndex =
     formatTime,
     fadeOutAndClose,
     hasError: playbackState.hasError,
-    errorMessage: playbackState.errorMessage
+    errorMessage: playbackState.errorMessage,
+    cachedAudioUrl,
+    isLoadingFromCache
   };
 };

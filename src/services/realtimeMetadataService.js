@@ -80,10 +80,33 @@ class RealtimeMetadataService {
             displayName: metadataObject[key].displayName
           })));
 
+          // Debug: zobraz slova soubory
+          const slovaFiles = Object.values(metadataObject).filter(file =>
+            file.fileName && file.fileName.includes('slova/')
+          );
+          log.debug(`🎤 Slova files in Realtime Database: ${slovaFiles.length}`);
+          log.debug('🎤 Sample slova files from DB:', slovaFiles.slice(0, 3).map(f => ({
+            fileName: f.fileName,
+            folder: f.folder,
+            hasDownloadURL: !!(f.downloadURL || f.audioSrc)
+          })));
+
           return metadataObject;
         } else {
           // Pokud jsou data už ve správné struktuře
           log.debug(`✅ All metadata loaded from Realtime Database: ${Object.keys(data).length} files`);
+
+          // Debug: zobraz slova soubory i pro druhou strukturu
+          const slovaFiles = Object.values(data).filter(file =>
+            file.fileName && file.fileName.includes('slova/')
+          );
+          log.debug(`🎤 Slova files in Realtime Database: ${slovaFiles.length}`);
+          log.debug('🎤 Sample slova files from DB:', slovaFiles.slice(0, 3).map(f => ({
+            fileName: f.fileName,
+            folder: f.folder,
+            hasDownloadURL: !!(f.downloadURL || f.audioSrc)
+          })));
+
           return data;
         }
       } else {

@@ -52,6 +52,7 @@ const AudioPlayer = ({
     handleSeek,
     formatTime,
     fadeOutAndClose,
+    cachedAudioUrl
   } = useAudioPlayer(audioUrl, albumTracks, currentTrackIndex, onTrackChange, autoplayEnabled);
 
   return (
@@ -66,7 +67,7 @@ const AudioPlayer = ({
         {/* Audio Element */}
         <audio
           ref={audioRef}
-          src={audioUrl || undefined}
+          src={cachedAudioUrl || audioUrl || undefined}
           preload="metadata"
         />
 

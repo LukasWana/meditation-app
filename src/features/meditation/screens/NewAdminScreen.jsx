@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { Moon, Sun, Database, Upload, BarChart3, FileAudio, FileText, RefreshCw } from 'lucide-react';
+import { Moon, Sun, Database, Upload, BarChart3, FileAudio, FileText, RefreshCw, Download, Wifi, WifiOff, HardDrive } from 'lucide-react';
 import { storage, db, database } from '@services/firebase';
 import { ref, listAll, getMetadata, getDownloadURL } from 'firebase/storage';
 import { collection, getDocs, addDoc } from 'firebase/firestore';
 import { ref as dbRef, set, get } from 'firebase/database';
+import offlineCacheService from '@services/offlineCacheService';
 
 const NewAdminScreen = () => {
   const [isDarkMode, setIsDarkMode] = useState(false);
@@ -23,10 +24,73 @@ const NewAdminScreen = () => {
   const [lastUpdateCheck, setLastUpdateCheck] = useState(null);
   const [updateStatus, setUpdateStatus] = useState('idle'); // idle, checking, needs-update, up-to-date
 
+  // Offline cache states
+  const [cacheStats, setCacheStats] = useState(null);
+  const [isOfflineReady, setIsOfflineReady] = useState(false);
+  const [cacheProgress, setCacheProgress] = useState(null);
+  const [isCaching, setIsCaching] = useState(false);
+
   // Automatická kontrola při načtení
   useEffect(() => {
     checkForUpdates();
+    initializeOfflineCache();
   }, []);
+
+  // Inicializace offline cache
+  const initializeOfflineCache = async () => {
+    try {
+      await offlineCacheService.initialize();
+      await loadCacheStats();
+    } catch (error) {
+      console.error('❌ Failed to initialize offline cache:', error);
+    }
+  };
+
+  // Načti statistiky cache
+  const loadCacheStats = async () => {
+    try {
+      const stats = await offlineCacheService.getCacheStats();
+      setCacheStats(stats);
+      setIsOfflineReady(stats ? stats.isOfflineReady : false);
+    } catch (error) {
+      console.error('❌ Failed to load cache stats:', error);
+    }
+  };
+
+  // Spusť stahování všech audio souborů do cache
+  const startCachingAllFiles = async () => {
+    if (isCaching) return;
+
+    setIsCaching(true);
+    setCacheProgress({ current: 0, total: fileData.length, percentage: 0 });
+
+    try {
+      const result = await offlineCacheService.cacheAllAudioFiles(fileData, (progress) => {
+        setCacheProgress(progress);
+      });
+
+      console.log('✅ Caching completed:', result);
+      await loadCacheStats(); // Aktualizuj statistiky
+    } catch (error) {
+      console.error('❌ Caching failed:', error);
+    } finally {
+      setIsCaching(false);
+      setCacheProgress(null);
+    }
+  };
+
+  // Vymaž cache
+  const clearCache = async () => {
+    if (!confirm('Opravdu chcete vymazat všechny stažené soubory?')) return;
+
+    try {
+      await offlineCacheService.clearCache();
+      await loadCacheStats();
+      console.log('✅ Cache cleared');
+    } catch (error) {
+      console.error('❌ Failed to clear cache:', error);
+    }
+  };
 
   // Rekurzivní načtení všech souborů ze složky
   const getAllFilesRecursively = async (folderRef, folderName) => {
@@ -617,6 +681,131 @@ const NewAdminScreen = () => {
                 </div>
               </div>
             )}
+          </div>
+        </motion.div>
+
+        {/* Offline Cache sekce */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.6 }}
+          className={`p-6 rounded-lg border mb-6 ${cardClasses}`}
+        >
+          <h3 className="text-xl font-semibold mb-4 flex items-center">
+            <HardDrive className="mr-2" size={24} />
+            Offline Cache
+          </h3>
+          <p className="text-gray-500 mb-4">
+            Stáhněte audio soubory do cache pro offline použití aplikace.
+          </p>
+
+          {/* Cache statistiky */}
+          {cacheStats && (
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+              <div className={`p-4 rounded-lg ${isOfflineReady ? 'bg-green-50 border border-green-200' : 'bg-gray-50 border border-gray-200'}`}>
+                <div className="flex items-center mb-2">
+                  {isOfflineReady ? <Wifi className="text-green-500 mr-2" size={20} /> : <WifiOff className="text-gray-400 mr-2" size={20} />}
+                  <span className="font-semibold">Offline stav</span>
+                </div>
+                <p className={`text-sm ${isOfflineReady ? 'text-green-600' : 'text-gray-500'}`}>
+                  {isOfflineReady ? 'Připraveno pro offline' : 'Není připraveno'}
+                </p>
+              </div>
+
+              <div className="p-4 rounded-lg bg-blue-50 border border-blue-200">
+                <div className="flex items-center mb-2">
+                  <FileAudio className="text-blue-500 mr-2" size={20} />
+                  <span className="font-semibold">Stažené soubory</span>
+                </div>
+                <p className="text-sm text-blue-600">
+                  {cacheStats.totalFiles} / {audioStats.totalFiles}
+                </p>
+              </div>
+
+              <div className="p-4 rounded-lg bg-purple-50 border border-purple-200">
+                <div className="flex items-center mb-2">
+                  <Database className="text-purple-500 mr-2" size={20} />
+                  <span className="font-semibold">Velikost cache</span>
+                </div>
+                <p className="text-sm text-purple-600">
+                  {cacheStats.totalSizeFormatted}
+                </p>
+              </div>
+            </div>
+          )}
+
+          {/* Progress bar pro stahování */}
+          {isCaching && cacheProgress && (
+            <div className="mb-6">
+              <div className="flex justify-between mb-2">
+                <span className="text-sm font-medium">Stahování souborů...</span>
+                <span className="text-sm text-gray-500">
+                  {cacheProgress.current} / {cacheProgress.total} ({cacheProgress.percentage}%)
+                </span>
+              </div>
+              <div className="w-full bg-gray-200 rounded-full h-3">
+                <div
+                  className="bg-blue-500 h-3 rounded-full transition-all duration-300"
+                  style={{ width: `${cacheProgress.percentage}%` }}
+                ></div>
+              </div>
+              <p className="text-xs text-gray-500 mt-1">
+                Aktuálně: {cacheProgress.fileName}
+              </p>
+            </div>
+          )}
+
+          {/* Tlačítka pro správu cache */}
+          <div className="space-y-4">
+            <div className="flex flex-wrap gap-3">
+              <button
+                onClick={startCachingAllFiles}
+                disabled={isCaching || fileData.length === 0}
+                className="flex items-center px-4 py-2 bg-blue-500 hover:bg-blue-600 disabled:bg-gray-400 text-white rounded-lg transition-colors"
+              >
+                <Download className="mr-2" size={16} />
+                {isCaching ? 'Stahování...' : 'Stáhnout vše do cache'}
+              </button>
+
+              <button
+                onClick={loadCacheStats}
+                className="flex items-center px-4 py-2 bg-gray-500 hover:bg-gray-600 text-white rounded-lg transition-colors"
+              >
+                <RefreshCw className="mr-2" size={16} />
+                Aktualizovat statistiky
+              </button>
+
+              <button
+                onClick={clearCache}
+                disabled={!cacheStats || cacheStats.totalFiles === 0}
+                className="flex items-center px-4 py-2 bg-red-500 hover:bg-red-600 disabled:bg-gray-400 text-white rounded-lg transition-colors"
+              >
+                <HardDrive className="mr-2" size={16} />
+                Vymazat cache
+              </button>
+            </div>
+
+            {/* Informace o offline režimu */}
+            <div className={`p-4 rounded-lg ${isOfflineReady ? 'bg-green-50 border border-green-200' : 'bg-yellow-50 border border-yellow-200'}`}>
+              <div className="flex items-start">
+                {isOfflineReady ? (
+                  <Wifi className="text-green-500 mr-3 mt-0.5" size={20} />
+                ) : (
+                  <WifiOff className="text-yellow-500 mr-3 mt-0.5" size={20} />
+                )}
+                <div>
+                  <h4 className="font-semibold mb-1">
+                    {isOfflineReady ? 'Aplikace je připravena pro offline použití' : 'Aplikace není připravena pro offline použití'}
+                  </h4>
+                  <p className="text-sm text-gray-600">
+                    {isOfflineReady
+                      ? 'Všechny audio soubory jsou stažené a aplikace bude fungovat i bez internetového připojení.'
+                      : 'Pro offline použití je potřeba stáhnout audio soubory do cache pomocí tlačítka výše.'
+                    }
+                  </p>
+                </div>
+              </div>
+            </div>
           </div>
         </motion.div>
 

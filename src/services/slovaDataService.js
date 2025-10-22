@@ -71,28 +71,28 @@ class SlovaDataService {
   // Inicializace slova dat z cache
   async initialize() {
     if (this.isInitialized) {
-      console.log('⚠️ SlovaDataService already initialized, skipping...');
+      log.debug('SlovaDataService already initialized, skipping...');
       return;
     }
 
     try {
-      console.log('🔄 Initializing slova data service...');
+      log.info('Initializing slova data service...');
 
-      // Import cache service
-      const cacheService = (await import('./cacheServiceRefactored')).default;
-      const allMetadata = cacheService.getAllMetadata();
+      // Import realtime metadata service
+      const { realtimeMetadataService } = await import('./realtimeMetadataService');
+      const allMetadata = await realtimeMetadataService.getAllMetadata();
 
-      console.log('🔍 Cache service loaded, checking metadata...');
-      console.log('🔍 All metadata keys count:', Object.keys(allMetadata).length);
+      log.debug('Cache service loaded, checking metadata...');
+      log.debug('All metadata keys count:', Object.keys(allMetadata).length);
 
       if (!allMetadata || Object.keys(allMetadata).length === 0) {
-        console.warn('⚠️ No metadata in cache for slova processing');
+        log.warn('No metadata in cache for slova processing');
         return;
       }
 
-      console.log(`📊 Processing ${Object.keys(allMetadata).length} metadata entries for slova...`);
-      console.log('🔍 Sample metadata keys:', Object.keys(allMetadata).slice(0, 5));
-      console.log('🔍 Sample metadata values:', Object.values(allMetadata).slice(0, 3).map(meta => ({
+      log.debug(`Processing ${Object.keys(allMetadata).length} metadata entries for slova...`);
+      log.debug('Sample metadata keys:', Object.keys(allMetadata).slice(0, 5));
+      log.debug('Sample metadata values:', Object.values(allMetadata).slice(0, 3).map(meta => ({
         fileName: meta.fileName,
         folder: meta.folder,
         fullPath: meta.fullPath
@@ -103,13 +103,12 @@ class SlovaDataService {
         const isSlova = meta.folder === 'slova' ||
                         meta.fileName?.includes('slova/') ||
                         meta.fullPath?.includes('slova/');
-        console.log(`🔍 File ${meta.fileName}: folder=${meta.folder}, isSlova=${isSlova}`);
         return isSlova;
       });
 
       // Pokud se nenašly žádné slova soubory, zkus najít všechny soubory s 'slova' v názvu
       if (slovaMetadata.length === 0) {
-        console.warn('⚠️ No slova files found with folder filter, trying broader search...');
+        log.warn('No slova files found with folder filter, trying broader search...');
         slovaMetadata = Object.values(allMetadata).filter(meta => {
           const fileName = meta.fileName || meta.fullPath || '';
           return fileName.toLowerCase().includes('slova') ||
@@ -118,7 +117,7 @@ class SlovaDataService {
         });
       }
 
-      console.log(`🎤 Found ${slovaMetadata.length} slova files`);
+      log.info(`Found ${slovaMetadata.length} slova files`);
 
       // Transformuj metadata na formát pro UI
       const transformedItems = slovaMetadata.map(meta => {
@@ -183,17 +182,17 @@ class SlovaDataService {
       });
 
       this.isInitialized = true;
-      console.log('✅ Slova data service initialized successfully');
-      console.log('📊 Slova data summary:', {
+      log.success('Slova data service initialized successfully');
+      log.debug('Slova data summary:', {
         sk: { male: this.slovaData.sk.male.length, female: this.slovaData.sk.female.length, all: this.slovaData.sk.all.length },
         cz: { male: this.slovaData.cz.male.length, female: this.slovaData.cz.female.length, all: this.slovaData.cz.all.length },
         en: { male: this.slovaData.en.male.length, female: this.slovaData.en.female.length, all: this.slovaData.en.all.length }
       });
-      console.log('🔍 SK male items sample:', this.slovaData.sk.male.slice(0, 3));
-      console.log('🔍 SK female items sample:', this.slovaData.sk.female.slice(0, 3));
+      log.debug('SK male items sample:', this.slovaData.sk.male.slice(0, 3));
+      log.debug('SK female items sample:', this.slovaData.sk.female.slice(0, 3));
 
     } catch (error) {
-      console.error('❌ Failed to initialize slova data service:', error);
+      log.error('Failed to initialize slova data service:', error);
     }
   }
 
@@ -300,7 +299,7 @@ class SlovaDataService {
   getSlovaData(userGender = 'all', userLanguage = 'sk') {
     // Pokud není inicializovaný, vrať prázdné pole
     if (!this.isInitialized) {
-      console.warn('⚠️ SlovaDataService not initialized');
+      log.warn('SlovaDataService not initialized');
       return [];
     }
 
