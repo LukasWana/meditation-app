@@ -264,7 +264,7 @@ const DataStorageCharts = () => {
                 <div className="w-24 text-sm font-medium capitalize">{item.name}</div>
                 <div className="flex-1 mx-3">
                   <div className="bg-gray-200 rounded-full h-6 relative">
-                    <div 
+                    <div
                       className="bg-blue-500 h-6 rounded-full flex items-center justify-end pr-2"
                       style={{ width: `${Math.min(100, (item.count / Math.max(1, ...barData.map(d => d.count))) * 100)}%` }}
                     >
@@ -290,7 +290,7 @@ const DataStorageCharts = () => {
           <div className="space-y-3">
             {pieData.map((item, index) => (
               <div key={index} className="flex items-center">
-                <div 
+                <div
                   className="w-4 h-4 rounded mr-3"
                   style={{ backgroundColor: item.color }}
                 ></div>
@@ -321,7 +321,7 @@ const DataStorageCharts = () => {
                 <div className="w-24 text-sm font-medium capitalize">{item.name}</div>
                 <div className="flex-1 mx-3">
                   <div className="bg-gray-200 rounded-full h-6 relative">
-                    <div 
+                    <div
                       className="bg-green-500 h-6 rounded-full flex items-center justify-end pr-2"
                       style={{ width: `${Math.min(100, (item.size / Math.max(1, ...barData.map(d => d.size))) * 100)}%` }}
                     >
