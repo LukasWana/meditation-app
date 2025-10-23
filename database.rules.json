@@ -1,41 +1,39 @@
 {
   "rules": {
-    // Veřejné čtení pro základní data
-    ".read": true,
-    
-    // Zápis pouze pro autentifikované uživatele
-    ".write": "auth != null",
-    
+    // Výchozí pravidla - zamítnout vše
+    ".read": false,
+    ".write": false,
+
     // Audio metadata - veřejné čtení, zápis pouze pro autentifikované
-    "audio_metadata": {
+    "audio-metadata": {
       ".read": true,
       ".write": "auth != null"
     },
-    
+
     // Audio statistiky - veřejné čtení, zápis pouze pro autentifikované
     "audio_stats": {
       ".read": true,
       ".write": "auth != null"
     },
-    
+
     // Test data - pouze pro autentifikované
     "test": {
       ".read": "auth != null",
       ".write": "auth != null"
     },
-    
+
     // Metadata - veřejné čtení, zápis pro autentifikované
     "metadata": {
       ".read": true,
       ".write": "auth != null"
     },
-    
+
     // System data - pouze pro autentifikované
     "system": {
       ".read": "auth != null",
       ".write": "auth != null"
     },
-    
+
     // User data - každý uživatel může číst/zapisovat pouze své vlastní data
     "users": {
       "$uid": {
