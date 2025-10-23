@@ -57,7 +57,7 @@ const DataStorageCharts = () => {
         console.error('Failed to load recharts:', error);
       }
     };
-    
+
     loadRecharts();
   }, []);
 
@@ -112,7 +112,7 @@ const DataStorageCharts = () => {
       // Test Static Data
       try {
         await staticMetadataService.initialize();
-        const staticData = staticMetadataService.getAllMetadata();
+        const staticData = staticMetadataService.getAllFromCache();
         data.static = {
           status: 'available',
           count: Object.keys(staticData).length,
@@ -234,7 +234,7 @@ const DataStorageCharts = () => {
       <div className="flex items-center justify-center h-64">
         <div className="flex items-center space-x-2">
           <RefreshCw className="w-5 h-5 animate-spin" />
-          <span>Načítání dat z úložišť...</span>
+          <span>{!rechartsComponents ? 'Načítání grafů...' : 'Načítání dat z úložišť...'}</span>
         </div>
       </div>
     );
