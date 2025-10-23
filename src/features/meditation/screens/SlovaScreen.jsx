@@ -29,6 +29,12 @@ const SlovaScreen = ({
   // Použij nový Realtime Database filtrovací systém
   const { slovaItems, isLoading, error, audioFiles } = useRealtimeSlovaFilter(gender, normalizedLanguage);
 
+  // Debug: zobraz informace o načtených datech
+  console.log(`🔍 SlovaScreen - slovaItems:`, slovaItems);
+  console.log(`🔍 SlovaScreen - isLoading:`, isLoading);
+  console.log(`🔍 SlovaScreen - error:`, error);
+  console.log(`🔍 SlovaScreen - audioFiles:`, audioFiles);
+
   // Preloading odstraněn - data se načítají při startu aplikace
 
   const handleItemClick = (item) => {

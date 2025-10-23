@@ -32,9 +32,11 @@ export const useRealtimeSlovaFilter = (userGender, userLanguage = 'sk') => {
 
         // Zkontroluj, jestli je slovaDataService inicializovaný
         console.log('🔍 Checking if slovaDataService is initialized...');
+        console.log('🔍 slovaDataService.isInitialized:', slovaDataService.isInitialized);
         if (!slovaDataService.isInitialized) {
           console.log('⚠️ SlovaDataService not initialized, trying to initialize...');
           await slovaDataService.initialize();
+          console.log('🔍 After initialization - slovaDataService.isInitialized:', slovaDataService.isInitialized);
         }
 
         // Získej předpřipravená data z slovaDataService
