@@ -127,3 +127,5 @@ console.log('  showCacheData() - zobrazí cache data');
 
 
 
+
+
