@@ -7,8 +7,6 @@ import {
   Wifi,
   WifiOff,
   BarChart3,
-  PieChart as PieChartIcon,
-  TrendingUp,
   RefreshCw,
   CheckCircle,
   AlertCircle,
@@ -19,7 +17,6 @@ const DataStorageCharts = () => {
   const [storageData, setStorageData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [lastUpdate, setLastUpdate] = useState(null);
-  const [rechartsComponents, setRechartsComponents] = useState(null);
 
   // Barvy pro grafy
   const colors = {
@@ -30,36 +27,6 @@ const DataStorageCharts = () => {
     memory: '#9c27b0',
     static: '#00bcd4'
   };
-
-  // Dynamický import recharts komponent
-  useEffect(() => {
-    const loadRecharts = async () => {
-      try {
-        const recharts = await import('recharts');
-        setRechartsComponents({
-          BarChart: recharts.BarChart,
-          Bar: recharts.Bar,
-          XAxis: recharts.XAxis,
-          YAxis: recharts.YAxis,
-          CartesianGrid: recharts.CartesianGrid,
-          Tooltip: recharts.Tooltip,
-          Legend: recharts.Legend,
-          ResponsiveContainer: recharts.ResponsiveContainer,
-          PieChart: recharts.PieChart,
-          Pie: recharts.Pie,
-          Cell: recharts.Cell,
-          LineChart: recharts.LineChart,
-          Line: recharts.Line,
-          Area: recharts.Area,
-          AreaChart: recharts.AreaChart
-        });
-      } catch (error) {
-        console.error('Failed to load recharts:', error);
-      }
-    };
-
-    loadRecharts();
-  }, []);
 
   // Načti data ze všech úložišť
   const loadStorageData = async () => {
@@ -229,12 +196,12 @@ const DataStorageCharts = () => {
     }
   };
 
-  if (loading || !rechartsComponents) {
+  if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
         <div className="flex items-center space-x-2">
           <RefreshCw className="w-5 h-5 animate-spin" />
-          <span>{!rechartsComponents ? 'Načítání grafů...' : 'Načítání dat z úložišť...'}</span>
+          <span>Načítání dat z úložišť...</span>
         </div>
       </div>
     );
@@ -291,16 +258,23 @@ const DataStorageCharts = () => {
             <BarChart3 className="w-5 h-5 mr-2" />
             Počet souborů podle úložiště
           </h3>
-          <rechartsComponents.ResponsiveContainer width="100%" height={300}>
-            <rechartsComponents.BarChart data={barData}>
-              <rechartsComponents.CartesianGrid strokeDasharray="3 3" />
-              <rechartsComponents.XAxis dataKey="name" />
-              <rechartsComponents.YAxis />
-              <rechartsComponents.Tooltip />
-              <rechartsComponents.Legend />
-              <rechartsComponents.Bar dataKey="count" fill="#4285f4" />
-            </rechartsComponents.BarChart>
-          </rechartsComponents.ResponsiveContainer>
+          <div className="space-y-3">
+            {barData.map((item, index) => (
+              <div key={index} className="flex items-center">
+                <div className="w-24 text-sm font-medium capitalize">{item.name}</div>
+                <div className="flex-1 mx-3">
+                  <div className="bg-gray-200 rounded-full h-6 relative">
+                    <div 
+                      className="bg-blue-500 h-6 rounded-full flex items-center justify-end pr-2"
+                      style={{ width: `${Math.min(100, (item.count / Math.max(1, ...barData.map(d => d.count))) * 100)}%` }}
+                    >
+                      <span className="text-white text-xs font-medium">{item.count}</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
         </motion.div>
 
         {/* Pie chart - rozložení dat */}
@@ -310,28 +284,25 @@ const DataStorageCharts = () => {
           className="bg-white rounded-lg p-6 shadow-sm border"
         >
           <h3 className="text-lg font-semibold mb-4 flex items-center">
-            <PieChartIcon className="w-5 h-5 mr-2" />
+            <BarChart3 className="w-5 h-5 mr-2" />
             Rozložení dat
           </h3>
-          <rechartsComponents.ResponsiveContainer width="100%" height={300}>
-            <rechartsComponents.PieChart>
-              <rechartsComponents.Pie
-                data={pieData}
-                cx="50%"
-                cy="50%"
-                labelLine={false}
-                label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
-                outerRadius={80}
-                fill="#8884d8"
-                dataKey="value"
-              >
-                {pieData.map((entry, index) => (
-                  <rechartsComponents.Cell key={`cell-${index}`} fill={entry.color} />
-                ))}
-              </rechartsComponents.Pie>
-              <rechartsComponents.Tooltip />
-            </rechartsComponents.PieChart>
-          </rechartsComponents.ResponsiveContainer>
+          <div className="space-y-3">
+            {pieData.map((item, index) => (
+              <div key={index} className="flex items-center">
+                <div 
+                  className="w-4 h-4 rounded mr-3"
+                  style={{ backgroundColor: item.color }}
+                ></div>
+                <div className="flex-1">
+                  <div className="flex justify-between">
+                    <span className="capitalize">{item.name}</span>
+                    <span className="font-medium">{item.value}</span>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
         </motion.div>
 
         {/* Area chart - velikost dat */}
@@ -341,18 +312,26 @@ const DataStorageCharts = () => {
           className="bg-white rounded-lg p-6 shadow-sm border"
         >
           <h3 className="text-lg font-semibold mb-4 flex items-center">
-            <TrendingUp className="w-5 h-5 mr-2" />
+            <BarChart3 className="w-5 h-5 mr-2" />
             Velikost dat (KB)
           </h3>
-          <rechartsComponents.ResponsiveContainer width="100%" height={300}>
-            <rechartsComponents.AreaChart data={barData}>
-              <rechartsComponents.CartesianGrid strokeDasharray="3 3" />
-              <rechartsComponents.XAxis dataKey="name" />
-              <rechartsComponents.YAxis />
-              <rechartsComponents.Tooltip />
-              <rechartsComponents.Area type="monotone" dataKey="size" stroke="#8884d8" fill="#8884d8" />
-            </rechartsComponents.AreaChart>
-          </rechartsComponents.ResponsiveContainer>
+          <div className="space-y-3">
+            {barData.map((item, index) => (
+              <div key={index} className="flex items-center">
+                <div className="w-24 text-sm font-medium capitalize">{item.name}</div>
+                <div className="flex-1 mx-3">
+                  <div className="bg-gray-200 rounded-full h-6 relative">
+                    <div 
+                      className="bg-green-500 h-6 rounded-full flex items-center justify-end pr-2"
+                      style={{ width: `${Math.min(100, (item.size / Math.max(1, ...barData.map(d => d.size))) * 100)}%` }}
+                    >
+                      <span className="text-white text-xs font-medium">{item.size} KB</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
         </motion.div>
 
         {/* Status chart */}
@@ -365,18 +344,26 @@ const DataStorageCharts = () => {
             <CheckCircle className="w-5 h-5 mr-2" />
             Status úložišť
           </h3>
-          <rechartsComponents.ResponsiveContainer width="100%" height={300}>
-            <rechartsComponents.BarChart data={statusData}>
-              <rechartsComponents.CartesianGrid strokeDasharray="3 3" />
-              <rechartsComponents.XAxis dataKey="name" />
-              <rechartsComponents.YAxis />
-              <rechartsComponents.Tooltip />
-              <rechartsComponents.Legend />
-              <rechartsComponents.Bar dataKey="available" stackId="a" fill="#4ade80" name="Dostupné" />
-              <rechartsComponents.Bar dataKey="error" stackId="a" fill="#ef4444" name="Chyba" />
-              <rechartsComponents.Bar dataKey="empty" stackId="a" fill="#f59e0b" name="Prázdné" />
-            </rechartsComponents.BarChart>
-          </rechartsComponents.ResponsiveContainer>
+          <div className="space-y-3">
+            {statusData.map((item, index) => (
+              <div key={index} className="flex items-center">
+                <div className="w-24 text-sm font-medium capitalize">{item.name}</div>
+                <div className="flex-1 mx-3">
+                  <div className="flex space-x-2">
+                    {item.available > 0 && (
+                      <div className="bg-green-500 text-white px-2 py-1 rounded text-xs">Dostupné</div>
+                    )}
+                    {item.error > 0 && (
+                      <div className="bg-red-500 text-white px-2 py-1 rounded text-xs">Chyba</div>
+                    )}
+                    {item.empty > 0 && (
+                      <div className="bg-yellow-500 text-white px-2 py-1 rounded text-xs">Prázdné</div>
+                    )}
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
         </motion.div>
       </div>
 
