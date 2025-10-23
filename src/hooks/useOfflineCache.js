@@ -12,25 +12,31 @@ export const useOfflineCache = () => {
   // Inicializace cache service
   const initializeCache = useCallback(async () => {
     try {
+      console.log('🔄 Initializing offline cache...');
       log.debug('🔄 Initializing offline cache...');
       const success = await offlineCacheService.initialize();
+      console.log('✅ Cache initialization result:', success);
       log.debug('✅ Cache initialization result:', success);
       setIsInitialized(success);
 
       if (success) {
         // Načti statistiky přímo, ne přes loadCacheStats (který kontroluje isInitialized)
         try {
+          console.log('🔄 Loading cache stats after initialization...');
           log.debug('🔄 Loading cache stats after initialization...');
           const stats = await offlineCacheService.getCacheStats();
+          console.log('📊 Cache stats after init:', stats);
           log.debug('📊 Cache stats after init:', stats);
           setCacheStats(stats);
           setIsOfflineReady(stats ? stats.isOfflineReady : false);
         } catch (statsError) {
+          console.error('❌ Failed to load cache stats after init:', statsError);
           log.error('❌ Failed to load cache stats after init:', statsError);
         }
       }
       return success;
     } catch (error) {
+      console.error('❌ Failed to initialize offline cache:', error);
       log.error('❌ Failed to initialize offline cache:', error);
       return false;
     }
@@ -38,19 +44,24 @@ export const useOfflineCache = () => {
 
   // Načti statistiky cache
   const loadCacheStats = useCallback(async () => {
+    console.log('🔄 loadCacheStats called:', { isInitialized });
     if (!isInitialized) {
+      console.warn('⚠️ Cache not initialized, cannot load stats');
       log.warn('⚠️ Cache not initialized, cannot load stats');
       return null;
     }
 
     try {
+      console.log('🔄 Loading cache stats...');
       log.debug('🔄 Loading cache stats...');
       const stats = await offlineCacheService.getCacheStats();
+      console.log('📊 Cache stats loaded:', stats);
       log.debug('📊 Cache stats loaded:', stats);
       setCacheStats(stats);
       setIsOfflineReady(stats ? stats.isOfflineReady : false);
       return stats;
     } catch (error) {
+      console.error('❌ Failed to load cache stats:', error);
       log.error('❌ Failed to load cache stats:', error);
       return null;
     }
@@ -58,23 +69,46 @@ export const useOfflineCache = () => {
 
   // Stáhni všechny soubory do cache
   const cacheAllFiles = useCallback(async (audioFiles, onProgress = null) => {
-    if (!isInitialized || isCaching) return false;
+    console.log('🔄 cacheAllFiles called:', {
+      isInitialized,
+      isCaching,
+      audioFilesLength: audioFiles?.length || 0
+    });
+
+    if (!isInitialized) {
+      console.warn('⚠️ Cache not initialized, cannot cache files');
+      return false;
+    }
+
+    if (isCaching) {
+      console.warn('⚠️ Cache already in progress, cannot start new caching');
+      return false;
+    }
 
     setIsCaching(true);
     setCacheProgress({ current: 0, total: audioFiles.length, percentage: 0 });
 
     try {
+      console.log('🚀 Starting cache operation with files:', audioFiles.length);
       const result = await offlineCacheService.cacheAllAudioFiles(audioFiles, (progress) => {
+        console.log('📊 Cache progress:', progress);
         setCacheProgress(progress);
         if (onProgress) {
           onProgress(progress);
         }
       });
 
+      console.log('✅ Caching completed:', result);
       log.success(`✅ Caching completed: ${result.success} success, ${result.errors} errors`);
-      await loadCacheStats(); // Aktualizuj statistiky
+
+      // Aktualizuj statistiky
+      console.log('🔄 Updating cache stats after caching...');
+      const updatedStats = await loadCacheStats();
+      console.log('📊 Updated cache stats:', updatedStats);
+
       return result;
     } catch (error) {
+      console.error('❌ Caching failed:', error);
       log.error('❌ Caching failed:', error);
       return { success: 0, errors: audioFiles.length };
     } finally {
