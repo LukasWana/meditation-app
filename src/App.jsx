@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { PageManager } from '@features/navigation';
 import { useNavigation, useTouchNavigation, useAppState, useBackgroundDataLoader, useTimer, useBreathPhase } from '@hooks';
+import { useOfflineStatus } from '@hooks/useOfflineStatus';
 import { LazyIntroScreen } from '@components/LazyWrapper';
 import { LanguageProvider } from '@contexts/LanguageContext';
 import MonitoringDashboard from '@components/MonitoringDashboard';
@@ -31,6 +32,9 @@ function MeditationApp() {
 
   // Navigation state
   const { currentScreen, navigateToScreen } = useNavigation('intro');
+
+  // Offline status
+  const { isOffline, showOfflineMessage } = useOfflineStatus();
 
 
   // App state
@@ -272,7 +276,7 @@ function MeditationApp() {
       )}
 
       {/* Offline Indicator */}
-      <OfflineIndicator />
+      <OfflineIndicator isOffline={isOffline} showOfflineMessage={showOfflineMessage} />
 
       </div>
       </LanguageProvider>

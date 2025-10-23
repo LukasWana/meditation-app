@@ -27,6 +27,8 @@ const AudioControls = ({
   albumTracks = null,
   currentTrackIndex = 0,
   onTrackChange = null,
+  // Data source indicator
+  dataSource = null,
   className = "w-full flex flex-col items-center justify-center h-full"
 }) => {
   return (
@@ -56,6 +58,15 @@ const AudioControls = ({
           }}
         >
           <span>{title || 'Meditácia'}</span>
+          {/* Data source indicator */}
+          {dataSource && (
+            <div
+              className={`w-2 h-2 rounded-full ml-2 ${
+                dataSource === 'cache' ? 'bg-red-500' : 'bg-green-500'
+              }`}
+              title={dataSource === 'cache' ? 'Načítáno z cache' : 'Načítáno z internetu'}
+            />
+          )}
         </div>
       </div>
 

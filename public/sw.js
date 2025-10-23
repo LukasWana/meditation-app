@@ -91,12 +91,18 @@ self.addEventListener('fetch', (event) => {
     // Pro non-GET requesty použij pouze fetch bez cachování
     event.respondWith(fetch(request));
     return;
-  } else if (url.pathname.endsWith('.mp3') || url.pathname.includes('/media/')) {
-    // Ostatní audio soubory - Network First s CORS podporou
+  }
+
+  // Cache strategie podle typu souboru
+  if (url.pathname.endsWith('.mp3') || url.pathname.includes('/media/') || url.hostname.includes('firebasestorage')) {
+    // Audio soubory a Firebase Storage - Cache First pro šetření mobilních dat
     event.respondWith(networkFirstAudio(request, AUDIO_CACHE));
   } else if (url.pathname.endsWith('.js') || url.pathname.endsWith('.css')) {
     // Statické soubory - Stale While Revalidate
     event.respondWith(staleWhileRevalidate(request, STATIC_CACHE));
+  } else if (url.pathname.endsWith('.svg') || url.pathname.endsWith('.png') || url.pathname.endsWith('.jpg') || url.pathname.endsWith('.jpeg') || url.pathname.endsWith('.webp') || url.pathname.endsWith('.ico')) {
+    // Obrázky a SVG - Cache First pro rychlejší načítání
+    event.respondWith(cacheFirst(request, STATIC_CACHE));
   } else if (url.hostname.includes('firebase') || url.hostname.includes('googleapis')) {
     // Firebase API - Network First
     event.respondWith(networkFirst(request, DYNAMIC_CACHE));
@@ -106,40 +112,80 @@ self.addEventListener('fetch', (event) => {
   }
 });
 
-// Network First strategie pro audio soubory s CORS podporou
-async function networkFirstAudio(request, cacheName) {
+// Cache First strategie pro obrázky a SVG - rychlejší načítání
+async function cacheFirst(request, cacheName) {
   try {
     // Zkus cache nejdříve
     const cachedResponse = await caches.match(request);
     if (cachedResponse) {
-
-      // Zkus aktualizovat cache na pozadí
-      fetch(request).then(networkResponse => {
-        if (networkResponse.ok) {
-          caches.open(cacheName).then(cache => {
-            cache.put(request, networkResponse.clone());
-
-          });
-        }
-      }).catch(() => {
-        // Ignoruj chyby při aktualizaci cache
-      });
+      console.log(`🖼️ Cache hit for image: ${request.url}`);
       return cachedResponse;
     }
 
+    console.log(`🖼️ Cache miss for image: ${request.url}`);
+
     // Pokud není v cache, zkus network
-
-    const networkResponse = await fetch(request, {
-      mode: 'cors',
-      credentials: 'omit'
-    });
-
-    if (networkResponse.ok) {
-      const cache = await caches.open(cacheName);
-      cache.put(request, networkResponse.clone());
-
+    try {
+      const networkResponse = await fetch(request);
+      if (networkResponse.ok) {
+        console.log(`🖼️ Network success for image: ${request.url}`);
+        // Ulož do cache
+        const cache = await caches.open(cacheName);
+        cache.put(request, networkResponse.clone());
+        return networkResponse;
+      } else {
+        console.warn(`🖼️ Network failed for image: ${request.url} - ${networkResponse.status}`);
+        return new Response('Image not found', { status: networkResponse.status });
+      }
+    } catch (fetchError) {
+      console.error(`🖼️ Fetch error for image: ${request.url}`, fetchError);
+      return new Response('Image fetch failed', { status: 503 });
     }
-    return networkResponse;
+  } catch (error) {
+    console.error('❌ Service Worker: Image fetch failed', error);
+    return new Response('Image not available', { status: 503 });
+  }
+}
+
+// Cache First strategie pro audio soubory - šetří mobilní data
+async function networkFirstAudio(request, cacheName) {
+  try {
+    // Zkus cache nejdříve - šetří mobilní data
+    const cachedResponse = await caches.match(request);
+    if (cachedResponse) {
+      console.log(`🎵 Cache hit for: ${request.url} (saving mobile data)`);
+      return cachedResponse;
+    }
+
+    console.log(`🎵 Cache miss for: ${request.url}`);
+
+        // Pokud není v cache, zkus network
+        try {
+          // Pro Firebase Storage URL použij no-cors mode
+          const networkResponse = await fetch(request, {
+            mode: 'no-cors',
+            credentials: 'omit'
+          });
+
+          if (networkResponse.type === 'opaque') {
+            console.log(`🎵 No-CORS success for: ${request.url}`);
+            // Ulož opaque response do cache
+            const cache = await caches.open(cacheName);
+            cache.put(request, networkResponse.clone());
+            return networkResponse;
+          } else {
+            console.warn(`🎵 Non-opaque response for: ${request.url} - ${networkResponse.type}`);
+            // Ulož i non-opaque response do cache
+            const cache = await caches.open(cacheName);
+            cache.put(request, networkResponse.clone());
+            return networkResponse;
+          }
+        } catch (fetchError) {
+          console.error(`🎵 Fetch error for: ${request.url}`, fetchError);
+
+          // Fallback na offline stránku
+          return new Response('Offline', { status: 503 });
+        }
   } catch (error) {
     console.error('❌ Service Worker: Audio fetch failed', error);
 

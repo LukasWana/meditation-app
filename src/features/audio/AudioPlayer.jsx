@@ -27,7 +27,8 @@ const AudioPlayer = ({
     selectedVoice,
     hasVariants,
     availableVoices,
-    handleVoiceChange
+    handleVoiceChange,
+    dataSource
   } = useAudioPlayerLogic({
     audioSrc,
     albumTracks,
@@ -104,6 +105,8 @@ const AudioPlayer = ({
           albumTracks={albumTracks}
           currentTrackIndex={currentTrackIndex}
           onTrackChange={onTrackChange}
+          // Data source indicator
+          dataSource={dataSource}
           className="w-full flex flex-col items-center justify-center h-full"
         />
 
