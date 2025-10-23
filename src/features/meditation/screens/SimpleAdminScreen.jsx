@@ -1,17 +1,19 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { Moon, Sun, Database, Download, RefreshCw, Upload, FileAudio } from 'lucide-react';
+import { Moon, Sun, Database, Download, RefreshCw, Upload, FileAudio, BarChart3 } from 'lucide-react';
 import { storage, db, database, auth } from '@services/firebase';
 import { ref, listAll, getMetadata, getDownloadURL } from 'firebase/storage';
 import { collection, getDocs, query, orderBy } from 'firebase/firestore';
 import { ref as dbRef, set } from 'firebase/database';
 import { signInAnonymously } from 'firebase/auth';
+import DataStorageCharts from '@components/admin/DataStorageCharts';
 // import { extractAudioMetadata } from '@utils/audioMetadataExtractor'; // Nepoužíváme kvůli CORS
 
 const SimpleAdminScreen = () => {
   const [isDarkMode, setIsDarkMode] = useState(false);
   const [loading, setLoading] = useState(false);
   const [status, setStatus] = useState('');
+  const [showCharts, setShowCharts] = useState(false);
 
   // Automatická kontrola při načtení
   useEffect(() => {
@@ -708,6 +710,18 @@ const SimpleAdminScreen = () => {
           </motion.div>
         </div>
 
+        {/* Grafy úložišť dat */}
+        {showCharts && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.4 }}
+            className={`mt-6 ${cardClasses}`}
+          >
+            <DataStorageCharts />
+          </motion.div>
+        )}
+
         {/* Rychlé akce */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
@@ -728,6 +742,13 @@ const SimpleAdminScreen = () => {
               className="px-4 py-2 bg-yellow-500 hover:bg-yellow-600 text-white rounded-lg transition-colors"
             >
               🗑️ Vymazat status
+            </button>
+            <button
+              onClick={() => setShowCharts(!showCharts)}
+              className="px-4 py-2 bg-purple-500 hover:bg-purple-600 text-white rounded-lg transition-colors flex items-center"
+            >
+              <BarChart3 className="w-4 h-4 mr-2" />
+              {showCharts ? 'Skrýt grafy' : 'Zobrazit grafy úložišť'}
             </button>
           </div>
         </motion.div>
