@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { ref, getDownloadURL } from 'firebase/storage';
 import { storage } from '@services/firebase';
 import cacheService from '@services/cacheServiceRefactored';
+import enhancedOfflineCacheService from '@services/enhancedOfflineCacheService';
 
 export const useFirebaseAudio = (audioFileName) => {
   // console.log('🔗 useFirebaseAudio called with:', audioFileName);
@@ -10,6 +11,7 @@ export const useFirebaseAudio = (audioFileName) => {
   const [error, setError] = useState(null);
   const [currentFileName, setCurrentFileName] = useState(null);
   const [fallbackUsed, setFallbackUsed] = useState(false);
+  const [dataSource, setDataSource] = useState(null); // 'cache' nebo 'internet'
 
   // Pokud není fileName, vrať prázdné hodnoty
   if (!audioFileName) {
@@ -37,12 +39,27 @@ export const useFirebaseAudio = (audioFileName) => {
         setLoading(true);
         setError(null);
 
-        // Zkontroluj cache první
+        // Inicializuj enhanced offline cache service
+        await enhancedOfflineCacheService.initialize();
+
+        // Zkontroluj offline cache PRVNÍ - šetří mobilní data
+        const offlineUrl = await enhancedOfflineCacheService.getOfflineUrl(audioFileName);
+        if (offlineUrl) {
+          console.log('🔗 Using offline URL for:', audioFileName, '(saving mobile data)');
+          setAudioUrl(offlineUrl);
+          setCurrentFileName(audioFileName);
+          setDataSource('cache');
+          setLoading(false);
+          return;
+        }
+
+        // Zkontroluj cache druhé
         const cachedUrl = cacheService.getAudioUrl(audioFileName);
         if (cachedUrl) {
           console.log('🔗 Using cached URL for:', audioFileName);
           setAudioUrl(cachedUrl);
           setCurrentFileName(audioFileName);
+          setDataSource('cache');
           setLoading(false);
           return;
         }
@@ -50,7 +67,7 @@ export const useFirebaseAudio = (audioFileName) => {
         // Vytvoření reference k souboru v Firebase Storage
         const audioRef = ref(storage, audioFileName);
 
-        // Získání download URL
+        // Získání download URL - Service Worker se postará o cache
         console.log('🔗 Fetching download URL for:', audioFileName);
         const url = await getDownloadURL(audioRef);
         console.log('🔗 Download URL obtained:', url);
@@ -65,6 +82,7 @@ export const useFirebaseAudio = (audioFileName) => {
 
         setAudioUrl(url);
         setCurrentFileName(audioFileName);
+        setDataSource('internet');
         setFallbackUsed(false); // Reset fallback flag při úspěchu
 
         // Spusť metadata preloading pro rychlejší přístup příště
@@ -85,6 +103,7 @@ export const useFirebaseAudio = (audioFileName) => {
 
           setAudioUrl(fallbackUrl);
           setCurrentFileName(audioFileName);
+          setDataSource('cache');
           setFallbackUsed(true);
           setError(null); // Clear error při úspěšném fallbacku
         } else {
@@ -102,7 +121,8 @@ export const useFirebaseAudio = (audioFileName) => {
     audioUrl,
     loading,
     error,
-    fallbackUsed
+    fallbackUsed,
+    dataSource
   };
 };
 

@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import offlineCacheService from '@services/offlineCacheService';
+import enhancedOfflineCacheService from '@services/enhancedOfflineCacheService';
 import log from '@services/logger';
 
 export const useOfflineCache = () => {
@@ -54,7 +55,11 @@ export const useOfflineCache = () => {
     try {
       console.log('🔄 Loading cache stats...');
       log.debug('🔄 Loading cache stats...');
-      const stats = await offlineCacheService.getCacheStats();
+
+      // Použij enhanced offline cache service pro lepší statistiky
+      await enhancedOfflineCacheService.initialize();
+      const stats = await enhancedOfflineCacheService.getCacheStats();
+
       console.log('📊 Cache stats loaded:', stats);
       log.debug('📊 Cache stats loaded:', stats);
       setCacheStats(stats);
@@ -141,7 +146,15 @@ export const useOfflineCache = () => {
   // Získej URL pro přehrávání (z cache nebo originál)
   const getAudioUrl = useCallback(async (fileName, originalUrl) => {
     if (!isInitialized) return originalUrl;
-    return await offlineCacheService.getAudioUrl(fileName, originalUrl);
+
+    try {
+      // Použij enhanced offline cache service pro lepší fallback strategii
+      await enhancedOfflineCacheService.initialize();
+      return await enhancedOfflineCacheService.getAudioUrl(fileName, originalUrl);
+    } catch (error) {
+      log.error('❌ Error getting audio URL:', error);
+      return originalUrl;
+    }
   }, [isInitialized]);
 
   // Zkontroluj dostupnost offline režimu

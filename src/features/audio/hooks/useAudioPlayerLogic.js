@@ -72,7 +72,7 @@ export const useAudioPlayerLogic = ({
   const fileName = useMemo(() => getFileNameFromUrl(currentAudioFile), [currentAudioFile, getFileNameFromUrl]);
 
   // Načtení URL z Firebase Storage
-  const { audioUrl, loading: firebaseLoading, error: firebaseError } = useFirebaseAudio(fileName);
+  const { audioUrl, loading: firebaseLoading, error: firebaseError, dataSource } = useFirebaseAudio(fileName);
 
   // AudioContext management
   const { audioContext, isAudioActivated } = useAudioContext(audioUrl);
@@ -124,6 +124,9 @@ export const useAudioPlayerLogic = ({
 
     // File management
     currentAudioFile,
-    setCurrentAudioFile
+    setCurrentAudioFile,
+
+    // Data source indicator
+    dataSource
   };
 };
