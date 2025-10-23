@@ -129,17 +129,28 @@ class OfflineCacheService {
 
   // Ulož soubor do cache
   async cacheFile(fileName, audioUrl) {
-    if (!this.isInitialized) return false;
+    console.log(`🔄 cacheFile called for ${fileName}:`, audioUrl);
+    if (!this.isInitialized) {
+      console.warn(`⚠️ Cache not initialized for ${fileName}`);
+      return false;
+    }
 
     try {
       // Zkus nejdříve normální fetch bez no-cors
       let response;
       try {
+        console.log(`🔄 Fetching ${fileName}...`);
         response = await fetch(audioUrl, {
           method: 'GET',
           credentials: 'omit'
         });
+        console.log(`📊 Fetch response for ${fileName}:`, {
+          ok: response.ok,
+          status: response.status,
+          statusText: response.statusText
+        });
       } catch (fetchError) {
+        console.warn(`⚠️ Normal fetch failed for ${fileName}, trying XHR method:`, fetchError.message);
         log.warn(`⚠️ Normal fetch failed for ${fileName}, trying XHR method:`, fetchError.message);
         // Fallback na XHR metodu
         return await this.cacheFileWithXHR(fileName, audioUrl);
@@ -148,7 +159,13 @@ class OfflineCacheService {
       if (response.ok) {
         // Zkus získat blob pro lepší cache kompatibilitu
         try {
+          console.log(`🔄 Creating blob for ${fileName}...`);
           const blob = await response.blob();
+          console.log(`📊 Blob created for ${fileName}:`, {
+            size: blob.size,
+            type: blob.type
+          });
+
           const cacheResponse = new Response(blob, {
             status: 200,
             statusText: 'OK',
@@ -166,29 +183,45 @@ class OfflineCacheService {
             fileName
           ];
 
+          console.log(`🔄 Storing ${fileName} in cache with keys:`, cacheKeys);
           let successCount = 0;
           for (const cacheKey of cacheKeys) {
             try {
+              console.log(`🔄 Putting ${fileName} in cache with key: ${cacheKey}`);
               await this.cache.put(cacheKey, cacheResponse.clone());
               successCount++;
+              console.log(`✅ Successfully cached with key: ${cacheKey}`);
+
+              // Zkontroluj, jestli se soubor skutečně uložil
+              const cachedResponse = await this.cache.match(cacheKey);
+              if (cachedResponse) {
+                console.log(`✅ Verified: ${fileName} is in cache with key: ${cacheKey}`);
+              } else {
+                console.warn(`⚠️ Verification failed: ${fileName} not found in cache with key: ${cacheKey}`);
+              }
             } catch (cacheError) {
+              console.warn(`⚠️ Failed to cache with key ${cacheKey}:`, cacheError.message);
               log.warn(`⚠️ Failed to cache with key ${cacheKey}:`, cacheError.message);
             }
           }
 
           if (successCount > 0) {
+            console.log(`✅ Cached ${fileName} (${this.formatFileSize(blob.size)})`);
             log.cache(`✅ Cached ${fileName} (${this.formatFileSize(blob.size)})`);
             return true;
           } else {
+            console.error(`❌ Failed to store ${fileName} in cache`);
             log.error(`❌ Failed to store ${fileName} in cache`);
             return false;
           }
         } catch (blobError) {
+          console.warn(`⚠️ Blob creation failed for ${fileName}, trying XHR method:`, blobError.message);
           log.warn(`⚠️ Blob creation failed for ${fileName}, trying XHR method:`, blobError.message);
           // Fallback na XHR metodu
           return await this.cacheFileWithXHR(fileName, audioUrl);
         }
       } else {
+        console.error(`❌ Failed to fetch ${fileName}: ${response.status} ${response.statusText}`);
         log.error(`❌ Failed to fetch ${fileName}: ${response.status} ${response.statusText}`);
         return false;
       }
@@ -312,20 +345,31 @@ class OfflineCacheService {
 
       let successCount = 0;
       let errorCount = 0;
+      
+      console.log(`📊 Starting to cache ${audioFiles.length} files...`);
 
       for (let i = 0; i < audioFiles.length; i++) {
         const file = audioFiles[i];
         const fileName = file.fileName || file.name;
         const audioUrl = file.downloadURL || file.audioSrc;
 
+        console.log(`\n🔄 Processing file ${i + 1}/${audioFiles.length}: ${fileName}`);
+        console.log(`🔗 URL: ${audioUrl}`);
+
         if (!audioUrl) {
+          console.warn(`⚠️ No URL for ${fileName}, skipping`);
           log.warn(`⚠️ No URL for ${fileName}, skipping`);
           errorCount++;
           continue;
         }
 
         // Zkontroluj, jestli už není v cache
-        if (await this.isFileCached(fileName)) {
+        console.log(`🔍 Checking if ${fileName} is already cached...`);
+        const isCached = await this.isFileCached(fileName);
+        console.log(`📊 Is ${fileName} cached? ${isCached}`);
+        
+        if (isCached) {
+          console.log(`⏭️ ${fileName} already cached, skipping`);
           log.cache(`⏭️ ${fileName} already cached, skipping`);
           successCount++;
           continue;
@@ -348,13 +392,18 @@ class OfflineCacheService {
         log.debug(`🔗 URL: ${audioUrl}`);
 
         // Stáhni a ulož do cache
+        console.log(`🔄 Caching file ${i + 1}/${audioFiles.length}: ${fileName}`);
+        console.log(`🔗 URL: ${audioUrl}`);
         const success = await this.cacheFile(fileName, audioUrl);
+        console.log(`📊 Cache result for ${fileName}:`, success);
         if (success) {
           successCount++;
           log.success(`✅ Successfully cached: ${fileName}`);
+          console.log(`✅ Successfully cached: ${fileName}`);
         } else {
           errorCount++;
           log.error(`❌ Failed to cache: ${fileName}`);
+          console.log(`❌ Failed to cache: ${fileName}`);
         }
 
         // Malé zpoždění, aby se nezatížil server
@@ -381,19 +430,28 @@ class OfflineCacheService {
     }
 
     try {
+      console.log('🔄 Getting cache stats...');
       log.debug('🔄 Getting cache stats...');
       const keys = await this.cache.keys();
+      console.log(`📊 Found ${keys.length} total cache entries`);
       log.debug(`📊 Found ${keys.length} total cache entries`);
 
+      // Zobraz všechny klíče v cache pro debug
+      console.log('🔍 All cache keys:', keys.map(key => key.url));
+
       const audioKeys = keys.filter(key => key.url.includes('/audio/'));
+      console.log(`🎵 Found ${audioKeys.length} audio files in cache`);
       log.debug(`🎵 Found ${audioKeys.length} audio files in cache`);
 
       // Debug: zobraz všechny klíče v cache
+      console.log('🔍 Audio cache keys:', audioKeys.map(key => key.url));
       log.debug('🔍 All cache keys:', audioKeys.map(key => key.url));
 
       // Debug: zobraz slova soubory v cache
       const slovaKeys = audioKeys.filter(key => key.url.includes('slova/'));
+      console.log(`🎤 Found ${slovaKeys.length} slova files in cache`);
       log.debug(`🎤 Found ${slovaKeys.length} slova files in cache`);
+      console.log('🎤 Slova cache keys:', slovaKeys.map(key => key.url));
       log.debug('🎤 Slova cache keys:', slovaKeys.map(key => key.url));
 
       let totalSize = 0;

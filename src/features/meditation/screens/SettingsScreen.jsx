@@ -88,6 +88,13 @@ const SettingsScreen = ({
 
   // Spusť stahování všech souborů
   const handleCacheAllFiles = async () => {
+    console.log('🔄 handleCacheAllFiles called:', {
+      isInitialized,
+      isCaching,
+      allAudioFilesLength: allAudioFiles.length,
+      audioFilesLength: audioFiles?.length || 0
+    });
+
     const filesToCache = allAudioFiles.length > 0 ? allAudioFiles : audioFiles;
     if (filesToCache && filesToCache.length > 0) {
       console.log('🚀 Starting cache with files:', filesToCache.length);
@@ -102,7 +109,8 @@ const SettingsScreen = ({
         hasDownloadURL: !!(f.downloadURL || f.audioSrc)
       })));
 
-      await cacheAllFiles(filesToCache);
+      const result = await cacheAllFiles(filesToCache);
+      console.log('📊 Cache result:', result);
     } else {
       console.warn('⚠️ No audio files available for caching');
     }
