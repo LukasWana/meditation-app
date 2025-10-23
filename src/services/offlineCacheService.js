@@ -132,45 +132,71 @@ class OfflineCacheService {
     if (!this.isInitialized) return false;
 
     try {
-      // Použij no-cors mode pro Firebase Storage (obejde CORS)
-      const response = await fetch(audioUrl, {
-        mode: 'no-cors',
-        credentials: 'omit'
-      });
+      // Zkus nejdříve normální fetch bez no-cors
+      let response;
+      try {
+        response = await fetch(audioUrl, {
+          method: 'GET',
+          credentials: 'omit'
+        });
+      } catch (fetchError) {
+        log.warn(`⚠️ Normal fetch failed for ${fileName}, trying XHR method:`, fetchError.message);
+        // Fallback na XHR metodu
+        return await this.cacheFileWithXHR(fileName, audioUrl);
+      }
 
-      if (response.ok || response.type === 'opaque') {
-        // Pro no-cors mode je response vždy "opaque" a nemůžeme číst obsah
-        // Ale můžeme ho uložit do cache pro pozdější použití
-        // Ulož s několika klíči pro lepší kompatibilitu
-        const cacheKeys = [
-          `/audio/${fileName}`,
-          audioUrl, // Ulož i s původní URL
-          fileName
-        ];
+      if (response.ok) {
+        // Zkus získat blob pro lepší cache kompatibilitu
+        try {
+          const blob = await response.blob();
+          const cacheResponse = new Response(blob, {
+            status: 200,
+            statusText: 'OK',
+            headers: {
+              'Content-Type': 'audio/mpeg',
+              'Content-Length': blob.size.toString(),
+              'Cache-Control': 'max-age=31536000',
+            }
+          });
 
-        // Pro každý klíč vytvoř nový fetch request, protože Response body může být použito pouze jednou
-        for (const cacheKey of cacheKeys) {
-          try {
-            const responseClone = await fetch(audioUrl, {
-              mode: 'no-cors',
-              credentials: 'omit'
-            });
-            await this.cache.put(cacheKey, responseClone);
-          } catch (cloneError) {
-            log.warn(`Failed to cache with key ${cacheKey}:`, cloneError.message);
+          // Ulož s několika klíči pro lepší kompatibilitu
+          const cacheKeys = [
+            `/audio/${fileName}`,
+            audioUrl,
+            fileName
+          ];
+
+          let successCount = 0;
+          for (const cacheKey of cacheKeys) {
+            try {
+              await this.cache.put(cacheKey, cacheResponse.clone());
+              successCount++;
+            } catch (cacheError) {
+              log.warn(`⚠️ Failed to cache with key ${cacheKey}:`, cacheError.message);
+            }
           }
-        }
 
-        log.cache(`✅ Cached ${fileName} (opaque response - size unknown)`);
-        return true;
+          if (successCount > 0) {
+            log.cache(`✅ Cached ${fileName} (${this.formatFileSize(blob.size)})`);
+            return true;
+          } else {
+            log.error(`❌ Failed to store ${fileName} in cache`);
+            return false;
+          }
+        } catch (blobError) {
+          log.warn(`⚠️ Blob creation failed for ${fileName}, trying XHR method:`, blobError.message);
+          // Fallback na XHR metodu
+          return await this.cacheFileWithXHR(fileName, audioUrl);
+        }
       } else {
-        log.error(`❌ Failed to fetch ${fileName}: ${response.status}`);
+        log.error(`❌ Failed to fetch ${fileName}: ${response.status} ${response.statusText}`);
         return false;
       }
 
     } catch (error) {
       log.error(`❌ Error caching ${fileName}:`, error);
-      return false;
+      // Fallback na XHR metodu
+      return await this.cacheFileWithXHR(fileName, audioUrl);
     }
   }
 
@@ -180,6 +206,7 @@ class OfflineCacheService {
       const xhr = new XMLHttpRequest();
       xhr.open('GET', audioUrl, true);
       xhr.responseType = 'blob';
+      xhr.timeout = 30000; // 30 sekund timeout
 
       xhr.onload = async () => {
         if (xhr.status === 200) {
@@ -195,15 +222,36 @@ class OfflineCacheService {
               }
             });
 
-            await this.cache.put(`/audio/${fileName}`, response);
-            log.cache(`✅ Cached ${fileName} via XHR (${this.formatFileSize(blob.size)})`);
-            resolve(true);
+            // Ulož s několika klíči pro lepší kompatibilitu
+            const cacheKeys = [
+              `/audio/${fileName}`,
+              audioUrl,
+              fileName
+            ];
+
+            let successCount = 0;
+            for (const cacheKey of cacheKeys) {
+              try {
+                await this.cache.put(cacheKey, response.clone());
+                successCount++;
+              } catch (cacheError) {
+                log.warn(`⚠️ XHR failed to cache with key ${cacheKey}:`, cacheError.message);
+              }
+            }
+
+            if (successCount > 0) {
+              log.cache(`✅ Cached ${fileName} via XHR (${this.formatFileSize(blob.size)})`);
+              resolve(true);
+            } else {
+              log.error(`❌ XHR failed to store ${fileName} in cache`);
+              resolve(false);
+            }
           } catch (error) {
-            log.error(`❌ Error storing ${fileName} in cache:`, error);
+            log.error(`❌ Error storing ${fileName} in cache via XHR:`, error);
             resolve(false);
           }
         } else {
-          log.error(`❌ XHR failed for ${fileName}: ${xhr.status}`);
+          log.error(`❌ XHR failed for ${fileName}: ${xhr.status} ${xhr.statusText}`);
           resolve(false);
         }
       };
@@ -213,7 +261,17 @@ class OfflineCacheService {
         resolve(false);
       };
 
-      xhr.send();
+      xhr.ontimeout = () => {
+        log.error(`❌ XHR timeout for ${fileName}`);
+        resolve(false);
+      };
+
+      try {
+        xhr.send();
+      } catch (sendError) {
+        log.error(`❌ XHR send error for ${fileName}:`, sendError);
+        resolve(false);
+      }
     });
   }
 
