@@ -1,10 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import {
-  BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer,
-  PieChart, Pie, Cell, LineChart, Line, Area, AreaChart
-} from 'recharts';
-import {
   Database,
   HardDrive,
   Cloud,
@@ -23,6 +19,7 @@ const DataStorageCharts = () => {
   const [storageData, setStorageData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [lastUpdate, setLastUpdate] = useState(null);
+  const [rechartsComponents, setRechartsComponents] = useState(null);
 
   // Barvy pro grafy
   const colors = {
@@ -33,6 +30,36 @@ const DataStorageCharts = () => {
     memory: '#9c27b0',
     static: '#00bcd4'
   };
+
+  // Dynamický import recharts komponent
+  useEffect(() => {
+    const loadRecharts = async () => {
+      try {
+        const recharts = await import('recharts');
+        setRechartsComponents({
+          BarChart: recharts.BarChart,
+          Bar: recharts.Bar,
+          XAxis: recharts.XAxis,
+          YAxis: recharts.YAxis,
+          CartesianGrid: recharts.CartesianGrid,
+          Tooltip: recharts.Tooltip,
+          Legend: recharts.Legend,
+          ResponsiveContainer: recharts.ResponsiveContainer,
+          PieChart: recharts.PieChart,
+          Pie: recharts.Pie,
+          Cell: recharts.Cell,
+          LineChart: recharts.LineChart,
+          Line: recharts.Line,
+          Area: recharts.Area,
+          AreaChart: recharts.AreaChart
+        });
+      } catch (error) {
+        console.error('Failed to load recharts:', error);
+      }
+    };
+    
+    loadRecharts();
+  }, []);
 
   // Načti data ze všech úložišť
   const loadStorageData = async () => {
@@ -202,7 +229,7 @@ const DataStorageCharts = () => {
     }
   };
 
-  if (loading) {
+  if (loading || !rechartsComponents) {
     return (
       <div className="flex items-center justify-center h-64">
         <div className="flex items-center space-x-2">
@@ -264,16 +291,16 @@ const DataStorageCharts = () => {
             <BarChart3 className="w-5 h-5 mr-2" />
             Počet souborů podle úložiště
           </h3>
-          <ResponsiveContainer width="100%" height={300}>
-            <BarChart data={barData}>
-              <CartesianGrid strokeDasharray="3 3" />
-              <XAxis dataKey="name" />
-              <YAxis />
-              <Tooltip />
-              <Legend />
-              <Bar dataKey="count" fill="#4285f4" />
-            </BarChart>
-          </ResponsiveContainer>
+          <rechartsComponents.ResponsiveContainer width="100%" height={300}>
+            <rechartsComponents.BarChart data={barData}>
+              <rechartsComponents.CartesianGrid strokeDasharray="3 3" />
+              <rechartsComponents.XAxis dataKey="name" />
+              <rechartsComponents.YAxis />
+              <rechartsComponents.Tooltip />
+              <rechartsComponents.Legend />
+              <rechartsComponents.Bar dataKey="count" fill="#4285f4" />
+            </rechartsComponents.BarChart>
+          </rechartsComponents.ResponsiveContainer>
         </motion.div>
 
         {/* Pie chart - rozložení dat */}
@@ -286,9 +313,9 @@ const DataStorageCharts = () => {
             <PieChartIcon className="w-5 h-5 mr-2" />
             Rozložení dat
           </h3>
-          <ResponsiveContainer width="100%" height={300}>
-            <PieChart>
-              <Pie
+          <rechartsComponents.ResponsiveContainer width="100%" height={300}>
+            <rechartsComponents.PieChart>
+              <rechartsComponents.Pie
                 data={pieData}
                 cx="50%"
                 cy="50%"
@@ -299,12 +326,12 @@ const DataStorageCharts = () => {
                 dataKey="value"
               >
                 {pieData.map((entry, index) => (
-                  <Cell key={`cell-${index}`} fill={entry.color} />
+                  <rechartsComponents.Cell key={`cell-${index}`} fill={entry.color} />
                 ))}
-              </Pie>
-              <Tooltip />
-            </PieChart>
-          </ResponsiveContainer>
+              </rechartsComponents.Pie>
+              <rechartsComponents.Tooltip />
+            </rechartsComponents.PieChart>
+          </rechartsComponents.ResponsiveContainer>
         </motion.div>
 
         {/* Area chart - velikost dat */}
@@ -317,15 +344,15 @@ const DataStorageCharts = () => {
             <TrendingUp className="w-5 h-5 mr-2" />
             Velikost dat (KB)
           </h3>
-          <ResponsiveContainer width="100%" height={300}>
-            <AreaChart data={barData}>
-              <CartesianGrid strokeDasharray="3 3" />
-              <XAxis dataKey="name" />
-              <YAxis />
-              <Tooltip />
-              <Area type="monotone" dataKey="size" stroke="#8884d8" fill="#8884d8" />
-            </AreaChart>
-          </ResponsiveContainer>
+          <rechartsComponents.ResponsiveContainer width="100%" height={300}>
+            <rechartsComponents.AreaChart data={barData}>
+              <rechartsComponents.CartesianGrid strokeDasharray="3 3" />
+              <rechartsComponents.XAxis dataKey="name" />
+              <rechartsComponents.YAxis />
+              <rechartsComponents.Tooltip />
+              <rechartsComponents.Area type="monotone" dataKey="size" stroke="#8884d8" fill="#8884d8" />
+            </rechartsComponents.AreaChart>
+          </rechartsComponents.ResponsiveContainer>
         </motion.div>
 
         {/* Status chart */}
@@ -338,18 +365,18 @@ const DataStorageCharts = () => {
             <CheckCircle className="w-5 h-5 mr-2" />
             Status úložišť
           </h3>
-          <ResponsiveContainer width="100%" height={300}>
-            <BarChart data={statusData}>
-              <CartesianGrid strokeDasharray="3 3" />
-              <XAxis dataKey="name" />
-              <YAxis />
-              <Tooltip />
-              <Legend />
-              <Bar dataKey="available" stackId="a" fill="#4ade80" name="Dostupné" />
-              <Bar dataKey="error" stackId="a" fill="#ef4444" name="Chyba" />
-              <Bar dataKey="empty" stackId="a" fill="#f59e0b" name="Prázdné" />
-            </BarChart>
-          </ResponsiveContainer>
+          <rechartsComponents.ResponsiveContainer width="100%" height={300}>
+            <rechartsComponents.BarChart data={statusData}>
+              <rechartsComponents.CartesianGrid strokeDasharray="3 3" />
+              <rechartsComponents.XAxis dataKey="name" />
+              <rechartsComponents.YAxis />
+              <rechartsComponents.Tooltip />
+              <rechartsComponents.Legend />
+              <rechartsComponents.Bar dataKey="available" stackId="a" fill="#4ade80" name="Dostupné" />
+              <rechartsComponents.Bar dataKey="error" stackId="a" fill="#ef4444" name="Chyba" />
+              <rechartsComponents.Bar dataKey="empty" stackId="a" fill="#f59e0b" name="Prázdné" />
+            </rechartsComponents.BarChart>
+          </rechartsComponents.ResponsiveContainer>
         </motion.div>
       </div>
 
