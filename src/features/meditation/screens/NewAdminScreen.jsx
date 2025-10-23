@@ -7,6 +7,7 @@ import { collection, getDocs, addDoc, query, orderBy } from 'firebase/firestore'
 import { ref as dbRef, set, get } from 'firebase/database';
 import { signInAnonymously } from 'firebase/auth';
 import offlineCacheService from '@services/offlineCacheService';
+import DataStorageCharts from '@components/admin/DataStorageCharts';
 
 const NewAdminScreen = () => {
   const [isDarkMode, setIsDarkMode] = useState(false);
@@ -30,6 +31,9 @@ const NewAdminScreen = () => {
   const [isOfflineReady, setIsOfflineReady] = useState(false);
   const [cacheProgress, setCacheProgress] = useState(null);
   const [isCaching, setIsCaching] = useState(false);
+
+  // Charts states
+  const [showCharts, setShowCharts] = useState(false);
 
   // Automatická kontrola při načtení
   useEffect(() => {
@@ -847,6 +851,14 @@ const NewAdminScreen = () => {
               </button>
 
               <button
+                onClick={() => setShowCharts(!showCharts)}
+                className="flex items-center px-4 py-2 bg-purple-500 hover:bg-purple-600 text-white rounded-lg transition-colors"
+              >
+                <BarChart3 className="mr-2" size={16} />
+                {showCharts ? 'Skrýt grafy' : 'Zobrazit grafy úložišť'}
+              </button>
+
+              <button
                 onClick={clearCache}
                 disabled={!cacheStats || cacheStats.totalFiles === 0}
                 className="flex items-center px-4 py-2 bg-red-500 hover:bg-red-600 disabled:bg-gray-400 text-white rounded-lg transition-colors"
@@ -1023,11 +1035,23 @@ const NewAdminScreen = () => {
         </div>
 
         {/* Náhled dat */}
-        {preparedData && (
+        {/* Grafy úložišť dat */}
+        {showCharts && (
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.7 }}
+            className={`mt-8 p-6 rounded-lg border ${cardClasses}`}
+          >
+            <DataStorageCharts />
+          </motion.div>
+        )}
+
+        {preparedData && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.8 }}
             className={`mt-8 p-6 rounded-lg border ${cardClasses}`}
           >
             <h3 className="text-xl font-semibold mb-4">Náhled připravených dat</h3>

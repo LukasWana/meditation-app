@@ -1,0 +1,366 @@
+import React, { useState, useEffect } from 'react';
+import { motion } from 'framer-motion';
+import {
+  BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer,
+  PieChart, Pie, Cell, LineChart, Line, Area, AreaChart
+} from 'recharts';
+import {
+  Database,
+  HardDrive,
+  Cloud,
+  Wifi,
+  WifiOff,
+  BarChart3,
+  PieChart as PieChartIcon,
+  TrendingUp,
+  RefreshCw,
+  CheckCircle,
+  AlertCircle,
+  XCircle
+} from 'lucide-react';
+
+const DataStorageCharts = () => {
+  const [storageData, setStorageData] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [lastUpdate, setLastUpdate] = useState(null);
+
+  // Barvy pro grafy
+  const colors = {
+    firestore: '#4285f4',
+    realtime: '#34a853',
+    storage: '#ea4335',
+    localStorage: '#ff9800',
+    memory: '#9c27b0',
+    static: '#00bcd4'
+  };
+
+  // Načti data ze všech úložišť
+  const loadStorageData = async () => {
+    setLoading(true);
+    try {
+      // Import služeb dynamicky
+      const { realtimeMetadataService } = await import('@services/realtimeMetadataService');
+      const { firestoreMetadataService } = await import('@services/firestoreMetadataService');
+      const { staticMetadataService } = await import('@services/staticMetadataService');
+      const { fastMetadataService } = await import('@services/fastMetadataService');
+      const cacheService = (await import('@services/cacheServiceRefactored')).default;
+
+      const data = {
+        firestore: { status: 'unknown', count: 0, size: 0, lastUpdate: null },
+        realtime: { status: 'unknown', count: 0, size: 0, lastUpdate: null },
+        storage: { status: 'unknown', count: 0, size: 0, lastUpdate: null },
+        localStorage: { status: 'unknown', count: 0, size: 0, lastUpdate: null },
+        memory: { status: 'unknown', count: 0, size: 0, lastUpdate: null },
+        static: { status: 'unknown', count: 0, size: 0, lastUpdate: null }
+      };
+
+      // Test Firestore
+      try {
+        const firestoreData = await firestoreMetadataService.loadAllMetadata();
+        data.firestore = {
+          status: 'available',
+          count: Object.keys(firestoreData).length,
+          size: JSON.stringify(firestoreData).length,
+          lastUpdate: new Date().toISOString()
+        };
+      } catch (error) {
+        data.firestore.status = 'error';
+        console.warn('Firestore error:', error);
+      }
+
+      // Test Realtime Database
+      try {
+        const realtimeData = await realtimeMetadataService.getAllMetadata();
+        data.realtime = {
+          status: 'available',
+          count: Object.keys(realtimeData).length,
+          size: JSON.stringify(realtimeData).length,
+          lastUpdate: new Date().toISOString()
+        };
+      } catch (error) {
+        data.realtime.status = 'error';
+        console.warn('Realtime Database error:', error);
+      }
+
+      // Test Static Data
+      try {
+        await staticMetadataService.initialize();
+        const staticData = staticMetadataService.getAllMetadata();
+        data.static = {
+          status: 'available',
+          count: Object.keys(staticData).length,
+          size: JSON.stringify(staticData).length,
+          lastUpdate: new Date().toISOString()
+        };
+      } catch (error) {
+        data.static.status = 'error';
+        console.warn('Static data error:', error);
+      }
+
+      // Test Fast Metadata Service
+      try {
+        await fastMetadataService.initialize();
+        const fastData = fastMetadataService.getAllMetadata();
+        data.storage = {
+          status: 'available',
+          count: Object.keys(fastData).length,
+          size: JSON.stringify(fastData).length,
+          lastUpdate: new Date().toISOString()
+        };
+      } catch (error) {
+        data.storage.status = 'error';
+        console.warn('Fast metadata service error:', error);
+      }
+
+      // Test Memory Cache
+      try {
+        const memoryData = cacheService.getAllMetadata();
+        data.memory = {
+          status: 'available',
+          count: Object.keys(memoryData).length,
+          size: JSON.stringify(memoryData).length,
+          lastUpdate: new Date().toISOString()
+        };
+      } catch (error) {
+        data.memory.status = 'error';
+        console.warn('Memory cache error:', error);
+      }
+
+      // Test LocalStorage
+      try {
+        const localStorageData = localStorage.getItem('meditation-app-cache');
+        data.localStorage = {
+          status: localStorageData ? 'available' : 'empty',
+          count: localStorageData ? JSON.parse(localStorageData).length || 0 : 0,
+          size: localStorageData ? localStorageData.length : 0,
+          lastUpdate: new Date().toISOString()
+        };
+      } catch (error) {
+        data.localStorage.status = 'error';
+        console.warn('LocalStorage error:', error);
+      }
+
+      setStorageData(data);
+      setLastUpdate(new Date());
+    } catch (error) {
+      console.error('Error loading storage data:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    loadStorageData();
+  }, []);
+
+  // Připrav data pro grafy
+  const prepareChartData = () => {
+    if (!storageData) return { barData: [], pieData: [], statusData: [] };
+
+    const barData = Object.entries(storageData).map(([key, value]) => ({
+      name: key,
+      count: value.count,
+      size: Math.round(value.size / 1024), // KB
+      status: value.status
+    }));
+
+    const pieData = Object.entries(storageData)
+      .filter(([_, value]) => value.count > 0)
+      .map(([key, value]) => ({
+        name: key,
+        value: value.count,
+        color: colors[key] || '#666'
+      }));
+
+    const statusData = Object.entries(storageData).map(([key, value]) => ({
+      name: key,
+      available: value.status === 'available' ? 1 : 0,
+      error: value.status === 'error' ? 1 : 0,
+      empty: value.status === 'empty' ? 1 : 0
+    }));
+
+    return { barData, pieData, statusData };
+  };
+
+  const { barData, pieData, statusData } = prepareChartData();
+
+  const getStatusIcon = (status) => {
+    switch (status) {
+      case 'available': return <CheckCircle className="w-5 h-5 text-green-500" />;
+      case 'error': return <XCircle className="w-5 h-5 text-red-500" />;
+      case 'empty': return <AlertCircle className="w-5 h-5 text-yellow-500" />;
+      default: return <AlertCircle className="w-5 h-5 text-gray-500" />;
+    }
+  };
+
+  const getStatusText = (status) => {
+    switch (status) {
+      case 'available': return 'Dostupné';
+      case 'error': return 'Chyba';
+      case 'empty': return 'Prázdné';
+      default: return 'Neznámé';
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <div className="flex items-center space-x-2">
+          <RefreshCw className="w-5 h-5 animate-spin" />
+          <span>Načítání dat z úložišť...</span>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-6">
+      {/* Header */}
+      <div className="flex items-center justify-between">
+        <div className="flex items-center space-x-3">
+          <BarChart3 className="w-6 h-6 text-blue-500" />
+          <h2 className="text-2xl font-bold text-gray-800">Analýza úložišť dat</h2>
+        </div>
+        <button
+          onClick={loadStorageData}
+          className="flex items-center space-x-2 px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors"
+        >
+          <RefreshCw className="w-4 h-4" />
+          <span>Obnovit</span>
+        </button>
+      </div>
+
+      {/* Status přehled */}
+      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+        {storageData && Object.entries(storageData).map(([key, value]) => (
+          <motion.div
+            key={key}
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="bg-white rounded-lg p-4 shadow-sm border"
+          >
+            <div className="flex items-center justify-between mb-2">
+              <h3 className="font-semibold text-gray-700 capitalize">{key}</h3>
+              {getStatusIcon(value.status)}
+            </div>
+            <div className="text-sm text-gray-600">
+              <div>Status: {getStatusText(value.status)}</div>
+              <div>Počet: {value.count}</div>
+              <div>Velikost: {Math.round(value.size / 1024)} KB</div>
+            </div>
+          </motion.div>
+        ))}
+      </div>
+
+      {/* Grafy */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Bar chart - počet souborů */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="bg-white rounded-lg p-6 shadow-sm border"
+        >
+          <h3 className="text-lg font-semibold mb-4 flex items-center">
+            <BarChart3 className="w-5 h-5 mr-2" />
+            Počet souborů podle úložiště
+          </h3>
+          <ResponsiveContainer width="100%" height={300}>
+            <BarChart data={barData}>
+              <CartesianGrid strokeDasharray="3 3" />
+              <XAxis dataKey="name" />
+              <YAxis />
+              <Tooltip />
+              <Legend />
+              <Bar dataKey="count" fill="#4285f4" />
+            </BarChart>
+          </ResponsiveContainer>
+        </motion.div>
+
+        {/* Pie chart - rozložení dat */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="bg-white rounded-lg p-6 shadow-sm border"
+        >
+          <h3 className="text-lg font-semibold mb-4 flex items-center">
+            <PieChartIcon className="w-5 h-5 mr-2" />
+            Rozložení dat
+          </h3>
+          <ResponsiveContainer width="100%" height={300}>
+            <PieChart>
+              <Pie
+                data={pieData}
+                cx="50%"
+                cy="50%"
+                labelLine={false}
+                label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
+                outerRadius={80}
+                fill="#8884d8"
+                dataKey="value"
+              >
+                {pieData.map((entry, index) => (
+                  <Cell key={`cell-${index}`} fill={entry.color} />
+                ))}
+              </Pie>
+              <Tooltip />
+            </PieChart>
+          </ResponsiveContainer>
+        </motion.div>
+
+        {/* Area chart - velikost dat */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="bg-white rounded-lg p-6 shadow-sm border"
+        >
+          <h3 className="text-lg font-semibold mb-4 flex items-center">
+            <TrendingUp className="w-5 h-5 mr-2" />
+            Velikost dat (KB)
+          </h3>
+          <ResponsiveContainer width="100%" height={300}>
+            <AreaChart data={barData}>
+              <CartesianGrid strokeDasharray="3 3" />
+              <XAxis dataKey="name" />
+              <YAxis />
+              <Tooltip />
+              <Area type="monotone" dataKey="size" stroke="#8884d8" fill="#8884d8" />
+            </AreaChart>
+          </ResponsiveContainer>
+        </motion.div>
+
+        {/* Status chart */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="bg-white rounded-lg p-6 shadow-sm border"
+        >
+          <h3 className="text-lg font-semibold mb-4 flex items-center">
+            <CheckCircle className="w-5 h-5 mr-2" />
+            Status úložišť
+          </h3>
+          <ResponsiveContainer width="100%" height={300}>
+            <BarChart data={statusData}>
+              <CartesianGrid strokeDasharray="3 3" />
+              <XAxis dataKey="name" />
+              <YAxis />
+              <Tooltip />
+              <Legend />
+              <Bar dataKey="available" stackId="a" fill="#4ade80" name="Dostupné" />
+              <Bar dataKey="error" stackId="a" fill="#ef4444" name="Chyba" />
+              <Bar dataKey="empty" stackId="a" fill="#f59e0b" name="Prázdné" />
+            </BarChart>
+          </ResponsiveContainer>
+        </motion.div>
+      </div>
+
+      {/* Poslední aktualizace */}
+      {lastUpdate && (
+        <div className="text-sm text-gray-500 text-center">
+          Poslední aktualizace: {lastUpdate.toLocaleString('cs-CZ')}
+        </div>
+      )}
+    </div>
+  );
+};
+
+export default DataStorageCharts;

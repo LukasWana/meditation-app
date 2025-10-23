@@ -76,6 +76,16 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
+  // IGNORUJ Firebase token endpointy - způsobují chyby
+  if (url.hostname.includes('securetoken.googleapis.com')) {
+    return;
+  }
+
+  // IGNORUJ Firebase Auth endpointy
+  if (url.hostname.includes('identitytoolkit.googleapis.com')) {
+    return;
+  }
+
   // Ignoruj non-GET requesty pro cache strategie (POST, PUT, DELETE nelze cachovat)
   if (request.method !== 'GET') {
     // Pro non-GET requesty použij pouze fetch bez cachování
