@@ -12,6 +12,14 @@ Items připravené stát se tasky (kompletní info: Why + Context + Scope).
   - **Added:** 2025-10-29
   - **Promoted to Ready:** 2025-10-29
 
+- [ ] **Fix Husky Pre-commit Hook**
+  - **Why:** Pre-commit hook selhává s "not found" error, blokuje commity
+  - **Context:** .husky/pre-commit má technický problém (`: not found` na řádku 3). Momentálně je nutné používat `git commit --no-verify`. Hook má správnou logiku (kontrola .env souborů, API keys) ale špatný shebang nebo path problém.
+  - **Scope/What's missing:** Opravit shebang line nebo path issues, zajistit správné executable permissions. Testovat hook opravený na .env files a API key detekci.
+  - **Priority:** High
+  - **Added:** 2025-10-30
+  - **Promoted to Ready:** 2025-10-30
+
 - [ ] **Rozšířit Test Coverage**
   - **Why:** Target je 70% coverage, momentálně ~20-25%
   - **Context:** Všechny existující testy nyní procházejí (91/91 passed, 100% pass rate). Existují testy pro: useTimer hook, cache/logger services, validation/error-handler utils. Logger nyní má history tracking.
