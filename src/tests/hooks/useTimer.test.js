@@ -40,18 +40,17 @@ describe('useTimer', () => {
   });
 
   it('should stop timer when time reaches 0', () => {
-    const setTime = vi.fn();
+    let currentTime = 1;
+    const setTime = vi.fn((updater) => {
+      // Execute the updater function to simulate real setState behavior
+      currentTime = typeof updater === 'function' ? updater(currentTime) : updater;
+    });
     const setIsPlaying = vi.fn();
 
-    renderHook(() => useTimer(true, 1, setTime, setIsPlaying));
+    renderHook(() => useTimer(true, currentTime, setTime, setIsPlaying));
 
     act(() => {
       vi.advanceTimersByTime(1000);
-    });
-
-    // Počkej na asynchronní setTimeout (delay 0)
-    act(() => {
-      vi.advanceTimersByTime(0);
     });
 
     expect(setIsPlaying).toHaveBeenCalledWith(false);

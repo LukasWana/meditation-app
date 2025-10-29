@@ -9,6 +9,7 @@ describe('BaseCache classes', () => {
 
     beforeEach(() => {
       audioCache = new AudioCache();
+      audioCache.clear(); // Clear any persisted data from previous runs
     });
 
     it('should store and retrieve audio URLs', () => {

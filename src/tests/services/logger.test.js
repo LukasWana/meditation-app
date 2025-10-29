@@ -3,11 +3,15 @@
 import logger from '@services/logger';
 import { vi } from 'vitest';
 
+// Alias for convenience in tests
+const log = logger;
+
 // Mock console methods
 const mockConsole = {
   log: vi.fn(),
   warn: vi.fn(),
-  error: vi.fn()
+  error: vi.fn(),
+  debug: vi.fn()
 };
 
 global.console = mockConsole;
@@ -16,6 +20,8 @@ describe('Logger', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     logger.clearHistory();
+    // Reset environment to test default
+    process.env.NODE_ENV = 'test';
   });
 
   describe('Development mode logging', () => {

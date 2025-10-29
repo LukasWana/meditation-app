@@ -4,39 +4,92 @@ class Logger {
   constructor() {
     this.isDevelopment = import.meta.env.MODE === 'development';
     this.isProduction = import.meta.env.MODE === 'production';
+    this.history = [];
+    this.maxHistorySize = 100;
+  }
+
+  _addToHistory(level, message, error = null) {
+    const entry = {
+      level,
+      message,
+      timestamp: new Date().toISOString(),
+      error: error ? {
+        name: error.name,
+        message: error.message,
+        stack: error.stack
+      } : null
+    };
+
+    this.history.push(entry);
+
+    // Limit history size (LRU - remove oldest)
+    if (this.history.length > this.maxHistorySize) {
+      this.history.shift();
+    }
+  }
+
+  clearHistory() {
+    this.history = [];
+  }
+
+  getHistory(level = null) {
+    if (level) {
+      return this.history.filter(entry => entry.level === level);
+    }
+    return this.history;
+  }
+
+  exportLogs() {
+    return JSON.stringify({
+      timestamp: new Date().toISOString(),
+      environment: import.meta.env.MODE || process.env.NODE_ENV || 'unknown',
+      userAgent: typeof navigator !== 'undefined' ? navigator.userAgent : 'N/A',
+      logs: this.history
+    });
   }
 
   info(message, ...args) {
+    this._addToHistory('info', message);
     if (this.isDevelopment) {
       console.log(`ℹ️ [INFO] ${message}`, ...args);
     }
   }
 
   warn(message, ...args) {
-    if (this.isDevelopment) {
-      console.warn(`⚠️ [WARN] ${message}`, ...args);
-    }
+    this._addToHistory('warn', message);
+    console.warn(`⚠️ [WARN] ${message}`, ...args);
   }
 
   error(message, ...args) {
+    // Extract error object if present
+    const errorObj = args.find(arg => arg instanceof Error);
+    this._addToHistory('error', message, errorObj);
     console.error(`❌ [ERROR] ${message}`, ...args);
   }
 
   success(message, ...args) {
+    this._addToHistory('success', message);
     if (this.isDevelopment) {
       console.log(`✅ [SUCCESS] ${message}`, ...args);
     }
   }
 
   debug(message, ...args) {
+    this._addToHistory('debug', message);
     if (this.isDevelopment) {
-      console.debug(`🐛 [DEBUG] ${message}`, ...args);
+      console.log(`🐛 [DEBUG] ${message}`, ...args);
     }
   }
 
   performance(metric, value, unit = 'ms') {
+    // Color indicators based on performance thresholds
+    let indicator = '🟢'; // Good
+    if (value > 500) indicator = '🟡'; // Medium
+    if (value > 1000) indicator = '🔴'; // Bad
+
+    this._addToHistory('performance', `${metric} (${value}${unit})`);
     if (this.isDevelopment) {
-      console.log(`⚡ [PERF] ${metric}: ${value}${unit}`);
+      console.log(`${indicator} [PERF] ${metric} (${value}${unit})`);
     }
   }
 
@@ -47,16 +100,24 @@ class Logger {
     }
   }
 
-  cache(operation, key, hit = null) {
+  cache(operation, key = '', hit = false) {
+    const message = key
+      ? `${operation}: ${key}`.trim()
+      : operation;
+    this._addToHistory('cache', message);
     if (this.isDevelopment) {
       const hitIcon = hit === true ? '🎯' : hit === false ? '💾' : '📦';
-      console.log(`${hitIcon} [CACHE] ${operation}: ${key}`);
+      console.log(`${hitIcon} [CACHE] ${message}`);
     }
   }
 
-  firebase(operation, collection, docId = null) {
+  firebase(operation, collection = '', docId = null) {
+    const message = collection
+      ? `${operation} ${collection}${docId ? `/${docId}` : ''}`.trim()
+      : operation;
+    this._addToHistory('firebase', message);
     if (this.isDevelopment) {
-      console.log(`🔥 [FIREBASE] ${operation} ${collection}${docId ? `/${docId}` : ''}`);
+      console.log(`🔥 [FIREBASE] ${message}`);
     }
   }
 
@@ -72,9 +133,13 @@ class Logger {
     }
   }
 
-  audio(operation, fileName, details = '') {
+  audio(operation, fileName = '', details = '') {
+    const message = fileName
+      ? `${operation}: ${fileName} ${details}`.trim()
+      : operation;
+    this._addToHistory('audio', message);
     if (this.isDevelopment) {
-      console.log(`🎵 [AUDIO] ${operation}: ${fileName} ${details}`);
+      console.log(`🎵 [AUDIO] ${message}`);
     }
   }
 

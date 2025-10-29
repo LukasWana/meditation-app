@@ -179,6 +179,9 @@ describe('ErrorHandler', () => {
         { id: 'error2', message: 'Error 2' }
       ];
 
+      // Snapshot queue before flush
+      const expectedErrors = [...errorHandler.errorQueue];
+
       await errorHandler.flushErrors();
 
       expect(fetch).toHaveBeenCalledWith('/api/errors/batch', {
@@ -187,7 +190,7 @@ describe('ErrorHandler', () => {
           'Content-Type': 'application/json',
           'X-Session-ID': errorHandler.sessionId
         },
-        body: JSON.stringify({ errors: errorHandler.errorQueue })
+        body: JSON.stringify({ errors: expectedErrors })
       });
 
       expect(errorHandler.errorQueue).toHaveLength(0);

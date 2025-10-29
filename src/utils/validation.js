@@ -346,7 +346,10 @@ export const validateInput = (input, schema) => {
     }
 
     result.isValid = result.isValid && fieldResult.isValid;
-    result.errors[field] = fieldResult.errors || [];
+    // Only add errors if there are any
+    if (fieldResult.errors && fieldResult.errors.length > 0) {
+      result.errors[field] = fieldResult.errors;
+    }
 
     if (fieldResult.sanitizedValue !== undefined) {
       result.sanitizedData[field] = fieldResult.sanitizedValue;
