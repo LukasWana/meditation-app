@@ -4,7 +4,7 @@ import { Moon, Sun, Database, Download, RefreshCw, Upload, FileAudio, BarChart3,
 import { storage, db, database, auth } from '@services/firebase';
 import { ref, listAll, getMetadata, getDownloadURL } from 'firebase/storage';
 import { collection, getDocs, query, orderBy } from 'firebase/firestore';
-import { ref as dbRef, set } from 'firebase/database';
+import { ref as dbRef, set, get } from 'firebase/database';
 import { signInAnonymously } from 'firebase/auth';
 import DataStorageCharts from '@components/admin/DataStorageCharts';
 import FirebaseMonitoring from '@components/admin/FirebaseMonitoring';
@@ -16,6 +16,8 @@ const SimpleAdminScreen = () => {
   const [status, setStatus] = useState('');
   const [showCharts, setShowCharts] = useState(false);
   const [showMonitoring, setShowMonitoring] = useState(true); // ✅ NOVÉ: zobrazit monitoring ve výchozím stavu
+  const [newFiles, setNewFiles] = useState([]); // ✅ FÁZE 3: detekované nové soubory
+  const [changedFiles, setChangedFiles] = useState([]); // ✅ FÁZE 3: detekované změněné soubory
 
   // Automatická kontrola při načtení
   useEffect(() => {
@@ -564,6 +566,222 @@ const SimpleAdminScreen = () => {
     }
   };
 
+  // ✅ FÁZE 3: Zkontrolovat nové a změněné soubory
+  const checkForNewFiles = async () => {
+    setLoading(true);
+    setStatus('🔍 Kontroluji nové soubory...');
+
+    try {
+      // 1. Načti všechny soubory z Firebase Storage
+      setStatus('📁 Skenuji Firebase Storage...');
+      const storageFiles = await scanFirebaseStorage();
+      console.log(`📊 Nalezeno ${storageFiles.length} souborů ve Storage`);
+
+      // 2. Načti existující metadata z Realtime Database
+      setStatus('📊 Načítám existující metadata...');
+      const realtimeRef = dbRef(database, 'audio-metadata');
+      const snapshot = await get(realtimeRef);
+
+      const existingMetadata = new Map();
+      if (snapshot.exists()) {
+        const data = snapshot.val();
+        if (data.files && Array.isArray(data.files)) {
+          data.files.forEach(file => {
+            existingMetadata.set(file.fullPath || file.fileName, file);
+          });
+        }
+      }
+
+      console.log(`📊 Existující metadata: ${existingMetadata.size} souborů`);
+
+      // 3. Porovnej a najdi nové a změněné soubory
+      const newFilesList = [];
+      const changedFilesList = [];
+
+      for (const storageFile of storageFiles) {
+        const existing = existingMetadata.get(storageFile.fullPath);
+
+        if (!existing) {
+          // Nový soubor - není v DB
+          newFilesList.push(storageFile);
+        } else {
+          // Zkontroluj jestli se změnil
+          const sizeChanged = existing.fileSize !== storageFile.size;
+
+          if (sizeChanged) {
+            changedFilesList.push({
+              ...storageFile,
+              oldSize: existing.fileSize,
+              reason: 'size changed'
+            });
+          }
+        }
+      }
+
+      setNewFiles(newFilesList);
+      setChangedFiles(changedFilesList);
+
+      const totalChanges = newFilesList.length + changedFilesList.length;
+
+      if (totalChanges === 0) {
+        setStatus('✅ Žádné nové soubory! Všechna metadata jsou aktuální.');
+      } else {
+        setStatus(`🆕 Nalezeno: ${newFilesList.length} nových souborů, ${changedFilesList.length} změněných souborů`);
+      }
+
+      console.log(`🆕 Nové soubory:`, newFilesList.map(f => f.name));
+      console.log(`🔄 Změněné soubory:`, changedFilesList.map(f => f.name));
+
+    } catch (error) {
+      setStatus(`❌ Chyba při kontrole: ${error.message}`);
+      console.error('❌ Check for new files failed:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // ✅ FÁZE 3: Synchronizovat jen nové a změněné soubory
+  const syncOnlyChanges = async () => {
+    const filesToSync = [...newFiles, ...changedFiles];
+
+    if (filesToSync.length === 0) {
+      setStatus('⚠️ Žádné soubory k synchronizaci. Spusť nejdříve "Zkontrolovat nové soubory".');
+      return;
+    }
+
+    setLoading(true);
+    setStatus(`🔄 Synchronizuji ${filesToSync.length} souborů...`);
+
+    try {
+      // Přihlásit se anonymně
+      try {
+        await signInAnonymously(auth);
+      } catch (authError) {
+        console.warn('⚠️ Anonymous auth failed:', authError.message);
+      }
+
+      // Načti existující metadata z Realtime Database
+      const realtimeRef = dbRef(database, 'audio-metadata');
+      const snapshot = await get(realtimeRef);
+
+      let existingFiles = [];
+      if (snapshot.exists()) {
+        const data = snapshot.val();
+        existingFiles = data.files || [];
+      }
+
+      // Vytvoř Map pro rychlé vyhledávání
+      const existingMap = new Map(existingFiles.map(f => [f.fullPath || f.fileName, f]));
+
+      // Zpracuj pouze nové a změněné soubory
+      const metadataArray = [];
+      let processedCount = 0;
+
+      for (const file of filesToSync) {
+        try {
+          const progress = Math.round(((processedCount + 1) / filesToSync.length) * 100);
+          setStatus(`📊 Měřím délku... ${processedCount + 1}/${filesToSync.length} (${progress}%) - ${file.name}`);
+
+          // Generuj downloadURL
+          let downloadURL = file.downloadURL;
+          if (!downloadURL) {
+            try {
+              const fileRef = ref(storage, file.fullPath);
+              downloadURL = await getDownloadURL(fileRef);
+            } catch (urlError) {
+              downloadURL = `https://firebasestorage.googleapis.com/v0/b/meditations-audio.firebasestorage.app/o/${encodeURIComponent(file.fullPath)}?alt=media`;
+            }
+          }
+
+          // Změř duration
+          let realDuration = null;
+          let extractionMethod = 'estimated';
+
+          try {
+            realDuration = await getAudioDuration(downloadURL);
+            if (realDuration && realDuration > 0) {
+              extractionMethod = 'extracted';
+            }
+          } catch (audioError) {
+            console.warn(`⚠️ Audio API failed for ${file.name}`);
+          }
+
+          const finalDuration = realDuration || estimateDurationFromSize(file.size);
+
+          // Vytvoř metadata
+          const completeMetadata = {
+            fileName: file.fullPath,
+            displayName: extractDisplayName(file.name),
+            folder: file.folder,
+            subFolder: extractSubFolder(file.fullPath),
+            downloadURL: downloadURL,
+            fullPath: file.fullPath,
+            duration: finalDuration,
+            durationFormatted: formatDuration(finalDuration),
+            durationDetailed: formatDurationDetailed(finalDuration),
+            isValid: finalDuration > 0,
+            extractionMethod: extractionMethod,
+            fileSize: file.size,
+            contentType: 'audio/mpeg',
+            lastModified: new Date().toISOString(),
+            extracted: finalDuration > 0,
+            ...(file.folder === 'slova' ? {
+              gender: extractGender(file.name),
+              topic: extractTopic(file.name),
+              type: extractType(file.name)
+            } : {})
+          };
+
+          metadataArray.push(completeMetadata);
+          processedCount++;
+
+        } catch (error) {
+          console.warn(`⚠️ Chyba při zpracování ${file.name}:`, error.message);
+          processedCount++;
+        }
+      }
+
+      // Aktualizuj existující soubory nebo přidej nové
+      metadataArray.forEach(newMeta => {
+        const existingIndex = existingFiles.findIndex(f =>
+          (f.fullPath || f.fileName) === newMeta.fullPath
+        );
+
+        if (existingIndex >= 0) {
+          // Aktualizuj existující
+          existingFiles[existingIndex] = newMeta;
+        } else {
+          // Přidej nový
+          existingFiles.push(newMeta);
+        }
+      });
+
+      // Ulož zpět do Realtime Database
+      const slovaFiles = existingFiles.filter(f => f.folder === 'slova');
+      const hudbaFiles = existingFiles.filter(f => f.folder === 'hudba');
+
+      await set(realtimeRef, {
+        files: existingFiles,
+        lastSync: new Date().toISOString(),
+        totalFiles: existingFiles.length,
+        slovaFiles: slovaFiles.length,
+        hudbaFiles: hudbaFiles.length
+      });
+
+      setStatus(`✅ Synchronizováno ${metadataArray.length} souborů! 📊 Celkem: ${existingFiles.length} | 🎤 ${slovaFiles.length} SLOVA | 🎵 ${hudbaFiles.length} HUDBA`);
+
+      // Vymaž seznam změn
+      setNewFiles([]);
+      setChangedFiles([]);
+
+    } catch (error) {
+      setStatus(`❌ Chyba při synchronizaci: ${error.message}`);
+      console.error('❌ Sync changes failed:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   // Stáhnout MP3 pro offline
   const downloadMP3ForOffline = async () => {
     setLoading(true);
@@ -667,7 +885,7 @@ const SimpleAdminScreen = () => {
 
         {/* Hlavní funkce */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {/* Kompletní synchronizace Storage → Realtime DB */}
+          {/* ✅ FÁZE 3: Zkontrolovat nové soubory */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -675,11 +893,90 @@ const SimpleAdminScreen = () => {
             className={`p-6 rounded-lg border ${cardClasses}`}
           >
             <h3 className="text-xl font-semibold mb-4 flex items-center">
+              <RefreshCw className="mr-2 text-blue-500" size={24} />
+              Zkontrolovat nové soubory
+            </h3>
+            <p className="text-gray-500 mb-4">
+              Porovná Firebase Storage s Realtime Database a najde nové nebo změněné MP3 soubory. Rychlejší než plná synchronizace.
+            </p>
+            <button
+              onClick={checkForNewFiles}
+              disabled={loading}
+              className="w-full bg-blue-500 hover:bg-blue-600 disabled:bg-gray-400 text-white py-3 px-4 rounded-lg transition-colors flex items-center justify-center mb-3"
+            >
+              {loading ? (
+                <RefreshCw className="animate-spin mr-2" size={20} />
+              ) : (
+                <RefreshCw className="mr-2" size={20} />
+              )}
+              {loading ? 'Kontroluji...' : '🔍 Zkontrolovat nové soubory'}
+            </button>
+
+            {/* Zobrazení detekovaných změn */}
+            {(newFiles.length > 0 || changedFiles.length > 0) && (
+              <div className="mt-4 p-4 bg-blue-50 rounded-lg">
+                <h4 className="font-semibold text-blue-800 mb-2">
+                  Nalezené změny:
+                </h4>
+                {newFiles.length > 0 && (
+                  <div className="mb-2">
+                    <p className="text-sm text-blue-700">
+                      🆕 Nové soubory: <span className="font-bold">{newFiles.length}</span>
+                    </p>
+                    <div className="text-xs text-blue-600 mt-1 max-h-20 overflow-y-auto">
+                      {newFiles.slice(0, 5).map((file, idx) => (
+                        <div key={idx}>• {file.name}</div>
+                      ))}
+                      {newFiles.length > 5 && (
+                        <div>... a {newFiles.length - 5} dalších</div>
+                      )}
+                    </div>
+                  </div>
+                )}
+                {changedFiles.length > 0 && (
+                  <div>
+                    <p className="text-sm text-blue-700">
+                      🔄 Změněné soubory: <span className="font-bold">{changedFiles.length}</span>
+                    </p>
+                    <div className="text-xs text-blue-600 mt-1 max-h-20 overflow-y-auto">
+                      {changedFiles.slice(0, 5).map((file, idx) => (
+                        <div key={idx}>• {file.name}</div>
+                      ))}
+                      {changedFiles.length > 5 && (
+                        <div>... a {changedFiles.length - 5} dalších</div>
+                      )}
+                    </div>
+                  </div>
+                )}
+                <button
+                  onClick={syncOnlyChanges}
+                  disabled={loading}
+                  className="w-full mt-3 bg-green-500 hover:bg-green-600 disabled:bg-gray-400 text-white py-2 px-4 rounded-lg transition-colors flex items-center justify-center"
+                >
+                  {loading ? (
+                    <RefreshCw className="animate-spin mr-2" size={16} />
+                  ) : (
+                    <Upload className="mr-2" size={16} />
+                  )}
+                  {loading ? 'Synchronizuji...' : `✨ Synchronizovat ${newFiles.length + changedFiles.length} souborů`}
+                </button>
+              </div>
+            )}
+          </motion.div>
+
+          {/* Kompletní synchronizace Storage → Realtime DB */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.2 }}
+            className={`p-6 rounded-lg border ${cardClasses}`}
+          >
+            <h3 className="text-xl font-semibold mb-4 flex items-center">
               <Database className="mr-2 text-green-500" size={24} />
               Kompletní synchronizace
             </h3>
             <p className="text-gray-500 mb-4">
-              Skenuje Firebase Storage, připraví metadata z velikosti MP3 souborů a uloží do Realtime Database. Doporučeno pro první spuštění.
+              Skenuje Firebase Storage, změří délku všech MP3 souborů a uloží do Realtime Database. Doporučeno jen pro první spuštění.
             </p>
             <button
               onClick={fullMetadataSync}
@@ -691,7 +988,7 @@ const SimpleAdminScreen = () => {
               ) : (
                 <Upload className="mr-2" size={20} />
               )}
-              {loading ? 'Synchronizuji...' : '🚀 Kompletní synchronizace Storage → Realtime DB'}
+              {loading ? 'Synchronizuji...' : '🚀 Kompletní synchronizace (všechny soubory)'}
             </button>
           </motion.div>
 
