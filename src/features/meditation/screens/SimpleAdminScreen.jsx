@@ -152,7 +152,8 @@ const SimpleAdminScreen = () => {
 
       for (const file of allFiles) {
         try {
-          setStatus(`📊 Připravuji metadata... ${processedCount + 1}/${allFiles.length} (${file.name})`);
+          const progress = Math.round(((processedCount + 1) / allFiles.length) * 100);
+          setStatus(`📊 Měřím délku... ${processedCount + 1}/${allFiles.length} (${progress}%) - ${file.name}`);
 
           // Generuj správné downloadURL pomocí getDownloadURL
           let downloadURL = file.downloadURL;
@@ -160,7 +161,7 @@ const SimpleAdminScreen = () => {
             try {
               const fileRef = ref(storage, file.fullPath);
               downloadURL = await getDownloadURL(fileRef);
-              console.log(`🔗 Generated downloadURL for ${file.name}: ${downloadURL}`);
+              console.log(`🔗 Generated downloadURL for ${file.name}`);
             } catch (urlError) {
               console.warn(`⚠️ Failed to generate downloadURL for ${file.name}:`, urlError);
               // Použij fallback URL
@@ -168,17 +169,35 @@ const SimpleAdminScreen = () => {
             }
           }
 
-          // Použij odhad délky z velikosti souboru (stejně jako starý admin)
-          // Tento přístup funguje bez CORS problémů
-          const estimatedDuration = estimateDurationFromSize(file.size);
+          // ✅ NOVÉ: Zkus skutečné měření délky z Audio API
+          let realDuration = null;
+          let extractionMethod = 'estimated';
+
+          try {
+            console.log(`🎵 Measuring real duration for ${file.name}...`);
+            realDuration = await getAudioDuration(downloadURL);
+
+            if (realDuration && realDuration > 0) {
+              extractionMethod = 'extracted';
+              console.log(`✅ ${file.name}: ${formatDuration(realDuration)} (REAL)`);
+            } else {
+              console.warn(`⚠️ Audio API returned invalid duration for ${file.name}, using estimate`);
+            }
+          } catch (audioError) {
+            console.warn(`⚠️ Audio API failed for ${file.name}:`, audioError.message);
+          }
+
+          // Fallback na odhad z velikosti souboru pokud Audio API selhalo
+          const finalDuration = realDuration || estimateDurationFromSize(file.size);
           const audioMetadata = {
-            duration: estimatedDuration,
-            durationFormatted: formatDuration(estimatedDuration),
-            durationDetailed: formatDurationDetailed(estimatedDuration),
-            isValid: estimatedDuration > 0
+            duration: finalDuration,
+            durationFormatted: formatDuration(finalDuration),
+            durationDetailed: formatDurationDetailed(finalDuration),
+            isValid: finalDuration > 0,
+            extractionMethod // 'extracted' nebo 'estimated'
           };
 
-          console.log(`📊 ${file.name}: ${audioMetadata.durationFormatted} (Estimated from ${Math.round(file.size / 1024 / 1024 * 100) / 100}MB)`);
+          console.log(`📊 ${file.name}: ${audioMetadata.durationFormatted} (${extractionMethod.toUpperCase()})`);
 
           // Vytvoř kompletní metadata objekt
           const completeMetadata = {
@@ -192,6 +211,7 @@ const SimpleAdminScreen = () => {
             durationFormatted: audioMetadata.durationFormatted,
             durationDetailed: audioMetadata.durationDetailed,
             isValid: audioMetadata.isValid,
+            extractionMethod: audioMetadata.extractionMethod, // ✅ NOVÉ: jak byla délka získána
             fileSize: file.size,
             contentType: 'audio/mpeg',
             lastModified: new Date().toISOString(),
@@ -207,12 +227,10 @@ const SimpleAdminScreen = () => {
           metadataArray.push(completeMetadata);
           processedCount++;
 
-          console.log(`✅ ${file.name}: ${audioMetadata.durationFormatted} (Estimated)`);
-
         } catch (error) {
           console.warn(`⚠️ Chyba při zpracování ${file.name}:`, error.message);
 
-          // Přidej soubor s odhadem délky
+          // Přidej soubor s odhadem délky (error fallback)
           const estimatedDuration = estimateDurationFromSize(file.size);
           metadataArray.push({
             fileName: file.fullPath,
@@ -225,6 +243,7 @@ const SimpleAdminScreen = () => {
             durationFormatted: formatDuration(estimatedDuration),
             durationDetailed: formatDurationDetailed(estimatedDuration),
             isValid: estimatedDuration > 0,
+            extractionMethod: 'error-fallback', // ✅ NOVÉ: označit že selhalo
             fileSize: file.size,
             contentType: 'audio/mpeg',
             lastModified: new Date().toISOString(),
@@ -235,13 +254,23 @@ const SimpleAdminScreen = () => {
         }
       }
 
-      // 4. Filtruj slova soubory
+      // 4. Filtruj slova soubory a spočítej statistiky
       const slovaFiles = metadataArray.filter(file => file.folder === 'slova');
       const hudbaFiles = metadataArray.filter(file => file.folder === 'hudba');
 
+      // ✅ NOVÉ: Statistiky metod extraction
+      const extractedCount = metadataArray.filter(f => f.extractionMethod === 'extracted').length;
+      const estimatedCount = metadataArray.filter(f => f.extractionMethod === 'estimated').length;
+      const errorCount = metadataArray.filter(f => f.extractionMethod === 'error-fallback').length;
+
       console.log(`📊 Zpracováno: ${metadataArray.length} souborů`);
       console.log(`🎤 SLOVA: ${slovaFiles.length} souborů`);
-      console.log(`🎵 HUDEBA: ${hudbaFiles.length} souborů`);
+      console.log(`🎵 HUDBA: ${hudbaFiles.length} souborů`);
+      console.log(`✅ Skutečně změřeno: ${extractedCount} souborů`);
+      console.log(`📏 Odhadnuto: ${estimatedCount} souborů`);
+      if (errorCount > 0) {
+        console.log(`⚠️ Chyby: ${errorCount} souborů`);
+      }
 
       // 5. Uložit do Realtime Database
       setStatus('💾 Ukládám do Realtime Database...');
@@ -256,7 +285,9 @@ const SimpleAdminScreen = () => {
         invalidFiles: metadataArray.filter(f => !f.isValid).length
       });
 
-      setStatus(`✅ Kompletní synchronizace dokončena! 📊 ${metadataArray.length} souborů, 🎤 ${slovaFiles.length} SLOVA, 🎵 ${hudbaFiles.length} HUDEBA`);
+      // ✅ NOVÉ: Vylepšený status s extraction statistikami
+      const successRate = Math.round((extractedCount / metadataArray.length) * 100);
+      setStatus(`✅ Dokončeno! 📊 ${metadataArray.length} souborů | 🎤 ${slovaFiles.length} SLOVA | 🎵 ${hudbaFiles.length} HUDBA | ✅ ${extractedCount} skutečně změřeno (${successRate}%)`);
       console.log('✅ Full metadata sync completed successfully');
 
     } catch (error) {
@@ -306,14 +337,51 @@ const SimpleAdminScreen = () => {
     return null;
   };
 
-  // Odhad délky z velikosti souboru (přibližně 1MB = 1 minuta pro MP3)
+  // Skutečné měření délky z Audio API
+  const getAudioDuration = (audioSrc) => {
+    return new Promise((resolve) => {
+      const audio = new Audio();
+      let resolved = false;
+
+      audio.addEventListener('loadedmetadata', () => {
+        if (resolved) return;
+        resolved = true;
+
+        const duration = audio.duration;
+        if (isFinite(duration) && duration > 0) {
+          resolve(Math.floor(duration)); // Vrať sekundy
+        } else {
+          resolve(null);
+        }
+      });
+
+      audio.addEventListener('error', (error) => {
+        if (resolved) return;
+        resolved = true;
+        console.warn('Audio duration extraction failed:', error);
+        resolve(null);
+      });
+
+      // Timeout po 10 sekundách (někdy trvá déle načíst metadata)
+      setTimeout(() => {
+        if (resolved) return;
+        resolved = true;
+        console.warn('Audio duration extraction timeout');
+        resolve(null);
+      }, 10000);
+
+      audio.src = audioSrc;
+    });
+  };
+
+  // Fallback: Odhad délky z velikosti souboru (když Audio API selže)
   const estimateDurationFromSize = (sizeInBytes) => {
     if (sizeInBytes <= 0) {
-      // Pokud nemáme velikost, použij výchozí odhad (5 minut)
-      return 300; // 5 minut
+      return 300; // 5 minut - výchozí odhad
     }
+    // MP3 průměrně 128 kbps = přibližně 960 KB/min = 0.94 MB/min
     const sizeInMB = sizeInBytes / (1024 * 1024);
-    return Math.round(sizeInMB * 60); // sekundy
+    return Math.round(sizeInMB * 60); // sekundy (1MB ≈ 1 minuta)
   };
 
   // Formátování délky
