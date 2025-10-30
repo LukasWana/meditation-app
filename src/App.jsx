@@ -95,10 +95,13 @@ function MeditationApp() {
       register();
     }
 
-    // Načti database viewer pro development
+    // Načti debug tools pro development
     if (import.meta.env.MODE === 'development') {
       import('./scripts/consoleDbViewer.js').then(() => {
-        console.log('🔍 Database viewer je k dispozici v konzoli');
+        console.log('📊 Database viewer loaded');
+      });
+      import('./scripts/testOfflineCache.js').then(() => {
+        console.log('🧪 Offline test utilities loaded');
       });
 
       // Debug funkce pro slova soubory

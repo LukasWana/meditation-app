@@ -10,11 +10,11 @@ const isLocalhost = Boolean(
 
 export function register() {
   if ('serviceWorker' in navigator) {
-    // V development módu přeskoč registraci
-    if (import.meta.env.MODE === 'development') {
-      console.log('🔧 Service Worker: Skipped in development mode');
-      return;
-    }
+    // Service Worker je nyní povolen i v development módu pro testování offline funkcionality
+    // if (import.meta.env.MODE === 'development') {
+    //   console.log('🔧 Service Worker: Skipped in development mode');
+    //   return;
+    // }
 
     const publicUrl = new URL(import.meta.env.BASE_URL, window.location.href);
     if (publicUrl.origin !== window.location.origin) {
