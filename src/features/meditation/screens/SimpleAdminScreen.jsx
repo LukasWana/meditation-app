@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { Moon, Sun, Database, Download, RefreshCw, Upload, FileAudio, BarChart3, Activity } from 'lucide-react';
+import { Moon, Sun, Database, RefreshCw, Upload, BarChart3, Activity } from 'lucide-react';
 import { storage, db, database, auth } from '@services/firebase';
 import { ref, listAll, getMetadata, getDownloadURL } from 'firebase/storage';
 import { collection, getDocs, query, orderBy } from 'firebase/firestore';
@@ -782,70 +782,6 @@ const SimpleAdminScreen = () => {
     }
   };
 
-  // Stáhnout MP3 pro offline
-  const downloadMP3ForOffline = async () => {
-    setLoading(true);
-    setStatus('🔄 Stahuji MP3 soubory...');
-
-    try {
-      // Získej seznam všech audio souborů ze Storage
-      const storageRef = ref(storage);
-      const result = await listAll(storageRef);
-
-      let downloadedCount = 0;
-      const totalFiles = result.items.length;
-
-      for (const itemRef of result.items) {
-        try {
-          // Získej URL a metadata
-          const [url, metadata] = await Promise.all([
-            getDownloadURL(itemRef),
-            getMetadata(itemRef)
-          ]);
-
-          // Stáhni soubor do cache
-          const response = await fetch(url);
-          const blob = await response.blob();
-
-          // Ulož do IndexedDB nebo localStorage
-          const fileName = itemRef.name;
-          const fileKey = `offline_audio_${fileName}`;
-
-          // Použij IndexedDB pro větší soubory
-          if ('indexedDB' in window) {
-            const request = indexedDB.open('AudioCache', 1);
-            request.onupgradeneeded = (event) => {
-              const db = event.target.result;
-              if (!db.objectStoreNames.contains('audioFiles')) {
-                db.createObjectStore('audioFiles');
-              }
-            };
-
-            request.onsuccess = (event) => {
-              const db = event.target.result;
-              const transaction = db.transaction(['audioFiles'], 'readwrite');
-              const store = transaction.objectStore('audioFiles');
-              store.put(blob, fileKey);
-            };
-          }
-
-          downloadedCount++;
-          setStatus(`🔄 Stahuji... ${downloadedCount}/${totalFiles} (${fileName})`);
-
-        } catch (fileError) {
-          console.warn(`⚠️ Failed to download ${itemRef.name}:`, fileError);
-        }
-      }
-
-      setStatus(`✅ Offline stahování dokončeno! 📁 ${downloadedCount}/${totalFiles} souborů staženo`);
-
-    } catch (error) {
-      setStatus(`❌ Chyba při stahování: ${error.message}`);
-      console.error('❌ Download failed:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
 
   const cardClasses = isDarkMode
     ? 'bg-gray-800 border-gray-700 text-white'
@@ -1045,34 +981,6 @@ const SimpleAdminScreen = () => {
                 <RefreshCw className="mr-2" size={20} />
               )}
               {loading ? 'Vymazávám cache...' : '🧹 Vymazat cache a načíst data'}
-            </button>
-          </motion.div>
-
-          {/* Offline stahování */}
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.4 }}
-            className={`p-6 rounded-lg border ${cardClasses}`}
-          >
-            <h3 className="text-xl font-semibold mb-4 flex items-center">
-              <Download className="mr-2 text-blue-500" size={24} />
-              Offline stahování
-            </h3>
-            <p className="text-gray-500 mb-4">
-              Stáhne všechny MP3 soubory pro offline použití. Uloží je do prohlížeče.
-            </p>
-            <button
-              onClick={downloadMP3ForOffline}
-              disabled={loading}
-              className="w-full bg-blue-500 hover:bg-blue-600 disabled:bg-gray-400 text-white py-3 px-4 rounded-lg transition-colors flex items-center justify-center"
-            >
-              {loading ? (
-                <RefreshCw className="animate-spin mr-2" size={20} />
-              ) : (
-                <FileAudio className="mr-2" size={20} />
-              )}
-              {loading ? 'Stahuji...' : '📁 Stáhnout MP3 pro offline'}
             </button>
           </motion.div>
         </div>
