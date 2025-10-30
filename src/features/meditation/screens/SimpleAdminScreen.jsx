@@ -1,12 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { Moon, Sun, Database, Download, RefreshCw, Upload, FileAudio, BarChart3 } from 'lucide-react';
+import { Moon, Sun, Database, Download, RefreshCw, Upload, FileAudio, BarChart3, Activity } from 'lucide-react';
 import { storage, db, database, auth } from '@services/firebase';
 import { ref, listAll, getMetadata, getDownloadURL } from 'firebase/storage';
 import { collection, getDocs, query, orderBy } from 'firebase/firestore';
 import { ref as dbRef, set } from 'firebase/database';
 import { signInAnonymously } from 'firebase/auth';
 import DataStorageCharts from '@components/admin/DataStorageCharts';
+import FirebaseMonitoring from '@components/admin/FirebaseMonitoring';
 // import { extractAudioMetadata } from '@utils/audioMetadataExtractor'; // Nepoužíváme kvůli CORS
 
 const SimpleAdminScreen = () => {
@@ -14,6 +15,7 @@ const SimpleAdminScreen = () => {
   const [loading, setLoading] = useState(false);
   const [status, setStatus] = useState('');
   const [showCharts, setShowCharts] = useState(false);
+  const [showMonitoring, setShowMonitoring] = useState(true); // ✅ NOVÉ: zobrazit monitoring ve výchozím stavu
 
   // Automatická kontrola při načtení
   useEffect(() => {
@@ -778,12 +780,24 @@ const SimpleAdminScreen = () => {
           </motion.div>
         </div>
 
+        {/* Firebase Monitoring */}
+        {showMonitoring && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.4 }}
+            className="mt-6"
+          >
+            <FirebaseMonitoring />
+          </motion.div>
+        )}
+
         {/* Grafy úložišť dat */}
         {showCharts && (
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.4 }}
+            transition={{ delay: 0.5 }}
             className={`mt-6 ${cardClasses}`}
           >
             <DataStorageCharts />
@@ -810,6 +824,13 @@ const SimpleAdminScreen = () => {
               className="px-4 py-2 bg-yellow-500 hover:bg-yellow-600 text-white rounded-lg transition-colors"
             >
               🗑️ Vymazat status
+            </button>
+            <button
+              onClick={() => setShowMonitoring(!showMonitoring)}
+              className="px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg transition-colors flex items-center"
+            >
+              <Activity className="w-4 h-4 mr-2" />
+              {showMonitoring ? 'Skrýt monitoring' : 'Zobrazit Firebase monitoring'}
             </button>
             <button
               onClick={() => setShowCharts(!showCharts)}
