@@ -90,10 +90,8 @@ function MeditationApp() {
 
   // Service Worker registrace
   React.useEffect(() => {
-    // Registruj Service Worker pouze v produkci nebo když je připraven
-    if (import.meta.env.MODE === 'production' || window.location.protocol === 'https:') {
-      register();
-    }
+    // Registruj Service Worker vždy (i v development pro testování offline funkcionality)
+    register();
 
     // Načti debug tools pro development
     if (import.meta.env.MODE === 'development') {
