@@ -71,10 +71,11 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  // IGNORUJ VŠECHNY Firebase Storage požadavky - nechte prohlížeč je zpracovat přímo
-  if (url.hostname.includes('firebasestorage.googleapis.com')) {
-    return;
-  }
+  // Firebase Storage požadavky MUSÍ být cachované pro offline funkcionalitu
+  // ❌ NEODSTRAŇUJTE - toto je důležité pro offline režim
+  // if (url.hostname.includes('firebasestorage.googleapis.com')) {
+  //   return;
+  // }
 
   // IGNORUJ Firebase token endpointy - způsobují chyby
   if (url.hostname.includes('securetoken.googleapis.com')) {
@@ -95,7 +96,7 @@ self.addEventListener('fetch', (event) => {
 
   // Cache strategie podle typu souboru
   if (url.pathname.endsWith('.mp3') || url.pathname.includes('/media/') || url.hostname.includes('firebasestorage')) {
-    // Audio soubory a Firebase Storage - Cache First pro šetření mobilních dat
+    // Audio soubory a Firebase Storage - Cache First pro offline funkcionalitu a šetření dat
     event.respondWith(networkFirstAudio(request, AUDIO_CACHE));
   } else if (url.pathname.endsWith('.js') || url.pathname.endsWith('.css')) {
     // Statické soubory - Stale While Revalidate
