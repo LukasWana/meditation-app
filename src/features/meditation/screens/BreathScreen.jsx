@@ -55,7 +55,7 @@ const BreathScreen = ({
           animationType="fadeIn"
           delay={0.1}
         >
-          <h2 className="text-5xl font-light mb-8" style={{fontFamily: 'Playfair Display'}}>
+          <h2 className="text-5xl font-light mb-8">
             dýchanie
           </h2>
 
@@ -83,7 +83,6 @@ const BreathScreen = ({
 
           <motion.p
             className="text-5xl font-light mb-4"
-            style={{fontFamily: 'Playfair Display'}}
             key={localBreathPhase}
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: isPlaying ? 1 : 0.5, y: 0 }}
@@ -101,7 +100,7 @@ const BreathScreen = ({
               {isPlaying ? <Pause size={24} /> : <Play size={24} />}
             </FramerButton>
           </div>
-                  <p className="text-gray-600 text-lg" style={{fontFamily: 'Playfair Display'}}>
+                  <p className="text-gray-600 text-lg">
                     4 sekundy
                   </p>
                 </FramerSection>

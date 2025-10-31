@@ -49,7 +49,6 @@ const AudioPermissionOverlay = ({
           {/* Title */}
           <h2
             className="text-3xl font-light text-black mb-4"
-            style={{fontFamily: 'Playfair Display'}}
           >
             Povolení zvuku
           </h2>
@@ -70,7 +69,6 @@ const AudioPermissionOverlay = ({
             onClick={onRequestPermission}
             disabled={isRequesting}
             className="w-full bg-black hover:bg-gray-800 disabled:bg-gray-400 text-white font-medium py-4 px-8 rounded-xl transition-all duration-200 flex items-center justify-center space-x-3 text-lg"
-            style={{fontFamily: 'Playfair Display'}}
           >
             {isRequesting ? (
               <>

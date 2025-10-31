@@ -8,12 +8,8 @@ const CurrentTimeDisplay = ({
 }) => {
   return (
     <div
-      className={className}
-      style={{
-        fontFamily: 'Playfair Display',
-        fontSize: '32px',
-        ...style
-      }}
+      className={`${className} text-32`}
+      style={style}
     >
       {formatTime(currentTime)}
     </div>

@@ -309,14 +309,25 @@ class SlovaDataService {
     // Pokud není inicializovaný, vrať prázdné pole
     if (!this.isInitialized) {
       log.warn('SlovaDataService not initialized');
+      console.warn('⚠️ SlovaDataService not initialized');
       return [];
     }
+
+    console.log(`🔍 getSlovaData called: userGender=${userGender}, userLanguage=${userLanguage}`);
 
     // Získej všechny slova soubory pro daný jazyk
     const allSlovaFiles = this.getAllSlovaFilesForLanguage(userLanguage);
 
+    console.log(`🔍 allSlovaFiles count: ${allSlovaFiles.length}`);
+    if (allSlovaFiles.length > 0) {
+      console.log(`🔍 Sample file names:`, allSlovaFiles.slice(0, 3).map(f => f.fileName));
+    }
+
     // Filtruj podle pohlaví
-    return this.filterSlovaItems(allSlovaFiles, userGender, userLanguage);
+    const filtered = this.filterSlovaItems(allSlovaFiles, userGender, userLanguage);
+    console.log(`🔍 After filtering: ${filtered.length} items`);
+
+    return filtered;
   }
 
   // Získej všechny slova soubory pro daný jazyk
@@ -324,12 +335,19 @@ class SlovaDataService {
     const langKey = userLanguage.toLowerCase();
     const allFiles = [];
 
+    // Debug: zobraz strukturu dat
+    console.log(`🔍 getAllSlovaFilesForLanguage: langKey=${langKey}`);
+    console.log(`🔍 this.slovaData[${langKey}]:`, this.slovaData[langKey]);
+    console.log(`🔍 Available languages:`, Object.keys(this.slovaData));
+
     // Získej všechny soubory pro daný jazyk (male, female, all)
     ['male', 'female', 'all'].forEach(gender => {
       const files = this.slovaData[langKey]?.[gender] || [];
+      console.log(`🔍 ${langKey}.${gender}: ${files.length} files`);
       allFiles.push(...files);
     });
 
+    console.log(`🔍 Total files for ${langKey}: ${allFiles.length}`);
     return allFiles;
   }
 

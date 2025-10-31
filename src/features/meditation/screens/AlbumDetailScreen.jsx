@@ -26,7 +26,7 @@ const AlbumDetailScreen = ({
         transition={{ duration: 0.3 }}
       >
         <div className="text-center">
-          <h1 className="text-2xl font-light mb-4" style={{fontFamily: 'Playfair Display'}}>
+          <h1 className="text-2xl font-light mb-4">
             Album nenalezeno
           </h1>
           <button
@@ -129,19 +129,19 @@ const AlbumDetailScreen = ({
                   e.target.nextSibling.style.display = 'flex';
                 }}
               />
-              <div className="w-full h-full bg-gray-200 flex items-center justify-center text-gray-400 text-4xl sm:text-6xl" style={{display: 'none'}}>
+              <div className="w-full h-full bg-gray-200 flex items-center justify-center text-gray-400 text-4xl sm:text-6xl placeholder-hidden">
                 📀
               </div>
             </motion.div>
           )}
 
           {/* Album title */}
-          <h1 className="text-4xl sm:text-6xl font-light mb-4" style={{fontFamily: 'Playfair Display'}}>
+          <h1 className="text-4xl sm:text-6xl font-light mb-4">
             {album.title}
           </h1>
 
           {/* Track count */}
-          <p className="text-lg sm:text-xl text-gray-700" style={{fontFamily: 'Playfair Display'}}>
+          <p className="text-lg sm:text-xl text-gray-700">
             {album.tracks.length} skladeb
           </p>
         </motion.div>
@@ -168,7 +168,7 @@ const AlbumDetailScreen = ({
 
                     {/* Track info */}
                     <div className="flex-1 min-w-0">
-                      <h3 className="text-lg sm:text-2xl font-light truncate" style={{fontFamily: 'Playfair Display'}}>
+                      <h3 className="text-lg sm:text-2xl font-light truncate">
                         {track.trackName}
                       </h3>
                     </div>
@@ -176,7 +176,7 @@ const AlbumDetailScreen = ({
 
                   {/* Duration */}
                   <div className="flex-shrink-0 ml-4">
-                    <span className="text-base sm:text-xl font-light text-gray-500" style={{fontFamily: 'Playfair Display'}}>
+                    <span className="text-base sm:text-xl font-light text-gray-500">
                       {track.duration}
                     </span>
                   </div>

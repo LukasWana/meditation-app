@@ -114,7 +114,7 @@ const HudbaScreen = ({
             animationType="fadeIn"
             delay={0.1}
           >
-            <h1 className="text-6xl font-light" style={{fontFamily: 'Playfair Display'}}>
+            <h1 className="text-6xl font-light">
               hudba
             </h1>
 
@@ -125,7 +125,7 @@ const HudbaScreen = ({
                 {isLoadingDurations && <div>⏱️ Načítám délky skladeb...</div>}
               </div>
             )} */}
-            {/* <p className="text-xl text-center text-gray-700 mb-8" style={{fontFamily: 'Playfair Display'}}>
+            {/* <p className="text-xl text-center text-gray-700 mb-8">
               hudobné meditácie a relaxačné zvuky
             </p> */}
 

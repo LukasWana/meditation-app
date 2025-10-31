@@ -97,7 +97,6 @@ const FramerMeditationCircle = ({
         >
           <motion.span
             className="text-6xl font-light leading-tight"
-            style={{fontFamily: 'Playfair Display'}}
             animate={isPlaying ? {
               scale: [1, 1.05, 1],
               transition: {

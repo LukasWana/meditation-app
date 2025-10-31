@@ -32,12 +32,7 @@ const Dropdown = ({
   return (
     <div
       ref={dropdownRef}
-      style={{
-        position: 'relative',
-        display: 'inline-block',
-        zIndex: 10000
-      }}
-      className={className}
+      className={`relative inline-block z-10000 ${className}`}
     >
       {/* Tlačítko */}
       <button
@@ -58,7 +53,7 @@ const Dropdown = ({
           minWidth: '120px'
         }}
       >
-        <span style={{ fontSize: '14px', fontWeight: '500', color: '#374151' }}>
+        <span className="text-14 font-medium text-gray-700">
           {selectedOption ? renderValue(selectedOption) : placeholder}
         </span>
         <ChevronDown

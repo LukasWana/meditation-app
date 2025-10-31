@@ -14,7 +14,7 @@ const LoadingIndicator = ({
           exit={{ opacity: 0 }}
           className={className}
         >
-          <p className="text-gray-600 text-[3vw] sm:text-sm lg:text-xs" style={{fontFamily: 'Playfair Display'}}>
+          <p className="text-gray-600 text-[3vw] sm:text-sm lg:text-xs">
             Načítavam...
           </p>
         </motion.div>

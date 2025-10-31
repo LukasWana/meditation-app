@@ -37,7 +37,6 @@ const IntroScreen = ({ onIntroComplete }) => {
           >
             <motion.h1
               className="text-7xl font-light tracking-wide mb-4"
-              style={{fontFamily: 'Playfair Display'}}
               initial={{ scale: 0.5, opacity: 0, y: 30 }}
               animate={{
                 scale: 1,

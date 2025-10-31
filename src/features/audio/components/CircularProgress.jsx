@@ -134,7 +134,7 @@ const CircularProgress = ({
   return (
     <svg
       ref={svgRef}
-      className={`${className} transform -rotate-90 cursor-pointer select-none`}
+      className={`${className} transform -rotate-90 cursor-pointer select-none circular-element`}
       onClick={handleClick}
       onMouseDown={handleMouseDown}
       onMouseMove={handleMouseMove}

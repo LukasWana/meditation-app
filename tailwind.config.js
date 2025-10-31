@@ -7,7 +7,8 @@ export default {
   theme: {
     extend: {
       fontFamily: {
-        'playfair': ['Playfair Display', 'serif'],
+        'philosopher': ['Philosopher', 'sans-serif'],
+        'sans': ['Philosopher', 'sans-serif'],
       },
     },
   },

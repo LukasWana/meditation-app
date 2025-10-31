@@ -147,7 +147,7 @@ const HudbaScreenDebug = ({
             animationType="fadeIn"
             delay={0.1}
           >
-            <h1 className="text-6xl font-light" style={{fontFamily: 'Playfair Display'}}>
+            <h1 className="text-6xl font-light">
               hudba
             </h1>
 
@@ -197,13 +197,13 @@ const HudbaScreenDebug = ({
                                 e.target.nextSibling.style.display = 'flex';
                               }}
                             />
-                            <div className="w-full h-full bg-gray-200 flex items-center justify-center text-gray-400" style={{display: 'none'}}>
+                            <div className="w-full h-full bg-gray-200 flex items-center justify-center text-gray-400 placeholder-hidden">
                               🎵
                             </div>
                           </div>
                         )}
                         <div className="flex-1">
-                          <h3 className="text-2xl font-light" style={{fontFamily: 'Playfair Display'}}>
+                          <h3 className="text-2xl font-light">
                             {item.title}
                           </h3>
                           {item.type === 'album' && (
@@ -226,12 +226,12 @@ const HudbaScreenDebug = ({
                       </div>
                       <div className="flex items-center space-x-3">
                         {item.type === 'hudba' && (
-                          <span className="text-2xl font-light text-gray-500" style={{fontFamily: 'Playfair Display'}}>
+                          <span className="text-2xl font-light text-gray-500">
                             {item.duration}
                           </span>
                         )}
                         {item.type === 'album' && (
-                          <span className="text-2xl font-light text-gray-500" style={{fontFamily: 'Playfair Display'}}>
+                          <span className="text-2xl font-light text-gray-500">
                             {item.totalDuration}
                           </span>
                         )}
