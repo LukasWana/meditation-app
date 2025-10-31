@@ -3,7 +3,8 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { FramerButton, FramerSection, FramerPageTransition, BackButton } from '@components';
 import LanguageSwitcher from '@components/LanguageSwitcher';
 import { useLanguage } from '@contexts/LanguageContext';
-import { Download, Wifi, WifiOff, HardDrive, RefreshCw, Trash2 } from 'lucide-react';
+import { Download, Wifi, WifiOff, HardDrive, RefreshCw, Trash2, Wind, Clock, Volume2, Image as ImageIcon } from 'lucide-react';
+import SoundThemeGallery from '@components/SoundThemeGallery';
 import useOfflineCache from '@hooks/useOfflineCache';
 import { useFirebaseHudbaScanner } from '@hooks/useFirebaseHudbaScanner';
 import { realtimeMetadataService } from '@services/realtimeMetadataService';
@@ -13,9 +14,20 @@ const SettingsScreen = ({
   onTouchStart,
   onTouchMove,
   onTouchEnd,
-  onPlayerStateChange
+  onPlayerStateChange,
+  breathInDuration,
+  breathOutDuration,
+  onBreathRhythmChange,
+  preparationTime,
+  onPreparationTimeChange,
+  breathInSound,
+  breathOutSound,
+  onBreathSoundChange,
+  breathSoundFadeEnabled,
+  onBreathSoundFadeChange
 }) => {
   const { t } = useLanguage();
+  const [showGallery, setShowGallery] = useState(false);
 
   // Offline cache hook
   const {
@@ -154,122 +166,225 @@ const SettingsScreen = ({
             </FramerSection>
 
 
-            {/* Offline Cache Settings */}
+            {/* Čas k přípravě */}
+            <FramerSection
+              animationType="slideInUp"
+              delay={0.25}
+            >
+              <div className="w-full p-6 bg-white/50 backdrop-blur rounded-none border border-black/10">
+                <h3 className="text-2xl font-light mb-4 flex items-center">
+                  <Clock className="mr-3" size={24} />
+                  {t('casKPriprave')}
+                </h3>
+
+                <p className="text-sm text-gray-600 mb-4">
+                  Nastavte čas na přípravu před začátkem meditace
+                </p>
+
+                <div className="space-y-3">
+                  <div className="flex gap-3">
+                    {[0, 5, 10, 15, 20, 30].map((seconds) => (
+                      <FramerButton
+                        key={seconds}
+                        onClick={() => onPreparationTimeChange(seconds)}
+                        variant={preparationTime === seconds ? 'rounded' : 'secondary'}
+                        className="flex-1 py-3"
+                      >
+                        <div className="text-center">
+                          <div className="text-lg font-medium">{seconds}</div>
+                          <div className="text-xs text-gray-500">{t('sekund')}</div>
+                        </div>
+                      </FramerButton>
+                    ))}
+                  </div>
+
+                  <div className="pt-3 border-t border-black/10">
+                    <label className="text-xs text-gray-600 mb-2 block">{t('vlastniRytmus')}:</label>
+                    <input
+                      type="number"
+                      min="0"
+                      max="60"
+                      value={preparationTime}
+                      onChange={(e) => {
+                        const value = parseInt(e.target.value, 10) || 0;
+                        onPreparationTimeChange(Math.max(0, Math.min(60, value)));
+                      }}
+                      className="w-full px-3 py-2 border border-black/20 rounded-none bg-white/50 text-center"
+                    />
+                  </div>
+                </div>
+              </div>
+            </FramerSection>
+
+            {/* Rytmus dýchání */}
             <FramerSection
               animationType="slideInUp"
               delay={0.3}
             >
               <div className="w-full p-6 bg-white/50 backdrop-blur rounded-none border border-black/10">
                 <h3 className="text-2xl font-light mb-4 flex items-center">
-                  <HardDrive className="mr-3" size={24} />
-                  Offline režim
+                  <Wind className="mr-3" size={24} />
+                  {t('rytmusDychania')}
                 </h3>
 
-                {/* Offline stav */}
-                <div className={`p-4 rounded-lg mb-4 ${isOfflineReady ? 'bg-green-50 border border-green-200' : 'bg-yellow-50 border border-yellow-200'}`}>
-                  <div className="flex items-center mb-2">
-                    {isOfflineReady ? <Wifi className="text-green-500 mr-2" size={20} /> : <WifiOff className="text-yellow-500 mr-2" size={20} />}
-                    <span className="font-semibold">
-                      {isOfflineReady ? 'Připraveno pro offline' : 'Není připraveno pro offline'}
-                    </span>
+                <p className="text-sm text-gray-600 mb-4">
+                  {t('vyberteRytmus')}
+                </p>
+
+                <div className="space-y-3 mb-4">
+                  {/* Přednastavené rytmy */}
+                  <div className="flex gap-3">
+                    <FramerButton
+                      onClick={() => onBreathRhythmChange(6, 8)}
+                      variant={breathInDuration === 6 && breathOutDuration === 8 ? 'rounded' : 'secondary'}
+                      className="flex-1 py-3"
+                    >
+                      <div className="text-center">
+                        <div className="text-lg font-medium">6:8</div>
+                        <div className="text-xs text-gray-500">{t('nadech')}:{t('vydech')}</div>
+                      </div>
+                    </FramerButton>
+                    <FramerButton
+                      onClick={() => onBreathRhythmChange(4, 6)}
+                      variant={breathInDuration === 4 && breathOutDuration === 6 ? 'rounded' : 'secondary'}
+                      className="flex-1 py-3"
+                    >
+                      <div className="text-center">
+                        <div className="text-lg font-medium">4:6</div>
+                        <div className="text-xs text-gray-500">{t('nadech')}:{t('vydech')}</div>
+                      </div>
+                    </FramerButton>
                   </div>
-                  <p className="text-sm text-gray-600">
-                    {isOfflineReady
-                      ? 'Aplikace bude fungovat i bez internetového připojení.'
-                      : 'Pro offline použití stáhněte audio soubory do cache.'
-                    }
-                  </p>
-                </div>
 
-                   {/* Cache statistiky */}
-                   {cacheStats ? (
-                     <div className="grid grid-cols-2 gap-4 mb-4">
-                       <div className="p-3 bg-blue-50 rounded-lg">
-                         <div className="flex items-center mb-1">
-                           <Download className="text-blue-500 mr-2" size={16} />
-                           <span className="text-sm font-medium">Stažené soubory</span>
-                         </div>
-                         <p className="text-lg font-bold text-blue-600">
-                           {cacheStats.totalFiles}
-                         </p>
-                       </div>
-
-                       <div className="p-3 bg-purple-50 rounded-lg">
-                         <div className="flex items-center mb-1">
-                           <HardDrive className="text-purple-500 mr-2" size={16} />
-                           <span className="text-sm font-medium">Velikost cache</span>
-                         </div>
-                         <p className="text-lg font-bold text-purple-600">
-                           {cacheStats.totalSizeFormatted || '0 B'}
-                         </p>
-                       </div>
-                     </div>
-                   ) : (
-                     <div className="p-4 bg-gray-50 rounded-lg mb-4">
-                       <div className="flex items-center">
-                         <RefreshCw className="text-gray-500 mr-2 animate-spin" size={16} />
-                         <span className="text-sm text-gray-600">
-                           {isInitialized ? 'Načítání statistik cache...' : 'Inicializace cache...'}
-                         </span>
-                       </div>
-                     </div>
-                   )}
-
-                {/* Progress bar pro stahování */}
-                {isCaching && cacheProgress && (
-                  <div className="mb-4">
-                    <div className="flex justify-between mb-2">
-                      <span className="text-sm font-medium">Stahování souborů...</span>
-                      <span className="text-sm text-gray-500">
-                        {cacheProgress.percentage}%
-                      </span>
+                  {/* Vlastní rytmus */}
+                  <div className="pt-3 border-t border-black/10">
+                    <p className="text-sm font-medium mb-3">{t('vlastniRytmus')}:</p>
+                    <div className="flex gap-4 items-center">
+                      <div className="flex-1">
+                        <label className="text-xs text-gray-600 mb-1 block">{t('nadech')}</label>
+                        <input
+                          type="number"
+                          min="1"
+                          max="20"
+                          value={breathInDuration}
+                          onChange={(e) => {
+                            const value = parseInt(e.target.value, 10) || 1;
+                            onBreathRhythmChange(value, breathOutDuration);
+                          }}
+                          className="w-full px-3 py-2 border border-black/20 rounded-none bg-white/50 text-center"
+                        />
+                      </div>
+                      <div className="text-2xl font-light pt-6">:</div>
+                      <div className="flex-1">
+                        <label className="text-xs text-gray-600 mb-1 block">{t('vydech')}</label>
+                        <input
+                          type="number"
+                          min="1"
+                          max="20"
+                          value={breathOutDuration}
+                          onChange={(e) => {
+                            const value = parseInt(e.target.value, 10) || 1;
+                            onBreathRhythmChange(breathInDuration, value);
+                          }}
+                          className="w-full px-3 py-2 border border-black/20 rounded-none bg-white/50 text-center"
+                        />
+                      </div>
                     </div>
-                    <div className="w-full bg-gray-200 rounded-full h-2">
-                      <div
-                        className="bg-blue-500 h-2 rounded-full transition-all duration-300"
-                        style={{ width: `${cacheProgress.percentage}%` }}
-                      ></div>
-                    </div>
-                    <p className="text-xs text-gray-500 mt-1">
-                      {cacheProgress.current} / {cacheProgress.total} - {cacheProgress.fileName}
+                    <p className="text-xs text-gray-500 mt-2 text-center">
+                      {breathInDuration} {t('sekund')} : {breathOutDuration} {t('sekund')}
                     </p>
                   </div>
-                )}
+                </div>
+              </div>
+            </FramerSection>
 
-                {/* Tlačítka */}
-                <div className="space-y-3">
-                  <FramerButton
-                    onClick={handleCacheAllFiles}
-                    disabled={isCaching || (allAudioFiles.length === 0 && (!audioFiles || audioFiles.length === 0))}
-                    className="w-full bg-blue-500 hover:bg-blue-600 disabled:bg-gray-400 text-white py-3 px-4 rounded-lg transition-colors flex items-center justify-center"
-                    animationType="fadeIn"
-                    delay={0.1}
-                  >
-                    <Download className="mr-2" size={16} />
-                    {isCaching ? 'Stahování...' : `Stáhnout vše do cache (${allAudioFiles.length || audioFiles?.length || 0} souborů)`}
-                  </FramerButton>
+            {/* Nastavení zvuku */}
+            <FramerSection
+              animationType="slideInUp"
+              delay={0.35}
+            >
+              <div className="w-full p-6 bg-white/50 backdrop-blur rounded-none border border-black/10">
+                <h3 className="text-2xl font-light mb-4 flex items-center">
+                  <Volume2 className="mr-3" size={24} />
+                  {t('nastaveniaZvuku')}
+                </h3>
 
-                  <div className="flex gap-2">
-                    <FramerButton
-                      onClick={loadCacheStats}
-                      className="flex-1 bg-gray-500 hover:bg-gray-600 text-white py-2 px-4 rounded-lg transition-colors flex items-center justify-center"
-                      animationType="fadeIn"
-                      delay={0.2}
-                    >
-                      <RefreshCw className="mr-2" size={16} />
-                      Aktualizovat
-                    </FramerButton>
+                <div className="space-y-4">
+                  {/* Výběr zvuku pro nádech */}
+                  <div>
+                    <label className="text-sm font-medium mb-2 block">
+                      {t('zvolteZvukNadech')}
+                    </label>
+                    <div className="flex gap-2 mb-3">
+                      <FramerButton
+                        onClick={() => onBreathSoundChange('in', 'none')}
+                        variant={breathInSound === 'none' ? 'rounded' : 'secondary'}
+                        className="flex-1 py-2"
+                      >
+                        {t('ziadnyZvuk')}
+                      </FramerButton>
+                      <FramerButton
+                        onClick={() => setShowGallery(true)}
+                        variant="secondary"
+                        className="flex-1 py-2"
+                      >
+                        <ImageIcon size={16} className="mr-2 inline" />
+                        {t('zobrazitGaleriu')}
+                      </FramerButton>
+                    </div>
+                    {breathInSound !== 'none' && (
+                      <p className="text-xs text-gray-600 line-clamp-1">
+                        Vybraný: {breathInSound.split('/').pop()}
+                      </p>
+                    )}
+                  </div>
 
-                    <FramerButton
-                      onClick={handleClearCache}
-                      disabled={!cacheStats || cacheStats.totalFiles === 0}
-                      className="flex-1 bg-red-500 hover:bg-red-600 disabled:bg-gray-400 text-white py-2 px-4 rounded-lg transition-colors flex items-center justify-center"
-                      animationType="fadeIn"
-                      delay={0.3}
-                    >
-                      <Trash2 className="mr-2" size={16} />
-                      Vymazat cache
-                    </FramerButton>
+                  {/* Výběr zvuku pro výdech */}
+                  <div>
+                    <label className="text-sm font-medium mb-2 block">
+                      {t('zvolteZvukVydech')}
+                    </label>
+                    <div className="flex gap-2 mb-3">
+                      <FramerButton
+                        onClick={() => onBreathSoundChange('out', 'none')}
+                        variant={breathOutSound === 'none' ? 'rounded' : 'secondary'}
+                        className="flex-1 py-2"
+                      >
+                        {t('ziadnyZvuk')}
+                      </FramerButton>
+                      <FramerButton
+                        onClick={() => setShowGallery(true)}
+                        variant="secondary"
+                        className="flex-1 py-2"
+                      >
+                        <ImageIcon size={16} className="mr-2 inline" />
+                        {t('zobrazitGaleriu')}
+                      </FramerButton>
+                    </div>
+                    {breathOutSound !== 'none' && (
+                      <p className="text-xs text-gray-600 line-clamp-1">
+                        Vybraný: {breathOutSound.split('/').pop()}
+                      </p>
+                    )}
+                  </div>
+
+                  {/* Fade in/out nastavení */}
+                  <div className="pt-3 border-t border-black/10">
+                    <div className="flex items-center justify-between">
+                      <label className="text-sm font-medium">
+                        {t('fadeInOut')}
+                      </label>
+                      <FramerButton
+                        onClick={() => onBreathSoundFadeChange(!breathSoundFadeEnabled)}
+                        variant={breathSoundFadeEnabled ? 'rounded' : 'secondary'}
+                        className="px-4 py-2"
+                      >
+                        {breathSoundFadeEnabled ? t('povolene') : t('zakazane')}
+                      </FramerButton>
+                    </div>
+                    <p className="text-xs text-gray-500 mt-2">
+                      Plynulé zesilování a zeslabování zvuku při nádechu a výdechu
+                    </p>
                   </div>
                 </div>
               </div>
@@ -284,14 +399,23 @@ const SettingsScreen = ({
                 <h3 className="text-2xl font-light mb-4">
                   {t('informacie')}
                 </h3>
-                <p className="text-lg text-gray-600">
-                  {t('verziaAplikacieDesc')}
+                <p className="text-lg text-gray-600 leading-relaxed whitespace-pre-line">
+                  {t('informacieText')}
                 </p>
               </div>
             </FramerSection>
           </div>
         </div>
       </div>
+
+      {/* Galerie zvukových témat */}
+      <SoundThemeGallery
+        isOpen={showGallery}
+        onClose={() => setShowGallery(false)}
+        onSelectSound={onBreathSoundChange}
+        selectedInSound={breathInSound}
+        selectedOutSound={breathOutSound}
+      />
     </FramerPageTransition>
   );
 };

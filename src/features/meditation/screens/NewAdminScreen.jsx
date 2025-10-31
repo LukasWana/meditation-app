@@ -759,8 +759,8 @@ const NewAdminScreen = () => {
           </div>
         </motion.div>
 
-        {/* Offline Cache sekce */}
-        <motion.div
+        {/* Offline Cache sekce - ZAKOMENTOVÁNO */}
+        {/* <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.6 }}
@@ -770,127 +770,7 @@ const NewAdminScreen = () => {
             <HardDrive className="mr-2" size={24} />
             Offline Cache
           </h3>
-          <p className="text-gray-500 mb-4">
-            Stáhněte audio soubory do cache pro offline použití aplikace.
-          </p>
-
-          {/* Cache statistiky */}
-          {cacheStats && (
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-              <div className={`p-4 rounded-lg ${isOfflineReady ? 'bg-green-50 border border-green-200' : 'bg-gray-50 border border-gray-200'}`}>
-                <div className="flex items-center mb-2">
-                  {isOfflineReady ? <Wifi className="text-green-500 mr-2" size={20} /> : <WifiOff className="text-gray-400 mr-2" size={20} />}
-                  <span className="font-semibold">Offline stav</span>
-                </div>
-                <p className={`text-sm ${isOfflineReady ? 'text-green-600' : 'text-gray-500'}`}>
-                  {isOfflineReady ? 'Připraveno pro offline' : 'Není připraveno'}
-                </p>
-              </div>
-
-              <div className="p-4 rounded-lg bg-blue-50 border border-blue-200">
-                <div className="flex items-center mb-2">
-                  <FileAudio className="text-blue-500 mr-2" size={20} />
-                  <span className="font-semibold">Stažené soubory</span>
-                </div>
-                <p className="text-sm text-blue-600">
-                  {cacheStats.totalFiles} / {audioStats.totalFiles}
-                </p>
-              </div>
-
-              <div className="p-4 rounded-lg bg-purple-50 border border-purple-200">
-                <div className="flex items-center mb-2">
-                  <Database className="text-purple-500 mr-2" size={20} />
-                  <span className="font-semibold">Velikost cache</span>
-                </div>
-                <p className="text-sm text-purple-600">
-                  {cacheStats.totalSizeFormatted}
-                </p>
-              </div>
-            </div>
-          )}
-
-          {/* Progress bar pro stahování */}
-          {isCaching && cacheProgress && (
-            <div className="mb-6">
-              <div className="flex justify-between mb-2">
-                <span className="text-sm font-medium">Stahování souborů...</span>
-                <span className="text-sm text-gray-500">
-                  {cacheProgress.current} / {cacheProgress.total} ({cacheProgress.percentage}%)
-                </span>
-              </div>
-              <div className="w-full bg-gray-200 rounded-full h-3">
-                <div
-                  className="bg-blue-500 h-3 rounded-full transition-all duration-300"
-                  style={{ width: `${cacheProgress.percentage}%` }}
-                ></div>
-              </div>
-              <p className="text-xs text-gray-500 mt-1">
-                Aktuálně: {cacheProgress.fileName}
-              </p>
-            </div>
-          )}
-
-          {/* Tlačítka pro správu cache */}
-          <div className="space-y-4">
-            <div className="flex flex-wrap gap-3">
-              <button
-                onClick={startCachingAllFiles}
-                disabled={isCaching || fileData.length === 0}
-                className="flex items-center px-4 py-2 bg-blue-500 hover:bg-blue-600 disabled:bg-gray-400 text-white rounded-lg transition-colors"
-              >
-                <Download className="mr-2" size={16} />
-                {isCaching ? 'Stahování...' : 'Stáhnout vše do cache'}
-              </button>
-
-              <button
-                onClick={loadCacheStats}
-                className="flex items-center px-4 py-2 bg-gray-500 hover:bg-gray-600 text-white rounded-lg transition-colors"
-              >
-                <RefreshCw className="mr-2" size={16} />
-                Aktualizovat statistiky
-              </button>
-
-              <button
-                onClick={() => setShowCharts(!showCharts)}
-                className="flex items-center px-4 py-2 bg-purple-500 hover:bg-purple-600 text-white rounded-lg transition-colors"
-              >
-                <BarChart3 className="mr-2" size={16} />
-                {showCharts ? 'Skrýt grafy' : 'Zobrazit grafy úložišť'}
-              </button>
-
-              <button
-                onClick={clearCache}
-                disabled={!cacheStats || cacheStats.totalFiles === 0}
-                className="flex items-center px-4 py-2 bg-red-500 hover:bg-red-600 disabled:bg-gray-400 text-white rounded-lg transition-colors"
-              >
-                <HardDrive className="mr-2" size={16} />
-                Vymazat cache
-              </button>
-            </div>
-
-            {/* Informace o offline režimu */}
-            <div className={`p-4 rounded-lg ${isOfflineReady ? 'bg-green-50 border border-green-200' : 'bg-yellow-50 border border-yellow-200'}`}>
-              <div className="flex items-start">
-                {isOfflineReady ? (
-                  <Wifi className="text-green-500 mr-3 mt-0.5" size={20} />
-                ) : (
-                  <WifiOff className="text-yellow-500 mr-3 mt-0.5" size={20} />
-                )}
-                <div>
-                  <h4 className="font-semibold mb-1">
-                    {isOfflineReady ? 'Aplikace je připravena pro offline použití' : 'Aplikace není připravena pro offline použití'}
-                  </h4>
-                  <p className="text-sm text-gray-600">
-                    {isOfflineReady
-                      ? 'Všechny audio soubory jsou stažené a aplikace bude fungovat i bez internetového připojení.'
-                      : 'Pro offline použití je potřeba stáhnout audio soubory do cache pomocí tlačítka výše.'
-                    }
-                  </p>
-                </div>
-              </div>
-            </div>
-          </div>
-        </motion.div>
+        </motion.div> */}
 
         {/* Synchronizace Firestore */}
         <motion.div

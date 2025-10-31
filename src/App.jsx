@@ -46,6 +46,8 @@ function MeditationApp() {
     setIsPlaying,
     breathPhase,
     setBreathPhase,
+    breathInDuration,
+    breathOutDuration,
     gender,
     voicePreference,
     isPlayerActive,
@@ -58,7 +60,15 @@ function MeditationApp() {
     handleVoicePreferenceChange,
     handlePlayerStateChange,
     handleCloseAudio,
-    handleAlbumClose
+    handleAlbumClose,
+    handleBreathRhythmChange,
+    preparationTime,
+    handlePreparationTimeChange,
+    breathInSound,
+    breathOutSound,
+    handleBreathSoundChange,
+    breathSoundFadeEnabled,
+    handleBreathSoundFadeChange
   } = useAppState();
 
   // Touch navigation
@@ -83,7 +93,7 @@ function MeditationApp() {
   useTimer(isPlaying, time, setTime, setIsPlaying);
 
   // Breath phase logika
-  useBreathPhase(isPlaying, time, setBreathPhase);
+  useBreathPhase(isPlaying, time, setBreathPhase, breathInDuration, breathOutDuration);
 
   // Načti data v pozadí během intro animace
   useBackgroundDataLoader(showIntro);
@@ -265,6 +275,16 @@ function MeditationApp() {
         onPlayPause={handlePlayPause}
         onReset={handleReset}
         breathPhase={breathPhase}
+        breathInDuration={breathInDuration}
+        breathOutDuration={breathOutDuration}
+        onBreathRhythmChange={handleBreathRhythmChange}
+        preparationTime={preparationTime}
+        onPreparationTimeChange={handlePreparationTimeChange}
+        breathInSound={breathInSound}
+        breathOutSound={breathOutSound}
+        onBreathSoundChange={handleBreathSoundChange}
+        breathSoundFadeEnabled={breathSoundFadeEnabled}
+        onBreathSoundFadeChange={handleBreathSoundFadeChange}
 
         // Audio player specifické
         activeAudio={activeAudio}
@@ -275,8 +295,8 @@ function MeditationApp() {
         />
       )}
 
-      {/* Offline Indicator */}
-      <OfflineIndicator isOffline={isOffline} showOfflineMessage={showOfflineMessage} />
+      {/* Offline Indicator - ZAKOMENTOVÁNO */}
+      {/* <OfflineIndicator isOffline={isOffline} showOfflineMessage={showOfflineMessage} /> */}
 
       </div>
       </LanguageProvider>

@@ -3,10 +3,20 @@ import { useState, useCallback } from 'react';
 export const useAppState = () => {
 
   // Meditace state
-  const [time, setTime] = useState(300);
-  const [selectedDuration, setSelectedDuration] = useState(5);
+  const [time, setTime] = useState(180); // 3 minuty v sekundách
+  const [selectedDuration, setSelectedDuration] = useState(3); // Výchozí 3 minuty
   const [isPlaying, setIsPlaying] = useState(false);
   const [breathPhase, setBreathPhase] = useState('in');
+
+  // Nastavení rytmu dýchání (nádech:výdech v sekundách)
+  const [breathInDuration, setBreathInDuration] = useState(() => {
+    const saved = localStorage.getItem('meditation-app-breath-in');
+    return saved ? parseInt(saved, 10) : 6; // Výchozí 6 sekund
+  });
+  const [breathOutDuration, setBreathOutDuration] = useState(() => {
+    const saved = localStorage.getItem('meditation-app-breath-out');
+    return saved ? parseInt(saved, 10) : 8; // Výchozí 8 sekund
+  });
 
   // User preferences
   const [gender, setGender] = useState(() => {
@@ -67,6 +77,59 @@ export const useAppState = () => {
     setSelectedAlbum(null);
   }, []);
 
+  // Handlers pro rytmus dýchání
+  const handleBreathRhythmChange = useCallback((inDuration, outDuration) => {
+    setBreathInDuration(inDuration);
+    setBreathOutDuration(outDuration);
+    localStorage.setItem('meditation-app-breath-in', inDuration.toString());
+    localStorage.setItem('meditation-app-breath-out', outDuration.toString());
+  }, []);
+
+  // Čas k přípravě (v sekundách)
+  const [preparationTime, setPreparationTime] = useState(() => {
+    const saved = localStorage.getItem('meditation-app-preparation-time');
+    return saved ? parseInt(saved, 10) : 10; // Výchozí 10 sekund
+  });
+
+  // Zvuky pro nádech a výdech
+  const [breathInSound, setBreathInSound] = useState(() => {
+    const saved = localStorage.getItem('meditation-app-breath-in-sound');
+    return saved || 'none'; // 'none' = žádný zvuk
+  });
+  const [breathOutSound, setBreathOutSound] = useState(() => {
+    const saved = localStorage.getItem('meditation-app-breath-out-sound');
+    return saved || 'none';
+  });
+
+  // Fade in/out nastavení
+  const [breathSoundFadeEnabled, setBreathSoundFadeEnabled] = useState(() => {
+    const saved = localStorage.getItem('meditation-app-breath-sound-fade');
+    return saved !== null ? saved === 'true' : true; // Výchozí zapnuto
+  });
+
+  // Handlers pro čas k přípravě
+  const handlePreparationTimeChange = useCallback((time) => {
+    setPreparationTime(time);
+    localStorage.setItem('meditation-app-preparation-time', time.toString());
+  }, []);
+
+  // Handlers pro zvuky dýchání
+  const handleBreathSoundChange = useCallback((type, soundId) => {
+    if (type === 'in') {
+      setBreathInSound(soundId);
+      localStorage.setItem('meditation-app-breath-in-sound', soundId);
+    } else {
+      setBreathOutSound(soundId);
+      localStorage.setItem('meditation-app-breath-out-sound', soundId);
+    }
+  }, []);
+
+  // Handler pro fade in/out
+  const handleBreathSoundFadeChange = useCallback((enabled) => {
+    setBreathSoundFadeEnabled(enabled);
+    localStorage.setItem('meditation-app-breath-sound-fade', enabled.toString());
+  }, []);
+
   return {
     // Meditace state
     time,
@@ -76,6 +139,8 @@ export const useAppState = () => {
     setIsPlaying,
     breathPhase,
     setBreathPhase,
+    breathInDuration,
+    breathOutDuration,
 
     // User preferences
     gender,
@@ -94,6 +159,18 @@ export const useAppState = () => {
     handleVoicePreferenceChange,
     handlePlayerStateChange,
     handleCloseAudio,
-    handleAlbumClose
+    handleAlbumClose,
+    handleBreathRhythmChange,
+
+    // Čas k přípravě
+    preparationTime,
+    handlePreparationTimeChange,
+
+    // Zvuky dýchání
+    breathInSound,
+    breathOutSound,
+    handleBreathSoundChange,
+    breathSoundFadeEnabled,
+    handleBreathSoundFadeChange
   };
 };
