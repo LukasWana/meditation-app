@@ -410,6 +410,31 @@ const SimpleAdminScreen = () => {
   };
 
 
+  // Helper: Čekání mezi požadavky
+  const sleep = (ms) => new Promise(resolve => setTimeout(resolve, ms));
+
+  // Helper: Retry s exponential backoff
+  const retryWithBackoff = async (fn, maxRetries = 3, baseDelay = 1000) => {
+    for (let i = 0; i < maxRetries; i++) {
+      try {
+        return await fn();
+      } catch (error) {
+        const isLastRetry = i === maxRetries - 1;
+        const isRetryableError = error.code === 'storage/retry-limit-exceeded' ||
+                                  error.code === 'storage/timeout' ||
+                                  error.message?.includes('retry');
+
+        if (isLastRetry || !isRetryableError) {
+          throw error;
+        }
+
+        const delay = baseDelay * Math.pow(2, i); // Exponential backoff
+        console.warn(`⚠️ Retry ${i + 1}/${maxRetries} po ${delay}ms:`, error.message);
+        await sleep(delay);
+      }
+    }
+  };
+
   // Skenování Firebase Storage - pouze listAll bez getMetadata/getDownloadURL
   const scanFirebaseStorage = async () => {
     const allFiles = [];
@@ -429,58 +454,75 @@ const SimpleAdminScreen = () => {
       console.warn('⚠️ Nelze vymazat cache:', error);
     }
 
-    // Rekurzivní načtení všech souborů ze složky
+    // Rekurzivní načtení všech souborů ze složky s retry mechanikou
     const getAllFilesRecursively = async (folderRef, folderName) => {
       const allFiles = [];
+      let folderCount = 0;
 
-      const processFolder = async (currentFolderRef) => {
+      const processFolder = async (currentFolderRef, depth = 0) => {
         try {
-          const result = await listAll(currentFolderRef);
-          console.log(`📂 Skenuji složku: ${folderName} (${result.items.length} souborů)`);
+          // Použij retry s exponential backoff
+          const result = await retryWithBackoff(async () => {
+            return await listAll(currentFolderRef);
+          }, 3, 1000);
+
+          folderCount++;
+          const pathName = currentFolderRef.fullPath || folderName;
+          console.log(`📂 [${depth}] Skenuji: ${pathName} (${result.items.length} souborů, ${result.prefixes.length} podsložek)`);
 
           // Přidej pouze MP3 soubory z aktuální složky
           for (const fileRef of result.items) {
             if (fileRef.name.toLowerCase().endsWith('.mp3')) {
-              // Použij pouze informace z listAll - bez getMetadata/getDownloadURL
               allFiles.push({
                 name: fileRef.name,
                 fullPath: fileRef.fullPath,
-                size: 0, // Bude odhadnuto z názvu souboru
+                size: 0, // Bude odhadnuto nebo změřeno později
                 folder: folderName,
                 downloadURL: null // Bude vygenerováno později pomocí getDownloadURL
               });
-              console.log(`✅ Načteno: ${fileRef.name} - POUZE LIST`);
             }
           }
 
-          // Rekurzivně zpracuj všechny podsložky
+          // Zpracuj podsložky postupně (ne paralelně) aby se snížilo zatížení
           for (const subFolderRef of result.prefixes) {
-            await processFolder(subFolderRef);
+            await sleep(100); // Malá pauza mezi složkami
+            await processFolder(subFolderRef, depth + 1);
           }
+
         } catch (error) {
-          console.warn(`❌ Chyba při skenování složky ${folderName}:`, error);
+          console.error(`❌ Chyba při skenování složky ${currentFolderRef.fullPath || folderName}:`, error);
+          setStatus(`⚠️ Chyba při skenování: ${error.message}`);
+
+          // Pokud selže celá složka, pokračuj dál (nespadni)
+          // Místo toho vlož chybovou zprávu do logu
+          console.warn(`⚠️ Přeskakuji složku ${currentFolderRef.fullPath} kvůli chybě`);
         }
       };
 
-      await processFolder(folderRef);
+      await processFolder(folderRef, 0);
+      console.log(`✅ ${folderName}: Nalezeno ${allFiles.length} MP3 souborů v ${folderCount} složkách`);
       return allFiles;
     };
 
-    // Skenuj hudba a slova složky
+    // Skenuj hudba a slova složky POSTUPNĚ (ne paralelně)
     const hudbaRef = ref(storage, 'hudba');
     const slovaRef = ref(storage, 'slova');
 
     console.log('🚀 Začínám skenování Firebase Storage...');
-    const [hudbaFiles, slovaFiles] = await Promise.all([
-      getAllFilesRecursively(hudbaRef, 'hudba'),
-      getAllFilesRecursively(slovaRef, 'slova')
-    ]);
+
+    setStatus('📁 Skenuji složku HUDBA...');
+    const hudbaFiles = await getAllFilesRecursively(hudbaRef, 'hudba');
+
+    await sleep(500); // Pauza mezi hlavními složkami
+
+    setStatus('📁 Skenuji složku SLOVA...');
+    const slovaFiles = await getAllFilesRecursively(slovaRef, 'slova');
 
     // Spoj všechny soubory
     allFiles.push(...hudbaFiles, ...slovaFiles);
 
     console.log(`✅ Skenování dokončeno! Nalezeno ${allFiles.length} MP3 souborů`);
-    console.log(`🎵 HUDEBA: ${hudbaFiles.length} souborů`);
+    console.log(`🎵 HUDBA: ${hudbaFiles.length} souborů`);
     console.log(`🎤 SLOVA: ${slovaFiles.length} souborů`);
 
     return allFiles;
