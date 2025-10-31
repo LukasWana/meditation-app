@@ -1,0 +1,19 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(git config:*)",
+      "Bash(git checkout:*)",
+      "Bash(git add:*)",
+      "Bash(git commit:*)",
+      "Bash(node --version:*)",
+      "Bash(npm --version:*)",
+      "Bash(netstat:*)",
+      "Bash(npm run dev:*)",
+      "Bash(git push:*)",
+      "Bash(npm run build:*)",
+      "Bash(firebase deploy:*)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}

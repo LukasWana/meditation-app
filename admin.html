@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Panel - Meditace App</title>
+    <link rel="icon" type="image/svg+xml" href="/icon-192x192.svg">
+    <link rel="manifest" href="/manifest.json">
+    <meta name="description" content="Admin panel pro správu meditační aplikace">
+    <meta name="theme-color" content="#f4ddc4">
+</head>
+<body>
+    <div id="admin-root"></div>
+    <script type="module" src="/src/admin.jsx"></script>
+    <script>
+        // Nastavíme admin mód
+        window.ADMIN_MODE = true;
+
+        // Admin aplikace se načte přímo s SimpleAdminScreen
+        console.log('Admin panel loading...');
+    </script>
+</body>
+</html>
+
