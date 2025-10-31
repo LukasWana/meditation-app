@@ -142,21 +142,36 @@ class OfflineCacheService {
         // Použij Service Worker pro cache - obejde CORS problémy
         console.log(`🔄 Using Service Worker cache for ${fileName}...`);
 
-        // Zkus načíst přes Service Worker
+        // Zkus načíst pomocí fetch s CORS (ne no-cors) pro Android kompatibilitu
+        // CORS responses lze převést na blob, což funguje s Audio elementem na Androidu
         let response;
         try {
-          console.log(`🔄 Fetching ${fileName} through Service Worker...`);
-          response = await this.fetchWithServiceWorker(fileName, audioUrl);
-          console.log(`📊 Service Worker response for ${fileName}:`, {
+          console.log(`🔄 Fetching ${fileName} with CORS mode (for Android compatibility)...`);
+
+          // Použij fetch bez no-cors - Firebase Storage by měl podporovat CORS pro čtení
+          response = await fetch(audioUrl, {
+            method: 'GET',
+            mode: 'cors',
+            credentials: 'omit',
+            cache: 'no-cache'
+          });
+
+          console.log(`📊 Fetch response for ${fileName}:`, {
             ok: response.ok,
             status: response.status,
-            statusText: response.statusText
+            statusText: response.statusText,
+            type: response.type
           });
         } catch (fetchError) {
-          console.error(`❌ Service Worker fetch failed for ${fileName}:`, fetchError);
-          log.error(`❌ Service Worker fetch failed for ${fileName}:`, fetchError);
+          console.error(`❌ CORS fetch failed for ${fileName}, trying no-cors...`, fetchError);
+          log.error(`❌ CORS fetch failed for ${fileName}, trying no-cors...`, fetchError);
           // Fallback na no-cors fetch
-          return await this.cacheFileNoCors(fileName, audioUrl);
+          try {
+            response = await this.fetchWithServiceWorker(fileName, audioUrl);
+          } catch (noCorsError) {
+            console.error(`❌ No-CORS fetch also failed for ${fileName}:`, noCorsError);
+            return await this.cacheFileNoCors(fileName, audioUrl);
+          }
         }
 
       // Zkontroluj typ response
