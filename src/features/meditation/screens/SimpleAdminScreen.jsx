@@ -7,7 +7,7 @@ import { collection, getDocs, query, orderBy } from 'firebase/firestore';
 import { ref as dbRef, set } from 'firebase/database';
 import { signInAnonymously } from 'firebase/auth';
 import DataStorageCharts from '@components/admin/DataStorageCharts';
-// import { extractAudioMetadata } from '@utils/audioMetadataExtractor'; // Nepoužíváme kvůli CORS
+import { extractAudioMetadata } from '@utils/audioMetadataExtractor';
 
 const SimpleAdminScreen = () => {
   const [isDarkMode, setIsDarkMode] = useState(false);
@@ -145,20 +145,33 @@ const SimpleAdminScreen = () => {
       const allFiles = await scanFirebaseStorage();
       console.log(`📊 Nalezeno ${allFiles.length} souborů ve Storage`);
 
-      // 3. Připravit metadata pro každý MP3 soubor
-      setStatus('📊 Připravuji metadata z velikosti souborů...');
+      // 3. Připravit metadata pro každý MP3 soubor s reálnou délkou
+      setStatus('📊 Připravuji metadata s reálnou délkou MP3...');
       const metadataArray = [];
       let processedCount = 0;
 
       for (const file of allFiles) {
         try {
-          setStatus(`📊 Připravuji metadata... ${processedCount + 1}/${allFiles.length} (${file.name})`);
+          setStatus(`📊 Zpracovávám... ${processedCount + 1}/${allFiles.length} (${file.name})`);
+
+          // Získej metadata ze Storage (velikost souboru)
+          let fileSize = file.size;
+          let fileRef = ref(storage, file.fullPath);
+
+          if (!fileSize || fileSize === 0) {
+            try {
+              const storageMetadata = await getMetadata(fileRef);
+              fileSize = storageMetadata.size;
+              console.log(`📦 Velikost souboru pro ${file.name}: ${Math.round(fileSize / 1024 / 1024 * 100) / 100}MB`);
+            } catch (metaError) {
+              console.warn(`⚠️ Nelze získat metadata pro ${file.name}:`, metaError.message);
+            }
+          }
 
           // Generuj správné downloadURL pomocí getDownloadURL
           let downloadURL = file.downloadURL;
           if (!downloadURL) {
             try {
-              const fileRef = ref(storage, file.fullPath);
               downloadURL = await getDownloadURL(fileRef);
               console.log(`🔗 Generated downloadURL for ${file.name}: ${downloadURL}`);
             } catch (urlError) {
@@ -168,17 +181,38 @@ const SimpleAdminScreen = () => {
             }
           }
 
-          // Použij odhad délky z velikosti souboru (stejně jako starý admin)
-          // Tento přístup funguje bez CORS problémů
-          const estimatedDuration = estimateDurationFromSize(file.size);
-          const audioMetadata = {
-            duration: estimatedDuration,
-            durationFormatted: formatDuration(estimatedDuration),
-            durationDetailed: formatDurationDetailed(estimatedDuration),
-            isValid: estimatedDuration > 0
-          };
+          // Získej reálnou délku MP3 souboru pomocí extractAudioMetadata
+          let audioMetadata;
+          try {
+            console.log(`🎵 Načítám reálnou délku pro ${file.name}...`);
+            audioMetadata = await extractAudioMetadata(downloadURL);
 
-          console.log(`📊 ${file.name}: ${audioMetadata.durationFormatted} (Estimated from ${Math.round(file.size / 1024 / 1024 * 100) / 100}MB)`);
+            if (audioMetadata.isValid && audioMetadata.duration > 0) {
+              console.log(`✅ ${file.name}: ${audioMetadata.durationFormatted} (Reálná délka)`);
+            } else {
+              // Fallback na odhad z velikosti, pokud se nepodařilo získat reálnou délku
+              console.warn(`⚠️ Nepodařilo se získat reálnou délku pro ${file.name}, použiji odhad`);
+              const estimatedDuration = estimateDurationFromSize(fileSize);
+              audioMetadata = {
+                duration: estimatedDuration,
+                durationFormatted: formatDuration(estimatedDuration),
+                durationDetailed: formatDurationDetailed(estimatedDuration),
+                isValid: estimatedDuration > 0
+              };
+              console.log(`📊 ${file.name}: ${audioMetadata.durationFormatted} (Odhad z velikosti ${Math.round(fileSize / 1024 / 1024 * 100) / 100}MB)`);
+            }
+          } catch (audioError) {
+            // Fallback na odhad z velikosti při chybě
+            console.warn(`⚠️ Chyba při získávání délky pro ${file.name}:`, audioError.message);
+            const estimatedDuration = estimateDurationFromSize(fileSize);
+            audioMetadata = {
+              duration: estimatedDuration,
+              durationFormatted: formatDuration(estimatedDuration),
+              durationDetailed: formatDurationDetailed(estimatedDuration),
+              isValid: estimatedDuration > 0
+            };
+            console.log(`📊 ${file.name}: ${audioMetadata.durationFormatted} (Odhad z velikosti - chyba)`);
+          }
 
           // Vytvoř kompletní metadata objekt
           const completeMetadata = {
@@ -192,7 +226,7 @@ const SimpleAdminScreen = () => {
             durationFormatted: audioMetadata.durationFormatted,
             durationDetailed: audioMetadata.durationDetailed,
             isValid: audioMetadata.isValid,
-            fileSize: file.size,
+            fileSize: fileSize,
             contentType: 'audio/mpeg',
             lastModified: new Date().toISOString(),
             extracted: audioMetadata.isValid,
@@ -207,13 +241,11 @@ const SimpleAdminScreen = () => {
           metadataArray.push(completeMetadata);
           processedCount++;
 
-          console.log(`✅ ${file.name}: ${audioMetadata.durationFormatted} (Estimated)`);
-
         } catch (error) {
           console.warn(`⚠️ Chyba při zpracování ${file.name}:`, error.message);
 
-          // Přidej soubor s odhadem délky
-          const estimatedDuration = estimateDurationFromSize(file.size);
+          // Přidej soubor s odhadem délky při chybě
+          const estimatedDuration = estimateDurationFromSize(file.size || 0);
           metadataArray.push({
             fileName: file.fullPath,
             displayName: extractDisplayName(file.name),
@@ -225,7 +257,7 @@ const SimpleAdminScreen = () => {
             durationFormatted: formatDuration(estimatedDuration),
             durationDetailed: formatDurationDetailed(estimatedDuration),
             isValid: estimatedDuration > 0,
-            fileSize: file.size,
+            fileSize: file.size || 0,
             contentType: 'audio/mpeg',
             lastModified: new Date().toISOString(),
             extracted: false,
@@ -509,11 +541,8 @@ const SimpleAdminScreen = () => {
 
       for (const itemRef of result.items) {
         try {
-          // Získej URL a metadata
-          const [url, metadata] = await Promise.all([
-            getDownloadURL(itemRef),
-            getMetadata(itemRef)
-          ]);
+          // Získej URL
+          const url = await getDownloadURL(itemRef);
 
           // Stáhni soubor do cache
           const response = await fetch(url);
@@ -609,7 +638,7 @@ const SimpleAdminScreen = () => {
               Kompletní synchronizace
             </h3>
             <p className="text-gray-500 mb-4">
-              Skenuje Firebase Storage, připraví metadata z velikosti MP3 souborů a uloží do Realtime Database. Doporučeno pro první spuštění.
+              Skenuje Firebase Storage, získá reálnou délku MP3 souborů a uloží metadata do Realtime Database. Doporučeno pro první spuštění.
             </p>
             <button
               onClick={fullMetadataSync}
