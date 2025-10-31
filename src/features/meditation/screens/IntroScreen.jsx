@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import meditatebodySvg from '../../../assets/flags/meditatebody.svg';
 
 const IntroScreen = ({ onIntroComplete }) => {
   const [showIntro, setShowIntro] = useState(true);
@@ -25,7 +26,7 @@ const IntroScreen = ({ onIntroComplete }) => {
           exit={{ opacity: 0 }}
           transition={{ duration: 0.5, ease: "easeInOut" }}
         >
-          {/* Úvodný text "Meditácia" uprostred */}
+          {/* Kompozice s meditující siluetou a bílým kruhem */}
           <motion.div
             className="flex flex-col items-center justify-center"
             initial={{ opacity: 1 }}
@@ -35,8 +36,44 @@ const IntroScreen = ({ onIntroComplete }) => {
             }}
             transition={{ duration: 0.4, ease: "easeInOut" }}
           >
+            {/* Bílý kruh na pozadí */}
+            <motion.div
+              className="relative flex items-center justify-center mb-6"
+              initial={{ scale: 0.8, opacity: 0 }}
+              animate={{
+                scale: 1,
+                opacity: 1
+              }}
+              transition={{
+                duration: 0.8,
+                ease: "easeOut",
+                delay: 0.1
+              }}
+            >
+              {/* Bílý kruh jako halo */}
+              <div className="absolute w-48 h-48 bg-white rounded-full z-0"></div>
+
+              {/* SVG silueta meditujícího člověka */}
+              <motion.img
+                src={meditatebodySvg}
+                alt="Meditující osoba"
+                className="relative z-10 w-64 h-auto"
+                initial={{ scale: 0.9, opacity: 0 }}
+                animate={{
+                  scale: 1,
+                  opacity: 1
+                }}
+                transition={{
+                  duration: 0.8,
+                  ease: "easeOut",
+                  delay: 0.2
+                }}
+              />
+            </motion.div>
+
+            {/* Text "Meditácia" */}
             <motion.h1
-              className="text-7xl font-light tracking-wide mb-4"
+              className="text-7xl font-light tracking-wide"
               initial={{ scale: 0.5, opacity: 0, y: 30 }}
               animate={{
                 scale: 1,
@@ -46,35 +83,11 @@ const IntroScreen = ({ onIntroComplete }) => {
               transition={{
                 duration: 0.8,
                 ease: "easeOut",
-                delay: 0.1
+                delay: 0.3
               }}
             >
-              Meditácia
+              meditácia
             </motion.h1>
-
-            {/* Dekorativní tečky */}
-            <motion.div
-              className="flex gap-2"
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.8, delay: 1.2 }}
-            >
-              <motion.div
-                className="w-2 h-2 bg-black rounded-full"
-                animate={{ scale: [1, 1.2, 1] }}
-                transition={{ duration: 2, repeat: Infinity, delay: 0 }}
-              />
-              <motion.div
-                className="w-2 h-2 bg-black rounded-full"
-                animate={{ scale: [1, 1.2, 1] }}
-                transition={{ duration: 2, repeat: Infinity, delay: 0.3 }}
-              />
-              <motion.div
-                className="w-2 h-2 bg-black rounded-full"
-                animate={{ scale: [1, 1.2, 1] }}
-                transition={{ duration: 2, repeat: Infinity, delay: 0.6 }}
-              />
-            </motion.div>
           </motion.div>
         </motion.div>
       )}
