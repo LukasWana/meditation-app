@@ -5,7 +5,8 @@ const FramerMeditationCircle = ({
   time,
   totalTime,
   isPlaying,
-  className = ''
+  className = '',
+  showTimeBelow = false
 }) => {
   const circleRef = useRef(null);
   const innerCircleControls = useAnimation();
@@ -85,20 +86,43 @@ const FramerMeditationCircle = ({
         />
       </svg>
 
-      {/* Vnútorný animovaný kruh */}
+      {/* Vnútorný animovaný kruh - čas uvnitř nebo prázdný kruh */}
       <motion.div
         className="absolute inset-0 flex items-center justify-center"
         animate={innerCircleControls}
       >
-        <motion.div
-          className="w-40 h-40 rounded-full bg-black/5 flex items-center justify-center p-4"
-          whileHover={{ scale: 1.05 }}
-          transition={{ type: "spring", stiffness: 300, damping: 20 }}
-        >
+        {!showTimeBelow ? (
+          <motion.div
+            className="w-40 h-40 rounded-full bg-black/5 flex items-center justify-center p-4"
+            whileHover={{ scale: 1.05 }}
+            transition={{ type: "spring", stiffness: 300, damping: 20 }}
+          >
+            <motion.span
+              className="text-6xl font-light leading-tight"
+              animate={isPlaying ? {
+                scale: [1, 1.05, 1],
+                transition: {
+                  duration: 2,
+                  repeat: Infinity,
+                  ease: "easeInOut"
+                }
+              } : {}}
+            >
+              {Math.floor(time / 60)}:{(time % 60).toString().padStart(2, '0')}
+            </motion.span>
+          </motion.div>
+        ) : (
+          <div className="w-40 h-40 rounded-full bg-black/5" />
+        )}
+      </motion.div>
+
+      {/* Čas pod kruhovým ukazatelem */}
+      {showTimeBelow && (
+        <div className="absolute inset-x-0 -bottom-20 flex items-center justify-center">
           <motion.span
-            className="text-6xl font-light leading-tight"
+            className="text-5xl font-light text-gray-800"
             animate={isPlaying ? {
-              scale: [1, 1.05, 1],
+              scale: [1, 1.02, 1],
               transition: {
                 duration: 2,
                 repeat: Infinity,
@@ -108,8 +132,8 @@ const FramerMeditationCircle = ({
           >
             {Math.floor(time / 60)}:{(time % 60).toString().padStart(2, '0')}
           </motion.span>
-        </motion.div>
-      </motion.div>
+        </div>
+      )}
     </div>
   );
 };

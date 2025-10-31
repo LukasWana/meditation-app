@@ -542,10 +542,6 @@ const NewAdminScreen = () => {
     }
   };
 
-  useEffect(() => {
-    loadAudioStats();
-  }, []);
-
   const themeClasses = isDarkMode
     ? 'bg-gray-900 text-white'
     : 'bg-white text-gray-900';
@@ -570,11 +566,10 @@ const NewAdminScreen = () => {
           </div>
           <button
             onClick={() => setIsDarkMode(!isDarkMode)}
-            className={`p-3 rounded-lg transition-colors ${
-              isDarkMode
+            className={`p-3 rounded-lg transition-colors ${isDarkMode
                 ? 'bg-gray-700 hover:bg-gray-600'
                 : 'bg-gray-200 hover:bg-gray-300'
-            }`}
+              }`}
           >
             {isDarkMode ? <Sun size={24} /> : <Moon size={24} />}
           </button>
@@ -802,95 +797,51 @@ const NewAdminScreen = () => {
               <div className="p-4 rounded-lg bg-purple-50 border border-purple-200">
                 <div className="flex items-center mb-2">
                   <Database className="text-purple-500 mr-2" size={20} />
-                  <span className="font-semibold">Velikost cache</span>
+                  <span className="font-semibold">Velikost v cache</span>
                 </div>
                 <p className="text-sm text-purple-600">
-                  {cacheStats.totalSizeFormatted}
+                  {formatFileSize(cacheStats.totalSize)}
                 </p>
               </div>
             </div>
           )}
 
-          {/* Progress bar pro stahování */}
-          {isCaching && cacheProgress && (
-            <div className="mb-6">
-              <div className="flex justify-between mb-2">
-                <span className="text-sm font-medium">Stahování souborů...</span>
-                <span className="text-sm text-gray-500">
-                  {cacheProgress.current} / {cacheProgress.total} ({cacheProgress.percentage}%)
-                </span>
-              </div>
-              <div className="w-full bg-gray-200 rounded-full h-3">
-                <div
-                  className="bg-blue-500 h-3 rounded-full transition-all duration-300"
-                  style={{ width: `${cacheProgress.percentage}%` }}
-                ></div>
-              </div>
-              <p className="text-xs text-gray-500 mt-1">
-                Aktuálně: {cacheProgress.fileName}
-              </p>
-            </div>
-          )}
-
-          {/* Tlačítka pro správu cache */}
+          {/* Cache akce */}
           <div className="space-y-4">
-            <div className="flex flex-wrap gap-3">
-              <button
-                onClick={startCachingAllFiles}
-                disabled={isCaching || fileData.length === 0}
-                className="flex items-center px-4 py-2 bg-blue-500 hover:bg-blue-600 disabled:bg-gray-400 text-white rounded-lg transition-colors"
-              >
-                <Download className="mr-2" size={16} />
-                {isCaching ? 'Stahování...' : 'Stáhnout vše do cache'}
-              </button>
-
-              <button
-                onClick={loadCacheStats}
-                className="flex items-center px-4 py-2 bg-gray-500 hover:bg-gray-600 text-white rounded-lg transition-colors"
-              >
-                <RefreshCw className="mr-2" size={16} />
-                Aktualizovat statistiky
-              </button>
-
-              <button
-                onClick={() => setShowCharts(!showCharts)}
-                className="flex items-center px-4 py-2 bg-purple-500 hover:bg-purple-600 text-white rounded-lg transition-colors"
-              >
-                <BarChart3 className="mr-2" size={16} />
-                {showCharts ? 'Skrýt grafy' : 'Zobrazit grafy úložišť'}
-              </button>
-
-              <button
-                onClick={clearCache}
-                disabled={!cacheStats || cacheStats.totalFiles === 0}
-                className="flex items-center px-4 py-2 bg-red-500 hover:bg-red-600 disabled:bg-gray-400 text-white rounded-lg transition-colors"
-              >
-                <HardDrive className="mr-2" size={16} />
-                Vymazat cache
-              </button>
-            </div>
-
-            {/* Informace o offline režimu */}
-            <div className={`p-4 rounded-lg ${isOfflineReady ? 'bg-green-50 border border-green-200' : 'bg-yellow-50 border border-yellow-200'}`}>
-              <div className="flex items-start">
-                {isOfflineReady ? (
-                  <Wifi className="text-green-500 mr-3 mt-0.5" size={20} />
-                ) : (
-                  <WifiOff className="text-yellow-500 mr-3 mt-0.5" size={20} />
-                )}
-                <div>
-                  <h4 className="font-semibold mb-1">
-                    {isOfflineReady ? 'Aplikace je připravena pro offline použití' : 'Aplikace není připravena pro offline použití'}
-                  </h4>
-                  <p className="text-sm text-gray-600">
-                    {isOfflineReady
-                      ? 'Všechny audio soubory jsou stažené a aplikace bude fungovat i bez internetového připojení.'
-                      : 'Pro offline použití je potřeba stáhnout audio soubory do cache pomocí tlačítka výše.'
-                    }
-                  </p>
+            {isCaching ? (
+              <div className="bg-blue-50 p-6 rounded-lg border border-blue-200">
+                <div className="flex justify-between mb-2">
+                  <span className="text-sm font-medium text-blue-700">Stahování souborů do cache...</span>
+                  <span className="text-sm text-blue-700">{cacheProgress?.percentage}%</span>
                 </div>
+                <div className="w-full bg-blue-200 rounded-full h-3 mb-2">
+                  <div
+                    className="bg-blue-600 h-3 rounded-full transition-all duration-300"
+                    style={{ width: `${cacheProgress?.percentage}%` }}
+                  ></div>
+                </div>
+                <p className="text-xs text-blue-600">
+                  Soubor {cacheProgress?.current} z {cacheProgress?.total}
+                </p>
               </div>
-            </div>
+            ) : (
+              <div className="flex flex-col md:flex-row gap-4">
+                <button
+                  onClick={startCachingAllFiles}
+                  disabled={loading || audioStats.totalFiles === 0}
+                  className="flex-1 bg-blue-600 hover:bg-blue-700 text-white py-3 px-6 rounded-xl font-semibold flex items-center justify-center transition-all shadow-md"
+                >
+                  <Download className="mr-2" size={20} />
+                  Stáhnout vše pro offline
+                </button>
+                <button
+                  onClick={clearCache}
+                  className="bg-white border-2 border-red-200 text-red-500 hover:bg-red-50 py-3 px-6 rounded-xl font-semibold transition-all"
+                >
+                  Vymazat cache
+                </button>
+              </div>
+            )}
           </div>
         </motion.div>
 
@@ -949,22 +900,20 @@ const NewAdminScreen = () => {
               <button
                 onClick={saveToRealtimeDB}
                 disabled={loading || !preparedData || updateStatus !== 'needs-update'}
-                className={`w-full py-2 px-4 rounded-lg transition-colors ${
-                  updateStatus === 'needs-update'
+                className={`w-full py-2 px-4 rounded-lg transition-colors ${updateStatus === 'needs-update'
                     ? 'bg-green-500 hover:bg-green-600 text-white'
                     : 'bg-gray-400 text-gray-600 cursor-not-allowed'
-                }`}
+                  }`}
               >
                 {loading ? <RefreshCw className="animate-spin mx-auto" size={20} /> : 'Uložit do Realtime DB'}
               </button>
               <button
                 onClick={saveToFirestore}
                 disabled={loading || !preparedData || updateStatus !== 'needs-update'}
-                className={`w-full py-2 px-4 rounded-lg transition-colors ${
-                  updateStatus === 'needs-update'
+                className={`w-full py-2 px-4 rounded-lg transition-colors ${updateStatus === 'needs-update'
                     ? 'bg-purple-500 hover:bg-purple-600 text-white'
                     : 'bg-gray-400 text-gray-600 cursor-not-allowed'
-                }`}
+                  }`}
               >
                 {loading ? <RefreshCw className="animate-spin mx-auto" size={20} /> : 'Uložit do Firestore'}
               </button>
@@ -984,11 +933,10 @@ const NewAdminScreen = () => {
                         }
                       }}
                       disabled={loading || !preparedData}
-                      className={`w-full py-2 px-4 rounded-lg transition-colors ${
-                        preparedData
+                      className={`w-full py-2 px-4 rounded-lg transition-colors ${preparedData
                           ? 'bg-orange-500 hover:bg-orange-600 text-white'
                           : 'bg-gray-400 text-gray-600 cursor-not-allowed'
-                      }`}
+                        }`}
                     >
                       {loading ? <RefreshCw className="animate-spin mx-auto" size={20} /> : '⚠️ Vynutit aktualizaci Realtime DB'}
                     </button>
@@ -999,11 +947,10 @@ const NewAdminScreen = () => {
                         }
                       }}
                       disabled={loading || !preparedData}
-                      className={`w-full py-2 px-4 rounded-lg transition-colors ${
-                        preparedData
+                      className={`w-full py-2 px-4 rounded-lg transition-colors ${preparedData
                           ? 'bg-purple-500 hover:bg-purple-600 text-white'
                           : 'bg-gray-400 text-gray-600 cursor-not-allowed'
-                      }`}
+                        }`}
                     >
                       {loading ? <RefreshCw className="animate-spin mx-auto" size={20} /> : '⚠️ Vynutit aktualizaci Firestore'}
                     </button>

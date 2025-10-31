@@ -40,7 +40,7 @@ const SCREEN_REGISTRY = {
   'meditation': {
     component: MeditationScreen,
     requiresLayout: true,
-    props: ['time', 'selectedDuration', 'isPlaying', 'onDurationChange', 'onPlayPause', 'onReset', 'onNavigateToScreen', 'onTouchStart', 'onTouchMove', 'onTouchEnd'],
+    props: ['time', 'selectedDuration', 'isPlaying', 'onDurationChange', 'onPlayPause', 'onReset', 'onNavigateToScreen', 'onTouchStart', 'onTouchMove', 'onTouchEnd', 'breathPhase', 'breathInDuration', 'breathOutDuration', 'breathInSound', 'breathOutSound', 'breathSoundFadeEnabled', 'onBreathSoundChange'],
     transition: {
       type: 'slide',
       direction: 'right',
@@ -59,7 +59,7 @@ const SCREEN_REGISTRY = {
   'settings': {
     component: SettingsScreen,
     requiresLayout: true,
-    props: ['onNavigateToScreen', 'onTouchStart', 'onTouchMove', 'onTouchEnd', 'onPlayerStateChange'],
+    props: ['onNavigateToScreen', 'onTouchStart', 'onTouchMove', 'onTouchEnd', 'onPlayerStateChange', 'breathInDuration', 'breathOutDuration', 'onBreathRhythmChange', 'preparationTime', 'onPreparationTimeChange', 'breathInSound', 'breathOutSound', 'onBreathSoundChange', 'breathSoundFadeEnabled', 'onBreathSoundFadeChange'],
     transition: {
       type: 'slide',
       direction: 'up',
@@ -193,6 +193,16 @@ const PageManager = ({
   onPlayPause,
   onReset,
   breathPhase,
+  breathInDuration,
+  breathOutDuration,
+  onBreathRhythmChange,
+  preparationTime,
+  onPreparationTimeChange,
+  breathInSound,
+  breathOutSound,
+  onBreathSoundChange,
+  breathSoundFadeEnabled,
+  onBreathSoundFadeChange,
 
   // Audio player specifické
   activeAudio,
@@ -273,6 +283,48 @@ const PageManager = ({
         case 'breathPhase':
           props.breathPhase = breathPhase;
           break;
+        case 'breathInDuration':
+          props.breathInDuration = breathInDuration;
+          break;
+        case 'breathOutDuration':
+          props.breathOutDuration = breathOutDuration;
+          break;
+        case 'breathInSound':
+          props.breathInSound = breathInSound;
+          break;
+        case 'breathOutSound':
+          props.breathOutSound = breathOutSound;
+          break;
+        case 'breathSoundFadeEnabled':
+          props.breathSoundFadeEnabled = breathSoundFadeEnabled;
+          break;
+        case 'onBreathSoundChange':
+          props.onBreathSoundChange = onBreathSoundChange;
+          break;
+        case 'onBreathRhythmChange':
+          props.onBreathRhythmChange = onBreathRhythmChange;
+          break;
+        case 'preparationTime':
+          props.preparationTime = preparationTime;
+          break;
+        case 'onPreparationTimeChange':
+          props.onPreparationTimeChange = onPreparationTimeChange;
+          break;
+        case 'breathInSound':
+          props.breathInSound = breathInSound;
+          break;
+        case 'breathOutSound':
+          props.breathOutSound = breathOutSound;
+          break;
+        case 'onBreathSoundChange':
+          props.onBreathSoundChange = onBreathSoundChange;
+          break;
+        case 'breathSoundFadeEnabled':
+          props.breathSoundFadeEnabled = breathSoundFadeEnabled;
+          break;
+        case 'onBreathSoundFadeChange':
+          props.onBreathSoundFadeChange = onBreathSoundFadeChange;
+          break;
         case 'onIntroComplete':
           props.onIntroComplete = () => onNavigateToScreen('home');
           break;
@@ -294,8 +346,9 @@ const PageManager = ({
   }, [
     onNavigateToScreen, onTouchStart, onTouchMove, onTouchEnd,
     gender, onPlayerStateChange, onGenderChange, time, selectedDuration, isPlaying,
-    onDurationChange, onPlayPause, onReset, breathPhase,
-    activeAudio, onCloseAudio
+    onDurationChange, onPlayPause, onReset, breathPhase, breathInDuration, breathOutDuration, breathInSound, breathOutSound, breathSoundFadeEnabled, onBreathRhythmChange,
+    preparationTime, onPreparationTimeChange, onBreathSoundChange, onBreathSoundFadeChange,
+    activeAudio, onCloseAudio, selectedAlbum, onAlbumSelect, onAlbumClose
   ]);
 
   // Renderování stránky

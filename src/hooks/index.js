@@ -21,4 +21,5 @@ export {
 export { useBackgroundDataLoader } from './useBackgroundDataLoader';
 export { useTimer } from './useTimer';
 export { useBreathPhase } from './useBreathPhase';
+export { useBreathSounds } from './useBreathSounds';
 // useOptimizedPreloader removed - using useBackgroundDataLoader instead
