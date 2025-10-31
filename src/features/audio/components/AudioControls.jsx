@@ -34,29 +34,15 @@ const AudioControls = ({
   return (
     <div className={className}>
       {/* Title and Duration - Above Circular Progress with fixed height */}
-      <div className="mb-6 z-10 w-full pl-10 pr-10 sm:pl-20 sm:pr-20 flex flex-col items-center space-y-0" style={{minHeight: 'clamp(80px, 15vh, 120px)'}}>
+      <div className="mb-6 z-10 w-full pl-10 pr-10 sm:pl-20 sm:pr-20 flex flex-col items-center space-y-0 audio-controls-container">
         {/* Duration - Total Time - Above title - zobraz pouze když je stabilní */}
         {duration && duration > 0 && durationStable && (
-          <div
-            className="text-gray-600 text-center mb-2"
-            style={{fontFamily: 'Playfair Display', fontSize: 'clamp(18px, 1.2vw, 16px)'}}
-          >
+          <div className="text-gray-600 text-center mb-2 text-clamp-duration">
             {formatTime(duration)}
           </div>
         )}
         {/* Title - Fixed height container for 2-line support */}
-        <div
-          className="font-light text-center text-black leading-tight"
-          style={{
-            fontFamily: 'Playfair Display',
-            fontSize: 'clamp(20px, 3.5vw, 32px)',
-            minHeight: '60px',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            lineHeight: '1.2'
-          }}
-        >
+        <div className="font-light text-center text-black leading-tight text-clamp-title min-h-[60px] flex items-center justify-center" style={{lineHeight: '1.2'}}>
           <span>{title || 'Meditácia'}</span>
           {/* Data source indicator */}
           {dataSource && (
@@ -96,12 +82,11 @@ const AudioControls = ({
         />
 
         {/* Current Time Display - Between skip buttons with fixed width */}
-        <div className="pointer-events-none z-10" style={{minWidth: '60px', textAlign: 'center'}}>
+        <div className="pointer-events-none z-10 min-w-[60px] text-center">
           <CurrentTimeDisplay
             currentTime={currentTime}
             formatTime={formatTime}
-            className="text-black font-medium text-center"
-            style={{fontSize: 'clamp(20px, 2.5vw, 28px)'}}
+            className="text-black font-medium text-center text-clamp-time"
           />
         </div>
 

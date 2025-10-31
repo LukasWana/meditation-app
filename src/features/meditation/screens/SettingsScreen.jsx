@@ -134,7 +134,7 @@ const SettingsScreen = ({
             animationType="fadeIn"
             delay={0.1}
           >
-            <h1 className="text-6xl font-light" style={{fontFamily: 'Playfair Display'}}>
+            <h1 className="text-6xl font-light">
               {t('nastavenie')}
             </h1>
           </FramerSection>
@@ -146,7 +146,7 @@ const SettingsScreen = ({
               delay={0.2}
             >
               <div className="w-full p-6 bg-white/50 backdrop-blur rounded-none border border-black/10">
-                <h3 className="text-2xl font-light mb-4" style={{fontFamily: 'Playfair Display'}}>
+                <h3 className="text-2xl font-light mb-4">
                   {t('selectLanguage')}
                 </h3>
                 <LanguageSwitcher />
@@ -160,7 +160,7 @@ const SettingsScreen = ({
               delay={0.3}
             >
               <div className="w-full p-6 bg-white/50 backdrop-blur rounded-none border border-black/10">
-                <h3 className="text-2xl font-light mb-4 flex items-center" style={{fontFamily: 'Playfair Display'}}>
+                <h3 className="text-2xl font-light mb-4 flex items-center">
                   <HardDrive className="mr-3" size={24} />
                   Offline režim
                 </h3>
@@ -281,7 +281,7 @@ const SettingsScreen = ({
               delay={0.4}
             >
               <div className="w-full p-6 bg-white/30 backdrop-blur rounded-none border border-black/10">
-                <h3 className="text-2xl font-light mb-4" style={{fontFamily: 'Playfair Display'}}>
+                <h3 className="text-2xl font-light mb-4">
                   {t('informacie')}
                 </h3>
                 <p className="text-lg text-gray-600">

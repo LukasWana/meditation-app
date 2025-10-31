@@ -80,10 +80,10 @@ const HudbaScreen = ({
             animationType="fadeIn"
             delay={0.1}
           >
-            <h1 className="text-6xl font-light" style={{fontFamily: 'Playfair Display'}}>
+            <h1 className="text-6xl font-light">
               bez slov
             </h1>
-            <p className="text-xl text-center text-gray-700 mb-8" style={{fontFamily: 'Playfair Display'}}>
+            <p className="text-xl text-center text-gray-700 mb-8">
               hudobné meditácie a relaxačné zvuky
             </p>
 
@@ -130,7 +130,7 @@ const HudbaScreen = ({
                     <div className="flex items-center justify-between">
                       <div className="flex items-center space-x-3">
                         <div>
-                          <h3 className="text-2xl font-light" style={{fontFamily: 'Playfair Display'}}>
+                          <h3 className="text-2xl font-light">
                             {item.title}
                           </h3>
                           {/* {item.voiceInfo && (
@@ -141,7 +141,7 @@ const HudbaScreen = ({
                         </div>
                       </div>
                       <div className="flex items-center space-x-3">
-                        <span className="text-2xl font-light text-gray-500" style={{fontFamily: 'Playfair Display'}}>
+                        <span className="text-2xl font-light text-gray-500">
                           {item.duration}
                         </span>
                       </div>

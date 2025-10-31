@@ -1,5 +1,6 @@
 import React from 'react';
-import { FramerButton, FramerSection } from '@components';
+import { FramerButton, FramerSection } from '@components';
+
 export const AlbumCard = ({
   item,
   idx,
@@ -44,13 +45,13 @@ export const AlbumCard = ({
                     )}
                   </div>
                 )}
-                <div className="w-full h-full bg-gradient-to-br from-gray-200 to-gray-300 flex items-center justify-center text-gray-500" style={{display: 'none'}}>
+                <div className="w-full h-full bg-gradient-to-br from-gray-200 to-gray-300 flex items-center justify-center text-gray-500 placeholder-hidden">
                   <div className="text-2xl">🎵</div>
                 </div>
               </div>
             )}
             <div className="flex-1">
-              <h3 className="text-2xl font-light" style={{fontFamily: 'Playfair Display'}}>
+              <h3 className="text-2xl font-light">
                 {item.title}
               </h3>
               {item.type === 'album' && (
@@ -67,12 +68,12 @@ export const AlbumCard = ({
           </div>
           <div className="flex items-center space-x-3">
             {item.type === 'song' && (
-              <span className="text-2xl font-light text-gray-500" style={{fontFamily: 'Playfair Display'}}>
+              <span className="text-2xl font-light text-gray-500">
                 {getDisplayDuration(item)}
               </span>
             )}
             {item.type === 'album' && (
-              <span className="text-2xl font-light text-gray-500" style={{fontFamily: 'Playfair Display'}}>
+              <span className="text-2xl font-light text-gray-500">
                 {item.totalDuration}
               </span>
             )}

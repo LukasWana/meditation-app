@@ -1,11 +1,11 @@
-@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Philosopher:wght@400;700&display=swap');
 
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 body, html {
-  font-family: 'Playfair Display', serif;
+  font-family: 'Philosopher', sans-serif;
   margin: 0;
   padding: 0;
   overflow-x: hidden;
@@ -33,6 +33,7 @@ body, html {
   max-width: 100vw;
   overflow-x: hidden;
   background-color: #f4ddc4;
+  font-family: 'Philosopher', sans-serif;
 
   /* Android Chrome safe area support */
   padding-bottom: env(safe-area-inset-bottom);
@@ -120,10 +121,11 @@ button, .no-select {
   user-select: none;
 }
 
-/* Smooth animations */
+/* Smooth animations and global font */
 * {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  font-family: 'Philosopher', sans-serif;
 }
 
 /* Zabránenie horizontálnemu scrollingu */
@@ -162,4 +164,54 @@ body, html, #root, main, div, section, article {
   opacity: 1 !important;
   position: absolute !important;
   z-index: 9999 !important;
+}
+
+/* Utility classes for commonly used inline styles */
+
+/* Placeholder hidden - for image placeholders */
+.placeholder-hidden {
+  display: none;
+}
+
+/* Aspect ratio utilities */
+.aspect-square {
+  aspect-ratio: 1 / 1;
+}
+
+/* Responsive font sizes - commonly used clamp values */
+.text-clamp-duration {
+  font-size: clamp(18px, 1.2vw, 16px);
+}
+
+.text-clamp-title {
+  font-size: clamp(20px, 3.5vw, 32px);
+}
+
+.text-clamp-time {
+  font-size: clamp(20px, 2.5vw, 28px);
+}
+
+/* Standard font sizes */
+.text-32 {
+  font-size: 32px;
+}
+
+.text-14 {
+  font-size: 14px;
+}
+
+/* Circular/circular progress elements */
+.circular-element {
+  aspect-ratio: 1 / 1;
+  user-select: none;
+}
+
+/* Z-index utilities for common values */
+.z-10000 {
+  z-index: 10000;
+}
+
+/* Audio controls container */
+.audio-controls-container {
+  min-height: clamp(80px, 15vh, 120px);
 }

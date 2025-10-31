@@ -52,7 +52,6 @@ const HomeScreen = ({
           >
             <div
               className="text-5xl font-light tracking-wide py-4 leading-loose"
-              style={{fontFamily: 'Playfair Display'}}
             >
               {t('slova')}
             </div>
@@ -76,7 +75,6 @@ const HomeScreen = ({
           >
             <div
               className="text-5xl font-light tracking-wide py-4 leading-loose"
-              style={{fontFamily: 'Playfair Display'}}
             >
               {t('hudba')}
             </div>
@@ -99,7 +97,6 @@ const HomeScreen = ({
           >
             <div
               className="text-5xl font-light tracking-wide mb-4 py-4 leading-loose"
-              style={{fontFamily: 'Playfair Display'}}
             >
               {t('meditacia')}
             </div>
@@ -122,7 +119,6 @@ const HomeScreen = ({
           >
             <div
               className="text-5xl font-light tracking-wide py-4 leading-loose"
-              style={{fontFamily: 'Playfair Display'}}
             >
               {t('nastavenie')}
             </div>

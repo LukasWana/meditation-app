@@ -29,7 +29,7 @@ class ErrorBoundary extends React.Component {
         <div className="min-h-screen bg-[#f4ddc4] flex items-center justify-center p-4">
           <div className="text-center max-w-md">
             <div className="mb-8">
-              <h1 className="text-6xl font-light mb-4" style={{fontFamily: 'Playfair Display'}}>
+              <h1 className="text-6xl font-light mb-4">
                 Oops!
               </h1>
               <p className="text-xl text-gray-700 mb-6">

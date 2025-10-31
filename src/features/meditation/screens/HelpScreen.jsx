@@ -25,7 +25,7 @@ const HelpScreen = ({
               animationType="fadeIn"
               delay={0.1}
             >
-              <h1 className="text-6xl font-light text-center" style={{fontFamily: 'Playfair Display'}}>
+              <h1 className="text-6xl font-light text-center">
                 první pomoc
               </h1>
             </FramerSection>
@@ -41,10 +41,10 @@ const HelpScreen = ({
                   className="w-full p-2 sm:p-8 text-left"
                 >
                   <div>
-                    <h3 className="text-3xl font-light mb-2" style={{fontFamily: 'Playfair Display'}}>
+                    <h3 className="text-3xl font-light mb-2">
                       dýchanie
                     </h3>
-                    <p className="text-gray-500" style={{fontFamily: 'Playfair Display'}}>
+                    <p className="text-gray-500">
                       upokojujúce dýchacie cvičenie
                     </p>
                   </div>
@@ -60,10 +60,10 @@ const HelpScreen = ({
                   className="w-full p-2 sm:p-8 text-left"
                 >
                   <div>
-                    <h3 className="text-3xl font-light mb-2" style={{fontFamily: 'Playfair Display'}}>
+                    <h3 className="text-3xl font-light mb-2">
                       ukotvenie
                     </h3>
-                    <p className="text-gray-500" style={{fontFamily: 'Playfair Display'}}>
+                    <p className="text-gray-500">
                       5-4-3-2-1 technika
                     </p>
                   </div>
@@ -79,10 +79,10 @@ const HelpScreen = ({
                   className="w-full p-2 sm:p-8 text-left"
                 >
                   <div>
-                    <h3 className="text-3xl font-light mb-2" style={{fontFamily: 'Playfair Display'}}>
+                    <h3 className="text-3xl font-light mb-2">
                       ticho
                     </h3>
-                    <p className="text-gray-500" style={{fontFamily: 'Playfair Display'}}>
+                    <p className="text-gray-500">
                       5 minút kľudu
                     </p>
                   </div>

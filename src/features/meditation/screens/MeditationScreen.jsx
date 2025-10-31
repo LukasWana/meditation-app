@@ -31,7 +31,7 @@ const MeditationScreen = ({
             animationType="fadeIn"
             delay={0.1}
           >
-            <h1 className="text-5xl font-light mb-2" style={{fontFamily: 'Playfair Display'}}>
+            <h1 className="text-5xl font-light mb-2">
               meditácia
             </h1>
             <div className="flex justify-center gap-2 mt-4">
@@ -66,7 +66,7 @@ const MeditationScreen = ({
                   variant={selectedDuration === mins ? 'rounded' : 'secondary'}
                   className="w-16 h-16 rounded-full flex items-center justify-center p-0"
                 >
-                  <span style={{fontFamily: 'Playfair Display'}}>
+                  <span>
                     {mins}
                   </span>
                 </FramerButton>
