@@ -19,65 +19,122 @@ export const getAudioDuration = (audioUrl) => {
 
     const audio = new Audio();
     let resolved = false;
-    
+    let timeoutId = null;
+
     const cleanup = () => {
+      if (timeoutId) {
+        clearTimeout(timeoutId);
+        timeoutId = null;
+      }
       audio.removeEventListener('loadedmetadata', onLoadedMetadata);
+      audio.removeEventListener('durationchange', onDurationChange);
+      audio.removeEventListener('canplaythrough', onCanPlayThrough);
       audio.removeEventListener('error', onError);
       audio.src = '';
+      audio.load(); // Reset audio element
     };
-    
-    const onLoadedMetadata = () => {
-      if (resolved) return;
-      resolved = true;
-      cleanup();
-      
-      const duration = Math.round(audio.duration);
-      if (isNaN(duration) || duration <= 0) {
-        console.warn('Invalid audio duration:', audio.duration, 'URL:', audioUrl);
-        resolve(0);
-      } else {
-        resolve(duration);
+
+    const checkDuration = () => {
+      // Zkontroluj, zda máme validní duration
+      const duration = audio.duration;
+      if (isFinite(duration) && duration > 0 && !isNaN(duration)) {
+        const roundedDuration = Math.round(duration);
+        if (roundedDuration > 0) {
+          return roundedDuration;
+        }
       }
+      return null;
     };
-    
+
+    const resolveWithDuration = (source) => {
+      if (resolved) return;
+      const duration = checkDuration();
+      if (duration !== null) {
+        resolved = true;
+        cleanup();
+        console.log(`✅ Duration loaded from ${source}: ${duration}s for`, audioUrl);
+        resolve(duration);
+        return true;
+      }
+      return false;
+    };
+
+    const onLoadedMetadata = () => {
+      // Počkej chvíli a pak zkontroluj duration
+      setTimeout(() => {
+        if (!resolved && audio.readyState >= 1) { // HAVE_METADATA
+          resolveWithDuration('loadedmetadata');
+        }
+      }, 500); // 500ms delay pro zajištění načtení metadat
+    };
+
+    const onDurationChange = () => {
+      resolveWithDuration('durationchange');
+    };
+
+    const onCanPlayThrough = () => {
+      resolveWithDuration('canplaythrough');
+    };
+
     const onError = (e) => {
       if (resolved) return;
       resolved = true;
       cleanup();
-      
+
       const errorMessage = e.target?.error?.message || e.message || 'Unknown audio loading error';
       console.warn('Failed to load audio metadata:', errorMessage, 'URL:', audioUrl);
       resolve(0); // Return 0 if failed to load
     };
-    
+
+    // Přidej všechny event listeners
     audio.addEventListener('loadedmetadata', onLoadedMetadata);
+    audio.addEventListener('durationchange', onDurationChange);
+    audio.addEventListener('canplaythrough', onCanPlayThrough);
     audio.addEventListener('error', onError);
-    
-    // Set timeout to prevent hanging
-    setTimeout(() => {
+
+    // Set timeout to prevent hanging (zvýšeno na 15s kvůli větším souborům)
+    timeoutId = setTimeout(() => {
       if (resolved) return;
+
+      // Před timeout zkontroluj ještě jednou duration
+      const duration = checkDuration();
+      if (duration !== null) {
+        resolved = true;
+        cleanup();
+        console.log(`✅ Duration loaded before timeout: ${duration}s for`, audioUrl);
+        resolve(duration);
+        return;
+      }
+
       resolved = true;
       cleanup();
       console.warn('Audio metadata loading timeout for URL:', audioUrl);
       resolve(0);
-    }, 15000); // 15 second timeout for CORS requests
-    
+    }, 15000); // 15 second timeout
+
     try {
-      // Try different CORS strategies
-      audio.crossOrigin = 'anonymous';
+      // Nastav preload na metadata (bez crossOrigin - jako v přehrávači)
       audio.preload = 'metadata';
-      
-      // For Firebase Storage URLs, try to bypass Service Worker if needed
-      if (audioUrl.includes('firebasestorage.googleapis.com')) {
-        // Add cache busting parameter to avoid Service Worker cache
-        const separator = audioUrl.includes('?') ? '&' : '?';
-        audio.src = `${audioUrl}${separator}_cacheBust=${Date.now()}`;
-      } else {
-        audio.src = audioUrl;
-      }
-      
+
+      // Pro Firebase Storage URL nepoužívej crossOrigin - podobně jako v přehrávači
+      audio.src = audioUrl;
+
+      // Explicitně spusť načítání
       audio.load();
+
+      // Pokud už máme duration, použij ji okamžitě
+      setTimeout(() => {
+        if (!resolved) {
+          const duration = checkDuration();
+          if (duration !== null) {
+            clearTimeout(timeoutId);
+            resolveWithDuration('immediate');
+          }
+        }
+      }, 100);
+
     } catch (error) {
+      clearTimeout(timeoutId);
       if (resolved) return;
       resolved = true;
       cleanup();
@@ -100,12 +157,12 @@ export const getAudioDurationWithFetch = async (audioUrl) => {
       mode: 'cors',
       credentials: 'omit'
     });
-    
+
     if (!response.ok) {
       console.warn('Failed to fetch audio headers:', response.status, audioUrl);
       return 0;
     }
-    
+
     // Try to get duration from Content-Length and estimate
     const contentLength = response.headers.get('Content-Length');
     if (contentLength) {
@@ -116,7 +173,7 @@ export const getAudioDurationWithFetch = async (audioUrl) => {
         return estimatedDuration;
       }
     }
-    
+
     return 0;
   } catch (error) {
     console.warn('Failed to fetch audio with fetch API:', error.message, audioUrl);
@@ -165,17 +222,27 @@ export const formatDurationDetailed = (seconds) => {
 /**
  * Extrahuje metadata z MP3 souboru
  * @param {string} audioUrl - URL MP3 souboru
+ * @param {Object} options - Volitelné možnosti
+ * @param {boolean} options.useFetchFallback - Použít fetch API jako fallback (default: false kvůli CORS problémům)
  * @returns {Promise<Object>} - Metadata objekt
  */
-export const extractAudioMetadata = async (audioUrl) => {
+export const extractAudioMetadata = async (audioUrl, options = {}) => {
+  const { useFetchFallback = false } = options;
+
   try {
-    // Try primary method first
+    // Try primary method first (HTML5 Audio API)
     let duration = await getAudioDuration(audioUrl);
-    
-    // If primary method failed, try alternative method
-    if (duration === 0 && audioUrl.includes('firebasestorage.googleapis.com')) {
+
+    // If primary method failed and fetch fallback is enabled, try alternative method
+    // NOTE: fetch API má CORS problémy s Firebase Storage, takže defaultně zakázáno
+    if (duration === 0 && useFetchFallback && audioUrl.includes('firebasestorage.googleapis.com')) {
       console.log('Primary method failed, trying alternative method for:', audioUrl);
-      duration = await getAudioDurationWithFetch(audioUrl);
+      try {
+        duration = await getAudioDurationWithFetch(audioUrl);
+      } catch (fetchError) {
+        // Ignoruj fetch errors - CORS problémy jsou očekávané
+        console.warn('Fetch fallback failed (expected CORS issue):', fetchError.message);
+      }
     }
 
     return {

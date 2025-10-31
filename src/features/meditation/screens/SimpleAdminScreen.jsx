@@ -182,28 +182,56 @@ const SimpleAdminScreen = () => {
           }
 
           // Získej reálnou délku MP3 souboru pomocí extractAudioMetadata
+          // Přidej pauzu mezi požadavky (2-3 sekundy), aby se metadata stihla načíst
+          // Důležité zejména pro slova soubory, které mohou mít problém s timeouty
+          if (processedCount > 0) {
+            const delaySeconds = 2.5; // 2.5 sekundy pauza mezi soubory
+            setStatus(`⏳ Čekám ${delaySeconds}s před načtením délky pro ${file.name}...`);
+            await new Promise(resolve => setTimeout(resolve, delaySeconds * 1000));
+          }
+
           let audioMetadata;
           try {
             console.log(`🎵 Načítám reálnou délku pro ${file.name}...`);
-            audioMetadata = await extractAudioMetadata(downloadURL);
+            setStatus(`🎵 Načítám reálnou délku pro ${file.name}...`);
+
+            // Použij stejnou metodu jako pro hudbu - extractAudioMetadata bez fetch fallback
+            audioMetadata = await extractAudioMetadata(downloadURL, { useFetchFallback: false });
 
             if (audioMetadata.isValid && audioMetadata.duration > 0) {
               console.log(`✅ ${file.name}: ${audioMetadata.durationFormatted} (Reálná délka)`);
+              setStatus(`✅ ${file.name}: ${audioMetadata.durationFormatted} (Reálná délka)`);
             } else {
-              // Fallback na odhad z velikosti, pokud se nepodařilo získat reálnou délku
-              console.warn(`⚠️ Nepodařilo se získat reálnou délku pro ${file.name}, použiji odhad`);
-              const estimatedDuration = estimateDurationFromSize(fileSize);
-              audioMetadata = {
-                duration: estimatedDuration,
-                durationFormatted: formatDuration(estimatedDuration),
-                durationDetailed: formatDurationDetailed(estimatedDuration),
-                isValid: estimatedDuration > 0
-              };
-              console.log(`📊 ${file.name}: ${audioMetadata.durationFormatted} (Odhad z velikosti ${Math.round(fileSize / 1024 / 1024 * 100) / 100}MB)`);
+              // Pokud se nepodařilo získat reálnou délku, zkus ještě jednou s delším timeout
+              console.log(`⚠️ První pokus selhal pro ${file.name}, zkouším znovu...`);
+              setStatus(`⚠️ Zkouším znovu pro ${file.name}...`);
+
+              // Pauza před druhým pokusem
+              await new Promise(resolve => setTimeout(resolve, 1000));
+
+              audioMetadata = await extractAudioMetadata(downloadURL, { useFetchFallback: false });
+
+              if (audioMetadata.isValid && audioMetadata.duration > 0) {
+                console.log(`✅ ${file.name}: ${audioMetadata.durationFormatted} (Reálná délka - druhý pokus)`);
+                setStatus(`✅ ${file.name}: ${audioMetadata.durationFormatted} (Reálná délka)`);
+              } else {
+                // Fallback na odhad z velikosti, pokud se nepodařilo získat reálnou délku
+                console.warn(`⚠️ Nepodařilo se získat reálnou délku pro ${file.name}, použiji odhad`);
+                setStatus(`⚠️ Používám odhad pro ${file.name}...`);
+                const estimatedDuration = estimateDurationFromSize(fileSize);
+                audioMetadata = {
+                  duration: estimatedDuration,
+                  durationFormatted: formatDuration(estimatedDuration),
+                  durationDetailed: formatDurationDetailed(estimatedDuration),
+                  isValid: estimatedDuration > 0
+                };
+                console.log(`📊 ${file.name}: ${audioMetadata.durationFormatted} (Odhad z velikosti ${Math.round(fileSize / 1024 / 1024 * 100) / 100}MB)`);
+              }
             }
           } catch (audioError) {
             // Fallback na odhad z velikosti při chybě
             console.warn(`⚠️ Chyba při získávání délky pro ${file.name}:`, audioError.message);
+            setStatus(`⚠️ Chyba při získávání délky pro ${file.name}, používám odhad...`);
             const estimatedDuration = estimateDurationFromSize(fileSize);
             audioMetadata = {
               duration: estimatedDuration,
