@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { useFirebaseHudbaFilter } from '@features/audio/hooks/useFirebaseHudbaFilter';
 import log from '@services/logger';
 import cacheService from '@services/cacheServiceRefactored';
+import { fastMetadataService } from '@services/fastMetadataService';
 
 // Vylepšená funkce pro načtení duration s retry logikou
 const getAudioDuration = (audioSrc, retries = 3) => {
@@ -58,7 +59,32 @@ export const useHudbaScreenData = () => {
   const [durations, setDurations] = useState(new Map());
 
   // Použij hudební filtrovací systém z Firebase
-  const { hudbaItems, isLoading, error, stats, isLoadingCovers, isLoadingDurations } = useFirebaseHudbaFilter();
+  const { hudbaItems, isLoading, error, stats, isLoadingCovers, isLoadingDurations, refreshAudioFiles } = useFirebaseHudbaFilter();
+
+  // Funkce pro refresh dat (vymaže cache a znovu načte)
+  const handleRefresh = async () => {
+    log.info('🔄 Manual refresh triggered - clearing cache and reloading...');
+    try {
+      // Vymaž cache fast metadata service
+      fastMetadataService.clearCache();
+      log.info('✅ Fast metadata cache cleared');
+
+      // Zavolej refresh z hooku (pokud existuje)
+      if (refreshAudioFiles) {
+        log.info('🔄 Calling refreshAudioFiles...');
+        await refreshAudioFiles();
+        log.success('✅ Data refreshed successfully');
+      } else {
+        log.warn('⚠️ refreshAudioFiles not available, reloading page...');
+        // Fallback: reload stránky
+        window.location.reload();
+      }
+    } catch (error) {
+      log.error('❌ Error refreshing data:', error);
+      // Fallback: reload stránky
+      window.location.reload();
+    }
+  };
 
   // Funkce pro formátování délky v sekundách na MM:SS
   const formatDuration = (seconds) => {
@@ -234,6 +260,7 @@ export const useHudbaScreenData = () => {
     isLoadingCovers,
     isLoadingDurations,
     getDisplayDuration,
-    formatDuration
+    formatDuration,
+    refreshData: handleRefresh
   };
 };
