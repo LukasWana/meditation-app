@@ -177,7 +177,7 @@ const MeditationScreen = ({
               animationType="fadeIn"
               delay={0.3}
             >
-              {[3, 7, 9, 16, 21].map((mins, index) => (
+              {[3, 7, 9, 21].map((mins, index) => (
                 <FramerButton
                   key={mins}
                   onClick={() => onDurationChange(mins)}
