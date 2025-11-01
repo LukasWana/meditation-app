@@ -24,7 +24,6 @@ export const LanguageProvider = ({ children }) => {
       slova: 'slova',
       meditacia: 'meditácia',
       nastavenie: 'nastavenie',
-      dychanie: 'dýchanie',
       pomoc: 'pomoc',
 
       // Podrobné názvy
@@ -51,10 +50,11 @@ export const LanguageProvider = ({ children }) => {
       rychlejsi: 'rýchlejší',
       pomalsi: 'pomalší',
       casKPriprave: 'čas k príprave',
+      priprava: 'príprava',
       nastaveniaZvuku: 'nastavenia zvuku',
       zvolteZvuk: 'zvoľte zvuk',
-      zvolteZvukNadech: 'zvuk pre nádech',
-      zvolteZvukVydech: 'zvuk pre výdech',
+      zvolteZvukNadech: 'nádech',
+      zvolteZvukVydech: 'výdech',
       ziadnyZvuk: 'žiadny zvuk',
       galeriaZvukovychTemat: 'galéria zvukových tém',
       zobrazitGaleriu: 'zobraziť galériu',
@@ -93,7 +93,6 @@ export const LanguageProvider = ({ children }) => {
       slova: 'slova',
       meditacia: 'meditace',
       nastavenie: 'nastavení',
-      dychanie: 'dýchání',
       pomoc: 'pomoc',
 
       // Podrobné názvy
@@ -120,10 +119,11 @@ export const LanguageProvider = ({ children }) => {
       rychlejsi: 'rychlejší',
       pomalsi: 'pomalejší',
       casKPriprave: 'čas k přípravě',
+      priprava: 'příprava',
       nastaveniaZvuku: 'nastavení zvuku',
       zvolteZvuk: 'vyberte zvuk',
-      zvolteZvukNadech: 'zvuk pro nádech',
-      zvolteZvukVydech: 'zvuk pro výdech',
+      zvolteZvukNadech: 'nádech',
+      zvolteZvukVydech: 'výdech',
       ziadnyZvuk: 'žádný zvuk',
       galeriaZvukovychTemat: 'galerie zvukových témat',
       zobrazitGaleriu: 'zobrazit galerii',
@@ -162,7 +162,6 @@ export const LanguageProvider = ({ children }) => {
       slova: 'words',
       meditacia: 'meditation',
       nastavenie: 'settings',
-      dychanie: 'breathing',
       pomoc: 'help',
 
       // Detailed names

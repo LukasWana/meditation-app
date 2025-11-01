@@ -310,21 +310,6 @@ const PageManager = ({
         case 'onPreparationTimeChange':
           props.onPreparationTimeChange = onPreparationTimeChange;
           break;
-        case 'breathInSound':
-          props.breathInSound = breathInSound;
-          break;
-        case 'breathOutSound':
-          props.breathOutSound = breathOutSound;
-          break;
-        case 'onBreathSoundChange':
-          props.onBreathSoundChange = onBreathSoundChange;
-          break;
-        case 'breathSoundFadeEnabled':
-          props.breathSoundFadeEnabled = breathSoundFadeEnabled;
-          break;
-        case 'onBreathSoundFadeChange':
-          props.onBreathSoundFadeChange = onBreathSoundFadeChange;
-          break;
         case 'onIntroComplete':
           props.onIntroComplete = () => onNavigateToScreen('home');
           break;
