@@ -22,4 +22,5 @@ export { useBackgroundDataLoader } from './useBackgroundDataLoader';
 export { useTimer } from './useTimer';
 export { useBreathPhase } from './useBreathPhase';
 export { useBreathSounds } from './useBreathSounds';
+export { useRealtimeSlovaFilter } from './useRealtimeSlovaFilter';
 // useOptimizedPreloader removed - using useBackgroundDataLoader instead
