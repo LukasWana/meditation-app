@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { ref, listAll, getDownloadURL, getMetadata } from 'firebase/storage';
 import { storage } from '@services/firebase';
 import { parseAudioFileName } from '@utils/hudbaParser';
@@ -7,6 +7,7 @@ import log from '@services/logger';
 import { performanceMonitor } from '@services/performanceMonitor';
 import { getComponentConfig } from '@config/performance';
 import { fastMetadataService } from '@services/fastMetadataService';
+import { realtimeMetadataService } from '@services/realtimeMetadataService';
 
 // Pomocná funkce pro načtení délky audio souboru
 const getAudioDuration = (audioSrc) => {
@@ -175,7 +176,7 @@ export const useFirebaseHudbaScanner = () => {
     cacheService.optimizeCache();
   };
 
-  const scanCDN = async () => {
+  const scanCDN = useCallback(async () => {
     try {
       setIsLoading(true);
       setError(null);
@@ -636,12 +637,49 @@ export const useFirebaseHudbaScanner = () => {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, []);
 
   useEffect(() => {
     // Spusť scan okamžitě - preload ready check odstraněn
     scanCDN();
-  }, []);
+  }, [scanCDN]);
+
+  // Real-time listener pro automatickou aktualizaci při změnách v Realtime Database
+  useEffect(() => {
+    let unsubscribe = null;
+
+    const startWatching = () => {
+      try {
+        log.info('📡 Setting up real-time listener for metadata changes...');
+
+        unsubscribe = realtimeMetadataService.watchMetadata((data) => {
+          log.info('📡 Real-time metadata update detected - refreshing data...');
+
+          // Vymaž cache pro force reload
+          fastMetadataService.clearCache();
+          cacheService.clearFirebaseQuery('hudba_scanner_all_files');
+
+          // Znovu načti data
+          scanCDN();
+
+          log.success('✅ Data refreshed from real-time update');
+        });
+
+        log.success('📡 Real-time listener activated - will auto-refresh on metadata changes');
+      } catch (error) {
+        log.warn('⚠️ Failed to set up real-time listener:', error);
+      }
+    };
+
+    startWatching();
+
+    return () => {
+      if (unsubscribe) {
+        unsubscribe();
+        log.info('📡 Real-time listener stopped');
+      }
+    };
+  }, [scanCDN]);
 
   const availableFiles = audioFiles.filter(file => file.isAvailable);
 
