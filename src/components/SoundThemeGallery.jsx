@@ -3,10 +3,12 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { X } from 'lucide-react';
 import { FramerButton } from '@components';
 import { useLanguage } from '@contexts/LanguageContext';
+import { useUIConfig } from '@contexts/UIConfigContext';
 import { realtimeMetadataService } from '@services/realtimeMetadataService';
 
 const SoundThemeGallery = ({ isOpen, onClose, onSelectSound, selectedInSound, selectedOutSound, layout = 'grid' }) => {
   const { t } = useLanguage();
+  const { getText } = useUIConfig();
   const [audioFiles, setAudioFiles] = useState([]);
   const [loading, setLoading] = useState(true);
 
@@ -199,11 +201,11 @@ const SoundThemeGallery = ({ isOpen, onClose, onSelectSound, selectedInSound, se
                     </h3>
                     {layout === 'list' ? (
                       <p className="text-xs text-gray-600">
-                        {selectedInSound === 'none' && selectedOutSound === 'none' ? '✓ Vybráno' : ''}
+                        {selectedInSound === 'none' && selectedOutSound === 'none' ? getText('selected') : ''}
                       </p>
                     ) : (
                       <p className="text-xs text-gray-600 text-center">
-                        {selectedInSound === 'none' && selectedOutSound === 'none' ? '✓ Vybráno' : ''}
+                        {selectedInSound === 'none' && selectedOutSound === 'none' ? getText('selected') : ''}
                       </p>
                     )}
                   </div>
@@ -213,7 +215,7 @@ const SoundThemeGallery = ({ isOpen, onClose, onSelectSound, selectedInSound, se
 
             {!loading && audioFiles.length === 0 && (
               <div className="text-center py-8 text-gray-600">
-                <p>Žádné hudba soubory nenalezeny</p>
+                <p>{getText('emptyState')}</p>
               </div>
             )}
 

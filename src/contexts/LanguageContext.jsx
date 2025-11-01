@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
+import uiDataService from '@services/uiDataService';
 
 const LanguageContext = createContext();
 
@@ -17,7 +18,7 @@ export const LanguageProvider = ({ children }) => {
     return savedLanguage || 'SK';
   });
 
-  const [translations] = useState({
+  const [translations, setTranslations] = useState({
     SK: {
       // Hlavná navigácia
       hudba: 'hudba',
@@ -225,6 +226,51 @@ export const LanguageProvider = ({ children }) => {
       jsemZena: 'I am Female'
     }
   });
+
+  // Načti překlady z Realtime Database při startu
+  useEffect(() => {
+    const loadTranslations = async () => {
+      try {
+        // Načti UI data z DB
+        const uiData = await uiDataService.loadUIData();
+
+        if (uiData && uiData.translations) {
+          // Aktualizuj překlady z DB
+          setTranslations(uiData.translations);
+
+          if (import.meta.env.MODE === 'development') {
+            console.log('✅ Translations loaded from Realtime Database');
+          }
+        } else {
+          if (import.meta.env.MODE === 'development') {
+            console.warn('⚠️ No translations found in DB, using defaults');
+          }
+        }
+
+        // Nastav real-time listener pro aktualizace
+        const stopWatching = uiDataService.watchUIData((data) => {
+          if (data && data.translations) {
+            setTranslations(data.translations);
+            if (import.meta.env.MODE === 'development') {
+              console.log('📡 Translations updated from real-time');
+            }
+          }
+        });
+
+        // Cleanup funkce
+        return () => {
+          if (stopWatching) {
+            stopWatching();
+          }
+        };
+      } catch (error) {
+        console.error('❌ Failed to load translations:', error);
+        // Použij defaultní překlady při chybě
+      }
+    };
+
+    loadTranslations();
+  }, []);
 
   // Ulož jazyk do localStorage při změně
   useEffect(() => {

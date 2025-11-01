@@ -5,6 +5,7 @@ import { useNavigation, useTouchNavigation, useAppState, useBackgroundDataLoader
 import { useOfflineStatus } from '@hooks/useOfflineStatus';
 import { LazyIntroScreen } from '@components/LazyWrapper';
 import { LanguageProvider } from '@contexts/LanguageContext';
+import { UIConfigProvider } from '@contexts/UIConfigContext';
 import MonitoringDashboard from '@components/MonitoringDashboard';
 import OfflineIndicator from '@components/OfflineIndicator';
 
@@ -243,63 +244,65 @@ function MeditationApp() {
   return (
     <ErrorBoundary>
       <LanguageProvider>
-        <div className="min-h-screen w-full bg-[#f4ddc4] overflow-x-hidden">
-          {/* Intro animace s písmem "Meditácia" */}
-          {showIntro && (
-            <LazyIntroScreen onIntroComplete={handleIntroComplete} />
-          )}
+        <UIConfigProvider>
+          <div className="min-h-screen w-full bg-[#f4ddc4] overflow-x-hidden">
+            {/* Intro animace s písmem "Meditácia" */}
+            {showIntro && (
+              <LazyIntroScreen onIntroComplete={handleIntroComplete} />
+            )}
 
-          {/* Hlavní aplikace - zobrazí se až po intro */}
-          {!showIntro && (
-            <PageManager
-              // Navigation
-              currentScreen={currentScreen}
-              onNavigateToScreen={navigateToScreen}
+            {/* Hlavní aplikace - zobrazí se až po intro */}
+            {!showIntro && (
+              <PageManager
+                // Navigation
+                currentScreen={currentScreen}
+                onNavigateToScreen={navigateToScreen}
 
-              // Touch handling
-              onTouchStart={handleTouchStart}
-              onTouchMove={handleTouchMove}
-              onTouchEnd={handleTouchEnd}
+                // Touch handling
+                onTouchStart={handleTouchStart}
+                onTouchMove={handleTouchMove}
+                onTouchEnd={handleTouchEnd}
 
-              // Global state
-              gender={gender}
-              onGenderChange={handleGenderChange}
-              voicePreference={voicePreference}
-              onVoicePreferenceChange={handleVoicePreferenceChange}
-              isPlayerActive={isPlayerActive}
+                // Global state
+                gender={gender}
+                onGenderChange={handleGenderChange}
+                voicePreference={voicePreference}
+                onVoicePreferenceChange={handleVoicePreferenceChange}
+                isPlayerActive={isPlayerActive}
 
-              // Meditace specifické
-              time={time}
-              selectedDuration={selectedDuration}
-              isPlaying={isPlaying}
-              onDurationChange={handleDurationChange}
-              onPlayPause={handlePlayPause}
-              onReset={handleReset}
-              breathPhase={breathPhase}
-              breathInDuration={breathInDuration}
-              breathOutDuration={breathOutDuration}
-              onBreathRhythmChange={handleBreathRhythmChange}
-              preparationTime={preparationTime}
-              onPreparationTimeChange={handlePreparationTimeChange}
-              breathInSound={breathInSound}
-              breathOutSound={breathOutSound}
-              onBreathSoundChange={handleBreathSoundChange}
-              breathSoundFadeEnabled={breathSoundFadeEnabled}
-              onBreathSoundFadeChange={handleBreathSoundFadeChange}
+                // Meditace specifické
+                time={time}
+                selectedDuration={selectedDuration}
+                isPlaying={isPlaying}
+                onDurationChange={handleDurationChange}
+                onPlayPause={handlePlayPause}
+                onReset={handleReset}
+                breathPhase={breathPhase}
+                breathInDuration={breathInDuration}
+                breathOutDuration={breathOutDuration}
+                onBreathRhythmChange={handleBreathRhythmChange}
+                preparationTime={preparationTime}
+                onPreparationTimeChange={handlePreparationTimeChange}
+                breathInSound={breathInSound}
+                breathOutSound={breathOutSound}
+                onBreathSoundChange={handleBreathSoundChange}
+                breathSoundFadeEnabled={breathSoundFadeEnabled}
+                onBreathSoundFadeChange={handleBreathSoundFadeChange}
 
-              // Audio player specifické
-              activeAudio={activeAudio}
-              selectedAlbum={selectedAlbum}
-              onPlayerStateChange={handlePlayerStateChange}
-              onCloseAudio={handleCloseAudio}
-              onAlbumClose={handleAlbumClose}
-            />
-          )}
+                // Audio player specifické
+                activeAudio={activeAudio}
+                selectedAlbum={selectedAlbum}
+                onPlayerStateChange={handlePlayerStateChange}
+                onCloseAudio={handleCloseAudio}
+                onAlbumClose={handleAlbumClose}
+              />
+            )}
 
-          {/* Offline Indicator */}
-          <OfflineIndicator isOffline={isOffline} showOfflineMessage={showOfflineMessage} />
+            {/* Offline Indicator */}
+            <OfflineIndicator isOffline={isOffline} showOfflineMessage={showOfflineMessage} />
 
-        </div>
+          </div>
+        </UIConfigProvider>
       </LanguageProvider>
     </ErrorBoundary>
   );
