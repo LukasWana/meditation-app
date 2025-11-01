@@ -5,6 +5,7 @@ import { useNavigation, useTouchNavigation, useAppState, useBackgroundDataLoader
 import { useOfflineStatus } from '@hooks/useOfflineStatus';
 import { LazyIntroScreen } from '@components/LazyWrapper';
 import { LanguageProvider } from '@contexts/LanguageContext';
+import { UIConfigProvider } from '@contexts/UIConfigContext';
 import MonitoringDashboard from '@components/MonitoringDashboard';
 import OfflineIndicator from '@components/OfflineIndicator';
 
@@ -242,7 +243,8 @@ function MeditationApp() {
   return (
     <ErrorBoundary>
       <LanguageProvider>
-        <div className="min-h-screen w-full bg-[#f4ddc4] overflow-x-hidden">
+        <UIConfigProvider>
+          <div className="min-h-screen w-full bg-[#f4ddc4] overflow-x-hidden">
       {/* Intro animace s písmem "Meditácia" */}
       {showIntro && (
         <LazyIntroScreen onIntroComplete={handleIntroComplete} />
@@ -299,6 +301,7 @@ function MeditationApp() {
       {/* <OfflineIndicator isOffline={isOffline} showOfflineMessage={showOfflineMessage} /> */}
 
       </div>
+        </UIConfigProvider>
       </LanguageProvider>
     </ErrorBoundary>
   );

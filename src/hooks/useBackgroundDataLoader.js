@@ -16,6 +16,17 @@ export const useBackgroundDataLoader = (showIntro) => {
           const { fastMetadataService } = await import('@services/fastMetadataService');
           const globalMetadataPreloader = (await import('@services/globalMetadataPreloader')).default;
           const cacheService = (await import('@services/cacheServiceRefactored')).default;
+          const uiDataService = (await import('@services/uiDataService')).default;
+
+          // Načti UI data (texty, překlady, konfigurace) z Realtime Database
+          console.log('🔄 Loading UI data from Realtime Database...');
+          try {
+            await uiDataService.loadUIData();
+            console.log('✅ UI data loaded successfully');
+          } catch (uiError) {
+            console.warn('⚠️ Failed to load UI data:', uiError.message);
+            // Pokračuj i když UI data selžou
+          }
 
           console.log('🔄 Loading metadata from Realtime Database...');
 
@@ -109,15 +120,16 @@ export const useBackgroundDataLoader = (showIntro) => {
       };
 
       // Spusť po delay aby neovlivnilo LCP
-      setTimeout(loadDataInBackground, 1000);
-    }
+      const timeoutId = setTimeout(loadDataInBackground, 1000);
 
-    // Cleanup funkce
-    return () => {
-      if (stopWatching) {
-        console.log('🔄 Cleaning up real-time metadata listener...');
-        stopWatching();
-      }
-    };
+      // Cleanup funkce
+      return () => {
+        clearTimeout(timeoutId);
+        if (stopWatching) {
+          console.log('🔄 Cleaning up real-time metadata listener...');
+          stopWatching();
+        }
+      };
+    }
   }, [showIntro]);
 };
