@@ -104,6 +104,7 @@ export const DualWheelPickerModal = ({
   rightValue,
   onLeftChange,
   onRightChange,
+  onChange, // Nový prop pro změnu obou hodnot najednou (leftValue, rightValue) => void
   leftLabel,
   rightLabel,
   leftMin,
@@ -126,9 +127,15 @@ export const DualWheelPickerModal = ({
   }, [isOpen, leftValue, rightValue]);
 
   const handleConfirm = () => {
-    // Použij obě změny najednou - předej oběma hodnotami do callbacku
-    onLeftChange(tempLeftValue);
-    onRightChange(tempRightValue);
+    // Pokud je poskytnut onChange callback, použij ho (předej obě hodnoty najednou)
+    if (onChange) {
+      onChange(tempLeftValue, tempRightValue);
+    } else {
+      // Jinak použij původní callbacky (kompatibilita se starým kódem)
+      // Ale toto může mít problém s zastaralými hodnotami
+      onLeftChange(tempLeftValue);
+      onRightChange(tempRightValue);
+    }
     onClose();
   };
 
