@@ -74,8 +74,8 @@ class UIDataService {
       translations: {
         SK: {
           hudba: 'hudba',
-          slova: 'slova',
-          meditacia: 'meditácia',
+          slova: 'meditácia',
+          meditacia: 'dýchanie',
           nastavenie: 'nastavenie',
           pomoc: 'pomoc',
           loading: 'načítam...',
@@ -87,8 +87,8 @@ class UIDataService {
         },
         CZ: {
           hudba: 'hudba',
-          slova: 'slova',
-          meditacia: 'meditace',
+          slova: 'meditace',
+          meditacia: 'dýchání',
           nastavenie: 'nastavení',
           pomoc: 'pomoc',
           loading: 'načítám...',
@@ -100,8 +100,8 @@ class UIDataService {
         },
         EN: {
           hudba: 'music',
-          slova: 'words',
-          meditacia: 'meditation',
+          slova: 'meditation',
+          meditacia: 'breathing',
           nastavenie: 'settings',
           pomoc: 'help',
           loading: 'loading...',

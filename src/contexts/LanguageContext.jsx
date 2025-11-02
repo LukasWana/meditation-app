@@ -22,8 +22,8 @@ export const LanguageProvider = ({ children }) => {
     SK: {
       // Hlavná navigácia
       hudba: 'hudba',
-      slova: 'slova',
-      meditacia: 'meditácia',
+      slova: 'meditácia',
+      meditacia: 'dýchanie',
       nastavenie: 'nastavenie',
       pomoc: 'pomoc',
 
@@ -101,8 +101,8 @@ export const LanguageProvider = ({ children }) => {
     CZ: {
       // Hlavní navigace
       hudba: 'hudba',
-      slova: 'slova',
-      meditacia: 'meditace',
+      slova: 'meditace',
+      meditacia: 'dýchání',
       nastavenie: 'nastavení',
       pomoc: 'pomoc',
 
@@ -180,8 +180,8 @@ export const LanguageProvider = ({ children }) => {
     EN: {
       // Main navigation
       hudba: 'music',
-      slova: 'words',
-      meditacia: 'meditation',
+      slova: 'meditation',
+      meditacia: 'breathing',
       nastavenie: 'settings',
       pomoc: 'help',
 
@@ -269,14 +269,38 @@ export const LanguageProvider = ({ children }) => {
           // Tím zajistíme, že pokud v DB chybí nějaký klíč, použije se defaultní hodnota
           setTranslations(prev => {
             const merged = { ...prev };
+            // Klíče, které se NIKDY nepřepisují z DB (vždy použijeme defaultní hodnoty)
+            const protectedKeys = ['slova', 'meditacia'];
+
             ['SK', 'CZ', 'EN'].forEach(lang => {
               if (uiData.translations[lang]) {
+                // Vytvoř kopii DB překladů bez chráněných klíčů
+                const dbTranslationsWithoutProtected = { ...uiData.translations[lang] };
+                protectedKeys.forEach(key => {
+                  delete dbTranslationsWithoutProtected[key];
+                });
+
                 merged[lang] = {
-                  ...prev[lang], // Defaultní překlady
-                  ...uiData.translations[lang] // Překlady z DB (mají prioritu)
+                  ...prev[lang], // Defaultní překlady (s novými hodnotami)
+                  ...dbTranslationsWithoutProtected, // Překlady z DB (bez chráněných klíčů)
+                  // Chráněné klíče se vždy používají z defaultních hodnot
+                  ...Object.fromEntries(
+                    protectedKeys.map(key => [key, prev[lang]?.[key]])
+                  )
                 };
               }
             });
+            // Pro debug: zkontroluj, zda DB obsahuje staré překlady
+            if (import.meta.env.MODE === 'development') {
+              console.log('🔍 Checking translations:', {
+                defaultSlova: prev.SK?.slova,
+                defaultMeditacia: prev.SK?.meditacia,
+                dbSlova: uiData.translations.SK?.slova,
+                dbMeditacia: uiData.translations.SK?.meditacia,
+                finalSlova: merged.SK?.slova,
+                finalMeditacia: merged.SK?.meditacia
+              });
+            }
             return merged;
           });
 
@@ -295,11 +319,24 @@ export const LanguageProvider = ({ children }) => {
             // Slouč překlady z DB s aktuálními (merge místo replace)
             setTranslations(prev => {
               const merged = { ...prev };
+              // Klíče, které se NIKDY nepřepisují z DB (vždy použijeme defaultní hodnoty)
+              const protectedKeys = ['slova', 'meditacia'];
+
               ['SK', 'CZ', 'EN'].forEach(lang => {
                 if (data.translations[lang]) {
+                  // Vytvoř kopii DB překladů bez chráněných klíčů
+                  const dbTranslationsWithoutProtected = { ...data.translations[lang] };
+                  protectedKeys.forEach(key => {
+                    delete dbTranslationsWithoutProtected[key];
+                  });
+
                   merged[lang] = {
                     ...prev[lang], // Aktuální překlady
-                    ...data.translations[lang] // Nové překlady z DB (mají prioritu)
+                    ...dbTranslationsWithoutProtected, // Nové překlady z DB (bez chráněných klíčů)
+                    // Chráněné klíče se vždy používají z aktuálních hodnot
+                    ...Object.fromEntries(
+                      protectedKeys.map(key => [key, prev[lang]?.[key]])
+                    )
                   };
                 }
               });
