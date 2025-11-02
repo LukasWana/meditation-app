@@ -62,20 +62,31 @@ const CircularProgress = ({
   };
 
 
-  // Přidáme event listenery s passive: false pro touch události
+  // Přidáme event listenery s passive: false pro touch události pouze pokud je onSeek nastaven
   useEffect(() => {
     const svgElement = svgRef.current;
-    if (!svgElement) return;
+    if (!svgElement || !onSeek) return; // Nezpracovávej touch události pokud není onSeek
 
     const handleTouchMovePassive = (e) => {
       if (isDragging) {
-        e.preventDefault();
+        // Pouze pokud je dragging aktivní, zkusme preventDefault
+        try {
+          e.preventDefault();
+        } catch (err) {
+          // Ignoruj chybu pokud preventDefault není možný
+        }
         handleSeek(e);
       }
     };
 
     const handleTouchStartPassive = (e) => {
-      e.preventDefault();
+      // Pouze pokud není scrollování v procesu, zkusme preventDefault
+      try {
+        e.preventDefault();
+      } catch (err) {
+        // Ignoruj chybu pokud preventDefault není možný (např. při scrollování)
+        return;
+      }
       setIsTouchDevice(true);
       setIsDragging(true);
       handleSeek(e);

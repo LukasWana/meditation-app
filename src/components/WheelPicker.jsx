@@ -13,11 +13,11 @@ const WheelPicker = ({
   const [isDragging, setIsDragging] = useState(false);
   const [scrollY, setScrollY] = useState(0);
   const containerRef = useRef(null);
-  const itemHeight = 60;
+  const itemHeight = 50;
 
-  // Počet položek k zobrazení (celkem zobrazíme 7, 3 nahoře + 1 vybraná + 3 dole)
-  const visibleItems = 7;
-  const itemsToShow = Math.ceil(visibleItems / 2) * 2 + 1; // vždy liché číslo
+  // Počet položek k zobrazení (5 položek podle obrázku)
+  const visibleItems = 5;
+  const itemsToShow = visibleItems;
 
   // Generuj všechny možné hodnoty
   const values = [];
@@ -52,7 +52,7 @@ const WheelPicker = ({
   const handleScroll = (e) => {
     if (!isDragging) setIsDragging(true);
     const scrollTop = e.target.scrollTop;
-    setScrollY(scrollTop);
+    setScrollY(scrollTop); // Aktualizuj scrollY pro re-render efektu
 
     // Najdi nejbližší hodnotu
     const index = Math.round(scrollTop / itemHeight);
@@ -90,28 +90,16 @@ const WheelPicker = ({
           {label}
         </label>
       )}
-      <div className="relative">
-        {/* Highlight linka nahoře a dole */}
-        <div
-          className="absolute left-0 right-0 z-10 pointer-events-none"
-          style={{
-            top: centerY - itemHeight / 2 - 2,
-            height: itemHeight + 4,
-            borderTop: '2px solid rgba(0, 0, 0, 0.3)',
-            borderBottom: '2px solid rgba(0, 0, 0, 0.3)',
-            backgroundColor: 'rgba(255, 255, 255, 0.1)'
-          }}
-        />
-
+      {/* Světle šedý obdélník s zakulacenými rohy */}
+      <div className="relative bg-gray-100 rounded-2xl overflow-hidden" style={{ width: '80px', height: itemsToShow * itemHeight }}>
         {/* Scrollovatelný kontejner */}
         <div
           ref={containerRef}
           onScroll={handleScroll}
           onTouchEnd={handleTouchEnd}
           onMouseUp={handleTouchEnd}
-          className="overflow-y-auto scrollbar-hide"
+          className="overflow-y-auto scrollbar-hide h-full"
           style={{
-            height: itemsToShow * itemHeight,
             scrollSnapType: 'y mandatory'
           }}
         >
@@ -120,9 +108,19 @@ const WheelPicker = ({
 
           {/* Seznam hodnot */}
           {values.map((val, index) => {
-            const distanceFromCenter = currentIndex >= 0 ? Math.abs(index - currentIndex) : index;
-            const opacity = distanceFromCenter === 0 ? 1 : Math.max(0.3, 1 - distanceFromCenter * 0.3);
-            const scale = distanceFromCenter === 0 ? 1 : Math.max(0.8, 1 - distanceFromCenter * 0.1);
+            // Vypočti vzdálenost od středu na základě aktuální scroll pozice
+            // Použij scrollY nebo targetScrollY pro plynulý efekt
+            const currentScroll = scrollY || targetScrollY || (currentIndex * itemHeight);
+            const scrollIndex = currentScroll / itemHeight;
+            const distanceFromCenter = Math.abs(index - scrollIndex);
+
+            // Postupně se ztrácející efekt - podle obrázku
+            // Střední hodnota (distance = 0) je plně viditelná, ostatní postupně slábnou
+            const opacity = distanceFromCenter === 0 ? 1 : Math.max(0.2, 1 - distanceFromCenter * 0.25);
+            const scale = distanceFromCenter === 0 ? 1 : Math.max(0.7, 1 - distanceFromCenter * 0.12);
+            const fontWeight = distanceFromCenter === 0 ? 600 : Math.max(300, 600 - distanceFromCenter * 100);
+            const fontSize = distanceFromCenter === 0 ? 24 : Math.max(16, 24 - distanceFromCenter * 3);
+            const colorIntensity = distanceFromCenter === 0 ? 1 : Math.max(0.3, 1 - distanceFromCenter * 0.2);
 
             return (
               <div
@@ -134,20 +132,18 @@ const WheelPicker = ({
                   scrollSnapStop: 'always'
                 }}
               >
-                <motion.div
-                  className="text-2xl font-medium"
+                <div
                   style={{
                     opacity,
-                    transform: `scale(${scale})`
+                    transform: `scale(${scale})`,
+                    fontWeight,
+                    fontSize: `${fontSize}px`,
+                    color: `rgba(0, 0, 0, ${colorIntensity})`,
+                    transition: 'opacity 0.1s, transform 0.1s, font-weight 0.1s, font-size 0.1s, color 0.1s'
                   }}
-                  animate={{
-                    opacity: distanceFromCenter === 0 ? 1 : Math.max(0.3, 1 - distanceFromCenter * 0.3),
-                    scale: distanceFromCenter === 0 ? 1 : Math.max(0.8, 1 - distanceFromCenter * 0.1)
-                  }}
-                  transition={{ duration: 0.2 }}
                 >
                   {val}
-                </motion.div>
+                </div>
               </div>
             );
           })}

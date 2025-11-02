@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { FramerButton, FramerSection, FramerPageTransition, BackButton, WheelPicker, DualWheelPicker } from '@components';
+import { FramerButton, FramerSection, FramerPageTransition, BackButton, WheelPickerModal, DualWheelPickerModal } from '@components';
 import LanguageSwitcher from '@components/LanguageSwitcher';
 import { useLanguage } from '@contexts/LanguageContext';
 import { Download, Wifi, WifiOff, HardDrive, RefreshCw, Trash2, Wind, Clock, Volume2, Image as ImageIcon } from 'lucide-react';
@@ -132,7 +132,7 @@ const SettingsScreen = ({
 
   // Vymaž cache
   const handleClearCache = async () => {
-    if (window.confirm('Opravdu chcete vymazat všechny stažené soubory?')) {
+    if (window.confirm(t('potvrditVymazaniCache'))) {
       await clearCache();
     }
   };
@@ -180,38 +180,32 @@ const SettingsScreen = ({
                 </h3>
 
                 <p className="text-sm text-gray-600 mb-4">
-                  Nastavte čas na přípravu před začátkem meditace
+                  {t('nastavteCasNaPripravu')}
                 </p>
 
-                {!showPreparationPicker ? (
-                  <div className="flex justify-center">
-                    <button
-                      onClick={() => setShowPreparationPicker(true)}
-                      className="text-4xl font-light text-gray-800 hover:text-black transition-colors cursor-pointer px-6 py-4"
-                    >
-                      {preparationTime}
-                    </button>
-                  </div>
-                ) : (
-                  <div className="flex flex-col items-center">
-                    <WheelPicker
-                      value={preparationTime}
-                      onChange={onPreparationTimeChange}
-                      min={0}
-                      max={60}
-                      step={1}
-                      label={t('sekund') || 'Sekund'}
-                      className="w-32"
-                    />
-                    <FramerButton
-                      onClick={() => setShowPreparationPicker(false)}
-                      variant="secondary"
-                      className="mt-4 px-6 py-2"
-                    >
-                      Hotovo
-                    </FramerButton>
-                  </div>
-                )}
+                <div className="flex justify-center">
+                  <button
+                    onClick={() => {
+                      setShowBreathPicker(false);
+                      setShowPreparationPicker(true);
+                    }}
+                    className="text-4xl font-light text-gray-800 hover:text-black transition-colors cursor-pointer px-6 py-4"
+                  >
+                    {preparationTime}
+                  </button>
+                </div>
+
+                <WheelPickerModal
+                  isOpen={showPreparationPicker}
+                  onClose={() => setShowPreparationPicker(false)}
+                  value={preparationTime}
+                  onChange={onPreparationTimeChange}
+                  min={0}
+                  max={60}
+                  step={1}
+                  label={t('sekund')}
+                  title={t('casKPriprave')}
+                />
               </div>
             </FramerSection>
 
@@ -230,48 +224,45 @@ const SettingsScreen = ({
                   {t('vyberteRytmus')}
                 </p>
 
-                {!showBreathPicker ? (
-                  <div className="flex justify-center items-center gap-2">
-                    <button
-                      onClick={() => setShowBreathPicker(true)}
-                      className="text-4xl font-light text-gray-800 hover:text-black transition-colors cursor-pointer px-6 py-4"
-                    >
-                      {breathInDuration}
-                    </button>
-                    <span className="text-4xl font-light">:</span>
-                    <button
-                      onClick={() => setShowBreathPicker(true)}
-                      className="text-4xl font-light text-gray-800 hover:text-black transition-colors cursor-pointer px-6 py-4"
-                    >
-                      {breathOutDuration}
-                    </button>
-                  </div>
-                ) : (
-                  <div className="flex flex-col items-center mb-4">
-                    <DualWheelPicker
-                      leftValue={breathInDuration}
-                      rightValue={breathOutDuration}
-                      onLeftChange={(value) => onBreathRhythmChange(value, breathOutDuration)}
-                      onRightChange={(value) => onBreathRhythmChange(breathInDuration, value)}
-                      leftLabel={t('nadech') || 'Nádech'}
-                      rightLabel={t('vydech') || 'Výdech'}
-                      leftMin={1}
-                      leftMax={20}
-                      leftStep={1}
-                      rightMin={1}
-                      rightMax={20}
-                      rightStep={1}
-                      className="w-full"
-                    />
-                    <FramerButton
-                      onClick={() => setShowBreathPicker(false)}
-                      variant="secondary"
-                      className="mt-4 px-6 py-2"
-                    >
-                      Hotovo
-                    </FramerButton>
-                  </div>
-                )}
+                <div className="flex justify-center items-center gap-2">
+                  <button
+                    onClick={() => {
+                      setShowPreparationPicker(false);
+                      setShowBreathPicker(true);
+                    }}
+                    className="text-4xl font-light text-gray-800 hover:text-black transition-colors cursor-pointer px-6 py-4"
+                  >
+                    {breathInDuration}
+                  </button>
+                  <span className="text-4xl font-light">:</span>
+                  <button
+                    onClick={() => {
+                      setShowPreparationPicker(false);
+                      setShowBreathPicker(true);
+                    }}
+                    className="text-4xl font-light text-gray-800 hover:text-black transition-colors cursor-pointer px-6 py-4"
+                  >
+                    {breathOutDuration}
+                  </button>
+                </div>
+
+                <DualWheelPickerModal
+                  isOpen={showBreathPicker}
+                  onClose={() => setShowBreathPicker(false)}
+                  leftValue={breathInDuration}
+                  rightValue={breathOutDuration}
+                  onLeftChange={(value) => onBreathRhythmChange(value, breathOutDuration)}
+                  onRightChange={(value) => onBreathRhythmChange(breathInDuration, value)}
+                  leftLabel={t('nadech')}
+                  rightLabel={t('vydech')}
+                  leftMin={1}
+                  leftMax={20}
+                  leftStep={1}
+                  rightMin={1}
+                  rightMax={20}
+                  rightStep={1}
+                  title={t('rytmusDychania')}
+                />
               </div>
             </FramerSection>
 
@@ -311,7 +302,7 @@ const SettingsScreen = ({
                     </div>
                     {breathInSound !== 'none' && (
                       <p className="text-xs text-gray-600 line-clamp-1">
-                        Vybraný: {breathInSound.split('/').pop()}
+                        {t('vybrany')}: {breathInSound.split('/').pop()}
                       </p>
                     )}
                   </div>
@@ -340,7 +331,7 @@ const SettingsScreen = ({
                     </div>
                     {breathOutSound !== 'none' && (
                       <p className="text-xs text-gray-600 line-clamp-1">
-                        Vybraný: {breathOutSound.split('/').pop()}
+                        {t('vybrany')}: {breathOutSound.split('/').pop()}
                       </p>
                     )}
                   </div>
@@ -360,7 +351,7 @@ const SettingsScreen = ({
                       </FramerButton>
                     </div>
                     <p className="text-xs text-gray-500 mt-2">
-                      Plynulé zesilování a zeslabování zvuku při nádechu a výdechu
+                      {t('fadeInOutDescription')}
                     </p>
                   </div>
                 </div>
