@@ -251,8 +251,7 @@ const SettingsScreen = ({
                   onClose={() => setShowBreathPicker(false)}
                   leftValue={breathInDuration}
                   rightValue={breathOutDuration}
-                  onLeftChange={(value) => onBreathRhythmChange(value, breathOutDuration)}
-                  onRightChange={(value) => onBreathRhythmChange(breathInDuration, value)}
+                  onChange={(leftValue, rightValue) => onBreathRhythmChange(leftValue, rightValue)}
                   leftLabel={t('nadech')}
                   rightLabel={t('vydech')}
                   leftMin={1}

@@ -40,6 +40,12 @@
         ".read": "auth != null && auth.uid == $uid",
         ".write": "auth != null && auth.uid == $uid"
       }
+    },
+
+    // UI data - veřejné čtení (texty, překlady, konfigurace), zápis pro autentifikované
+    "ui-data": {
+      ".read": true,
+      ".write": "auth != null"
     }
   }
 }
