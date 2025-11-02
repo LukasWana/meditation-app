@@ -70,7 +70,9 @@ function MeditationApp() {
     breathOutSound,
     handleBreathSoundChange,
     breathSoundFadeEnabled,
-    handleBreathSoundFadeChange
+    handleBreathSoundFadeChange,
+    isPreparing,
+    preparationCountdown
   } = useAppState();
 
   // Touch navigation
@@ -288,6 +290,8 @@ function MeditationApp() {
                 onBreathSoundChange={handleBreathSoundChange}
                 breathSoundFadeEnabled={breathSoundFadeEnabled}
                 onBreathSoundFadeChange={handleBreathSoundFadeChange}
+                isPreparing={isPreparing}
+                preparationCountdown={preparationCountdown}
 
                 // Audio player specifické
                 activeAudio={activeAudio}

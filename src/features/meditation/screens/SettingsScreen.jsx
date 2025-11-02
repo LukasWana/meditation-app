@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { FramerButton, FramerSection, FramerPageTransition, BackButton } from '@components';
+import { FramerButton, FramerSection, FramerPageTransition, BackButton, WheelPicker, DualWheelPicker } from '@components';
 import LanguageSwitcher from '@components/LanguageSwitcher';
 import { useLanguage } from '@contexts/LanguageContext';
 import { Download, Wifi, WifiOff, HardDrive, RefreshCw, Trash2, Wind, Clock, Volume2, Image as ImageIcon } from 'lucide-react';
@@ -28,6 +28,8 @@ const SettingsScreen = ({
 }) => {
   const { t } = useLanguage();
   const [showGallery, setShowGallery] = useState(false);
+  const [showPreparationPicker, setShowPreparationPicker] = useState(false);
+  const [showBreathPicker, setShowBreathPicker] = useState(false);
 
   // Offline cache hook
   const {
@@ -181,38 +183,35 @@ const SettingsScreen = ({
                   Nastavte čas na přípravu před začátkem meditace
                 </p>
 
-                <div className="space-y-3">
-                  <div className="flex gap-3">
-                    {[0, 5, 10, 15, 20, 30].map((seconds) => (
-                      <FramerButton
-                        key={seconds}
-                        onClick={() => onPreparationTimeChange(seconds)}
-                        variant={preparationTime === seconds ? 'rounded' : 'secondary'}
-                        className="flex-1 py-3"
-                      >
-                        <div className="text-center">
-                          <div className="text-lg font-medium">{seconds}</div>
-                          <div className="text-xs text-gray-500">{t('sekund')}</div>
-                        </div>
-                      </FramerButton>
-                    ))}
+                {!showPreparationPicker ? (
+                  <div className="flex justify-center">
+                    <button
+                      onClick={() => setShowPreparationPicker(true)}
+                      className="text-4xl font-light text-gray-800 hover:text-black transition-colors cursor-pointer px-6 py-4"
+                    >
+                      {preparationTime}
+                    </button>
                   </div>
-
-                  <div className="pt-3 border-t border-black/10">
-                    <label className="text-xs text-gray-600 mb-2 block">{t('vlastniRytmus')}:</label>
-                    <input
-                      type="number"
-                      min="0"
-                      max="60"
+                ) : (
+                  <div className="flex flex-col items-center">
+                    <WheelPicker
                       value={preparationTime}
-                      onChange={(e) => {
-                        const value = parseInt(e.target.value, 10) || 0;
-                        onPreparationTimeChange(Math.max(0, Math.min(60, value)));
-                      }}
-                      className="w-full px-3 py-2 border border-black/20 rounded-none bg-white/50 text-center"
+                      onChange={onPreparationTimeChange}
+                      min={0}
+                      max={60}
+                      step={1}
+                      label={t('sekund') || 'Sekund'}
+                      className="w-32"
                     />
+                    <FramerButton
+                      onClick={() => setShowPreparationPicker(false)}
+                      variant="secondary"
+                      className="mt-4 px-6 py-2"
+                    >
+                      Hotovo
+                    </FramerButton>
                   </div>
-                </div>
+                )}
               </div>
             </FramerSection>
 
@@ -231,70 +230,48 @@ const SettingsScreen = ({
                   {t('vyberteRytmus')}
                 </p>
 
-                <div className="space-y-3 mb-4">
-                  {/* Přednastavené rytmy */}
-                  <div className="flex gap-3">
-                    <FramerButton
-                      onClick={() => onBreathRhythmChange(6, 8)}
-                      variant={breathInDuration === 6 && breathOutDuration === 8 ? 'rounded' : 'secondary'}
-                      className="flex-1 py-3"
+                {!showBreathPicker ? (
+                  <div className="flex justify-center items-center gap-2">
+                    <button
+                      onClick={() => setShowBreathPicker(true)}
+                      className="text-4xl font-light text-gray-800 hover:text-black transition-colors cursor-pointer px-6 py-4"
                     >
-                      <div className="text-center">
-                        <div className="text-lg font-medium">6:8</div>
-                        <div className="text-xs text-gray-500">{t('nadech')}:{t('vydech')}</div>
-                      </div>
-                    </FramerButton>
-                    <FramerButton
-                      onClick={() => onBreathRhythmChange(4, 6)}
-                      variant={breathInDuration === 4 && breathOutDuration === 6 ? 'rounded' : 'secondary'}
-                      className="flex-1 py-3"
+                      {breathInDuration}
+                    </button>
+                    <span className="text-4xl font-light">:</span>
+                    <button
+                      onClick={() => setShowBreathPicker(true)}
+                      className="text-4xl font-light text-gray-800 hover:text-black transition-colors cursor-pointer px-6 py-4"
                     >
-                      <div className="text-center">
-                        <div className="text-lg font-medium">4:6</div>
-                        <div className="text-xs text-gray-500">{t('nadech')}:{t('vydech')}</div>
-                      </div>
+                      {breathOutDuration}
+                    </button>
+                  </div>
+                ) : (
+                  <div className="flex flex-col items-center mb-4">
+                    <DualWheelPicker
+                      leftValue={breathInDuration}
+                      rightValue={breathOutDuration}
+                      onLeftChange={(value) => onBreathRhythmChange(value, breathOutDuration)}
+                      onRightChange={(value) => onBreathRhythmChange(breathInDuration, value)}
+                      leftLabel={t('nadech') || 'Nádech'}
+                      rightLabel={t('vydech') || 'Výdech'}
+                      leftMin={1}
+                      leftMax={20}
+                      leftStep={1}
+                      rightMin={1}
+                      rightMax={20}
+                      rightStep={1}
+                      className="w-full"
+                    />
+                    <FramerButton
+                      onClick={() => setShowBreathPicker(false)}
+                      variant="secondary"
+                      className="mt-4 px-6 py-2"
+                    >
+                      Hotovo
                     </FramerButton>
                   </div>
-
-                  {/* Vlastní rytmus */}
-                  <div className="pt-3 border-t border-black/10">
-                    <p className="text-sm font-medium mb-3">{t('vlastniRytmus')}:</p>
-                    <div className="flex gap-4 items-center">
-                      <div className="flex-1">
-                        <label className="text-xs text-gray-600 mb-1 block">{t('nadech')}</label>
-                        <input
-                          type="number"
-                          min="1"
-                          max="20"
-                          value={breathInDuration}
-                          onChange={(e) => {
-                            const value = parseInt(e.target.value, 10) || 1;
-                            onBreathRhythmChange(value, breathOutDuration);
-                          }}
-                          className="w-full px-3 py-2 border border-black/20 rounded-none bg-white/50 text-center"
-                        />
-                      </div>
-                      <div className="text-2xl font-light pt-6">:</div>
-                      <div className="flex-1">
-                        <label className="text-xs text-gray-600 mb-1 block">{t('vydech')}</label>
-                        <input
-                          type="number"
-                          min="1"
-                          max="20"
-                          value={breathOutDuration}
-                          onChange={(e) => {
-                            const value = parseInt(e.target.value, 10) || 1;
-                            onBreathRhythmChange(breathInDuration, value);
-                          }}
-                          className="w-full px-3 py-2 border border-black/20 rounded-none bg-white/50 text-center"
-                        />
-                      </div>
-                    </div>
-                    <p className="text-xs text-gray-500 mt-2 text-center">
-                      {breathInDuration} {t('sekund')} : {breathOutDuration} {t('sekund')}
-                    </p>
-                  </div>
-                </div>
+                )}
               </div>
             </FramerSection>
 

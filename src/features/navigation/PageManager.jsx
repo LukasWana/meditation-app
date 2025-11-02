@@ -40,7 +40,7 @@ const SCREEN_REGISTRY = {
   'meditation': {
     component: MeditationScreen,
     requiresLayout: true,
-    props: ['time', 'selectedDuration', 'isPlaying', 'onDurationChange', 'onPlayPause', 'onReset', 'onNavigateToScreen', 'onTouchStart', 'onTouchMove', 'onTouchEnd', 'breathPhase', 'breathInDuration', 'breathOutDuration', 'breathInSound', 'breathOutSound', 'breathSoundFadeEnabled', 'onBreathSoundChange'],
+    props: ['time', 'selectedDuration', 'isPlaying', 'onDurationChange', 'onPlayPause', 'onReset', 'onNavigateToScreen', 'onTouchStart', 'onTouchMove', 'onTouchEnd', 'breathPhase', 'breathInDuration', 'breathOutDuration', 'breathInSound', 'breathOutSound', 'breathSoundFadeEnabled', 'onBreathSoundChange', 'isPreparing', 'preparationCountdown', 'preparationTime'],
     transition: {
       type: 'slide',
       direction: 'right',
@@ -203,6 +203,8 @@ const PageManager = ({
   onBreathSoundChange,
   breathSoundFadeEnabled,
   onBreathSoundFadeChange,
+  isPreparing,
+  preparationCountdown,
 
   // Audio player specifické
   activeAudio,
@@ -310,6 +312,15 @@ const PageManager = ({
         case 'onPreparationTimeChange':
           props.onPreparationTimeChange = onPreparationTimeChange;
           break;
+        case 'isPreparing':
+          props.isPreparing = isPreparing;
+          break;
+        case 'preparationCountdown':
+          props.preparationCountdown = preparationCountdown;
+          break;
+        case 'preparationTime':
+          props.preparationTime = preparationTime;
+          break;
         case 'onIntroComplete':
           props.onIntroComplete = () => onNavigateToScreen('home');
           break;
@@ -333,6 +344,7 @@ const PageManager = ({
     gender, onPlayerStateChange, onGenderChange, time, selectedDuration, isPlaying,
     onDurationChange, onPlayPause, onReset, breathPhase, breathInDuration, breathOutDuration, breathInSound, breathOutSound, breathSoundFadeEnabled, onBreathRhythmChange,
     preparationTime, onPreparationTimeChange, onBreathSoundChange, onBreathSoundFadeChange,
+    isPreparing, preparationCountdown,
     activeAudio, onCloseAudio, selectedAlbum, onAlbumSelect, onAlbumClose
   ]);
 
