@@ -61,8 +61,18 @@ export const LanguageProvider = ({ children }) => {
       zobrazitGaleriu: 'zobraziť galériu',
       ilustracia: 'ilustrácia',
       fadeInOut: 'fade in/out',
+      fadeInOutDescription: 'Plynulé zesilovanie a zoslabovanie zvuku pri nádychu a výdychu',
       povolene: 'povolené',
       zakazane: 'zakázané',
+      hotovo: 'hotovo',
+      vybrany: 'vybraný',
+      nastavteCasNaPripravu: 'Nastavte čas na prípravu pred začiatkom meditácie',
+      potvrditVymazaniCache: 'Naozaj chcete vymazať všetky stiahnuté súbory?',
+      minut: 'min',
+      dlzkaMeditacie: 'Dĺžka meditácie (minúty)',
+      pripravaNaMeditaci: 'Príprava na meditáciu...',
+      selected: '✓ Vybraté',
+      emptyState: 'Žiadne súbory nenájdené',
 
       // Audio prehrávač
       play: 'prehrať',
@@ -130,8 +140,18 @@ export const LanguageProvider = ({ children }) => {
       zobrazitGaleriu: 'zobrazit galerii',
       ilustracia: 'ilustrace',
       fadeInOut: 'fade in/out',
+      fadeInOutDescription: 'Plynulé zesilování a zeslabování zvuku při nádechu a výdechu',
       povolene: 'povoleno',
       zakazane: 'zakázáno',
+      hotovo: 'hotovo',
+      vybrany: 'vybraný',
+      nastavteCasNaPripravu: 'Nastavte čas na přípravu před začátkem meditace',
+      potvrditVymazaniCache: 'Opravdu chcete vymazat všechny stažené soubory?',
+      minut: 'min',
+      dlzkaMeditacie: 'Délka meditace (minuty)',
+      pripravaNaMeditaci: 'Příprava na meditaci...',
+      selected: '✓ Vybráno',
+      emptyState: 'Žádné soubory nenalezeny',
 
       // Audio přehrávač
       play: 'přehrát',
@@ -198,8 +218,18 @@ export const LanguageProvider = ({ children }) => {
       zobrazitGaleriu: 'show gallery',
       ilustracia: 'illustration',
       fadeInOut: 'fade in/out',
+      fadeInOutDescription: 'Smooth volume increase and decrease of sound during inhale and exhale',
       povolene: 'enabled',
       zakazane: 'disabled',
+      hotovo: 'done',
+      vybrany: 'selected',
+      nastavteCasNaPripravu: 'Set preparation time before meditation starts',
+      potvrditVymazaniCache: 'Do you really want to delete all downloaded files?',
+      minut: 'min',
+      dlzkaMeditacie: 'Meditation duration (minutes)',
+      pripravaNaMeditaci: 'Preparing for meditation...',
+      selected: '✓ Selected',
+      emptyState: 'No files found',
 
       // Audio player
       play: 'play',
@@ -235,8 +265,20 @@ export const LanguageProvider = ({ children }) => {
         const uiData = await uiDataService.loadUIData();
 
         if (uiData && uiData.translations) {
-          // Aktualizuj překlady z DB
-          setTranslations(uiData.translations);
+          // Slouč překlady z DB s defaultními (merge místo replace)
+          // Tím zajistíme, že pokud v DB chybí nějaký klíč, použije se defaultní hodnota
+          setTranslations(prev => {
+            const merged = { ...prev };
+            ['SK', 'CZ', 'EN'].forEach(lang => {
+              if (uiData.translations[lang]) {
+                merged[lang] = {
+                  ...prev[lang], // Defaultní překlady
+                  ...uiData.translations[lang] // Překlady z DB (mají prioritu)
+                };
+              }
+            });
+            return merged;
+          });
 
           if (import.meta.env.MODE === 'development') {
             console.log('✅ Translations loaded from Realtime Database');
@@ -250,7 +292,19 @@ export const LanguageProvider = ({ children }) => {
         // Nastav real-time listener pro aktualizace
         const stopWatching = uiDataService.watchUIData((data) => {
           if (data && data.translations) {
-            setTranslations(data.translations);
+            // Slouč překlady z DB s aktuálními (merge místo replace)
+            setTranslations(prev => {
+              const merged = { ...prev };
+              ['SK', 'CZ', 'EN'].forEach(lang => {
+                if (data.translations[lang]) {
+                  merged[lang] = {
+                    ...prev[lang], // Aktuální překlady
+                    ...data.translations[lang] // Nové překlady z DB (mají prioritu)
+                  };
+                }
+              });
+              return merged;
+            });
             if (import.meta.env.MODE === 'development') {
               console.log('📡 Translations updated from real-time');
             }

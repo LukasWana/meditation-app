@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { RotateCcw, Image as ImageIcon } from 'lucide-react';
-import { FramerButton, FramerSection, FramerPageTransition, BackButton, WheelPicker } from '@components';
+import { FramerButton, FramerSection, FramerPageTransition, BackButton, WheelPickerModal } from '@components';
 import SoundThemeGallery from '@components/SoundThemeGallery';
 import CircularProgress from '@features/audio/components/CircularProgress';
 import PlayPauseButton from '@features/audio/components/PlayPauseButton';
@@ -32,6 +32,7 @@ const MeditationScreen = ({
 }) => {
   const { t } = useLanguage();
   const [showGallery, setShowGallery] = useState(false);
+  const [showDurationPicker, setShowDurationPicker] = useState(false);
 
   // Použij hook pro přehrávání zvuků dýchání
   useBreathSounds(
@@ -74,7 +75,7 @@ const MeditationScreen = ({
               delay={0.1}
             >
               <h1 className="text-5xl font-light mb-2">
-                {t('priprava') || 'Příprava'}
+                {t('priprava')}
               </h1>
               <div className="flex justify-center gap-2 mt-4 mb-4">
                 <div className="w-2 h-2 bg-black rounded-full"></div>
@@ -114,7 +115,7 @@ const MeditationScreen = ({
               {/* Text pod odpočítáváním */}
               <div className="mt-6 text-center">
                 <div className="text-black font-medium text-xl">
-                  {t('pripravaNaMeditaci') || 'Příprava na meditaci...'}
+                  {t('pripravaNaMeditaci')}
                 </div>
               </div>
             </FramerSection>
@@ -264,16 +265,28 @@ const MeditationScreen = ({
               delay={0.3}
             >
               <div className="flex justify-center">
-                <WheelPicker
-                  value={selectedDuration}
-                  onChange={onDurationChange}
-                  min={1}
-                  max={60}
-                  step={1}
-                  label={t('dlzkaMeditacie') || 'Délka meditace (minuty)'}
-                  className="w-32"
-                />
+                <button
+                  onClick={() => setShowDurationPicker(true)}
+                  className="text-4xl font-light text-gray-800 hover:text-black transition-colors cursor-pointer px-6 py-4"
+                >
+                  {selectedDuration}
+                </button>
+                <span className="text-3xl font-light text-gray-600 pt-4 px-2">
+                  {t('minut')}
+                </span>
               </div>
+
+              <WheelPickerModal
+                isOpen={showDurationPicker}
+                onClose={() => setShowDurationPicker(false)}
+                value={selectedDuration}
+                onChange={onDurationChange}
+                min={1}
+                max={60}
+                step={1}
+                label={t('dlzkaMeditacie')}
+                title={t('dlzkaMeditacie')}
+              />
             </FramerSection>
           )}
 
