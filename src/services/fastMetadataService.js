@@ -4,6 +4,7 @@ import { ref, listAll, getDownloadURL } from 'firebase/storage';
 import { storage } from './firebase';
 import log from './logger';
 import { parseAudioFileName } from '@utils/hudbaParser';
+import { realtimeMetadataService } from './realtimeMetadataService';
 
 class FastMetadataService {
   constructor() {
@@ -503,34 +504,237 @@ class FastMetadataService {
 
   getCoverImages() {
     const covers = new Map();
-    Array.from(this.metadata.values())
-      .filter(meta => meta.type === 'image' && meta.isCover)
-      .forEach(meta => {
-        if (meta.albumName) {
-          covers.set(meta.albumName, meta.downloadURL);
-        }
-      });
+    const coverImages = Array.from(this.metadata.values())
+      .filter(meta => meta.type === 'image' && meta.isCover);
+
+    log.debug(`🖼️ Found ${coverImages.length} cover images in metadata`);
+
+    coverImages.forEach(meta => {
+      if (meta.albumName && meta.downloadURL) {
+        covers.set(meta.albumName, meta.downloadURL);
+        log.debug(`✅ Cover image mapped: ${meta.albumName} -> ${meta.downloadURL ? 'OK' : 'MISSING URL'}`);
+      } else {
+        log.debug(`⚠️ Cover image missing albumName or downloadURL:`, {
+          fileName: meta.fileName,
+          albumName: meta.albumName,
+          hasDownloadURL: !!meta.downloadURL
+        });
+      }
+    });
+
+    log.debug(`📊 Cover images map:`, Array.from(covers.keys()));
     return covers;
+  }
+
+  /**
+   * Normalizuje metadata z Realtime Database do formátu, který očekává filtr
+   */
+  normalizeRealtimeMetadata(data) {
+    if (!data) return null;
+
+    // Získej fileName - může být v různých polích
+    const fileName = data.fileName || data.fullPath || data.name || '';
+
+    if (!fileName) {
+      return null;
+    }
+
+    const fileNameOnly = fileName.split('/').pop();
+
+    // Zkontroluj, zda je to obrázek (cover.jpg, cover.png, atd.)
+    const isImage = /\.(jpg|jpeg|png|gif|webp)$/i.test(fileNameOnly);
+
+    // Pokud je to obrázek, zpracuj ho jako cover obrázek
+    if (isImage) {
+      const folder = data.folder || (fileName.includes('hudba/') ? 'hudba' : fileName.includes('slova/') ? 'slova' : null);
+      const isCover = fileNameOnly.toLowerCase().includes('cover');
+
+      // Urči albumName ze struktury souboru
+      // Podporuje různé formáty: "hudba/ambient-journey/cover.jpg" nebo "ambient-journey/cover.jpg"
+      let albumName = null;
+      const pathParts = fileName.split('/');
+
+      if (folder === 'hudba') {
+        // Pokud je cesta "hudba/album/cover.jpg" -> albumName je "album"
+        if (pathParts.length > 2 && pathParts[0] === 'hudba') {
+          albumName = pathParts[1];
+        }
+        // Pokud je cesta "album/cover.jpg" (bez hudba/) -> albumName je "album"
+        else if (pathParts.length > 1 && pathParts[0] !== 'hudba') {
+          albumName = pathParts[0];
+        }
+        // Pokud je v datech subFolder, použij ho
+        else if (data.subFolder) {
+          albumName = data.subFolder;
+        }
+      }
+
+      log.debug(`🖼️ Normalizing cover image:`, {
+        fileName: fileName,
+        folder: folder,
+        pathParts: pathParts,
+        albumName: albumName,
+        isCover: isCover,
+        hasDownloadURL: !!(data.downloadURL || data.audioSrc)
+      });
+
+      return {
+        fileName: fileName,
+        fileNameOnly: fileNameOnly,
+        folder: folder,
+        subFolder: albumName,
+        type: 'image',
+        contentType: data.contentType || this.getImageContentType(fileNameOnly),
+        timeCreated: data.timeCreated || data.lastUpdated || new Date().toISOString(),
+        updated: data.updated || data.lastUpdated || new Date().toISOString(),
+        downloadURL: data.downloadURL || data.audioSrc,
+        size: data.size || null,
+        isCover: isCover,
+        albumName: albumName
+      };
+    }
+
+    // Jinak zpracuj jako audio soubor
+    // Urči folder podle fileName nebo pole folder
+    const folder = data.folder || (fileName.includes('hudba/') ? 'hudba' : fileName.includes('slova/') ? 'slova' : null);
+
+    // Urči type podle struktury
+    let type = data.type;
+    if (!type) {
+      // Pokud je soubor v podsložce, je to album_track
+      if (folder === 'hudba' && fileName.split('/').length > 2) {
+        type = 'album_track';
+      } else if (folder === 'hudba') {
+        type = 'audio';
+      } else {
+        type = 'audio'; // default
+      }
+    }
+
+    // Urči isHudba podle folder
+    const isHudba = folder === 'hudba' || (data.category === 'music' || data.category === 'hudba');
+
+    // Parsuj název souboru pro získání informací o albu
+    const parsed = parseAudioFileName(fileNameOnly);
+
+    // Vytvoř normalizovaná metadata
+    const normalized = {
+      fileName: fileName,
+      fileNameOnly: fileNameOnly,
+      folder: folder,
+      subFolder: folder === 'hudba' && fileName.split('/').length > 2 ? fileName.split('/')[1] : null,
+      type: type,
+      contentType: data.contentType || 'audio/mpeg',
+      timeCreated: data.timeCreated || data.lastUpdated || new Date().toISOString(),
+      updated: data.updated || data.lastUpdated || new Date().toISOString(),
+      downloadURL: data.downloadURL || data.audioSrc,
+      duration: data.duration || null,
+      durationFormatted: data.durationFormatted || data.durationDetailed || 'N/A',
+      size: data.size || null,
+      // Parsované informace
+      parsed: {
+        ...parsed,
+        isHudba: isHudba,
+        isSlova: folder === 'slova',
+        isAlbum: folder === 'hudba' && fileName.split('/').length > 2,
+        albumName: folder === 'hudba' && fileName.split('/').length > 2 ? fileName.split('/')[1] : null,
+        trackName: parsed?.trackName || parsed?.name || fileNameOnly.replace(/\.mp3$/i, ''),
+      },
+      // Top level vlastnosti
+      isHudba: isHudba,
+      isSlova: folder === 'slova',
+      isAlbum: folder === 'hudba' && fileName.split('/').length > 2,
+      albumName: folder === 'hudba' && fileName.split('/').length > 2 ? fileName.split('/')[1] : null,
+      trackName: parsed?.trackName || parsed?.name || fileNameOnly.replace(/\.mp3$/i, ''),
+    };
+
+    return normalized;
   }
 
   async initialize(forceReload = false) {
     log.info('Initializing FastMetadataService...');
 
-    // Nejdříve zkus načíst z cache (pokud není forceReload)
+    if (forceReload) {
+      log.info('Force reloading metadata from Firebase...');
+      this.metadata.clear();
+      localStorage.removeItem(this.cacheKey);
+    }
+
+    // Nejdříve zkus načíst z Realtime Database (nejrychlejší a nejaktuálnější)
+    try {
+      log.info('🔄 Trying to load metadata from Realtime Database...');
+      const realtimeMetadata = await realtimeMetadataService.getAllMetadata();
+
+      if (realtimeMetadata && Object.keys(realtimeMetadata).length > 0) {
+        log.success(`✅ Loaded ${Object.keys(realtimeMetadata).length} metadata records from Realtime Database`);
+
+        // Převeď na Map a normalizuj data do správného formátu
+        this.metadata.clear();
+        Object.entries(realtimeMetadata).forEach(([key, value]) => {
+          // Normalizuj data z Realtime Database do formátu, který očekává filtr
+          const normalized = this.normalizeRealtimeMetadata(value);
+          if (normalized) {
+            // Použij fileName jako klíč, nebo key pokud fileName není
+            const metadataKey = normalized.fileName || key;
+            this.metadata.set(metadataKey, normalized);
+          }
+        });
+
+        // Ulož do cache
+        this.saveToCache();
+        log.success(`✅ FastMetadataService initialized from Realtime Database (${this.metadata.size} records)`);
+
+        // Načti cover obrázky z Firebase Storage (pokud nejsou v Realtime Database)
+        const coverImagesCount = Array.from(this.metadata.values()).filter(m => m.type === 'image' && m.isCover).length;
+        if (coverImagesCount === 0) {
+          log.info('🖼️ No cover images in Realtime Database, loading from Firebase Storage...');
+          await this.loadCoverImagesFromStorage();
+        } else {
+          log.success(`✅ Found ${coverImagesCount} cover images in Realtime Database`);
+        }
+
+        return;
+      } else {
+        log.warn('⚠️ Realtime Database is empty, trying cache...');
+      }
+    } catch (error) {
+      log.warn('⚠️ Failed to load from Realtime Database, trying cache:', error.message);
+    }
+
+    // Pokud Realtime Database neobsahuje data, zkus cache (pokud není forceReload)
     if (!forceReload && this.loadFromCache()) {
-      log.success('Metadata loaded from cache');
+      const cachedCount = this.metadata.size;
+      log.success(`✅ Metadata loaded from cache (${cachedCount} records)`);
+
+      // Pokud máme méně než 10 souborů v cache, zkus načíst z Realtime Database znovu
+      if (cachedCount < 10) {
+        log.warn('⚠️ Cache contains very few files, trying Realtime Database again...');
+        try {
+          const realtimeMetadata = await realtimeMetadataService.getAllMetadata();
+          if (realtimeMetadata && Object.keys(realtimeMetadata).length > cachedCount) {
+            log.success(`✅ Found ${Object.keys(realtimeMetadata).length} records in Realtime Database (more than cache)`);
+            this.metadata.clear();
+            Object.entries(realtimeMetadata).forEach(([key, value]) => {
+              this.metadata.set(key, value);
+            });
+            this.saveToCache();
+            return;
+          }
+        } catch (error) {
+          log.warn('⚠️ Failed to reload from Realtime Database:', error.message);
+        }
+      }
+
       return;
     }
 
-    if (forceReload) {
-      log.info('Force reloading metadata from Firebase...');
-    }
-
-    // Pokud není v cache, načti z Firebase
+    // Fallback na Firebase Storage, pokud Realtime Database ani cache neobsahují data
     try {
+      log.info('🔄 Loading metadata from Firebase Storage...');
       await this.loadAllMetadata();
+      log.success('✅ FastMetadataService initialized from Firebase Storage');
     } catch (error) {
-      log.warn('Failed to initialize metadata service:', error);
+      log.warn('❌ Failed to initialize metadata service:', error);
     }
   }
 
@@ -538,6 +742,87 @@ class FastMetadataService {
     this.metadata.clear();
     localStorage.removeItem(this.cacheKey);
     await this.loadAllMetadata();
+  }
+
+  /**
+   * Načte cover obrázky z Firebase Storage pro alba, která jsou v metadata
+   */
+  async loadCoverImagesFromStorage() {
+    try {
+      log.info('🖼️ Loading cover images from Firebase Storage...');
+
+      // Najdi všechna alba v metadata (soubory v podsložkách hudba/)
+      const albums = new Set();
+      Array.from(this.metadata.values()).forEach(meta => {
+        if (meta.folder === 'hudba' && meta.subFolder) {
+          albums.add(meta.subFolder);
+        } else if (meta.folder === 'hudba' && meta.fileName && meta.fileName.split('/').length > 2) {
+          const albumName = meta.fileName.split('/')[1];
+          albums.add(albumName);
+        }
+      });
+
+      log.debug(`📊 Found ${albums.size} albums to load cover images for:`, Array.from(albums));
+
+      // Pro každé album zkus načíst cover obrázek
+      for (const albumName of albums) {
+        // Zkontroluj, zda už máme cover obrázek pro toto album
+        const existingCover = Array.from(this.metadata.values()).find(
+          m => m.type === 'image' && m.isCover && m.albumName === albumName
+        );
+
+        if (existingCover && existingCover.downloadURL) {
+          log.debug(`✅ Cover image already exists for album: ${albumName}`);
+          continue;
+        }
+
+        // Zkus různé možné cesty k cover obrázku
+        const possiblePaths = [
+          `hudba/${albumName}/cover.jpg`,
+          `hudba/${albumName}/cover.png`,
+          `hudba/${albumName}/Cover.jpg`,
+          `hudba/${albumName}/Cover.png`,
+        ];
+
+        for (const imagePath of possiblePaths) {
+          try {
+            const imageRef = ref(storage, imagePath);
+            const downloadURL = await getDownloadURL(imageRef);
+
+            // Vytvoř metadata pro cover obrázek
+            const coverMetadata = {
+              fileName: imagePath,
+              fileNameOnly: imagePath.split('/').pop(),
+              folder: 'hudba',
+              subFolder: albumName,
+              type: 'image',
+              contentType: this.getImageContentType(imagePath.split('/').pop()),
+              timeCreated: new Date().toISOString(),
+              updated: new Date().toISOString(),
+              downloadURL: downloadURL,
+              size: null,
+              isCover: true,
+              albumName: albumName
+            };
+
+            // Ulož do metadata
+            this.metadata.set(imagePath, coverMetadata);
+            log.success(`✅ Cover image loaded for album: ${albumName} from ${imagePath}`);
+
+            // Ulož do cache
+            this.saveToCache();
+            break; // Našli jsme cover, nemusíme zkoušet další cesty
+          } catch (error) {
+            // Obrázek na této cestě neexistuje, zkus další
+            continue;
+          }
+        }
+      }
+
+      log.success(`✅ Finished loading cover images from Firebase Storage`);
+    } catch (error) {
+      log.warn('⚠️ Failed to load cover images from Firebase Storage:', error);
+    }
   }
 }
 
