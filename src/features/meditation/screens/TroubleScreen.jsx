@@ -3,6 +3,7 @@ import { AnimatePresence } from 'framer-motion';
 import { FramerButton, FramerSection, FramerPageTransition, BackButton } from '@components';
 import { AudioPlayer } from '@features/audio';
 import { useFirebaseAudioFilter } from '@features/audio/hooks/useFirebaseAudioFilter';
+import { useLanguage } from '@contexts/LanguageContext';
 
 const SlovaScreen = ({
   onNavigateToScreen,
@@ -13,6 +14,8 @@ const SlovaScreen = ({
   onPlayerStateChange // Callback pro předání stavu přehrávače
 }) => {
   const [activeAudio, setActiveAudio] = useState(null);
+
+  const { t } = useLanguage();
 
   // Použij nový filtrovací systém
   const { troubleItems: slovaItems, isLoading, error, userStats, audioFiles } = useFirebaseAudioFilter(gender);
@@ -94,10 +97,10 @@ const SlovaScreen = ({
             delay={0.1}
           >
             <h1 className="text-6xl font-light">
-              slova
+              {t('slova')}
             </h1>
             <p className="text-xl text-center text-gray-700 mb-8">
-              mluvené slovo a audio meditácie
+              {t('mluvene')}
             </p>
 
             {/* Zobraz statistiky pro uživatele */}
