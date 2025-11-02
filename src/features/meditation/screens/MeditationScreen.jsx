@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
-import { Play, Pause, RotateCcw, Image as ImageIcon } from 'lucide-react';
-import { FramerButton, FramerSection, FramerPageTransition, BackButton } from '@components';
+import { RotateCcw, Image as ImageIcon } from 'lucide-react';
+import { FramerButton, FramerSection, FramerPageTransition, BackButton, WheelPicker } from '@components';
 import SoundThemeGallery from '@components/SoundThemeGallery';
 import CircularProgress from '@features/audio/components/CircularProgress';
 import PlayPauseButton from '@features/audio/components/PlayPauseButton';
@@ -25,7 +25,10 @@ const MeditationScreen = ({
   onTouchStart,
   onTouchMove,
   onTouchEnd,
-  onBreathSoundChange
+  onBreathSoundChange,
+  isPreparing,
+  preparationCountdown,
+  preparationTime
 }) => {
   const { t } = useLanguage();
   const [showGallery, setShowGallery] = useState(false);
@@ -51,6 +54,89 @@ const MeditationScreen = ({
     const secs = Math.floor(seconds % 60);
     return `${mins}:${secs.toString().padStart(2, '0')}`;
   };
+
+  // Pokud probíhá příprava, zobraz odpočítávání přípravy
+  if (isPreparing) {
+    return (
+      <FramerPageTransition screenKey="meditation">
+        <div
+          className="min-h-screen w-full max-w-full bg-[#f4ddc4] flex flex-col items-center justify-center p-2 sm:p-8 pb-20 overflow-x-hidden relative"
+          onTouchStart={onTouchStart}
+          onTouchMove={onTouchMove}
+          onTouchEnd={onTouchEnd}
+        >
+          <BackButton onClick={() => onNavigateToScreen('home')} />
+
+          <div className="max-w-md w-full mt-16">
+            <FramerSection
+              className="text-center mb-16"
+              animationType="fadeIn"
+              delay={0.1}
+            >
+              <h1 className="text-5xl font-light mb-2">
+                {t('priprava') || 'Příprava'}
+              </h1>
+              <div className="flex justify-center gap-2 mt-4 mb-4">
+                <div className="w-2 h-2 bg-black rounded-full"></div>
+                <div className="w-2 h-2 bg-black rounded-full"></div>
+                <div className="w-2 h-2 bg-black rounded-full"></div>
+              </div>
+            </FramerSection>
+
+            <FramerSection
+              className="mb-12"
+              animationType="scaleIn"
+              delay={0.2}
+            >
+              {/* CircularProgress pro přípravu */}
+              <div className="relative flex-shrink-0 flex items-center justify-center">
+                <CircularProgress
+                  progress={preparationCountdown > 0 && preparationTime > 0 ? ((preparationTime - preparationCountdown) / preparationTime) * 100 : 0}
+                  onSeek={null}
+                  className="w-[50vw] h-[50vw] max-w-[400px] max-h-[400px] min-w-[250px] min-h-[250px]"
+                />
+
+                {/* Odpočítávání v centru */}
+                <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
+                  <motion.div
+                    key={preparationCountdown}
+                    className="text-6xl font-light text-black"
+                    initial={{ opacity: 0, scale: 0.8 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    exit={{ opacity: 0, scale: 0.8 }}
+                    transition={{ duration: 0.3 }}
+                  >
+                    {preparationCountdown}
+                  </motion.div>
+                </div>
+              </div>
+
+              {/* Text pod odpočítáváním */}
+              <div className="mt-6 text-center">
+                <div className="text-black font-medium text-xl">
+                  {t('pripravaNaMeditaci') || 'Příprava na meditaci...'}
+                </div>
+              </div>
+            </FramerSection>
+
+            <FramerSection
+              className="flex justify-center gap-6 mb-6"
+              animationType="fadeIn"
+              delay={0.3}
+            >
+              <FramerButton
+                onClick={onPlayPause}
+                variant="secondary"
+                className="w-20 h-20 rounded-full flex items-center justify-center p-0"
+              >
+                <RotateCcw size={28} />
+              </FramerButton>
+            </FramerSection>
+          </div>
+        </div>
+      </FramerPageTransition>
+    );
+  }
   return (
     <FramerPageTransition screenKey="meditation">
       <div
@@ -173,22 +259,21 @@ const MeditationScreen = ({
 
           {!isPlaying && (
             <FramerSection
-              className="flex justify-center gap-4 mb-12 flex-wrap"
+              className="mb-12"
               animationType="fadeIn"
               delay={0.3}
             >
-              {[3, 7, 9, 21].map((mins, index) => (
-                <FramerButton
-                  key={mins}
-                  onClick={() => onDurationChange(mins)}
-                  variant={selectedDuration === mins ? 'rounded' : 'secondary'}
-                  className="w-16 h-16 rounded-full flex items-center justify-center p-0"
-                >
-                  <span>
-                    {mins}
-                  </span>
-                </FramerButton>
-              ))}
+              <div className="flex justify-center">
+                <WheelPicker
+                  value={selectedDuration}
+                  onChange={onDurationChange}
+                  min={1}
+                  max={60}
+                  step={1}
+                  label={t('dlzkaMeditacie') || 'Délka meditace (minuty)'}
+                  className="w-32"
+                />
+              </div>
             </FramerSection>
           )}
 

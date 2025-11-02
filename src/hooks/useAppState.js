@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 
 export const useAppState = () => {
 
@@ -7,6 +7,16 @@ export const useAppState = () => {
   const [selectedDuration, setSelectedDuration] = useState(3); // Výchozí 3 minuty
   const [isPlaying, setIsPlaying] = useState(false);
   const [breathPhase, setBreathPhase] = useState('in');
+
+  // Čas přípravy state
+  const [isPreparing, setIsPreparing] = useState(false);
+  const [preparationCountdown, setPreparationCountdown] = useState(0);
+
+  // Čas k přípravě (v sekundách) - MUSÍ být před handlePlayPause
+  const [preparationTime, setPreparationTime] = useState(() => {
+    const saved = localStorage.getItem('meditation-app-preparation-time');
+    return saved ? parseInt(saved, 10) : 10; // Výchozí 10 sekund
+  });
 
   // Nastavení rytmu dýchání (nádech:výdech v sekundách)
   const [breathInDuration, setBreathInDuration] = useState(() => {
@@ -42,14 +52,63 @@ export const useAppState = () => {
   }, []);
 
   const handlePlayPause = useCallback(() => {
-    setIsPlaying(prev => !prev);
-  }, []);
+    // Pokud už meditace hraje, zastav ji
+    if (isPlaying) {
+      setIsPlaying(false);
+      setIsPreparing(false);
+      setPreparationCountdown(0);
+      return;
+    }
+
+    // Pokud probíhá příprava, zastav ji
+    if (isPreparing) {
+      setIsPreparing(false);
+      setPreparationCountdown(0);
+      return;
+    }
+
+    // Pokud je nastaven čas přípravy a meditace nehraje, spusť přípravu
+    if (preparationTime > 0 && !isPlaying) {
+      setIsPreparing(true);
+      setPreparationCountdown(preparationTime);
+    } else {
+      // Jinak spusť meditaci přímo
+      setIsPlaying(true);
+    }
+  }, [isPlaying, preparationTime, isPreparing]);
 
   const handleReset = useCallback(() => {
     setIsPlaying(false);
+    setIsPreparing(false);
+    setPreparationCountdown(0);
     setTime(selectedDuration * 60);
     setBreathPhase('in');
   }, [selectedDuration]);
+
+  // Odpočítávání času přípravy
+  useEffect(() => {
+    let interval;
+    if (isPreparing && preparationCountdown > 0) {
+      interval = setInterval(() => {
+        setPreparationCountdown(prev => {
+          const newCountdown = prev - 1;
+          if (newCountdown <= 0) {
+            // Po dokončení přípravy spusť meditaci
+            setIsPreparing(false);
+            setIsPlaying(true);
+            return 0;
+          }
+          return newCountdown;
+        });
+      }, 1000);
+    }
+
+    return () => {
+      if (interval) {
+        clearInterval(interval);
+      }
+    };
+  }, [isPreparing, preparationCountdown]);
 
   // Handlers pro user preferences
   const handleGenderChange = useCallback((selectedGender) => {
@@ -84,12 +143,6 @@ export const useAppState = () => {
     localStorage.setItem('meditation-app-breath-in', inDuration.toString());
     localStorage.setItem('meditation-app-breath-out', outDuration.toString());
   }, []);
-
-  // Čas k přípravě (v sekundách)
-  const [preparationTime, setPreparationTime] = useState(() => {
-    const saved = localStorage.getItem('meditation-app-preparation-time');
-    return saved ? parseInt(saved, 10) : 10; // Výchozí 10 sekund
-  });
 
   // Zvuky pro nádech a výdech
   const [breathInSound, setBreathInSound] = useState(() => {
@@ -141,6 +194,10 @@ export const useAppState = () => {
     setBreathPhase,
     breathInDuration,
     breathOutDuration,
+
+    // Čas přípravy state
+    isPreparing,
+    preparationCountdown,
 
     // User preferences
     gender,
