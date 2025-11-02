@@ -7,8 +7,8 @@ export default {
   theme: {
     extend: {
       fontFamily: {
-        'philosopher': ['Philosopher', 'sans-serif'],
-        'sans': ['Philosopher', 'sans-serif'],
+        'petrona': ['Petrona', 'serif'],
+        'sans': ['Petrona', 'serif'],
       },
     },
   },
