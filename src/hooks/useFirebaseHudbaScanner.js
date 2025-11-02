@@ -88,14 +88,33 @@ export const useFirebaseHudbaScanner = () => {
     // Vyluč sound effects a breathing soubory
     const hudbaFiles = Object.values(fastMetadata).filter(metadata => {
       const fileName = (metadata.fileName || '').toLowerCase();
-      const isHudba = metadata.isHudba && (metadata.type === 'audio' || metadata.type === 'album_track');
+      const isInHudbaFolder = fileName.startsWith('hudba/');
+
+      // Pokud je soubor ve složce hudba/, zahrň ho (přijímáme audio, album_track i simple typy)
+      // Pouze pokud je soubor ve složce hudba/ a není sound effect
+      if (!isInHudbaFolder) {
+        return false;
+      }
+
+      // Kontrola sound effects
       const isSoundEffect = fileName.includes('breathing-sfx') ||
                            fileName.includes('breathing') ||
                            fileName.includes('sfx-') ||
                            fileName.startsWith('p2nz7wnr34r');
-      const isInHudbaFolder = fileName.startsWith('hudba/');
 
-      return isHudba && isInHudbaFolder && !isSoundEffect;
+      if (isSoundEffect) {
+        return false;
+      }
+
+      // Přijímej soubory s typem audio, album_track nebo simple (jednoduché MP3 soubory)
+      const isValidType = metadata.type === 'audio' ||
+                         metadata.type === 'album_track' ||
+                         metadata.type === 'simple';
+
+      // Pokud má metadata nastavené isHudba, použij to, jinak akceptuj pokud je ve složce hudba/
+      const isHudba = metadata.isHudba !== undefined ? metadata.isHudba : isInHudbaFolder;
+
+      return isValidType && isHudba;
     });
 
     log.firebase(`📊 Found ${hudbaFiles.length} hudba files in fast metadata`);
