@@ -13,7 +13,9 @@ const SettingsScreen = ({
   onTouchStart,
   onTouchMove,
   onTouchEnd,
-  onPlayerStateChange
+  onPlayerStateChange,
+  gender = 'none',
+  onGenderChange
 }) => {
   const { t } = useLanguage();
 
@@ -134,7 +136,7 @@ const SettingsScreen = ({
             animationType="fadeIn"
             delay={0.1}
           >
-            <h1 className="text-6xl font-light">
+            <h1 className="text-6xl font-light leading-normal pb-3 overflow-visible" style={{ lineHeight: '1.2' }}>
               {t('nastavenie')}
             </h1>
           </FramerSection>
@@ -153,6 +155,63 @@ const SettingsScreen = ({
               </div>
             </FramerSection>
 
+            {/* Gender Settings */}
+            <FramerSection
+              animationType="slideInUp"
+              delay={0.21}
+            >
+              <div className="w-full p-6 bg-white/50 backdrop-blur rounded-none border border-black/10">
+                <h3 className="text-2xl font-light mb-4">
+                  {t('pohlavie')}
+                </h3>
+                <motion.div
+                  className="inline-flex items-center gap-2 bg-white/90 backdrop-blur-sm border border-gray-200 rounded-full p-1 shadow-sm"
+                  initial={{ opacity: 0, scale: 0.9 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  transition={{ duration: 0.3, ease: "easeOut" }}
+                >
+                  <motion.button
+                    onClick={() => onGenderChange && onGenderChange('male')}
+                    className={`px-3 py-2 rounded-full text-sm font-medium transition-colors duration-200 ${
+                      gender === 'male'
+                        ? 'bg-gray-800 text-white'
+                        : 'text-gray-600 hover:text-gray-800'
+                    }`}
+                    whileHover={{ scale: 1 }}
+                    whileTap={{ scale: 0.9 }}
+                    transition={{ type: "spring", stiffness: 300, damping: 20 }}
+                  >
+                    {t('jsemMuz')}
+                  </motion.button>
+                  <motion.button
+                    onClick={() => onGenderChange && onGenderChange('female')}
+                    className={`px-3 py-2 rounded-full text-sm font-medium transition-colors duration-200 ${
+                      gender === 'female'
+                        ? 'bg-gray-800 text-white'
+                        : 'text-gray-600 hover:text-gray-800'
+                    }`}
+                    whileHover={{ scale: 1 }}
+                    whileTap={{ scale: 0.9 }}
+                    transition={{ type: "spring", stiffness: 300, damping: 20 }}
+                  >
+                    {t('jsemZena')}
+                  </motion.button>
+                  <motion.button
+                    onClick={() => onGenderChange && onGenderChange('none')}
+                    className={`px-3 py-2 rounded-full text-sm font-medium transition-colors duration-200 ${
+                      gender === 'none'
+                        ? 'bg-gray-800 text-white'
+                        : 'text-gray-600 hover:text-gray-800'
+                    }`}
+                    whileHover={{ scale: 1 }}
+                    whileTap={{ scale: 0.9 }}
+                    transition={{ type: "spring", stiffness: 300, damping: 20 }}
+                  >
+                    {t('obecnyObsah')}
+                  </motion.button>
+                </motion.div>
+              </div>
+            </FramerSection>
 
             {/* Informace */}
             <FramerSection

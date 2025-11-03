@@ -130,7 +130,7 @@ const BreathScreen = ({
             animationType="fadeIn"
             delay={0.1}
           >
-            <h1 className="text-5xl font-serif text-gray-800">
+            <h1 className="text-5xl font-serif text-gray-800 leading-normal pb-3 overflow-visible" style={{ lineHeight: '1.2' }}>
               {t('dychanie') || 'dýchání'}
             </h1>
           </FramerSection>

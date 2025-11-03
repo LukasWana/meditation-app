@@ -127,8 +127,8 @@ const SlovaScreen = ({
             animationType="fadeIn"
             delay={0.1}
           >
-            <h1 className="text-6xl font-light">
-              {t('meditace') || 'meditace'}
+            <h1 className="text-6xl font-light leading-normal pb-3 overflow-visible" style={{ lineHeight: '1.2' }}>
+              {t('slova')}
             </h1>
             <p className="text-xl text-center text-gray-700 mb-8">
               {t('mluvene')}

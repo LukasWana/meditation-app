@@ -59,7 +59,7 @@ const SCREEN_REGISTRY = {
   'settings': {
     component: SettingsScreen,
     requiresLayout: true,
-    props: ['onNavigateToScreen', 'onTouchStart', 'onTouchMove', 'onTouchEnd', 'onPlayerStateChange'],
+    props: ['onNavigateToScreen', 'onTouchStart', 'onTouchMove', 'onTouchEnd', 'onPlayerStateChange', 'gender', 'onGenderChange'],
     transition: {
       type: 'slide',
       direction: 'up',
