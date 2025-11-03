@@ -92,33 +92,32 @@ class FastMetadataService {
     try {
       log.info('🚀 Loading metadata from Firebase Storage structure...');
 
-      // Načti pouze hudba složku
-      const hudbaRef = ref(storage, 'hudba');
-      log.debug(`🔍 Loading from Firebase Storage path: hudba`);
-      const result = await listAll(hudbaRef);
-      log.debug(`📊 Firebase Storage result:`, {
-        itemsCount: result.items.length,
-        prefixesCount: result.prefixes.length,
-        items: result.items.map(i => i.name),
-        prefixes: result.prefixes.map(p => p.name)
-      });
-
       const allFiles = [];
 
-      // Přidej soubory z hudba složky
-      result.items.forEach(item => {
-        const fileData = {
-          ...item,
-          name: item.name, // Nejdříve bez prefixu
-          folder: 'hudba'
-        };
-        log.debug(`📄 Adding root hudba file:`, fileData);
-        allFiles.push(fileData);
-      });
+      // Načti hudba složku
+      try {
+        const hudbaRef = ref(storage, 'hudba');
+        log.debug(`🔍 Loading from Firebase Storage path: hudba`);
+        const hudbaResult = await listAll(hudbaRef);
+        log.debug(`📊 Firebase Storage result for hudba:`, {
+          itemsCount: hudbaResult.items.length,
+          prefixesCount: hudbaResult.prefixes.length
+        });
 
-      // Prohledej podsložky hudba složky
-      log.debug(`🔍 Found hudba subfolders:`, result.prefixes.map(p => p.name));
-      for (const folderRef of result.prefixes) {
+        // Přidej soubory z hudba složky
+        hudbaResult.items.forEach(item => {
+          const fileData = {
+            ...item,
+            name: item.name,
+            folder: 'hudba'
+          };
+          log.debug(`📄 Adding root hudba file:`, fileData);
+          allFiles.push(fileData);
+        });
+
+        // Prohledej podsložky hudba složky
+        log.debug(`🔍 Found hudba subfolders:`, hudbaResult.prefixes.map(p => p.name));
+        for (const folderRef of hudbaResult.prefixes) {
         try {
           log.debug(`📁 Processing folder: ${folderRef.name}`);
           const folderResult = await listAll(folderRef);
@@ -159,6 +158,95 @@ class FastMetadataService {
           log.warn(`Failed to check folder ${folderRef.name}:`, err);
         }
       }
+      } catch (hudbaError) {
+        log.warn(`Failed to load hudba folder:`, hudbaError);
+      }
+
+      // Načti dychanie složku
+      try {
+        const dychanieRef = ref(storage, 'dychanie');
+        log.debug(`🔍 Loading from Firebase Storage path: dychanie`);
+        const dychanieResult = await listAll(dychanieRef);
+        log.debug(`📊 Firebase Storage result for dychanie:`, {
+          itemsCount: dychanieResult.items.length,
+          prefixesCount: dychanieResult.prefixes.length
+        });
+
+        // Přidej soubory z dychanie složky (OGG formát)
+        dychanieResult.items.forEach(item => {
+          const fileName = item.name.toLowerCase();
+          const isOggFile = fileName.endsWith('.ogg') || fileName.endsWith('.oga');
+          const isMp3File = fileName.endsWith('.mp3'); // Fallback pro MP3
+
+          if (isOggFile || isMp3File) {
+            const fileData = {
+              ...item,
+              name: item.name,
+              folder: 'dychanie'
+            };
+            log.debug(`📄 Adding dychanie file:`, fileData);
+            allFiles.push(fileData);
+          }
+        });
+
+        // Prohledej podsložky dychanie složky (pokud existují) - rekurzivně
+        if (dychanieResult.prefixes.length > 0) {
+          log.debug(`🔍 Found dychanie subfolders:`, dychanieResult.prefixes.map(p => p.name));
+          for (const folderRef of dychanieResult.prefixes) {
+            try {
+              log.debug(`📁 Processing dychanie folder: ${folderRef.name}`);
+              const folderResult = await listAll(folderRef);
+              log.debug(`📄 Found ${folderResult.items.length} items and ${folderResult.prefixes.length} subfolders in ${folderRef.name}`);
+
+              // Přidej soubory z této složky
+              folderResult.items.forEach(item => {
+                const fileName = item.name.toLowerCase();
+                const isOggFile = fileName.endsWith('.ogg') || fileName.endsWith('.oga');
+                const isMp3File = fileName.endsWith('.mp3');
+
+                if (isOggFile || isMp3File) {
+                  allFiles.push({
+                    ...item,
+                    name: `${folderRef.name}/${item.name}`,
+                    folder: 'dychanie',
+                    subFolder: folderRef.name
+                  });
+                }
+              });
+
+              // Prohledej podsložky této složky (rekurzivně)
+              log.debug(`🔍 Checking subfolders for ${folderRef.name}:`, folderResult.prefixes.map(p => p.name));
+              for (const subFolderRef of folderResult.prefixes) {
+                try {
+                  log.debug(`📁 Processing dychanie subfolder: ${subFolderRef.name}`);
+                  const subFolderResult = await listAll(subFolderRef);
+                  log.debug(`📄 Found ${subFolderResult.items.length} items in ${subFolderRef.name}`);
+                  subFolderResult.items.forEach(item => {
+                    const fileName = item.name.toLowerCase();
+                    const isOggFile = fileName.endsWith('.ogg') || fileName.endsWith('.oga');
+                    const isMp3File = fileName.endsWith('.mp3');
+
+                    if (isOggFile || isMp3File) {
+                      allFiles.push({
+                        ...item,
+                        name: `${subFolderRef.name}/${item.name}`,
+                        folder: 'dychanie',
+                        subFolder: subFolderRef.name
+                      });
+                    }
+                  });
+                } catch (subErr) {
+                  log.warn(`Failed to check dychanie subfolder ${subFolderRef.name}:`, subErr);
+                }
+              }
+            } catch (err) {
+              log.warn(`Failed to check dychanie folder ${folderRef.name}:`, err);
+            }
+          }
+        }
+      } catch (dychanieError) {
+        log.warn(`Failed to load dychanie folder:`, dychanieError);
+      }
 
     // Zpracuj soubory a vytvoř metadata
     await this.processFiles(allFiles);
@@ -195,15 +283,22 @@ class FastMetadataService {
     }, {});
     log.debug(`📊 Files by folder:`, folderStats);
 
-    // Filtruj pouze soubory z hudba složky
+    // Filtruj soubory podle složek
     const hudbaFiles = files.filter(file => file.folder === 'hudba');
+    const dychanieFiles = files.filter(file => file.folder === 'dychanie');
     const mp3Files = hudbaFiles.filter(file => file.name.toLowerCase().endsWith('.mp3'));
+    const oggFiles = dychanieFiles.filter(file => {
+      const fileName = file.name.toLowerCase();
+      return fileName.endsWith('.ogg') || fileName.endsWith('.oga') || fileName.endsWith('.mp3');
+    });
     const imageFiles = hudbaFiles.filter(file => /\.(jpg|jpeg|png|gif|webp)$/i.test(file.name));
 
-    log.debug(`🎵 Filtered to hudba files only:`, {
+    log.debug(`🎵 Filtered files:`, {
       totalFiles: files.length,
       hudbaFiles: hudbaFiles.length,
+      dychanieFiles: dychanieFiles.length,
       mp3Files: mp3Files.length,
+      oggFiles: oggFiles.length,
       imageFiles: imageFiles.length
     });
 
@@ -231,11 +326,26 @@ class FastMetadataService {
     for (const file of mp3Files) {
       try {
         const metadata = await this.createMetadataFromFile(file);
-        this.metadata.set(file.name, metadata);
+        // Použij metadata.fileName jako klíč (obsahuje celou cestu včetně složky)
+        this.metadata.set(metadata.fileName, metadata);
       } catch (error) {
         log.warn(`Failed to process file ${file.name}:`, error);
       }
     }
+
+    // Zpracuj OGG soubory (dychanie)
+    log.info(`🎵 Processing ${oggFiles.length} OGG files for dychanie...`);
+    for (const file of oggFiles) {
+      try {
+        const metadata = await this.createMetadataFromFile(file);
+        // Použij metadata.fileName jako klíč (obsahuje celou cestu včetně složky)
+        this.metadata.set(metadata.fileName, metadata);
+      } catch (error) {
+        log.warn(`Failed to process dychanie file ${file.name}:`, error);
+      }
+    }
+
+    log.success(`✅ Processed ${this.metadata.size} files`);
   }
 
   async createMetadataFromFile(file) {
@@ -260,9 +370,10 @@ class FastMetadataService {
           ...parsed,
           isHudba: file.folder === 'hudba',
           isSlova: file.folder === 'slova',
+          isDychanie: file.folder === 'dychanie',
           isAlbum: file.subFolder ? true : false,
           albumName: file.subFolder || null,
-          trackName: parsed?.trackName || parsed?.name || fileNameOnly.replace(/\.mp3$/i, ''),
+          trackName: parsed?.trackName || parsed?.name || fileNameOnly.replace(/\.(mp3|ogg|oga)$/i, ''),
         },
         // Urči typ podle struktury složek
         isHudba: file.folder === 'hudba',

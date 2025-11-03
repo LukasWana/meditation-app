@@ -45,19 +45,27 @@ exports.testMetadata = functions
   });
 
 /**
- * Extrahuje metadata z MP3 souboru
+ * Extrahuje metadata z audio souboru (MP3, OGG, OGA)
  * @param {string} fileName - Název souboru
  * @returns {Promise<Object>} Metadata objekt
  */
-async function extractMP3Metadata(fileName) {
+async function extractAudioMetadata(fileName) {
   try {
     // Prozatím vracíme základní metadata z názvu souboru
-    // V produkci by se zde použila knihovna pro extrakci MP3 tagů
+    // V produkci by se zde použila knihovna pro extrakci audio tagů (MP3, OGG)
 
-    const nameWithoutExt = fileName.replace(/\.mp3$/i, '');
+    // Podporuje MP3, OGG, OGA formáty
+    const nameWithoutExt = fileName.replace(/\.(mp3|ogg|oga)$/i, '');
     const pathParts = fileName.split('/');
     const folder = pathParts[0];
     const subFolder = pathParts.length > 2 ? pathParts[1] : null;
+
+    // Urči contentType podle přípony
+    const fileNameLower = fileName.toLowerCase();
+    let contentType = 'audio/mpeg'; // default pro MP3
+    if (fileNameLower.endsWith('.ogg') || fileNameLower.endsWith('.oga')) {
+      contentType = 'audio/ogg';
+    }
 
     return {
       fileName: fileName,
@@ -67,6 +75,7 @@ async function extractMP3Metadata(fileName) {
       folder: folder,
       subFolder: subFolder,
       album: subFolder || null,
+      contentType: contentType,
       lastModified: new Date().toISOString(),
       extracted: false // Označuje, že metadata nejsou ještě extrahovány
     };
@@ -164,21 +173,30 @@ exports.onFileUpload = functions
 
     console.log(`📁 Storage change detected: ${fileName}`);
 
-    // Zpracuj pouze MP3 soubory
-    if (!fileName.toLowerCase().endsWith('.mp3')) {
-      console.log(`⏭️ Skipping non-MP3 file: ${fileName}`);
+    // Zpracuj pouze audio soubory (MP3, OGG, OGA)
+    const fileNameLower = fileName.toLowerCase();
+    const isAudioFile = fileNameLower.endsWith('.mp3') ||
+                       fileNameLower.endsWith('.ogg') ||
+                       fileNameLower.endsWith('.oga');
+
+    if (!isAudioFile) {
+      console.log(`⏭️ Skipping non-audio file: ${fileName}`);
       return null;
     }
 
-    // Zpracuj pouze soubory v hudba/ nebo slova/ složkách
-    if (!fileName.startsWith('hudba/') && !fileName.startsWith('slova/')) {
+    // Zpracuj pouze soubory v hudba/, slova/ nebo dychanie/ složkách
+    const isInTargetFolder = fileName.startsWith('hudba/') ||
+                             fileName.startsWith('slova/') ||
+                             fileName.startsWith('dychanie/');
+
+    if (!isInTargetFolder) {
       console.log(`⏭️ Skipping file outside target folders: ${fileName}`);
       return null;
     }
 
     try {
-      // Extrahuj metadata
-      const metadata = await extractMP3Metadata(fileName);
+      // Extrahuj metadata (funguje pro MP3 i OGG)
+      const metadata = await extractAudioMetadata(fileName);
 
       if (metadata) {
         // Ulož do databáze
@@ -227,7 +245,7 @@ exports.syncStorage = functions
       // Zpracuj soubory postupně
       for (const fileName of testFiles) {
         try {
-          const metadata = await extractMP3Metadata(fileName);
+          const metadata = await extractAudioMetadata(fileName);
           if (metadata) {
             await updateMetadataDatabase(fileName, metadata);
             processedCount++;

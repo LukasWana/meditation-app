@@ -23,4 +23,6 @@ export { useTimer } from './useTimer';
 export { useBreathPhase } from './useBreathPhase';
 export { useBreathSounds } from './useBreathSounds';
 export { useRealtimeSlovaFilter } from './useRealtimeSlovaFilter';
+export { useFirebaseDychanieScanner } from './useFirebaseDychanieScanner';
+export { useFirebaseDychanieFilter } from './useFirebaseDychanieFilter';
 // useOptimizedPreloader removed - using useBackgroundDataLoader instead

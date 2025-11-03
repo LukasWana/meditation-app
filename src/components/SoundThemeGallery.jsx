@@ -22,27 +22,58 @@ const SoundThemeGallery = ({ isOpen, onClose, onSelectSound, selectedInSound, se
       setLoading(true);
       const allMetadata = await realtimeMetadataService.getAllMetadata();
 
-      // Filtruj pouze soubory z kategorie "hudba"
-      const musicFiles = Object.values(allMetadata).filter(file => {
+      console.log('🔍 SoundThemeGallery: Načteno metadata:', Object.keys(allMetadata).length);
+
+      // Debug: zobraz všechny soubory s "dychanie" v názvu
+      const allDychanieFiles = Object.values(allMetadata).filter(file => {
+        const fileName = (file.fileName || '').toLowerCase();
+        return fileName.includes('dychanie');
+      });
+      console.log('🫁 SoundThemeGallery: Všechny soubory s "dychanie":', allDychanieFiles.length);
+      console.log('🫁 Sample dychanie files:', allDychanieFiles.slice(0, 5).map(f => ({
+        fileName: f.fileName,
+        folder: f.folder,
+        hasDownloadURL: !!(f.downloadURL || f.audioSrc)
+      })));
+
+      // Filtruj pouze soubory z kategorie "dychanie" (OGG formát)
+      const dychanieFiles = Object.values(allMetadata).filter(file => {
         const fileName = file.fileName || '';
-        return fileName.startsWith('hudba/') && fileName.endsWith('.mp3');
+        const isInDychanieFolder = fileName.startsWith('dychanie/');
+        const isOggFile = fileName.endsWith('.ogg') || fileName.endsWith('.oga');
+        const isMp3File = fileName.endsWith('.mp3'); // Fallback pro MP3
+
+        const matches = isInDychanieFolder && (isOggFile || isMp3File);
+        if (isInDychanieFolder) {
+          console.log(`🫁 Soubor dychanie: ${fileName}, isOgg: ${isOggFile}, isMp3: ${isMp3File}, matches: ${matches}`);
+        }
+
+        return matches;
       });
 
-      // Mapuj na formát pro galerii
-      const mappedFiles = musicFiles.map(file => ({
-        id: file.fileName,
-        fileName: file.fileName,
-        fileNameOnly: file.fileNameOnly || file.fileName.split('/').pop(),
-        name: file.displayName || file.fileNameOnly || file.fileName.split('/').pop().replace('.mp3', ''),
-        downloadURL: file.downloadURL || file.audioSrc,
-        coverImage: file.coverImage || file.albumCover || null,
-        duration: file.duration || file.durationFormatted || 'N/A'
-      }));
+      console.log('🫁 SoundThemeGallery: Filtrováno dychanie souborů:', dychanieFiles.length);
 
+      // Mapuj na formát pro galerii
+      const mappedFiles = dychanieFiles.map(file => {
+        const fileNameOnly = file.fileNameOnly || file.fileName.split('/').pop();
+        const name = file.displayName || file.fileNameOnly || fileNameOnly.replace(/\.(ogg|oga|mp3)$/i, '');
+
+        return {
+          id: file.fileName,
+          fileName: file.fileName,
+          fileNameOnly: fileNameOnly,
+          name: name,
+          downloadURL: file.downloadURL || file.audioSrc,
+          coverImage: file.coverImage || file.albumCover || null,
+          duration: file.duration || file.durationFormatted || 'N/A'
+        };
+      });
+
+      console.log('🫁 SoundThemeGallery: Zmapováno souborů:', mappedFiles.length);
       setAudioFiles(mappedFiles);
       setLoading(false);
     } catch (error) {
-      console.error('Failed to load music files:', error);
+      console.error('❌ Failed to load dychanie files:', error);
       setLoading(false);
     }
   };
