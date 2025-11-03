@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useMemo, useCallback } from 'react';
 import { motion } from 'framer-motion';
 
 const WheelPicker = ({
@@ -13,75 +13,189 @@ const WheelPicker = ({
   const [isDragging, setIsDragging] = useState(false);
   const [scrollY, setScrollY] = useState(0);
   const containerRef = useRef(null);
+  const rafRef = useRef(null);
+  const onChangeTimeoutRef = useRef(null);
+  const isScrollingRef = useRef(false);
+  const isInitializedRef = useRef(false);
   const itemHeight = 50;
 
   // Počet položek k zobrazení (5 položek podle obrázku)
   const visibleItems = 5;
   const itemsToShow = visibleItems;
 
-  // Generuj všechny možné hodnoty
-  const values = [];
-  for (let i = min; i <= max; i += step) {
-    values.push(i);
-  }
+  // Generuj všechny možné hodnoty pomocí useMemo pro optimalizaci
+  const values = useMemo(() => {
+    const vals = [];
+    for (let i = min; i <= max; i += step) {
+      vals.push(i);
+    }
+    return vals;
+  }, [min, max, step]);
 
   // Najdi index aktuální hodnoty
-  const currentIndex = values.indexOf(value);
-  const targetScrollY = currentIndex >= 0 ? currentIndex * itemHeight : 0;
+  const currentIndex = useMemo(() => values.indexOf(value), [values, value]);
+  const targetScrollY = useMemo(() =>
+    currentIndex >= 0 ? currentIndex * itemHeight : 0,
+    [currentIndex, itemHeight]
+  );
 
-  // Inicializuj scroll pozici
+  // Inicializuj scroll pozici při prvním renderu
   useEffect(() => {
-    if (containerRef.current && scrollY === 0 && currentIndex >= 0) {
+    if (containerRef.current && !isInitializedRef.current && currentIndex >= 0) {
       containerRef.current.scrollTop = targetScrollY;
       setScrollY(targetScrollY);
+      isInitializedRef.current = true;
     }
   }, [targetScrollY, currentIndex]);
 
-  // Aktualizuj scroll při změně hodnoty zvenčí
+  // Aktualizuj scroll při změně hodnoty zvenčí (jen když uživatel neposouvá)
   useEffect(() => {
-    if (containerRef.current && !isDragging && currentIndex >= 0) {
+    if (containerRef.current && !isDragging && !isScrollingRef.current && currentIndex >= 0) {
       const newScrollY = currentIndex * itemHeight;
-      containerRef.current.scrollTo({
-        top: newScrollY,
-        behavior: 'smooth'
-      });
-      setScrollY(newScrollY);
-    }
-  }, [value, currentIndex, itemHeight, isDragging, values.length]);
+      const currentScrollY = containerRef.current.scrollTop;
+      const difference = Math.abs(currentScrollY - newScrollY);
 
-  const handleScroll = (e) => {
+      // Aktualizuj pouze pokud je rozdíl větší než 1px (aby nedošlo k nekonečnému loop)
+      if (difference > 1) {
+        containerRef.current.scrollTop = newScrollY;
+        setScrollY(newScrollY);
+      }
+    }
+  }, [value, currentIndex, isDragging]);
+
+  // Optimalizovaný handleScroll s requestAnimationFrame
+  const handleScroll = useCallback((e) => {
     if (!isDragging) setIsDragging(true);
+    if (!isScrollingRef.current) isScrollingRef.current = true;
+
     const scrollTop = e.target.scrollTop;
-    setScrollY(scrollTop); // Aktualizuj scrollY pro re-render efektu
 
-    // Najdi nejbližší hodnotu
-    const index = Math.round(scrollTop / itemHeight);
-    const clampedIndex = Math.max(0, Math.min(values.length - 1, index));
-    const newValue = values[clampedIndex];
-
-    if (newValue !== value) {
-      onChange(newValue);
+    // Zruš předchozí RAF pokud existuje
+    if (rafRef.current) {
+      cancelAnimationFrame(rafRef.current);
     }
-  };
 
-  const handleTouchEnd = () => {
+    // Použij RAF pro plynulou aktualizaci scrollY
+    rafRef.current = requestAnimationFrame(() => {
+      setScrollY(scrollTop);
+
+      // Najdi nejbližší hodnotu
+      const index = Math.round(scrollTop / itemHeight);
+      const clampedIndex = Math.max(0, Math.min(values.length - 1, index));
+      const newValue = values[clampedIndex];
+
+      // Throttle onChange volání - aktualizuj pouze pokud se hodnota změnila
+      if (newValue !== value) {
+        // Zruš předchozí timeout
+        if (onChangeTimeoutRef.current) {
+          clearTimeout(onChangeTimeoutRef.current);
+        }
+
+        // Použij malý timeout pro throttling (16ms = ~60fps)
+        onChangeTimeoutRef.current = setTimeout(() => {
+          onChange(newValue);
+        }, 16);
+      }
+    });
+  }, [value, values, onChange, isDragging]);
+
+  // Vyčistit při unmount
+  useEffect(() => {
+    return () => {
+      if (rafRef.current) {
+        cancelAnimationFrame(rafRef.current);
+      }
+      if (onChangeTimeoutRef.current) {
+        clearTimeout(onChangeTimeoutRef.current);
+      }
+    };
+  }, []);
+
+  const handleTouchEnd = useCallback(() => {
     setIsDragging(false);
+
     // Snap na nejbližší hodnotu
     if (containerRef.current) {
-      const index = Math.round(scrollY / itemHeight);
+      const currentScrollY = containerRef.current.scrollTop;
+      const index = Math.round(currentScrollY / itemHeight);
       const clampedIndex = Math.max(0, Math.min(values.length - 1, index));
       const targetScroll = clampedIndex * itemHeight;
+      const newValue = values[clampedIndex];
 
       containerRef.current.scrollTo({
         top: targetScroll,
         behavior: 'smooth'
       });
       setScrollY(targetScroll);
+
+      // Aktualizuj hodnotu pokud se změnila (použij setTimeout pro zajištění plynulého snapu)
+      setTimeout(() => {
+        isScrollingRef.current = false;
+        if (newValue !== value) {
+          onChange(newValue);
+        }
+      }, 100);
+    } else {
+      isScrollingRef.current = false;
     }
-  };
+  }, [values, value, onChange, itemHeight]);
 
   // Vypočti střed (výška kontejneru / 2)
-  const centerY = (itemsToShow * itemHeight) / 2;
+  const centerY = useMemo(() => (itemsToShow * itemHeight) / 2, [itemsToShow, itemHeight]);
+
+  // Vypočti aktuální scroll index pro renderování
+  const scrollIndex = useMemo(() => {
+    const currentScroll = scrollY || targetScrollY || (currentIndex * itemHeight);
+    return currentScroll / itemHeight;
+  }, [scrollY, targetScrollY, currentIndex, itemHeight]);
+
+  // Komponenta pro jednotlivou položku - memoizovaná pro lepší výkon
+  const WheelItem = React.memo(({ val, index, scrollIndex, itemHeight }) => {
+    // Vypočti vzdálenost od středu na základě aktuální scroll pozice
+    const distanceFromCenter = React.useMemo(() =>
+      Math.abs(index - scrollIndex),
+      [index, scrollIndex]
+    );
+
+    // Postupně se ztrácející efekt - podle obrázku
+    // Střední hodnota (distance = 0) je plně viditelná, ostatní postupně slábnou
+    const styleProps = React.useMemo(() => {
+      const opacity = distanceFromCenter === 0 ? 1 : Math.max(0.2, 1 - distanceFromCenter * 0.25);
+      const scale = distanceFromCenter === 0 ? 1 : Math.max(0.7, 1 - distanceFromCenter * 0.12);
+      const fontWeight = distanceFromCenter === 0 ? 600 : Math.max(300, 600 - distanceFromCenter * 100);
+      const fontSize = distanceFromCenter === 0 ? 24 : Math.max(16, 24 - distanceFromCenter * 3);
+      const colorIntensity = distanceFromCenter === 0 ? 1 : Math.max(0.3, 1 - distanceFromCenter * 0.2);
+
+      return { opacity, scale, fontWeight, fontSize, colorIntensity };
+    }, [distanceFromCenter]);
+
+    return (
+      <div
+        className="flex items-center justify-center"
+        style={{
+          height: itemHeight,
+          scrollSnapAlign: 'center',
+          scrollSnapStop: 'always'
+        }}
+      >
+        <div
+          style={{
+            opacity: styleProps.opacity,
+            transform: `scale(${styleProps.scale})`,
+            fontWeight: styleProps.fontWeight,
+            fontSize: `${styleProps.fontSize}px`,
+            color: `rgba(0, 0, 0, ${styleProps.colorIntensity})`,
+            willChange: 'opacity, transform', // Optimalizace pro GPU
+            transition: 'opacity 0.1s, transform 0.1s, font-weight 0.1s, font-size 0.1s, color 0.1s'
+          }}
+        >
+          {val}
+        </div>
+      </div>
+    );
+  });
+
+  WheelItem.displayName = 'WheelItem';
 
   return (
     <div className={`relative ${className}`}>
@@ -107,46 +221,15 @@ const WheelPicker = ({
           <div style={{ height: centerY - itemHeight / 2 }} />
 
           {/* Seznam hodnot */}
-          {values.map((val, index) => {
-            // Vypočti vzdálenost od středu na základě aktuální scroll pozice
-            // Použij scrollY nebo targetScrollY pro plynulý efekt
-            const currentScroll = scrollY || targetScrollY || (currentIndex * itemHeight);
-            const scrollIndex = currentScroll / itemHeight;
-            const distanceFromCenter = Math.abs(index - scrollIndex);
-
-            // Postupně se ztrácející efekt - podle obrázku
-            // Střední hodnota (distance = 0) je plně viditelná, ostatní postupně slábnou
-            const opacity = distanceFromCenter === 0 ? 1 : Math.max(0.2, 1 - distanceFromCenter * 0.25);
-            const scale = distanceFromCenter === 0 ? 1 : Math.max(0.7, 1 - distanceFromCenter * 0.12);
-            const fontWeight = distanceFromCenter === 0 ? 600 : Math.max(300, 600 - distanceFromCenter * 100);
-            const fontSize = distanceFromCenter === 0 ? 24 : Math.max(16, 24 - distanceFromCenter * 3);
-            const colorIntensity = distanceFromCenter === 0 ? 1 : Math.max(0.3, 1 - distanceFromCenter * 0.2);
-
-            return (
-              <div
-                key={val}
-                className="flex items-center justify-center"
-                style={{
-                  height: itemHeight,
-                  scrollSnapAlign: 'center',
-                  scrollSnapStop: 'always'
-                }}
-              >
-                <div
-                  style={{
-                    opacity,
-                    transform: `scale(${scale})`,
-                    fontWeight,
-                    fontSize: `${fontSize}px`,
-                    color: `rgba(0, 0, 0, ${colorIntensity})`,
-                    transition: 'opacity 0.1s, transform 0.1s, font-weight 0.1s, font-size 0.1s, color 0.1s'
-                  }}
-                >
-                  {val}
-                </div>
-              </div>
-            );
-          })}
+          {values.map((val, index) => (
+            <WheelItem
+              key={val}
+              val={val}
+              index={index}
+              scrollIndex={scrollIndex}
+              itemHeight={itemHeight}
+            />
+          ))}
 
           {/* Padding dole pro poslední položky */}
           <div style={{ height: centerY - itemHeight / 2 }} />
