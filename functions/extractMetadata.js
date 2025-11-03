@@ -19,13 +19,29 @@ exports.extractMP3Metadata = functions.storage.object().onFinalize(async (object
   const filePath = object.name;
   const contentType = object.contentType;
 
-  // Zkontroluj, jestli je to MP3 soubor
-  if (!contentType || !contentType.startsWith('audio/') || !filePath.endsWith('.mp3')) {
+  // Zkontroluj, jestli je to audio soubor (MP3, OGG, OGA)
+  const filePathLower = filePath.toLowerCase();
+  const isAudioFile = contentType && contentType.startsWith('audio/') &&
+                     (filePathLower.endsWith('.mp3') ||
+                      filePathLower.endsWith('.ogg') ||
+                      filePathLower.endsWith('.oga'));
+
+  if (!isAudioFile) {
     console.log('Skipping non-audio file:', filePath);
     return null;
   }
 
-  console.log('Processing MP3 file:', filePath);
+  // Zkontroluj, jestli je soubor v podporované složce
+  const isInTargetFolder = filePath.startsWith('hudba/') ||
+                           filePath.startsWith('slova/') ||
+                           filePath.startsWith('dychanie/');
+
+  if (!isInTargetFolder) {
+    console.log('Skipping file outside target folders:', filePath);
+    return null;
+  }
+
+  console.log('Processing audio file:', filePath);
 
   try {
     // Stáhni soubor do dočasné složky
@@ -36,10 +52,22 @@ exports.extractMP3Metadata = functions.storage.object().onFinalize(async (object
     // Extrahuj metadata pomocí ffprobe
     const metadata = await extractMetadataWithFFprobe(tempFilePath);
 
+    // Urči příponu souboru
+    const fileExt = path.extname(filePath).toLowerCase();
+    const baseName = path.basename(filePath, fileExt);
+
+    // Urči contentType podle přípony
+    let finalContentType = contentType;
+    if (fileExt === '.ogg' || fileExt === '.oga') {
+      finalContentType = 'audio/ogg';
+    } else if (fileExt === '.mp3') {
+      finalContentType = 'audio/mpeg';
+    }
+
     // Přidej dodatečné informace
     const completeMetadata = {
       fileName: filePath,
-      displayName: path.basename(filePath, '.mp3'),
+      displayName: baseName,
       folder: filePath.split('/')[0],
       subFolder: filePath.split('/').length > 2 ? filePath.split('/')[1] : null,
       downloadURL: `https://firebasestorage.googleapis.com/v0/b/${object.bucket}/o/${encodeURIComponent(filePath)}?alt=media`,
@@ -49,7 +77,7 @@ exports.extractMP3Metadata = functions.storage.object().onFinalize(async (object
       durationDetailed: formatDurationDetailed(metadata.duration),
       isValid: metadata.duration > 0,
       fileSize: parseInt(object.size),
-      contentType: contentType,
+      contentType: finalContentType,
       lastModified: new Date().toISOString(),
       extracted: true,
       // Dodatečné informace pro slova soubory
@@ -84,7 +112,13 @@ exports.extractMP3Metadata = functions.storage.object().onFinalize(async (object
       lastSync: new Date().toISOString(),
       totalFiles: files.length,
       slovaFiles: files.filter(f => f.folder === 'slova').length,
-      hudbaFiles: files.filter(f => f.folder === 'hudba').length
+      hudbaFiles: files.filter(f => f.folder === 'hudba').length,
+      dychanieFiles: files.filter(f => f.folder === 'dychanie').length,
+      mp3Files: files.filter(f => f.fileName?.toLowerCase().endsWith('.mp3')).length,
+      oggFiles: files.filter(f => {
+        const name = f.fileName?.toLowerCase() || '';
+        return name.endsWith('.ogg') || name.endsWith('.oga');
+      }).length
     });
 
     console.log('Metadata extracted and saved for:', filePath);

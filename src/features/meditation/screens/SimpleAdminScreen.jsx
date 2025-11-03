@@ -28,12 +28,20 @@ const SimpleAdminScreen = () => {
       const querySnapshot = await getDocs(q);
 
       const slovaFiles = [];
+      const hudbaFiles = [];
+      const dychanieFiles = [];
       const sampleFiles = [];
 
       querySnapshot.forEach((doc) => {
         const data = doc.data();
         if (data.fileName && data.fileName.includes('slova/')) {
           slovaFiles.push(data);
+        }
+        if (data.fileName && data.fileName.includes('hudba/')) {
+          hudbaFiles.push(data);
+        }
+        if (data.fileName && data.fileName.includes('dychanie/')) {
+          dychanieFiles.push(data);
         }
         if (sampleFiles.length < 3) {
           sampleFiles.push({
@@ -51,7 +59,9 @@ const SimpleAdminScreen = () => {
         console.log(`     Has DownloadURL: ${file.hasDownloadURL}`);
       });
 
-      setStatus(`📊 Firestore: ${querySnapshot.size} souborů, 🎤 SLOVA: ${slovaFiles.length} souborů`);
+      const mp3Count = querySnapshot.size - dychanieFiles.length; // přibližně
+      const oggCount = dychanieFiles.length; // přibližně
+      setStatus(`📊 Firestore: ${querySnapshot.size} souborů, 🎤 SLOVA: ${slovaFiles.length}, 🎵 HUDEBA: ${hudbaFiles.length}, 🫁 DÝCHANIE: ${dychanieFiles.length}`);
     } catch (error) {
       setStatus(`❌ Chyba při načítání: ${error.message}`);
     }
@@ -97,6 +107,18 @@ const SimpleAdminScreen = () => {
       const slovaFiles = metadataArray.filter(file =>
         file.fileName && file.fileName.includes('slova/')
       );
+      const hudbaFiles = metadataArray.filter(file =>
+        file.fileName && file.fileName.includes('hudba/')
+      );
+      const dychanieFiles = metadataArray.filter(file =>
+        file.fileName && file.fileName.includes('dychanie/')
+      );
+
+      const mp3Count = metadataArray.filter(f => f.fileName?.toLowerCase().endsWith('.mp3')).length;
+      const oggCount = metadataArray.filter(f => {
+        const name = f.fileName?.toLowerCase() || '';
+        return name.endsWith('.ogg') || name.endsWith('.oga');
+      }).length;
 
       console.log('🔍 Sample processed data:');
       metadataArray.slice(0, 3).forEach((file, i) => {
@@ -112,10 +134,14 @@ const SimpleAdminScreen = () => {
         files: metadataArray,
         lastSync: new Date().toISOString(),
         totalFiles: metadataArray.length,
-        slovaFiles: slovaFiles.length
+        slovaFiles: slovaFiles.length,
+        hudbaFiles: hudbaFiles.length,
+        dychanieFiles: dychanieFiles.length,
+        mp3Files: mp3Count,
+        oggFiles: oggCount
       });
 
-      setStatus(`✅ Synchronizace dokončena! 📊 ${metadataArray.length} souborů, 🎤 ${slovaFiles.length} SLOVA souborů`);
+      setStatus(`✅ Synchronizace dokončena! 📊 ${metadataArray.length} souborů (${mp3Count} MP3, ${oggCount} OGG), 🎤 ${slovaFiles.length} SLOVA, 🎵 ${hudbaFiles.length} HUDEBA, 🫁 ${dychanieFiles.length} DÝCHANIE`);
       console.log('✅ Successfully synced Firestore to Realtime Database');
 
     } catch (error) {
@@ -145,15 +171,12 @@ const SimpleAdminScreen = () => {
       const allFiles = await scanFirebaseStorage();
       console.log(`📊 Nalezeno ${allFiles.length} souborů ve Storage`);
 
-      // 3. Připravit metadata pro každý MP3 soubor s reálnou délkou
-      setStatus('📊 Připravuji metadata s reálnou délkou MP3...');
-      const metadataArray = [];
-      let processedCount = 0;
+      // 3. Připravit metadata pro každý audio soubor s reálnou délkou (paralelně)
+      setStatus('📊 Připravuji metadata s reálnou délkou...');
 
-      for (const file of allFiles) {
+      // Helper funkce pro zpracování jednoho souboru
+      const processFile = async (file, index) => {
         try {
-          setStatus(`📊 Zpracovávám... ${processedCount + 1}/${allFiles.length} (${file.name})`);
-
           // Získej metadata ze Storage (velikost souboru)
           let fileSize = file.size;
           let fileRef = ref(storage, file.fullPath);
@@ -181,70 +204,71 @@ const SimpleAdminScreen = () => {
             }
           }
 
-          // Získej reálnou délku MP3 souboru pomocí extractAudioMetadata
-          // Přidej pauzu mezi požadavky (2-3 sekundy), aby se metadata stihla načíst
-          // Důležité zejména pro slova soubory, které mohou mít problém s timeouty
-          if (processedCount > 0) {
-            const delaySeconds = 2.5; // 2.5 sekundy pauza mezi soubory
-            setStatus(`⏳ Čekám ${delaySeconds}s před načtením délky pro ${file.name}...`);
-            await new Promise(resolve => setTimeout(resolve, delaySeconds * 1000));
-          }
-
+          // Získej reálnou délku audio souboru
+          // Pro OGG soubory použij odhad z velikosti, pro MP3 zkus extrahovat skutečnou délku
           let audioMetadata;
-          try {
-            console.log(`🎵 Načítám reálnou délku pro ${file.name}...`);
-            setStatus(`🎵 Načítám reálnou délku pro ${file.name}...`);
+          const fileExt = file.name.toLowerCase();
+          const isOggFile = fileExt.endsWith('.ogg') || fileExt.endsWith('.oga');
 
-            // Použij stejnou metodu jako pro hudbu - extractAudioMetadata bez fetch fallback
-            audioMetadata = await extractAudioMetadata(downloadURL, { useFetchFallback: false });
-
-            if (audioMetadata.isValid && audioMetadata.duration > 0) {
-              console.log(`✅ ${file.name}: ${audioMetadata.durationFormatted} (Reálná délka)`);
-              setStatus(`✅ ${file.name}: ${audioMetadata.durationFormatted} (Reálná délka)`);
-            } else {
-              // Pokud se nepodařilo získat reálnou délku, zkus ještě jednou s delším timeout
-              console.log(`⚠️ První pokus selhal pro ${file.name}, zkouším znovu...`);
-              setStatus(`⚠️ Zkouším znovu pro ${file.name}...`);
-
-              // Pauza před druhým pokusem
-              await new Promise(resolve => setTimeout(resolve, 1000));
-
-              audioMetadata = await extractAudioMetadata(downloadURL, { useFetchFallback: false });
-
-              if (audioMetadata.isValid && audioMetadata.duration > 0) {
-                console.log(`✅ ${file.name}: ${audioMetadata.durationFormatted} (Reálná délka - druhý pokus)`);
-                setStatus(`✅ ${file.name}: ${audioMetadata.durationFormatted} (Reálná délka)`);
-              } else {
-                // Fallback na odhad z velikosti, pokud se nepodařilo získat reálnou délku
-                console.warn(`⚠️ Nepodařilo se získat reálnou délku pro ${file.name}, použiji odhad`);
-                setStatus(`⚠️ Používám odhad pro ${file.name}...`);
-                const estimatedDuration = estimateDurationFromSize(fileSize);
-                audioMetadata = {
-                  duration: estimatedDuration,
-                  durationFormatted: formatDuration(estimatedDuration),
-                  durationDetailed: formatDurationDetailed(estimatedDuration),
-                  isValid: estimatedDuration > 0
-                };
-                console.log(`📊 ${file.name}: ${audioMetadata.durationFormatted} (Odhad z velikosti ${Math.round(fileSize / 1024 / 1024 * 100) / 100}MB)`);
-              }
-            }
-          } catch (audioError) {
-            // Fallback na odhad z velikosti při chybě
-            console.warn(`⚠️ Chyba při získávání délky pro ${file.name}:`, audioError.message);
-            setStatus(`⚠️ Chyba při získávání délky pro ${file.name}, používám odhad...`);
-            const estimatedDuration = estimateDurationFromSize(fileSize);
+          if (isOggFile) {
+            // Pro OGG soubory použij odhad z velikosti (HTML5 Audio API může mít problémy s OGG)
+            console.log(`🫁 OGG soubor ${file.name}: používám odhad z velikosti`);
+            // Urči contentType pro správný odhad délky
+            const oggContentType = fileExt.endsWith('.ogg') || fileExt.endsWith('.oga') ? 'audio/ogg' : 'audio/mpeg';
+            const estimatedDuration = estimateDurationFromSize(fileSize, oggContentType);
             audioMetadata = {
               duration: estimatedDuration,
               durationFormatted: formatDuration(estimatedDuration),
               durationDetailed: formatDurationDetailed(estimatedDuration),
               isValid: estimatedDuration > 0
             };
-            console.log(`📊 ${file.name}: ${audioMetadata.durationFormatted} (Odhad z velikosti - chyba)`);
+            console.log(`📊 ${file.name}: ${audioMetadata.durationFormatted} (Odhad z velikosti - OGG)`);
+          } else {
+            // Pro MP3 soubory zkus extrahovat skutečnou délku
+            try {
+              console.log(`🎵 Načítám reálnou délku pro ${file.name}...`);
+              // Použij extractAudioMetadata bez fetch fallback
+              audioMetadata = await extractAudioMetadata(downloadURL, { useFetchFallback: false });
+
+              if (!audioMetadata.isValid || audioMetadata.duration === 0) {
+                // Fallback na odhad z velikosti, pokud se nepodařilo získat reálnou délku
+                console.warn(`⚠️ Nepodařilo se získat reálnou délku pro ${file.name}, použiji odhad`);
+                const estimatedDuration = estimateDurationFromSize(fileSize, contentType);
+                audioMetadata = {
+                  duration: estimatedDuration,
+                  durationFormatted: formatDuration(estimatedDuration),
+                  durationDetailed: formatDurationDetailed(estimatedDuration),
+                  isValid: estimatedDuration > 0
+                };
+                console.log(`📊 ${file.name}: ${audioMetadata.durationFormatted} (Odhad z velikosti)`);
+              } else {
+                console.log(`✅ ${file.name}: ${audioMetadata.durationFormatted} (Reálná délka)`);
+              }
+            } catch (audioError) {
+              // Fallback na odhad z velikosti při chybě
+              console.warn(`⚠️ Chyba při získávání délky pro ${file.name}:`, audioError.message);
+              const estimatedDuration = estimateDurationFromSize(fileSize, contentType);
+              audioMetadata = {
+                duration: estimatedDuration,
+                durationFormatted: formatDuration(estimatedDuration),
+                durationDetailed: formatDurationDetailed(estimatedDuration),
+                isValid: estimatedDuration > 0
+              };
+              console.log(`📊 ${file.name}: ${audioMetadata.durationFormatted} (Odhad z velikosti - chyba)`);
+            }
+          }
+
+          // Urči contentType podle přípony souboru (před vytvořením metadat)
+          const fileNameForContentType = file.name.toLowerCase();
+          let contentType = 'audio/mpeg'; // default pro MP3
+          if (fileNameForContentType.endsWith('.ogg') || fileNameForContentType.endsWith('.oga')) {
+            contentType = 'audio/ogg';
           }
 
           // Vytvoř kompletní metadata objekt
-          const completeMetadata = {
-            fileName: file.fullPath,
+          // fileName musí být celá cesta včetně složky (např. "dychanie/prana-breath/file.ogg")
+          const metadata = {
+            fileName: file.fullPath, // Celá cesta: "dychanie/prana-breath/file.ogg"
             displayName: extractDisplayName(file.name),
             folder: file.folder,
             subFolder: extractSubFolder(file.fullPath),
@@ -255,7 +279,7 @@ const SimpleAdminScreen = () => {
             durationDetailed: audioMetadata.durationDetailed,
             isValid: audioMetadata.isValid,
             fileSize: fileSize,
-            contentType: 'audio/mpeg',
+            contentType: contentType,
             lastModified: new Date().toISOString(),
             extracted: audioMetadata.isValid,
             // Dodatečné informace pro slova soubory
@@ -266,15 +290,25 @@ const SimpleAdminScreen = () => {
             } : {})
           };
 
-          metadataArray.push(completeMetadata);
-          processedCount++;
+          // Debug pro dychanie soubory
+          if (file.folder === 'dychanie') {
+            console.log(`🫁 Dychanie metadata: fileName=${metadata.fileName}, fullPath=${metadata.fullPath}, downloadURL=${metadata.downloadURL ? 'yes' : 'no'}`);
+          }
 
+          return metadata;
         } catch (error) {
           console.warn(`⚠️ Chyba při zpracování ${file.name}:`, error.message);
 
-          // Přidej soubor s odhadem délky při chybě
-          const estimatedDuration = estimateDurationFromSize(file.size || 0);
-          metadataArray.push({
+          // Urči contentType podle přípony souboru
+          const errorFileName = file.name.toLowerCase();
+          let errorContentType = 'audio/mpeg'; // default pro MP3
+          if (errorFileName.endsWith('.ogg') || errorFileName.endsWith('.oga')) {
+            errorContentType = 'audio/ogg';
+          }
+
+          // Vrátí soubor s odhadem délky při chybě
+          const estimatedDuration = estimateDurationFromSize(file.size || 0, errorContentType);
+          return {
             fileName: file.fullPath,
             displayName: extractDisplayName(file.name),
             folder: file.folder,
@@ -286,22 +320,51 @@ const SimpleAdminScreen = () => {
             durationDetailed: formatDurationDetailed(estimatedDuration),
             isValid: estimatedDuration > 0,
             fileSize: file.size || 0,
-            contentType: 'audio/mpeg',
+            contentType: errorContentType,
             lastModified: new Date().toISOString(),
             extracted: false,
             error: error.message
-          });
-          processedCount++;
+          };
         }
+      };
+
+      // Paralelní zpracování s limitem současných requestů (5-10 současně)
+      const MAX_CONCURRENT = 8; // Počet současných requestů
+      const metadataArray = [];
+
+      for (let i = 0; i < allFiles.length; i += MAX_CONCURRENT) {
+        const batch = allFiles.slice(i, i + MAX_CONCURRENT);
+        setStatus(`📊 Zpracovávám batch ${Math.floor(i / MAX_CONCURRENT) + 1}/${Math.ceil(allFiles.length / MAX_CONCURRENT)} (${i + 1}-${Math.min(i + MAX_CONCURRENT, allFiles.length)}/${allFiles.length})`);
+
+        const batchResults = await Promise.allSettled(
+          batch.map((file, batchIndex) => processFile(file, i + batchIndex))
+        );
+
+        // Přidej úspěšné výsledky
+        batchResults.forEach((result, batchIndex) => {
+          if (result.status === 'fulfilled' && result.value) {
+            metadataArray.push(result.value);
+          } else if (result.status === 'rejected') {
+            console.error(`❌ Chyba při zpracování souboru v batchu:`, result.reason);
+          }
+        });
       }
 
-      // 4. Filtruj slova soubory
+      // 4. Filtruj soubory podle složek
       const slovaFiles = metadataArray.filter(file => file.folder === 'slova');
       const hudbaFiles = metadataArray.filter(file => file.folder === 'hudba');
+      const dychanieFiles = metadataArray.filter(file => file.folder === 'dychanie');
 
-      console.log(`📊 Zpracováno: ${metadataArray.length} souborů`);
+      const mp3Count = metadataArray.filter(f => f.fileName?.toLowerCase().endsWith('.mp3')).length;
+      const oggCount = metadataArray.filter(f => {
+        const name = f.fileName?.toLowerCase() || '';
+        return name.endsWith('.ogg') || name.endsWith('.oga');
+      }).length;
+
+      console.log(`📊 Zpracováno: ${metadataArray.length} souborů (${mp3Count} MP3, ${oggCount} OGG)`);
       console.log(`🎤 SLOVA: ${slovaFiles.length} souborů`);
       console.log(`🎵 HUDEBA: ${hudbaFiles.length} souborů`);
+      console.log(`🫁 DÝCHANIE: ${dychanieFiles.length} souborů`);
 
       // 5. Uložit do Realtime Database
       setStatus('💾 Ukládám do Realtime Database...');
@@ -312,11 +375,14 @@ const SimpleAdminScreen = () => {
         totalFiles: metadataArray.length,
         slovaFiles: slovaFiles.length,
         hudbaFiles: hudbaFiles.length,
+        dychanieFiles: dychanieFiles.length,
+        mp3Files: mp3Count,
+        oggFiles: oggCount,
         validFiles: metadataArray.filter(f => f.isValid).length,
         invalidFiles: metadataArray.filter(f => !f.isValid).length
       });
 
-      setStatus(`✅ Kompletní synchronizace dokončena! 📊 ${metadataArray.length} souborů, 🎤 ${slovaFiles.length} SLOVA, 🎵 ${hudbaFiles.length} HUDEBA`);
+      setStatus(`✅ Kompletní synchronizace dokončena! 📊 ${metadataArray.length} souborů (${mp3Count} MP3, ${oggCount} OGG), 🎤 ${slovaFiles.length} SLOVA, 🎵 ${hudbaFiles.length} HUDEBA, 🫁 ${dychanieFiles.length} DÝCHANIE`);
       console.log('✅ Full metadata sync completed successfully');
 
     } catch (error) {
@@ -329,7 +395,8 @@ const SimpleAdminScreen = () => {
 
   // Pomocné funkce pro extrakci informací ze jména souboru
   const extractDisplayName = (fileName) => {
-    const nameWithoutExt = fileName.replace(/\.mp3$/i, '');
+    // Podporuje MP3, OGG, OGA formáty
+    const nameWithoutExt = fileName.replace(/\.(mp3|ogg|oga)$/i, '');
     const parts = nameWithoutExt.split('/');
     const lastPart = parts[parts.length - 1];
 
@@ -355,8 +422,8 @@ const SimpleAdminScreen = () => {
   };
 
   const extractTopic = (fileName) => {
-    // Extrahuj téma ze jména souboru (např. "muzsky1MSK-meditace.mp3" -> "meditace")
-    const match = fileName.match(/-([^-]+)\.mp3$/i);
+    // Extrahuj téma ze jména souboru (podporuje MP3, OGG, OGA formáty)
+    const match = fileName.match(/-([^-]+)\.(mp3|ogg|oga)$/i);
     return match ? match[1] : null;
   };
 
@@ -366,14 +433,21 @@ const SimpleAdminScreen = () => {
     return null;
   };
 
-  // Odhad délky z velikosti souboru (přibližně 1MB = 1 minuta pro MP3)
-  const estimateDurationFromSize = (sizeInBytes) => {
+  // Odhad délky z velikosti souboru
+  // Pro MP3: přibližně 1MB = 1 minuta
+  // Pro OGG: přibližně 0.5MB = 1 minuta (OGG má lepší kompresi)
+  const estimateDurationFromSize = (sizeInBytes, contentType = 'audio/mpeg') => {
     if (sizeInBytes <= 0) {
       // Pokud nemáme velikost, použij výchozí odhad (5 minut)
       return 300; // 5 minut
     }
     const sizeInMB = sizeInBytes / (1024 * 1024);
-    return Math.round(sizeInMB * 60); // sekundy
+
+    // Pro OGG použij jiný přepočet (lepší komprese)
+    const isOgg = contentType === 'audio/ogg';
+    const mbPerMinute = isOgg ? 0.5 : 1.0; // OGG má lepší kompresi
+
+    return Math.round(sizeInMB * 60 / mbPerMinute); // sekundy
   };
 
   // Formátování délky
@@ -418,35 +492,75 @@ const SimpleAdminScreen = () => {
     }
 
     // Rekurzivní načtení všech souborů ze složky
+    // Použijeme jednodušší přístup - podobný jako v fastMetadataService
     const getAllFilesRecursively = async (folderRef, folderName) => {
       const allFiles = [];
 
       const processFolder = async (currentFolderRef) => {
         try {
           const result = await listAll(currentFolderRef);
-          console.log(`📂 Skenuji složku: ${folderName} (${result.items.length} souborů)`);
+          const folderPath = currentFolderRef.fullPath || currentFolderRef.name || '';
+          const folderNameOnly = currentFolderRef.name || folderPath.split('/').pop() || '';
 
-          // Přidej pouze MP3 soubory z aktuální složky
+          console.log(`📂 Skenuji složku: ${folderPath} (${folderNameOnly})`);
+          console.log(`   - Items: ${result.items.length}, Prefixes: ${result.prefixes.length}`);
+
+          // Přidej audio soubory z aktuální složky (MP3, OGG, OGA)
           for (const fileRef of result.items) {
-            if (fileRef.name.toLowerCase().endsWith('.mp3')) {
+            const fileName = fileRef.name.toLowerCase();
+            const isAudioFile = fileName.endsWith('.mp3') ||
+                               fileName.endsWith('.ogg') ||
+                               fileName.endsWith('.oga');
+
+            console.log(`   📄 Soubor: ${fileRef.name} (fullPath: ${fileRef.fullPath}), isAudio: ${isAudioFile}`);
+
+            if (isAudioFile) {
+              // Použij fileRef.fullPath, který už obsahuje celou cestu od rootu
+              // Pokud není k dispozici, sestav cestu z folderPath
+              let fullPath = fileRef.fullPath;
+              let relativePath;
+
+              if (fullPath && fullPath.startsWith(folderName)) {
+                // fileRef.fullPath už obsahuje celou cestu (např. "dychanie/prana-breath/file.ogg")
+                relativePath = fullPath.replace(`${folderName}/`, '');
+              } else if (fullPath) {
+                // fullPath je relativní, přidej folderName
+                fullPath = `${folderName}/${fullPath}`;
+                relativePath = fullPath.replace(`${folderName}/`, '');
+              } else {
+                // Sestav cestu z folderPath a fileRef.name
+                if (folderPath === folderName || folderPath === `${folderName}/`) {
+                  // Jsme v root složce
+                  relativePath = fileRef.name;
+                } else {
+                  // Jsme v podsložce - extrahuj relativní cestu z folderPath
+                  const relativeFolderPath = folderPath.replace(`${folderName}/`, '');
+                  relativePath = `${relativeFolderPath}/${fileRef.name}`;
+                }
+                fullPath = `${folderName}/${relativePath}`;
+              }
+
               // Použij pouze informace z listAll - bez getMetadata/getDownloadURL
               allFiles.push({
-                name: fileRef.name,
-                fullPath: fileRef.fullPath,
+                name: relativePath, // Relativní cesta včetně podsložky (např. "prana-breath/file.ogg")
+                fullPath: fullPath, // Celá cesta včetně složky (např. "dychanie/prana-breath/file.ogg")
                 size: 0, // Bude odhadnuto z názvu souboru
                 folder: folderName,
                 downloadURL: null // Bude vygenerováno později pomocí getDownloadURL
               });
-              console.log(`✅ Načteno: ${fileRef.name} - POUZE LIST`);
+              console.log(`✅ Načteno: ${fullPath} (relativní: ${relativePath}) - POUZE LIST`);
             }
           }
 
           // Rekurzivně zpracuj všechny podsložky
+          console.log(`   🔍 Nalezeno ${result.prefixes.length} podsložek`);
           for (const subFolderRef of result.prefixes) {
+            const subFolderPath = subFolderRef.fullPath || subFolderRef.name;
+            console.log(`   📁 Zpracovávám podsložku: ${subFolderPath}`);
             await processFolder(subFolderRef);
           }
         } catch (error) {
-          console.warn(`❌ Chyba při skenování složky ${folderName}:`, error);
+          console.error(`❌ Chyba při skenování složky ${currentFolderRef.fullPath || currentFolderRef.name}:`, error);
         }
       };
 
@@ -454,22 +568,104 @@ const SimpleAdminScreen = () => {
       return allFiles;
     };
 
-    // Skenuj hudba a slova složky
+    // Skenuj hudba, slova a dychanie složky
     const hudbaRef = ref(storage, 'hudba');
     const slovaRef = ref(storage, 'slova');
+    const dychanieRef = ref(storage, 'dychanie');
 
     console.log('🚀 Začínám skenování Firebase Storage...');
+
+    // Zkontroluj, jestli složka dychanie existuje
+    let dychanieFiles = [];
+    try {
+      const dychanieTest = await listAll(dychanieRef);
+      console.log(`🫁 Dychanie složka: Items=${dychanieTest.items.length}, Prefixes=${dychanieTest.prefixes.length}`);
+      console.log(`🫁 Dychanie podsložky:`, dychanieTest.prefixes.map(p => p.name || p.fullPath));
+
+      // Pokud máme přístup, načteme soubory přímo ze Storage
+      dychanieFiles = await getAllFilesRecursively(dychanieRef, 'dychanie');
+    } catch (dychanieTestError) {
+      console.warn(`⚠️ Nemám přístup k dychanie složce v Storage (403 Forbidden), načítám z Realtime Database...`);
+      console.error(`❌ Chyba při kontrole dychanie složky:`, dychanieTestError);
+
+      // Pokud nemáme přístup k Storage, načteme metadata z Realtime Database
+      try {
+        const { realtimeMetadataService } = await import('@services/realtimeMetadataService');
+        const realtimeMetadata = await realtimeMetadataService.getAllMetadata();
+
+        // Filtruj pouze dychanie soubory (OGG formát)
+        const dychanieMetadata = Object.values(realtimeMetadata).filter(file => {
+          const fileName = (file.fileName || '').toLowerCase();
+          const isInDychanieFolder = fileName.startsWith('dychanie/');
+          const isOggFile = fileName.endsWith('.ogg') || fileName.endsWith('.oga');
+          const isMp3File = fileName.endsWith('.mp3');
+          return isInDychanieFolder && (isOggFile || isMp3File);
+        });
+
+        console.log(`🫁 Načteno ${dychanieMetadata.length} dychanie souborů z Realtime Database`);
+
+        // Převeď metadata na formát pro admin panel
+        dychanieFiles = dychanieMetadata.map(file => {
+          // Extrahuj relativní cestu (bez "dychanie/" prefixu)
+          const relativePath = file.fileName.replace('dychanie/', '');
+          return {
+            name: relativePath,
+            fullPath: file.fileName,
+            size: file.size || 0,
+            folder: 'dychanie',
+            downloadURL: file.downloadURL || file.audioSrc || null
+          };
+        });
+
+        console.log(`✅ Přepracováno ${dychanieFiles.length} souborů z Realtime Database`);
+      } catch (realtimeError) {
+        console.error(`❌ Chyba při načítání z Realtime Database:`, realtimeError);
+      }
+    }
+
     const [hudbaFiles, slovaFiles] = await Promise.all([
       getAllFilesRecursively(hudbaRef, 'hudba'),
       getAllFilesRecursively(slovaRef, 'slova')
     ]);
 
-    // Spoj všechny soubory
-    allFiles.push(...hudbaFiles, ...slovaFiles);
+    console.log(`🫁 Dychanie files výsledek: ${dychanieFiles.length} souborů`);
+    if (dychanieFiles.length > 0) {
+      console.log('🫁 Sample dychanie files:', dychanieFiles.slice(0, 3).map(f => ({
+        name: f.name,
+        fullPath: f.fullPath,
+        folder: f.folder
+      })));
+    }
 
-    console.log(`✅ Skenování dokončeno! Nalezeno ${allFiles.length} MP3 souborů`);
+    // Spoj všechny soubory
+    allFiles.push(...hudbaFiles, ...slovaFiles, ...dychanieFiles);
+
+    const mp3Count = allFiles.filter(f => {
+      const name = (f.name || f.fullPath || '').toLowerCase();
+      return name.endsWith('.mp3');
+    }).length;
+    const oggCount = allFiles.filter(f => {
+      const name = (f.name || f.fullPath || '').toLowerCase();
+      return name.endsWith('.ogg') || name.endsWith('.oga');
+    }).length;
+
+    // Debug: zobraz dychanie soubory
+    const dychanieDebug = allFiles.filter(f => f.folder === 'dychanie');
+    console.log(`🫁 DEBUG Dychanie soubory: ${dychanieDebug.length}`);
+    console.log('🫁 Sample dychanie files:', dychanieDebug.slice(0, 5).map(f => ({
+      name: f.name,
+      fullPath: f.fullPath,
+      folder: f.folder
+    })));
+
+    console.log(`✅ Skenování dokončeno! Nalezeno ${allFiles.length} audio souborů (${mp3Count} MP3, ${oggCount} OGG)`);
     console.log(`🎵 HUDEBA: ${hudbaFiles.length} souborů`);
     console.log(`🎤 SLOVA: ${slovaFiles.length} souborů`);
+    console.log(`🫁 DÝCHANIE: ${dychanieFiles.length} souborů`);
+    console.log(`🫁 OGG soubory: ${oggCount} (z toho ${dychanieFiles.filter(f => {
+      const name = (f.name || f.fullPath || '').toLowerCase();
+      return name.endsWith('.ogg') || name.endsWith('.oga');
+    }).length} v dychanie)`);
 
     return allFiles;
   };
