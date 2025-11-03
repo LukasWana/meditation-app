@@ -100,7 +100,9 @@ export const LanguageProvider = ({ children }) => {
 
       // Gender
       jsemMuz: 'jsem Muž',
-      jsemZena: 'jsem Žena'
+      jsemZena: 'jsem Žena',
+      pohlavie: 'Pohlavie',
+      obecnyObsah: 'Obecný obsah'
     },
     CZ: {
       // Hlavní navigace
@@ -183,7 +185,9 @@ export const LanguageProvider = ({ children }) => {
 
       // Gender
       jsemMuz: 'jsem Muž',
-      jsemZena: 'jsem Žena'
+      jsemZena: 'jsem Žena',
+      pohlavie: 'Pohlavie',
+      obecnyObsah: 'Obecný obsah'
     },
     EN: {
       // Main navigation
@@ -265,7 +269,9 @@ export const LanguageProvider = ({ children }) => {
 
       // Gender
       jsemMuz: 'I am Male',
-      jsemZena: 'I am Female'
+      jsemZena: 'I am Female',
+      pohlavie: 'Gender',
+      obecnyObsah: 'General content'
     }
   });
 

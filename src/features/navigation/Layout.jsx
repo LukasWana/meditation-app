@@ -111,53 +111,57 @@ const Layout = ({
             <img src={getFlagUrl(language)} alt={language} className="w-6 h-6" />
           </motion.button>
 
-          {/* Gender Switcher - desktop/tablet */}
-          <motion.div
-            className="hidden sm:flex bg-white/90 backdrop-blur-sm border border-gray-200 rounded-full p-1 shadow-sm"
-            initial={{ opacity: 0, scale: 0.9 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ duration: 0.3, ease: "easeOut" }}
-          >
-            <motion.button
-              onClick={() => handleGenderSelect('male')}
-              className={`px-3 py-2 rounded-full text-sm font-medium transition-colors duration-200 ${
-                gender === 'male'
-                  ? 'bg-gray-800 text-white'
-                  : 'text-gray-600 hover:text-gray-800'
-              }`}
-              whileHover={{ scale: 1 }}
-              whileTap={{ scale: 0.9 }}
-              transition={{ type: "spring", stiffness: 300, damping: 20 }}
+          {/* Gender Switcher - desktop/tablet - zobraz pouze v sekci meditace */}
+          {currentScreen === 'slova' && (
+            <motion.div
+              className="hidden sm:flex bg-white/90 backdrop-blur-sm border border-gray-200 rounded-full p-1 shadow-sm"
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ duration: 0.3, ease: "easeOut" }}
             >
-              {t('jsemMuz')}
-            </motion.button>
-            <motion.button
-              onClick={() => handleGenderSelect('female')}
-              className={`px-3 py-2 rounded-full text-sm font-medium transition-colors duration-200 ${
-                gender === 'female'
-                  ? 'bg-gray-800 text-white'
-                  : 'text-gray-600 hover:text-gray-800'
-              }`}
-              whileHover={{ scale: 1 }}
-              whileTap={{ scale: 0.9 }}
-              transition={{ type: "spring", stiffness: 300, damping: 20 }}
-            >
-              {t('jsemZena')}
-            </motion.button>
-          </motion.div>
+              <motion.button
+                onClick={() => handleGenderSelect('male')}
+                className={`px-3 py-2 rounded-full text-sm font-medium transition-colors duration-200 ${
+                  gender === 'male'
+                    ? 'bg-gray-800 text-white'
+                    : 'text-gray-600 hover:text-gray-800'
+                }`}
+                whileHover={{ scale: 1 }}
+                whileTap={{ scale: 0.9 }}
+                transition={{ type: "spring", stiffness: 300, damping: 20 }}
+              >
+                {t('jsemMuz')}
+              </motion.button>
+              <motion.button
+                onClick={() => handleGenderSelect('female')}
+                className={`px-3 py-2 rounded-full text-sm font-medium transition-colors duration-200 ${
+                  gender === 'female'
+                    ? 'bg-gray-800 text-white'
+                    : 'text-gray-600 hover:text-gray-800'
+                }`}
+                whileHover={{ scale: 1 }}
+                whileTap={{ scale: 0.9 }}
+                transition={{ type: "spring", stiffness: 300, damping: 20 }}
+              >
+                {t('jsemZena')}
+              </motion.button>
+            </motion.div>
+          )}
 
-          {/* Gender Switcher - mobile (show only current selection, tap toggles) */}
-          <motion.button
-            onClick={() => handleGenderSelect(gender === 'male' ? 'female' : 'male')}
-            className="sm:hidden px-3 py-2 bg-gray-800 backdrop-blur-sm border border-gray-200 rounded-full shadow-sm text-sm font-medium text-white"
-            initial={{ opacity: 0, scale: 0.9 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ duration: 0.3, ease: "easeOut" }}
-            whileHover={{ scale: 1.02 }}
-            whileTap={{ scale: 0.95 }}
-          >
-            {gender === 'female' ? t('jsemZena') : t('jsemMuz')}
-          </motion.button>
+          {/* Gender Switcher - mobile (show only current selection, tap toggles) - zobraz pouze v sekci meditace */}
+          {currentScreen === 'slova' && (
+            <motion.button
+              onClick={() => handleGenderSelect(gender === 'male' ? 'female' : 'male')}
+              className="sm:hidden px-3 py-2 bg-gray-800 backdrop-blur-sm border border-gray-200 rounded-full shadow-sm text-sm font-medium text-white"
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ duration: 0.3, ease: "easeOut" }}
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.95 }}
+            >
+              {gender === 'female' ? t('jsemZena') : t('jsemMuz')}
+            </motion.button>
+          )}
         </div>
       )}
 

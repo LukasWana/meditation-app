@@ -4,6 +4,7 @@ import { FramerSection, FramerPageTransition, BackButton } from '@components';
 import { AudioPlayer } from '@features/audio';
 import { AlbumGrid } from '../components';
 import { useHudbaScreenData } from '../hooks';
+import { useLanguage } from '@contexts/LanguageContext';
 
 
 const HudbaScreen = ({
@@ -15,6 +16,7 @@ const HudbaScreen = ({
   onPlayerStateChange
 }) => {
   const [activeAudio, setActiveAudio] = useState(null);
+  const { t } = useLanguage();
 
   // Hlavní logika pro data HudbaScreen
   const {
@@ -114,8 +116,8 @@ const HudbaScreen = ({
             animationType="fadeIn"
             delay={0.1}
           >
-            <h1 className="text-6xl font-light">
-              hudba
+            <h1 className="text-6xl font-light leading-normal pb-3 overflow-visible" style={{ lineHeight: '1.2' }}>
+              {t('hudba')}
             </h1>
 
             {/* Loading indikátory - Hidden */}
