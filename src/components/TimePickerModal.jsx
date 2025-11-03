@@ -6,7 +6,7 @@ import { WheelPicker, DualWheelPicker, FramerButton } from '@components';
 import { useLanguage } from '@contexts/LanguageContext';
 
 // Modal pro jeden WheelPicker
-export const WheelPickerModal = ({ isOpen, onClose, value, onChange, min, max, step, label, title }) => {
+export const WheelPickerModal = ({ isOpen, onClose, value, onChange, min, max, step, label, title, onSoundButtonClick }) => {
   const { t } = useLanguage();
   const [tempValue, setTempValue] = React.useState(value);
 
@@ -42,7 +42,7 @@ export const WheelPickerModal = ({ isOpen, onClose, value, onChange, min, max, s
           }}
         >
           <motion.div
-            className="bg-[#f4ddc4] w-full max-w-sm min-h-screen p-6 relative mx-4 border border-black/10 rounded-none flex flex-col"
+            className="bg-[#f4ddc4] w-full max-w-sm min-h-screen p-6 relative mx-4 border border-black/10 rounded-none flex flex-col items-center"
             initial={{ scale: 0.9, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
             exit={{ scale: 0.9, opacity: 0 }}
@@ -50,7 +50,7 @@ export const WheelPickerModal = ({ isOpen, onClose, value, onChange, min, max, s
             style={{ zIndex: 10001 }}
           >
             {/* Header */}
-            <div className="flex items-center justify-between mb-6 flex-shrink-0">
+            <div className="flex items-center justify-between mb-6 flex-shrink-0 w-full">
               {title && (
                 <h2 className="text-2xl font-light">
                   {typeof title === 'string' ? title : t(title)}
@@ -64,8 +64,8 @@ export const WheelPickerModal = ({ isOpen, onClose, value, onChange, min, max, s
               </button>
             </div>
 
-            {/* Picker - scrollovatelný kontejner */}
-            <div className="flex flex-col items-center justify-center mb-4 flex-1 min-h-[200px]">
+            {/* Picker - scrollovatelný kontejner - perfektně na středu */}
+            <div className="flex flex-col items-center justify-center mb-4 flex-1 min-h-[200px] w-full">
               <WheelPicker
                 value={tempValue}
                 onChange={setTempValue}
@@ -77,8 +77,22 @@ export const WheelPickerModal = ({ isOpen, onClose, value, onChange, min, max, s
               />
             </div>
 
-            {/* Footer - vždy viditelný dole */}
-            <div className="flex justify-center pt-4 pb-2 flex-shrink-0 border-t border-black/10">
+            {/* Footer - vždy viditelný dole - zarovnáno na střed */}
+            <div className="flex flex-col gap-3 pt-4 pb-2 flex-shrink-0 border-t border-black/10 w-full items-center">
+              {/* Tlačítko ZVUKY - zobraz pouze pokud je poskytnut callback */}
+              {onSoundButtonClick && (
+                <FramerButton
+                  onClick={() => {
+                    onSoundButtonClick();
+                  }}
+                  variant="secondary"
+                  className="px-6 py-3 flex items-center justify-center gap-2"
+                >
+                  <span>♫</span>
+                  <span>{t('zvuky') || 'zvuky'}</span>
+                </FramerButton>
+              )}
+              {/* Hlavní tlačítko */}
               <FramerButton
                 onClick={handleConfirm}
                 variant="secondary"
@@ -113,7 +127,8 @@ export const DualWheelPickerModal = ({
   rightMin,
   rightMax,
   rightStep,
-  title
+  title,
+  onSoundButtonClick // Callback pro otevření galerie zvuků
 }) => {
   const { t } = useLanguage();
   const [tempLeftValue, setTempLeftValue] = React.useState(leftValue);
@@ -197,12 +212,26 @@ export const DualWheelPickerModal = ({
                 rightMin={rightMin}
                 rightMax={rightMax}
                 rightStep={rightStep}
-                className="w-full"
+                className="w-full max-w-md"
               />
             </div>
 
             {/* Footer - vždy viditelný dole */}
-            <div className="flex justify-center pt-4 pb-2 flex-shrink-0 border-t border-black/10">
+            <div className="flex flex-col gap-3 pt-4 pb-2 flex-shrink-0 border-t border-black/10">
+              {/* Tlačítko ZVUKY - zobraz pouze pokud je poskytnut callback */}
+              {onSoundButtonClick && (
+                <FramerButton
+                  onClick={() => {
+                    onSoundButtonClick();
+                  }}
+                  variant="secondary"
+                  className="px-6 py-3 flex items-center justify-center gap-2"
+                >
+                  <span>♫</span>
+                  <span>{t('zvuky') || 'zvuky'}</span>
+                </FramerButton>
+              )}
+              {/* Hlavní tlačítko */}
               <FramerButton
                 onClick={handleConfirm}
                 variant="secondary"

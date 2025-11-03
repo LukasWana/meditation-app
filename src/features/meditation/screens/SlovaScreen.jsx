@@ -128,7 +128,7 @@ const SlovaScreen = ({
             delay={0.1}
           >
             <h1 className="text-6xl font-light">
-              {t('slova')}
+              {t('meditace') || 'meditace'}
             </h1>
             <p className="text-xl text-center text-gray-700 mb-8">
               {t('mluvene')}

@@ -28,6 +28,17 @@ export const useAppState = () => {
     return saved ? parseInt(saved, 10) : 8; // Výchozí 8 sekund
   });
 
+  // Délka dýchání (v minutách) - samostatný state pro BreathScreen
+  const [breathDuration, setBreathDuration] = useState(() => {
+    const saved = localStorage.getItem('meditation-app-breath-duration');
+    return saved ? parseInt(saved, 10) : 3; // Výchozí 3 minuty
+  });
+  const [breathTime, setBreathTime] = useState(() => {
+    const saved = localStorage.getItem('meditation-app-breath-duration');
+    return saved ? parseInt(saved, 10) * 60 : 180; // V sekundách
+  });
+  const [isBreathing, setIsBreathing] = useState(false);
+
   // User preferences
   const [gender, setGender] = useState(() => {
     // Načti gender z localStorage nebo použij default
@@ -49,6 +60,13 @@ export const useAppState = () => {
   const handleDurationChange = useCallback((duration) => {
     setSelectedDuration(duration);
     setTime(duration * 60); // Převod na sekundy
+  }, []);
+
+  // Handler pro změnu délky dýchání
+  const handleBreathDurationChange = useCallback((duration) => {
+    setBreathDuration(duration);
+    setBreathTime(duration * 60); // Převod na sekundy
+    localStorage.setItem('meditation-app-breath-duration', duration.toString());
   }, []);
 
   const handlePlayPause = useCallback(() => {
@@ -228,6 +246,14 @@ export const useAppState = () => {
     breathOutSound,
     handleBreathSoundChange,
     breathSoundFadeEnabled,
-    handleBreathSoundFadeChange
+    handleBreathSoundFadeChange,
+
+    // Dýchání state
+    breathDuration,
+    breathTime,
+    setBreathTime,
+    isBreathing,
+    setIsBreathing,
+    handleBreathDurationChange
   };
 };

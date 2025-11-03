@@ -198,9 +198,9 @@ const WheelPicker = ({
   WheelItem.displayName = 'WheelItem';
 
   return (
-    <div className={`relative ${className}`}>
+    <div className={`relative flex flex-col items-center ${className}`}>
       {label && (
-        <label className="text-sm font-medium mb-2 block text-center text-gray-700">
+        <label className="text-sm font-medium mb-2 block text-center text-gray-700 w-full">
           {label}
         </label>
       )}
@@ -256,8 +256,8 @@ export const DualWheelPicker = ({
   className = ''
 }) => {
   return (
-    <div className={`flex items-center gap-4 ${className}`}>
-      <div className="flex-1">
+    <div className={`flex items-center justify-center gap-4 ${className}`}>
+      <div className="flex flex-col items-center">
         <WheelPicker
           value={leftValue}
           onChange={onLeftChange}
@@ -268,7 +268,7 @@ export const DualWheelPicker = ({
         />
       </div>
       <div className="text-3xl font-light pt-8">:</div>
-      <div className="flex-1">
+      <div className="flex flex-col items-center">
         <WheelPicker
           value={rightValue}
           onChange={onRightChange}

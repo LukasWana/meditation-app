@@ -53,7 +53,7 @@ const HomeScreen = ({
             <div
               className="text-5xl font-light tracking-wide py-4 leading-loose"
             >
-              {t('slova')}
+              {t('meditace') || 'meditace'}
             </div>
           </motion.div>
         </motion.div>
@@ -83,7 +83,7 @@ const HomeScreen = ({
 
         <motion.div
           className="flex-1 flex items-center justify-center bg-[#f4ddc4] cursor-pointer"
-          onClick={() => onNavigateToScreen('meditation')}
+          onClick={() => onNavigateToScreen('breath')}
           initial={{ opacity: 0, scale: 0.9 }}
           animate={{ opacity: 1, scale: 1 }}
           whileTap={{ scale: 0.95 }}
@@ -98,7 +98,7 @@ const HomeScreen = ({
             <div
               className="text-5xl font-light tracking-wide mb-4 py-4 leading-loose"
             >
-              {t('meditacia')}
+              {t('dychanie') || 'dýchání'}
             </div>
           </motion.div>
         </motion.div>
