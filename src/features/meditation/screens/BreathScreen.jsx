@@ -126,18 +126,18 @@ const BreathScreen = ({
         <div className="max-w-md w-full mt-16">
           {/* Nadpis - velký elegantní serif font */}
           <FramerSection
-            className="text-center mb-16"
+            className="text-center mb-6"
             animationType="fadeIn"
             delay={0.1}
           >
-            <h1 className="text-5xl font-serif text-gray-800 mb-2">
+            <h1 className="text-5xl font-serif text-gray-800">
               {t('dychanie') || 'dýchání'}
             </h1>
           </FramerSection>
 
           {/* CircularProgress s tmavě šedým kruhem a bílou play ikonou - stejný jako v hudbě */}
           <FramerSection
-            className="mb-12 flex flex-col items-center"
+            className="mb-6 flex flex-col items-center"
             animationType="scaleIn"
             delay={0.2}
           >
@@ -194,7 +194,7 @@ const BreathScreen = ({
             </div>
 
             {/* Current Time Display - pod CircularProgress - s informací o fázi dýchání vpravo */}
-            <div className="flex items-center justify-center mt-6 mb-4 pointer-events-auto w-full gap-4">
+            <div className="flex items-center justify-center mt-4 mb-2 pointer-events-auto w-full gap-4">
               <div className="pointer-events-none z-10 text-center">
                 <CurrentTimeDisplay
                   currentTime={totalTime - breathTime}
@@ -220,11 +220,11 @@ const BreathScreen = ({
 
           {/* Tři parametry: příprava, délka, rytmus - horizontálně pod kruhem */}
           <FramerSection
-            className="mb-12"
+            className="mb-6"
             animationType="fadeIn"
             delay={0.3}
           >
-            <div className="flex justify-center items-start gap-8 md:gap-12 mb-8">
+            <div className="flex justify-center items-start gap-8 md:gap-12 mb-4">
               {/* Příprava */}
               <div className="flex flex-col items-center">
                 <button
@@ -233,7 +233,7 @@ const BreathScreen = ({
                     setShowRhythmPicker(false);
                     setShowPreparationPicker(true);
                   }}
-                  className="text-4xl md:text-5xl font-sans font-medium text-gray-800 hover:text-black transition-colors cursor-pointer mb-2"
+                  className="text-4xl md:text-5xl font-sans font-medium text-gray-800 hover:text-black transition-colors cursor-pointer mb-1"
                 >
                   {formatPreparationTime(preparationTime)}
                 </button>
@@ -250,7 +250,7 @@ const BreathScreen = ({
                     setShowRhythmPicker(false);
                     setShowDurationPicker(true);
                   }}
-                  className="text-4xl md:text-5xl font-sans font-medium text-gray-800 hover:text-black transition-colors cursor-pointer mb-2"
+                  className="text-4xl md:text-5xl font-sans font-medium text-gray-800 hover:text-black transition-colors cursor-pointer mb-1"
                 >
                   {formatTime(totalTime)}
                 </button>
@@ -267,7 +267,7 @@ const BreathScreen = ({
                     setShowDurationPicker(false);
                     setShowRhythmPicker(true);
                   }}
-                  className="text-4xl md:text-5xl font-sans font-medium text-gray-800 hover:text-black transition-colors cursor-pointer mb-2"
+                  className="text-4xl md:text-5xl font-sans font-medium text-gray-800 hover:text-black transition-colors cursor-pointer mb-1"
                 >
                   {breathInDuration} : {breathOutDuration}
                 </button>
