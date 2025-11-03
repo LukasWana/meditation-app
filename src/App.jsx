@@ -72,7 +72,13 @@ function MeditationApp() {
     breathSoundFadeEnabled,
     handleBreathSoundFadeChange,
     isPreparing,
-    preparationCountdown
+    preparationCountdown,
+    breathDuration,
+    breathTime,
+    setBreathTime,
+    isBreathing,
+    setIsBreathing,
+    handleBreathDurationChange
   } = useAppState();
 
   // Touch navigation
@@ -280,6 +286,7 @@ function MeditationApp() {
                 onPlayPause={handlePlayPause}
                 onReset={handleReset}
                 breathPhase={breathPhase}
+                setBreathPhase={setBreathPhase}
                 breathInDuration={breathInDuration}
                 breathOutDuration={breathOutDuration}
                 onBreathRhythmChange={handleBreathRhythmChange}
@@ -292,6 +299,12 @@ function MeditationApp() {
                 onBreathSoundFadeChange={handleBreathSoundFadeChange}
                 isPreparing={isPreparing}
                 preparationCountdown={preparationCountdown}
+                breathDuration={breathDuration}
+                breathTime={breathTime}
+                setBreathTime={setBreathTime}
+                isBreathing={isBreathing}
+                setIsBreathing={setIsBreathing}
+                onBreathDurationChange={handleBreathDurationChange}
 
                 // Audio player specifické
                 activeAudio={activeAudio}

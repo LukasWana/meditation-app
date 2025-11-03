@@ -1,10 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { FramerButton, FramerSection, FramerPageTransition, BackButton, WheelPickerModal, DualWheelPickerModal } from '@components';
+import { FramerButton, FramerSection, FramerPageTransition, BackButton } from '@components';
 import LanguageSwitcher from '@components/LanguageSwitcher';
 import { useLanguage } from '@contexts/LanguageContext';
-import { Download, Wifi, WifiOff, HardDrive, RefreshCw, Trash2, Wind, Clock, Volume2, Image as ImageIcon } from 'lucide-react';
-import SoundThemeGallery from '@components/SoundThemeGallery';
+import { Download, Wifi, WifiOff, HardDrive, RefreshCw, Trash2 } from 'lucide-react';
 import useOfflineCache from '@hooks/useOfflineCache';
 import { useFirebaseHudbaScanner } from '@hooks/useFirebaseHudbaScanner';
 import { realtimeMetadataService } from '@services/realtimeMetadataService';
@@ -14,22 +13,9 @@ const SettingsScreen = ({
   onTouchStart,
   onTouchMove,
   onTouchEnd,
-  onPlayerStateChange,
-  breathInDuration,
-  breathOutDuration,
-  onBreathRhythmChange,
-  preparationTime,
-  onPreparationTimeChange,
-  breathInSound,
-  breathOutSound,
-  onBreathSoundChange,
-  breathSoundFadeEnabled,
-  onBreathSoundFadeChange
+  onPlayerStateChange
 }) => {
   const { t } = useLanguage();
-  const [showGallery, setShowGallery] = useState(false);
-  const [showPreparationPicker, setShowPreparationPicker] = useState(false);
-  const [showBreathPicker, setShowBreathPicker] = useState(false);
 
   // Offline cache hook
   const {
@@ -168,199 +154,10 @@ const SettingsScreen = ({
             </FramerSection>
 
 
-            {/* Čas k přípravě */}
-            <FramerSection
-              animationType="slideInUp"
-              delay={0.25}
-            >
-              <div className="w-full p-6 bg-white/50 backdrop-blur rounded-none border border-black/10">
-                <h3 className="text-2xl font-light mb-4 flex items-center">
-                  <Clock className="mr-3" size={24} />
-                  {t('casKPriprave')}
-                </h3>
-
-                <p className="text-sm text-gray-600 mb-4">
-                  {t('nastavteCasNaPripravu')}
-                </p>
-
-                <div className="flex justify-center">
-                  <button
-                    onClick={() => {
-                      setShowBreathPicker(false);
-                      setShowPreparationPicker(true);
-                    }}
-                    className="text-4xl font-light text-gray-800 hover:text-black transition-colors cursor-pointer px-6 py-4"
-                  >
-                    {preparationTime}
-                  </button>
-                </div>
-
-                <WheelPickerModal
-                  isOpen={showPreparationPicker}
-                  onClose={() => setShowPreparationPicker(false)}
-                  value={preparationTime}
-                  onChange={onPreparationTimeChange}
-                  min={0}
-                  max={60}
-                  step={1}
-                  label={t('sekund')}
-                  title={t('casKPriprave')}
-                />
-              </div>
-            </FramerSection>
-
-            {/* Rytmus dýchání */}
-            <FramerSection
-              animationType="slideInUp"
-              delay={0.3}
-            >
-              <div className="w-full p-6 bg-white/50 backdrop-blur rounded-none border border-black/10">
-                <h3 className="text-2xl font-light mb-4 flex items-center">
-                  <Wind className="mr-3" size={24} />
-                  {t('rytmusDychania')}
-                </h3>
-
-                <p className="text-sm text-gray-600 mb-4">
-                  {t('vyberteRytmus')}
-                </p>
-
-                <div className="flex justify-center items-center gap-2">
-                  <button
-                    onClick={() => {
-                      setShowPreparationPicker(false);
-                      setShowBreathPicker(true);
-                    }}
-                    className="text-4xl font-light text-gray-800 hover:text-black transition-colors cursor-pointer px-6 py-4"
-                  >
-                    {breathInDuration}
-                  </button>
-                  <span className="text-4xl font-light">:</span>
-                  <button
-                    onClick={() => {
-                      setShowPreparationPicker(false);
-                      setShowBreathPicker(true);
-                    }}
-                    className="text-4xl font-light text-gray-800 hover:text-black transition-colors cursor-pointer px-6 py-4"
-                  >
-                    {breathOutDuration}
-                  </button>
-                </div>
-
-                <DualWheelPickerModal
-                  isOpen={showBreathPicker}
-                  onClose={() => setShowBreathPicker(false)}
-                  leftValue={breathInDuration}
-                  rightValue={breathOutDuration}
-                  onChange={(leftValue, rightValue) => onBreathRhythmChange(leftValue, rightValue)}
-                  leftLabel={t('nadech')}
-                  rightLabel={t('vydech')}
-                  leftMin={1}
-                  leftMax={20}
-                  leftStep={1}
-                  rightMin={1}
-                  rightMax={20}
-                  rightStep={1}
-                  title={t('rytmusDychania')}
-                />
-              </div>
-            </FramerSection>
-
-            {/* Nastavení zvuku */}
-            <FramerSection
-              animationType="slideInUp"
-              delay={0.35}
-            >
-              <div className="w-full p-6 bg-white/50 backdrop-blur rounded-none border border-black/10">
-                <h3 className="text-2xl font-light mb-4 flex items-center">
-                  <Volume2 className="mr-3" size={24} />
-                  {t('nastaveniaZvuku')}
-                </h3>
-
-                <div className="space-y-4">
-                  {/* Výběr zvuku pro nádech */}
-                  <div>
-                    <label className="text-sm font-medium mb-2 block">
-                      {t('zvolteZvukNadech')}
-                    </label>
-                    <div className="flex gap-2 mb-3">
-                      <FramerButton
-                        onClick={() => onBreathSoundChange('in', 'none')}
-                        variant={breathInSound === 'none' ? 'rounded' : 'secondary'}
-                        className="flex-1 py-2"
-                      >
-                        {t('ziadnyZvuk')}
-                      </FramerButton>
-                      <FramerButton
-                        onClick={() => setShowGallery(true)}
-                        variant="secondary"
-                        className="flex-1 py-2"
-                      >
-                        <ImageIcon size={16} className="mr-2 inline" />
-                        {t('zobrazitGaleriu')}
-                      </FramerButton>
-                    </div>
-                    {breathInSound !== 'none' && (
-                      <p className="text-xs text-gray-600 line-clamp-1">
-                        {t('vybrany')}: {breathInSound.split('/').pop()}
-                      </p>
-                    )}
-                  </div>
-
-                  {/* Výběr zvuku pro výdech */}
-                  <div>
-                    <label className="text-sm font-medium mb-2 block">
-                      {t('zvolteZvukVydech')}
-                    </label>
-                    <div className="flex gap-2 mb-3">
-                      <FramerButton
-                        onClick={() => onBreathSoundChange('out', 'none')}
-                        variant={breathOutSound === 'none' ? 'rounded' : 'secondary'}
-                        className="flex-1 py-2"
-                      >
-                        {t('ziadnyZvuk')}
-                      </FramerButton>
-                      <FramerButton
-                        onClick={() => setShowGallery(true)}
-                        variant="secondary"
-                        className="flex-1 py-2"
-                      >
-                        <ImageIcon size={16} className="mr-2 inline" />
-                        {t('zobrazitGaleriu')}
-                      </FramerButton>
-                    </div>
-                    {breathOutSound !== 'none' && (
-                      <p className="text-xs text-gray-600 line-clamp-1">
-                        {t('vybrany')}: {breathOutSound.split('/').pop()}
-                      </p>
-                    )}
-                  </div>
-
-                  {/* Fade in/out nastavení */}
-                  <div className="pt-3 border-t border-black/10">
-                    <div className="flex items-center justify-between">
-                      <label className="text-sm font-medium">
-                        {t('fadeInOut')}
-                      </label>
-                      <FramerButton
-                        onClick={() => onBreathSoundFadeChange(!breathSoundFadeEnabled)}
-                        variant={breathSoundFadeEnabled ? 'rounded' : 'secondary'}
-                        className="px-4 py-2"
-                      >
-                        {breathSoundFadeEnabled ? t('povolene') : t('zakazane')}
-                      </FramerButton>
-                    </div>
-                    <p className="text-xs text-gray-500 mt-2">
-                      {t('fadeInOutDescription')}
-                    </p>
-                  </div>
-                </div>
-              </div>
-            </FramerSection>
-
             {/* Informace */}
             <FramerSection
               animationType="slideInUp"
-              delay={0.4}
+              delay={0.25}
             >
               <div className="w-full p-6 bg-white/30 backdrop-blur rounded-none border border-black/10">
                 <h3 className="text-2xl font-light mb-4">
@@ -375,14 +172,6 @@ const SettingsScreen = ({
         </div>
       </div>
 
-      {/* Galerie zvukových témat */}
-      <SoundThemeGallery
-        isOpen={showGallery}
-        onClose={() => setShowGallery(false)}
-        onSelectSound={onBreathSoundChange}
-        selectedInSound={breathInSound}
-        selectedOutSound={breathOutSound}
-      />
     </FramerPageTransition>
   );
 };

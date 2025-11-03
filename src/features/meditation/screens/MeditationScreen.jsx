@@ -320,7 +320,6 @@ const MeditationScreen = ({
           onSelectSound={onBreathSoundChange}
           selectedInSound={breathInSound}
           selectedOutSound={breathOutSound}
-          layout="list"
         />
       </div>
     </FramerPageTransition>

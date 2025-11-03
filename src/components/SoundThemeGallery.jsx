@@ -5,17 +5,11 @@ import { FramerButton } from '@components';
 import { useLanguage } from '@contexts/LanguageContext';
 import { realtimeMetadataService } from '@services/realtimeMetadataService';
 
-const SoundThemeGallery = ({ isOpen, onClose, onSelectSound, selectedInSound, selectedOutSound, layout = 'grid' }) => {
+const SoundThemeGallery = ({ isOpen, onClose, onSelectSound, selectedInSound, selectedOutSound }) => {
   const { t } = useLanguage();
   const [audioFiles, setAudioFiles] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  // Debug: zkontroluj layout prop
-  useEffect(() => {
-    if (isOpen) {
-      console.log('SoundThemeGallery layout:', layout);
-    }
-  }, [isOpen, layout]);
 
   useEffect(() => {
     if (isOpen) {
@@ -96,117 +90,73 @@ const SoundThemeGallery = ({ isOpen, onClose, onSelectSound, selectedInSound, se
               </div>
             )}
 
-            {/* Galerie hudba souborů */}
+            {/* Textový seznam skladeb */}
             {!loading && (
-              <div
-                className={
-                  layout === 'list'
-                    ? 'flex flex-col space-y-3 w-full'
-                    : 'flex overflow-x-auto gap-4 pb-4 snap-x snap-mandatory scrollbar-hide'
-                }
-                style={layout === 'list' ? { display: 'flex', flexDirection: 'column' } : {}}
-              >
+              <div className="flex flex-col space-y-3 w-full">
                 {audioFiles.map((file) => (
                   <motion.div
                     key={file.id}
-                    className={`bg-white/50 backdrop-blur rounded-none border border-black/10 cursor-pointer hover:bg-white/70 transition-colors ${
-                      layout === 'list'
-                        ? 'p-4 flex items-center gap-4 w-full'
-                        : 'p-4 min-w-[calc(33.333%-0.667rem)] flex-shrink-0 sm:min-w-[calc(25%-0.75rem)] md:min-w-[calc(16.666%-0.667rem)] lg:min-w-[calc(12.5%-0.75rem)] snap-start'
-                    }`}
-                    whileHover={{ scale: layout === 'list' ? 1.01 : 1.05 }}
-                    whileTap={{ scale: 0.95 }}
+                    className="bg-white/50 backdrop-blur rounded-none border border-black/10 p-4 w-full hover:bg-white/70 transition-colors"
+                    whileHover={{ scale: 1.01 }}
+                    whileTap={{ scale: 0.98 }}
                   >
-                    {/* Cover obrázek nebo placeholder */}
-                    <div className={`${layout === 'list' ? 'w-20 h-20 flex-shrink-0' : 'w-full aspect-square mb-3'} bg-black/5 rounded-none flex items-center justify-center overflow-hidden`}>
-                      {file.coverImage ? (
-                        <img
-                          src={file.coverImage}
-                          alt={file.name}
-                          className="w-full h-full object-cover"
-                          onError={(e) => {
-                            e.target.style.display = 'none';
-                            e.target.nextSibling.style.display = 'flex';
-                          }}
-                        />
-                      ) : null}
-                      <div className={`w-full h-full flex items-center justify-center ${layout === 'list' ? 'text-2xl' : 'text-4xl'} ${file.coverImage ? 'hidden' : ''}`}>
-                        🎵
-                      </div>
-                    </div>
-
-                    {/* Content area */}
-                    <div className={`${layout === 'list' ? 'flex-1 flex flex-col' : 'text-center'}`}>
-                      {/* Název */}
-                      <h3 className={`font-medium ${layout === 'list' ? 'text-lg mb-1' : 'text-base mb-1 line-clamp-2'}`}>
+                    {/* Název skladby */}
+                    <div className="mb-3">
+                      <h3 className="font-medium text-lg mb-1">
                         {file.name}
                       </h3>
-
                       {/* Délka */}
                       {file.duration !== 'N/A' && (
-                        <p className={`text-gray-500 ${layout === 'list' ? 'text-sm mb-3' : 'text-xs text-center mb-3'}`}>
+                        <p className="text-gray-500 text-sm">
                           {file.duration}
                         </p>
                       )}
+                    </div>
 
-                      {/* Tlačítka pro výběr */}
-                      <div className={layout === 'list' ? 'flex gap-2' : 'space-y-2'}>
-                        <FramerButton
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleFileSelect('in', file.fileName);
-                          }}
-                          variant={selectedInSound === file.fileName ? 'rounded' : 'secondary'}
-                          className={`${layout === 'list' ? 'flex-1 py-2 text-sm' : 'w-full py-2 text-sm'}`}
-                        >
-                          {t('zvolteZvukNadech')}
-                        </FramerButton>
-                        <FramerButton
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleFileSelect('out', file.fileName);
-                          }}
-                          variant={selectedOutSound === file.fileName ? 'rounded' : 'secondary'}
-                          className={`${layout === 'list' ? 'flex-1 py-2 text-sm' : 'w-full py-2 text-sm'}`}
-                        >
-                          {t('zvolteZvukVydech')}
-                        </FramerButton>
-                      </div>
+                    {/* Tlačítka pro výběr */}
+                    <div className="flex gap-2">
+                      <FramerButton
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleFileSelect('in', file.fileName);
+                        }}
+                        variant={selectedInSound === file.fileName ? 'rounded' : 'secondary'}
+                        className="flex-1 py-2 text-sm"
+                      >
+                        {t('zvolteZvukNadech')}
+                      </FramerButton>
+                      <FramerButton
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleFileSelect('out', file.fileName);
+                        }}
+                        variant={selectedOutSound === file.fileName ? 'rounded' : 'secondary'}
+                        className="flex-1 py-2 text-sm"
+                      >
+                        {t('zvolteZvukVydech')}
+                      </FramerButton>
                     </div>
                   </motion.div>
                 ))}
 
                 {/* Žádný zvuk */}
                 <motion.div
-                  className={`bg-white/50 backdrop-blur rounded-none border border-black/10 cursor-pointer hover:bg-white/70 transition-colors ${
-                    layout === 'list'
-                      ? 'p-4 flex items-center gap-4 w-full'
-                      : 'p-4 flex flex-col items-center justify-center'
-                  }`}
-                  whileHover={{ scale: layout === 'list' ? 1.01 : 1.05 }}
-                  whileTap={{ scale: 0.95 }}
+                  className="bg-white/50 backdrop-blur rounded-none border border-black/10 p-4 w-full hover:bg-white/70 transition-colors cursor-pointer"
+                  whileHover={{ scale: 1.01 }}
+                  whileTap={{ scale: 0.98 }}
                   onClick={() => {
                     handleFileSelect('in', 'none');
                     handleFileSelect('out', 'none');
                   }}
                 >
-                  <div className={`${layout === 'list' ? 'w-20 h-20 flex-shrink-0 flex items-center justify-center text-4xl' : 'text-6xl mb-3'}`}>
-                    🔇
-                  </div>
-                  <div className={layout === 'list' ? 'flex-1' : ''}>
-                    <h3 className={`font-medium ${layout === 'list' ? 'text-lg mb-1' : 'text-lg text-center mb-2'}`}>
-                      {t('ziadnyZvuk')}
-                    </h3>
-                    {layout === 'list' ? (
-                      <p className="text-xs text-gray-600">
-                        {selectedInSound === 'none' && selectedOutSound === 'none' ? t('selected') : ''}
-                      </p>
-                    ) : (
-                      <p className="text-xs text-gray-600 text-center">
-                        {selectedInSound === 'none' && selectedOutSound === 'none' ? t('selected') : ''}
-                      </p>
-                    )}
-                  </div>
+                  <h3 className="font-medium text-lg mb-1">
+                    {t('ziadnyZvuk')}
+                  </h3>
+                  {selectedInSound === 'none' && selectedOutSound === 'none' && (
+                    <p className="text-xs text-gray-600">
+                      {t('selected')}
+                    </p>
+                  )}
                 </motion.div>
               </div>
             )}
@@ -217,10 +167,6 @@ const SoundThemeGallery = ({ isOpen, onClose, onSelectSound, selectedInSound, se
               </div>
             )}
 
-            {/* Footer */}
-            <div className="mt-6 pt-4 border-t border-black/10 text-center text-sm text-gray-600">
-              <p>{t('zobrazitGaleriu')}</p>
-            </div>
           </motion.div>
         </motion.div>
       )}

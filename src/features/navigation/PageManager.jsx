@@ -50,7 +50,7 @@ const SCREEN_REGISTRY = {
   'breath': {
     component: BreathScreen,
     requiresLayout: true,
-    props: ['breathPhase', 'onNavigateToScreen', 'onTouchStart', 'onTouchMove', 'onTouchEnd'],
+    props: ['breathPhase', 'setBreathPhase', 'onNavigateToScreen', 'onTouchStart', 'onTouchMove', 'onTouchEnd', 'breathInDuration', 'breathOutDuration', 'onBreathRhythmChange', 'preparationTime', 'onPreparationTimeChange', 'breathDuration', 'breathTime', 'setBreathTime', 'isBreathing', 'setIsBreathing', 'onBreathDurationChange', 'onReset', 'breathInSound', 'breathOutSound', 'breathSoundFadeEnabled', 'onBreathSoundChange'],
     transition: {
       type: 'scale',
       duration: 0.7
@@ -59,7 +59,7 @@ const SCREEN_REGISTRY = {
   'settings': {
     component: SettingsScreen,
     requiresLayout: true,
-    props: ['onNavigateToScreen', 'onTouchStart', 'onTouchMove', 'onTouchEnd', 'onPlayerStateChange', 'breathInDuration', 'breathOutDuration', 'onBreathRhythmChange', 'preparationTime', 'onPreparationTimeChange', 'breathInSound', 'breathOutSound', 'onBreathSoundChange', 'breathSoundFadeEnabled', 'onBreathSoundFadeChange'],
+    props: ['onNavigateToScreen', 'onTouchStart', 'onTouchMove', 'onTouchEnd', 'onPlayerStateChange'],
     transition: {
       type: 'slide',
       direction: 'up',
@@ -193,6 +193,7 @@ const PageManager = ({
   onPlayPause,
   onReset,
   breathPhase,
+  setBreathPhase,
   breathInDuration,
   breathOutDuration,
   onBreathRhythmChange,
@@ -205,6 +206,12 @@ const PageManager = ({
   onBreathSoundFadeChange,
   isPreparing,
   preparationCountdown,
+  breathDuration,
+  breathTime,
+  setBreathTime,
+  isBreathing,
+  setIsBreathing,
+  onBreathDurationChange,
 
   // Audio player specifické
   activeAudio,
@@ -285,6 +292,9 @@ const PageManager = ({
         case 'breathPhase':
           props.breathPhase = breathPhase;
           break;
+        case 'setBreathPhase':
+          props.setBreathPhase = setBreathPhase;
+          break;
         case 'breathInDuration':
           props.breathInDuration = breathInDuration;
           break;
@@ -321,6 +331,24 @@ const PageManager = ({
         case 'preparationTime':
           props.preparationTime = preparationTime;
           break;
+        case 'breathDuration':
+          props.breathDuration = breathDuration;
+          break;
+        case 'breathTime':
+          props.breathTime = breathTime;
+          break;
+        case 'setBreathTime':
+          props.setBreathTime = setBreathTime;
+          break;
+        case 'isBreathing':
+          props.isBreathing = isBreathing;
+          break;
+        case 'setIsBreathing':
+          props.setIsBreathing = setIsBreathing;
+          break;
+        case 'onBreathDurationChange':
+          props.onBreathDurationChange = onBreathDurationChange;
+          break;
         case 'onIntroComplete':
           props.onIntroComplete = () => onNavigateToScreen('home');
           break;
@@ -342,9 +370,10 @@ const PageManager = ({
   }, [
     onNavigateToScreen, onTouchStart, onTouchMove, onTouchEnd,
     gender, onPlayerStateChange, onGenderChange, time, selectedDuration, isPlaying,
-    onDurationChange, onPlayPause, onReset, breathPhase, breathInDuration, breathOutDuration, breathInSound, breathOutSound, breathSoundFadeEnabled, onBreathRhythmChange,
+    onDurationChange, onPlayPause, onReset, breathPhase, setBreathPhase, breathInDuration, breathOutDuration, breathInSound, breathOutSound, breathSoundFadeEnabled, onBreathRhythmChange,
     preparationTime, onPreparationTimeChange, onBreathSoundChange, onBreathSoundFadeChange,
     isPreparing, preparationCountdown,
+    breathDuration, breathTime, setBreathTime, isBreathing, setIsBreathing, onBreathDurationChange,
     activeAudio, onCloseAudio, selectedAlbum, onAlbumSelect, onAlbumClose
   ]);
 

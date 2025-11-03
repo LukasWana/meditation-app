@@ -4,7 +4,13 @@ import { motion } from 'framer-motion';
 const CircularProgress = ({
   progress,
   onSeek,
-  className = "w-[50vw] h-[50vw] max-w-[400px] max-h-[400px] min-w-[200px] min-h-[200px]"
+  className = "w-[50vw] h-[50vw] max-w-[400px] max-h-[400px] min-w-[200px] min-h-[200px]",
+  backgroundColor = "rgba(255,255,255,0.3)",
+  progressColor = "limegreen",
+  backgroundProgressColor = "white",
+  backgroundProgressOpacity = 0.15,
+  strokeWidth = 20,
+  backgroundStrokeWidth = 12
 }) => {
   const radius = 180; // Snížil radius aby se vešel do viewBox
   const circumference = 2 * Math.PI * radius;
@@ -159,31 +165,31 @@ const CircularProgress = ({
         cx="225"
         cy="225"
         r={radius}
-        stroke="rgba(255,255,255,0.3)"
-        strokeWidth="12"
+        stroke={backgroundColor}
+        strokeWidth={backgroundStrokeWidth}
         fill="none"
       />
-      {/* Background Progress Circle - Duplicate with 50% opacity and 50% thicker */}
+      {/* Background Progress Circle - Duplicate with opacity */}
       <motion.circle
         cx="225"
         cy="225"
         r={radius}
-        stroke="white"
-        strokeWidth="50"
+        stroke={backgroundProgressColor}
+        strokeWidth={strokeWidth * 2.5}
         fill="none"
         strokeLinecap="butt"
         strokeDasharray={circumference}
         strokeDashoffset={circumference * (1 - progress / 100)}
         transition={{ duration: 0.1 }}
-        opacity="0.15"
+        opacity={backgroundProgressOpacity}
       />
       {/* Main Progress Circle */}
       <motion.circle
         cx="225"
         cy="225"
         r={radius}
-        stroke="limegreen"
-        strokeWidth="20"
+        stroke={progressColor}
+        strokeWidth={strokeWidth}
         fill="none"
         strokeLinecap="butt"
         strokeDasharray={circumference}
