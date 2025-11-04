@@ -89,6 +89,9 @@ class UnifiedMetadataService {
 
   async saveToFirestore(fileName, metadata) {
     try {
+      // Import rate limiteru pro bezpečnost
+      const { withRateLimit } = await import('@utils/rateLimiter');
+
       // Nahraď lomítka v názvu souboru, aby vytvořil platný document ID
       const safeFileName = fileName.replace(/\//g, '_');
       const docRef = doc(db, this.collectionName, safeFileName);
@@ -98,7 +101,11 @@ class UnifiedMetadataService {
         updated: new Date().toISOString()
       };
 
-      await setDoc(docRef, metadataDoc);
+      // Použij rate limiting pro Firebase operaci
+      await withRateLimit(async () => {
+        await setDoc(docRef, metadataDoc);
+      });
+
       log.debug(`✅ Saved to Firestore: ${fileName}`);
     } catch (error) {
       log.warn(`Failed to save to Firestore: ${fileName}`, error);

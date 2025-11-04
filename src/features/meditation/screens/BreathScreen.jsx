@@ -326,11 +326,6 @@ const BreathScreen = ({
               <h1 className="text-5xl font-light mb-2">
                 {t('priprava') || 'příprava'}
               </h1>
-              <div className="flex justify-center gap-2 mt-4 mb-4">
-                <div className="w-2 h-2 bg-black rounded-full"></div>
-                <div className="w-2 h-2 bg-black rounded-full"></div>
-                <div className="w-2 h-2 bg-black rounded-full"></div>
-              </div>
             </FramerSection>
 
             <FramerSection
@@ -399,15 +394,43 @@ const BreathScreen = ({
         <BackButton onClick={() => onNavigateToScreen('home')} />
 
         <div className="max-w-md w-full mt-16">
-          {/* Nadpis - velký elegantní serif font */}
+          {/* Nadpis - velký elegantní serif font - dynamicky se mění podle fáze dýchání */}
           <FramerSection
             className="text-center mb-6"
             animationType="fadeIn"
             delay={0.1}
           >
-            <h1 className="text-5xl font-serif text-gray-800 leading-normal pb-3 overflow-visible" style={{ lineHeight: '1.2' }}>
-              {t('dychanie') || 'dýchání'}
-            </h1>
+            <motion.h1
+              key={isBreathing ? breathPhase : 'default'}
+              className="text-5xl font-serif text-gray-800 leading-normal pb-3 overflow-visible"
+              style={{ lineHeight: '1.2' }}
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -10 }}
+              transition={{ duration: 0.3 }}
+            >
+              {isBreathing
+                ? (breathPhase === 'in' ? t('nadech') || 'nádech' : t('vydech') || 'výdech')
+                : (t('dychanie') || 'dýchání')
+              }
+            </motion.h1>
+            {/* Aktuální čas pod nadpisem - pouze když je aktivní dýchání */}
+            {isBreathing && (
+              <motion.div
+                key={`time-${breathPhase}`}
+                className="mt-2"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 0.3 }}
+              >
+                <CurrentTimeDisplay
+                  currentTime={totalTime - breathTime}
+                  formatTime={formatTime}
+                  className="text-black font-medium text-center text-lg"
+                />
+              </motion.div>
+            )}
           </FramerSection>
 
           {/* CircularProgress s tmavě šedým kruhem a bílou play ikonou - stejný jako v hudbě */}
@@ -466,30 +489,6 @@ const BreathScreen = ({
                       duration: 0.5
                     }}
                   />
-                </motion.div>
-              )}
-            </div>
-
-            {/* Current Time Display - pod CircularProgress - s informací o fázi dýchání vpravo */}
-            <div className="flex items-center justify-center mt-4 mb-2 pointer-events-auto w-full gap-4">
-              <div className="pointer-events-none z-10 text-center">
-                <CurrentTimeDisplay
-                  currentTime={totalTime - breathTime}
-                  formatTime={formatTime}
-                  className="text-black font-medium text-center text-clamp-time"
-                />
-              </div>
-              {/* Textový indikátor fáze dýchání - vpravo vedle času */}
-              {isBreathing && (
-                <motion.div
-                  key={breathPhase}
-                  initial={{ opacity: 0, x: -10 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  exit={{ opacity: 0, x: 10 }}
-                  transition={{ duration: 0.3 }}
-                  className="pointer-events-none z-10 text-black font-medium text-clamp-time"
-                >
-                  {breathPhase === 'in' ? t('nadech') || 'nádech' : t('vydech') || 'výdech'}
                 </motion.div>
               )}
             </div>

@@ -4,16 +4,16 @@
     ".read": false,
     ".write": false,
 
-    // Audio metadata - veřejné čtení, zápis pouze pro autentifikované
+    // Audio metadata - veřejné čtení, zápis pouze pro admin
     "audio-metadata": {
       ".read": true,
-      ".write": "auth != null"
+      ".write": "auth != null && auth.token.admin === true"
     },
 
-    // Audio statistiky - veřejné čtení, zápis pouze pro autentifikované
+    // Audio statistiky - veřejné čtení, zápis pouze pro admin
     "audio_stats": {
       ".read": true,
-      ".write": "auth != null"
+      ".write": "auth != null && auth.token.admin === true"
     },
 
     // Test data - pouze pro autentifikované
@@ -22,16 +22,16 @@
       ".write": "auth != null"
     },
 
-    // Metadata - veřejné čtení, zápis pro autentifikované
+    // Metadata - veřejné čtení, zápis pouze pro admin
     "metadata": {
       ".read": true,
-      ".write": "auth != null"
+      ".write": "auth != null && auth.token.admin === true"
     },
 
-    // System data - pouze pro autentifikované
+    // System data - pouze pro admin
     "system": {
-      ".read": "auth != null",
-      ".write": "auth != null"
+      ".read": "auth != null && auth.token.admin === true",
+      ".write": "auth != null && auth.token.admin === true"
     },
 
     // User data - každý uživatel může číst/zapisovat pouze své vlastní data
@@ -42,10 +42,10 @@
       }
     },
 
-    // UI data - veřejné čtení (texty, překlady, konfigurace), zápis pro autentifikované
+    // UI data - veřejné čtení (texty, překlady, konfigurace), zápis pouze pro admin
     "ui-data": {
       ".read": true,
-      ".write": "auth != null"
+      ".write": "auth != null && auth.token.admin === true"
     }
   }
 }

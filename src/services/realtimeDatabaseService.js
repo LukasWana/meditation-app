@@ -36,12 +36,19 @@ class RealtimeDatabaseService {
 
   async setData(path, data) {
     try {
+      // Import rate limiteru pro bezpečnost
+      const { withRateLimit } = await import('@utils/rateLimiter');
+
       // Sanitizuj cestu pro Realtime Database
       const safePath = this.sanitizePath(path);
       const dataRef = ref(this.database, safePath);
-      await set(dataRef, {
-        ...data,
-        lastUpdated: new Date().toISOString()
+
+      // Použij rate limiting pro Firebase operaci
+      await withRateLimit(async () => {
+        await set(dataRef, {
+          ...data,
+          lastUpdated: new Date().toISOString()
+        });
       });
 
       log.debug(`✅ Data saved to Realtime Database: ${safePath}`);

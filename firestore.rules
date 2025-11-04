@@ -8,12 +8,19 @@ service cloud.firestore {
       // Veřejné čtení pro všechny (meditační data jsou veřejná)
       allow read: if true;
 
-      // Zápis pro všechny (pro testování - v produkci by mělo být omezeno)
-      allow write: if true;
-
-      // Alternativně: Zápis POUZE pro autentifikované admin uživatele
-      // allow write: if request.auth != null &&
-      //                 request.auth.token.admin == true;
+      // Zápis POUZE pro autentifikované admin uživatele s validací dat
+      allow write: if request.auth != null &&
+                      request.auth.token.admin == true &&
+                      // Validace struktury dat
+                      request.resource.data.keys().hasAll(['fileName', 'duration', 'size']) &&
+                      // Validace typů
+                      request.resource.data.fileName is string &&
+                      request.resource.data.duration is number &&
+                      request.resource.data.size is number &&
+                      // Validace rozsahů
+                      request.resource.data.duration > 0 &&
+                      request.resource.data.size > 0 &&
+                      request.resource.data.size < 52428800; // Max 50MB
     }
 
     // Pravidla pro cache kolekci

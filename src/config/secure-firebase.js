@@ -188,16 +188,19 @@ export const firebaseUtils = {
   },
 
   /**
-   * Bezpečné uložení dokumentu do Firestore
+   * Bezpečné uložení dokumentu do Firestore s rate limiting
    */
   async setDocument(collection, docId, data) {
+    const { withRateLimit } = await import('@utils/rateLimiter');
     return withFirebaseErrorHandling(
       async () => {
         const { doc, setDoc } = await import('firebase/firestore');
         const docRef = doc(db, collection, docId);
-        await setDoc(docRef, {
-          ...data,
-          updated: new Date().toISOString()
+        await withRateLimit(async () => {
+          await setDoc(docRef, {
+            ...data,
+            updated: new Date().toISOString()
+          });
         });
         return true;
       },

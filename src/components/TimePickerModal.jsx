@@ -11,13 +11,27 @@ const DualWheelPicker = lazy(() => import('@components/WheelPicker').then(m => (
 // Modal pro jeden WheelPicker
 export const WheelPickerModal = ({ isOpen, onClose, value, onChange, min, max, step, label, title, onSoundButtonClick }) => {
   const { t } = useLanguage();
-  const [tempValue, setTempValue] = React.useState(value);
+
+  // Validace vstupních parametrů pro bezpečnost
+  const validateNum = (val, defMin, defMax) => {
+    if (typeof val !== 'number' || isNaN(val)) return defMin;
+    return Math.max(defMin, Math.min(defMax, val));
+  };
+
+  const validatedMin = validateNum(min, 0, 1000);
+  const validatedMax = validateNum(max, validatedMin, 1000);
+  const validatedStep = validateNum(step, 1, 100);
+  const validatedValue = validateNum(value, validatedMin, validatedMax);
+
+  const [tempValue, setTempValue] = React.useState(validatedValue);
 
   React.useEffect(() => {
     if (isOpen) {
-      setTempValue(value);
+      // Validace hodnoty před nastavení
+      const validated = validateNum(value, validatedMin, validatedMax);
+      setTempValue(validated);
     }
-  }, [isOpen, value]);
+  }, [isOpen, value, validatedMin, validatedMax]);
 
   const handleConfirm = () => {
     onChange(tempValue);
@@ -80,10 +94,14 @@ export const WheelPickerModal = ({ isOpen, onClose, value, onChange, min, max, s
                     }>
                       <WheelPicker
                         value={tempValue}
-                        onChange={setTempValue}
-                        min={min}
-                        max={max}
-                        step={step}
+                        onChange={(newValue) => {
+                          // Validace před změnou hodnoty
+                          const validated = validateNum(newValue, validatedMin, validatedMax);
+                          setTempValue(validated);
+                        }}
+                        min={validatedMin}
+                        max={validatedMax}
+                        step={validatedStep}
                         label={label ? (typeof label === 'string' ? label : t(label)) : ''}
                         className={isLargeModal ? 'w-48' : 'w-32'}
                       />

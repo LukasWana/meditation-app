@@ -326,8 +326,12 @@ export const useBreathSounds = (
         });
 
         const currentIntervalRef = phase === 'in' ? inFadeIntervalRef : outFadeIntervalRef;
-        // Fade in nového zvuku - delší fade in při prvním spuštění (3 sekundy) nebo při prvním nádechu, jinak 1.5 sekundy
-        const fadeInDuration = (isFirstStart && phase === 'in') ? 3.0 : 1.5;
+        // Fade in nového zvuku - delší fade in pro první nádech (5 sekund nebo podle délky nádechu, minimálně 3 sekundy), jinak 1.5 sekundy
+        let fadeInDuration = 1.5;
+        if (phase === 'in' && isFirstStart) {
+          // Pro první nádech použij delší fade in - minimálně 3 sekundy, ideálně 5 sekund nebo podle délky nádechu
+          fadeInDuration = Math.min(Math.max(breathInDuration * 0.5, 3.0), 5.0);
+        }
         fadeIn(sound, fadeInDuration, currentIntervalRef);
 
         // Pomocná funkce pro nastavení fade out

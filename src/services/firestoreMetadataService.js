@@ -124,6 +124,9 @@ class FirestoreMetadataService {
 
   async saveMetadata(fileName, metadata) {
     try {
+      // Import rate limiteru pro bezpečnost
+      const { withRateLimit } = await import('@utils/rateLimiter');
+
       // Nahraď lomítka v názvu souboru, aby vytvořil platný document ID
       const safeFileName = fileName.replace(/\//g, '_');
       const docRef = doc(db, this.collectionName, safeFileName);
@@ -133,7 +136,10 @@ class FirestoreMetadataService {
         updated: new Date().toISOString()
       };
 
-      await setDoc(docRef, metadataDoc);
+      // Použij rate limiting pro Firebase operaci
+      await withRateLimit(async () => {
+        await setDoc(docRef, metadataDoc);
+      });
 
       // Aktualizuj cache
       this.cache.set(fileName, metadataDoc);
