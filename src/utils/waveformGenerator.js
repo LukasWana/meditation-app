@@ -128,108 +128,97 @@ export const generateWaveformFromUrl = async (audioUrl, samples = 150) => {
  * Vykresli waveformu na canvas z pole amplitud
  * Realistický bar waveform (čárky nahoru a dolů od středu)
  * @param {CanvasRenderingContext2D} ctx - Canvas context
- * @param {Array<number>} waveform - Pole amplitud (0-1)
+ * @param {Array<number>} waveform - Pole amplitud (0-32768 absolutní hodnoty nebo 0-1 normalizované, automaticky detekuje)
  * @param {number} width - Šířka canvasu
  * @param {number} height - Výška canvasu
  * @param {string} color - Barva waveformy
  * @param {string} style - Styl vizualizace: 'bar' (čárky), 'line' (spojitá čára), 'mirror' (symetrický)
+ * @param {number|null} globalMax - Globální maximum pro normalizaci napříč všemi soubory (zachová relativní rozdíly)
  */
 export const drawWaveformFromData = (ctx, waveform, width, height, color = '#3b82f6', style = 'bar', globalMax = null) => {
-  if (!waveform || waveform.length === 0) {
+  if (!waveform || !Array.isArray(waveform) || waveform.length === 0) {
+    console.warn('⚠️ drawWaveformFromData: waveform je prázdné nebo není pole!');
     return;
   }
 
+  // Vymazat canvas
   ctx.clearRect(0, 0, width, height);
 
-  // Vyplň pozadí (volitelné)
-  // ctx.fillStyle = '#f9fafb';
-  // ctx.fillRect(0, 0, width, height);
-
   const centerY = height / 2;
-  const step = width / waveform.length;
+  const barWidth = Math.max(1, width / waveform.length);
+  const spacing = barWidth > 2 ? 0.2 : 0; // Mezera mezi čárkami, pokud jsou dostatečně široké
 
-  // KRITICKÉ: Použijme absolutní hodnoty BEZ normalizace podle vlastního rozsahu
-  // Normalizace podle vlastního rozsahu způsobuje, že všechny soubory vypadají stejně
-  // Každý soubor má jiné absolutní hodnoty (0-1, ale různé průměry), takže zachová skutečný průběh
-  const maxAmp = height * 0.475; // 47.5% výšky nahoru a dolů = 95% celkem
-
-  ctx.strokeStyle = color;
+  // Nastav barvu
   ctx.fillStyle = color;
-  ctx.lineWidth = 1.5; // Mírně tlustší čárky pro lepší viditelnost
+  ctx.strokeStyle = color;
+  ctx.lineWidth = 1;
+
+  // Najdi maximum
+  const maxValue = Math.max(...waveform.map(Math.abs));
+
+  // Rozhodni, zda jsou data normalizovaná (0-1) nebo absolutní (0-32768)
+  const isNormalized = maxValue < 1.5;
+
+  // ✅ PRO NORMALIZOVANÁ DATA: Použij LOKÁLNÍ normalizaci - každý soubor má svůj vlastní max
+  // ✅ PRO ABSOLUTNÍ HODNOTY: Použij globální normalizaci - zachová relativní rozdíly mezi soubory
+  const normalizationBase = isNormalized ? maxValue : (globalMax && globalMax > 0 ? globalMax : maxValue);
+
+  // Maximální amplituda (47.5% výšky nahoru a dolů = 95% celkem, 5% padding)
+  const maxAmplitude = height * 0.475;
+
+  console.log(`🎨 drawWaveformFromData - Nový přístup:`, {
+    samples: waveform.length,
+    width,
+    height,
+    barWidth: barWidth.toFixed(2),
+    isNormalized: isNormalized ? 'ANO (0-1)' : 'NE (absolutní)',
+    maxValue: maxValue.toFixed(4),
+    normalizationBase: normalizationBase.toFixed(4),
+    maxAmplitude: maxAmplitude.toFixed(2),
+    usingLocalMax: isNormalized ? 'ANO ✅' : 'NE (globální)'
+  });
 
   if (style === 'bar') {
-    // ✅ OPRAVA: Normalizuj každý waveform podle jeho VLASTNÍHO maxima
-    // To zajistí, že každý soubor využije celou výšku canvasu podle svých vlastních hodnot
-    // Tím se zachová relativní průběh (decay pattern) a každý soubor bude mít odlišný vzhled
-
-    // Najdi maximum TENTO waveform (ne globální!)
-    const maxValue = Math.max(...waveform.map(Math.abs));
-    const minValue = Math.min(...waveform.map(Math.abs));
-
-    // Debug: zobraz hodnoty pro kontrolu
-    if (waveform.length > 0 && (maxValue > 1 || minValue !== maxValue)) {
-      console.log('🎨 drawWaveformFromData:', {
-        samples: waveform.length,
-        min: minValue.toFixed(2),
-        max: maxValue.toFixed(2),
-        range: (maxValue - minValue).toFixed(2),
-        first3: waveform.slice(0, 3).map(v => v.toFixed(2)),
-        last3: waveform.slice(-3).map(v => v.toFixed(2)),
-        isAbsolute: maxValue > 1
-      });
-    }
-
-    // ✅ KRITICKÁ OPRAVA: Použijme GLOBÁLNÍ normalizaci místo lokální!
-    // Lokální normalizace podle vlastního maxima způsobuje, že všechny soubory vypadají stejně
-    // Protože všechny mají podobný max (0.81-0.82), takže po normalizaci všechny mají max=1.0
-    // Globální normalizace zachová skutečné rozdíly - soubory s různými průměry (0.51, 0.46, 0.40) vypadají odlišně
-
-    // ✅ Použijme globální maximum pro normalizaci - zachová skutečné rozdíly mezi soubory
-    // Pokud není globální maximum poskytnuto, použijeme lokální maximum jako fallback
-    const normalizationBase = globalMax && globalMax > 0 ? globalMax : maxValue;
-
-    // ✅ DEBUG: Zobraz normalizační základ pro první 3 soubory
-    if (waveform.length > 0) {
-      const first3 = waveform.slice(0, 3);
-      const avgValue = waveform.reduce((a, b) => a + Math.abs(b), 0) / waveform.length;
-      console.log(`🎨 drawWaveformFromData: max=${maxValue.toFixed(4)}, avg=${avgValue.toFixed(4)}, globalMax=${globalMax?.toFixed(4)}, normalizationBase=${normalizationBase.toFixed(4)}, first3=${first3.map(v => v.toFixed(2)).join(',')}`);
-    }
-
+    // Kresli čárky pomocí fillRect - spolehlivější než lineTo
     for (let i = 0; i < waveform.length; i++) {
-      // Normalizuj podle GLOBÁLNÍHO maxima - zachová skutečné rozdíly mezi soubory
-      // Soubory s různými průměry (0.51, 0.46, 0.40) budou mít různé amplitudy
-      let value = Math.abs(waveform[i]) / normalizationBase;
+      const value = Math.abs(waveform[i]);
+      const normalizedValue = value / normalizationBase; // Normalizuj na 0-1
+      const amplitude = normalizedValue * maxAmplitude; // Vypočítej amplitudu
 
-      const amplitude = value * maxAmp;
-
-      // X pozice pro střed čárky
-      const x = i * step + step / 2;
+      // X pozice pro čárku
+      const x = i * barWidth + (spacing * barWidth);
+      const barWidthActual = barWidth * (1 - spacing * 2);
 
       // Horní čárka (nahoru od středu)
       const topY = centerY - amplitude;
       // Dolní čárka (dolů od středu)
       const bottomY = centerY + amplitude;
 
-      // Vykresli svislou čárku
-      ctx.beginPath();
-      ctx.moveTo(x, topY);
-      ctx.lineTo(x, bottomY);
-      ctx.stroke();
+      // Vykresli svislou čárku pomocí fillRect
+      if (amplitude > 0.5) { // Ignoruj příliš malé čárky (šum)
+        ctx.fillRect(x, topY, barWidthActual, bottomY - topY);
+      }
+    }
+
+    // Debug: zkontroluj první a poslední čárku
+    if (waveform.length > 0) {
+      const firstValue = Math.abs(waveform[0]) / normalizationBase;
+      const lastValue = Math.abs(waveform[waveform.length - 1]) / normalizationBase;
+      const firstAmplitude = firstValue * maxAmplitude;
+      const lastAmplitude = lastValue * maxAmplitude;
+      console.log(`🎨 drawWaveformFromData - Vykresleno ${waveform.length} čárek:`, {
+        firstBar: { value: firstValue.toFixed(4), amplitude: firstAmplitude.toFixed(2), yRange: `${(centerY - firstAmplitude).toFixed(1)}-${(centerY + firstAmplitude).toFixed(1)}` },
+        lastBar: { value: lastValue.toFixed(4), amplitude: lastAmplitude.toFixed(2), yRange: `${(centerY - lastAmplitude).toFixed(1)}-${(centerY + lastAmplitude).toFixed(1)}` }
+      });
     }
   } else if (style === 'line') {
-    // Line waveform - spojitá čára nahoru a dolů od středu
-    // Použij stejnou globální normalizaci jako u bar stylu
-    const maxValue = Math.max(...waveform.map(Math.abs));
-    const normalizationBase = globalMax && globalMax > 0 ? globalMax : maxValue;
-
+    // Line waveform - spojitá čára
     ctx.beginPath();
-
-    // Horní část (nahoru)
     for (let i = 0; i < waveform.length; i++) {
       const value = Math.abs(waveform[i]) / normalizationBase;
-      const amplitude = value * maxAmp;
+      const amplitude = value * maxAmplitude;
       const y = centerY - amplitude;
-      const x = i * step + step / 2;
+      const x = i * barWidth + barWidth / 2;
 
       if (i === 0) {
         ctx.moveTo(x, y);
@@ -237,32 +226,17 @@ export const drawWaveformFromData = (ctx, waveform, width, height, color = '#3b8
         ctx.lineTo(x, y);
       }
     }
-
-    // Dolní část (dolů) - zpětně
-    for (let i = waveform.length - 1; i >= 0; i--) {
-      const value = Math.abs(waveform[i]) / normalizationBase;
-      const amplitude = value * maxAmp;
-      const y = centerY + amplitude;
-      const x = i * step + step / 2;
-      ctx.lineTo(x, y);
-    }
-
-    ctx.closePath();
     ctx.stroke();
   } else if (style === 'mirror') {
-    // Mirror waveform - symetrický tvar s vyplněním (původní styl)
-    // Použij stejnou globální normalizaci jako u bar stylu
-    const maxValue = Math.max(...waveform.map(Math.abs));
-    const normalizationBase = globalMax && globalMax > 0 ? globalMax : maxValue;
-
+    // Mirror waveform - symetrický tvar s vyplněním
     ctx.beginPath();
 
     // Horní část
     for (let i = 0; i < waveform.length; i++) {
       const value = Math.abs(waveform[i]) / normalizationBase;
-      const amplitude = value * maxAmp;
+      const amplitude = value * maxAmplitude;
       const y = centerY - amplitude;
-      const x = i * step + step / 2;
+      const x = i * barWidth + barWidth / 2;
 
       if (i === 0) {
         ctx.moveTo(x, y);
@@ -271,12 +245,12 @@ export const drawWaveformFromData = (ctx, waveform, width, height, color = '#3b8
       }
     }
 
-    // Dolní část
+    // Dolní část (zpětně)
     for (let i = waveform.length - 1; i >= 0; i--) {
       const value = Math.abs(waveform[i]) / normalizationBase;
-      const amplitude = value * maxAmp;
+      const amplitude = value * maxAmplitude;
       const y = centerY + amplitude;
-      const x = i * step + step / 2;
+      const x = i * barWidth + barWidth / 2;
       ctx.lineTo(x, y);
     }
 

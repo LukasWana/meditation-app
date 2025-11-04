@@ -260,7 +260,15 @@ const SoundThemeGallery = ({ isOpen, onClose, onSelectSound, selectedInSound, se
                   >
                     {/* Waveforma */}
                     <div className="w-full mb-2 flex items-center justify-center">
+                      {/* ✅ DEBUG: Zobraz globalMax před předáním */}
+                      {console.log(`🔍 SoundThemeGallery rendering ${file.fileName}:`, {
+                        hasWaveformData: !!file.waveformData,
+                        waveformDataLength: file.waveformData?.length || 0,
+                        globalMax: file.globalMax?.toFixed(4) || 'NULL',
+                        first5: file.waveformData?.slice(0, 5).map(v => v.toFixed(2)) || []
+                      })}
                       <Waveform
+                        key={`${file.fileName}-${file.globalMax || 'no-globalMax'}`} // ✅ KEY: Force re-render when globalMax changes
                         audioUrl={file.downloadURL}
                         waveformData={file.waveformData}
                         globalMax={file.globalMax} // ✅ Přidej globální maximum pro globální normalizaci
