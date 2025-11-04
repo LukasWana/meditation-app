@@ -1,8 +1,8 @@
 import React from 'react';
 import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X } from 'lucide-react';
-import { WheelPicker, DualWheelPicker, FramerButton } from '@components';
+import { X, Music2 } from 'lucide-react';
+import { WheelPicker, DualWheelPicker } from '@components';
 import { useLanguage } from '@contexts/LanguageContext';
 
 // Modal pro jeden WheelPicker
@@ -65,42 +65,52 @@ export const WheelPickerModal = ({ isOpen, onClose, value, onChange, min, max, s
             </div>
 
             {/* Picker - scrollovatelný kontejner - perfektně na středu */}
-            <div className="flex flex-col items-center justify-center mb-4 flex-1 min-h-[200px] w-full">
-              <WheelPicker
-                value={tempValue}
-                onChange={setTempValue}
-                min={min}
-                max={max}
-                step={step}
-                label={label ? (typeof label === 'string' ? label : t(label)) : ''}
-                className="w-32"
-              />
-            </div>
+            {(() => {
+              const isLargeModal = title === t('dlzka') || title === 'délka' || title === t('priprava') || title === 'příprava' || title === 'priprava';
+              return (
+                <div className={`flex flex-col items-center justify-center mb-4 flex-1 w-full ${isLargeModal ? 'min-h-[calc(100vh-280px)]' : 'min-h-[200px]'}`}>
+                  <div className={isLargeModal ? 'transform scale-[2] origin-center' : ''}>
+                    <WheelPicker
+                      value={tempValue}
+                      onChange={setTempValue}
+                      min={min}
+                      max={max}
+                      step={step}
+                      label={label ? (typeof label === 'string' ? label : t(label)) : ''}
+                      className={isLargeModal ? 'w-48' : 'w-32'}
+                    />
+                  </div>
+                </div>
+              );
+            })()}
 
             {/* Footer - vždy viditelný dole - zarovnáno na střed */}
-            <div className="flex flex-col gap-3 pt-4 pb-2 flex-shrink-0 border-t border-black/10 w-full items-center">
-              {/* Tlačítko ZVUKY - zobraz pouze pokud je poskytnut callback */}
-              {onSoundButtonClick && (
-                <FramerButton
-                  onClick={() => {
-                    onSoundButtonClick();
-                  }}
-                  variant="secondary"
-                  className="px-6 py-3 flex items-center justify-center gap-2"
-                >
-                  <span>♫</span>
-                  <span>{t('zvuky') || 'zvuky'}</span>
-                </FramerButton>
-              )}
-              {/* Hlavní tlačítko */}
-              <FramerButton
-                onClick={handleConfirm}
-                variant="secondary"
-                className="px-8 py-3"
-              >
-                {t('hotovo')}
-              </FramerButton>
-            </div>
+            {(() => {
+              const isLargeModal = title === t('dlzka') || title === 'délka' || title === t('priprava') || title === 'příprava' || title === 'priprava';
+              return (
+                <div className={`flex ${isLargeModal ? 'flex-row' : 'flex-col'} gap-3 pt-4 pb-2 flex-shrink-0 border-t border-black/10 w-full items-center ${isLargeModal ? 'justify-center' : ''}`}>
+                  {/* Tlačítko ZVUKY - zobraz pouze pokud je poskytnut callback */}
+                  {onSoundButtonClick && (
+                    <button
+                      onClick={() => {
+                        onSoundButtonClick();
+                      }}
+                      className="px-6 py-3 rounded bg-white/70 hover:bg-white text-gray-700 border border-black/10 transition-colors flex items-center justify-center gap-2"
+                    >
+                      <Music2 size={18} />
+                      <span>{t('zvuky') || 'zvuky'}</span>
+                    </button>
+                  )}
+                  {/* Hlavní tlačítko */}
+                  <button
+                    onClick={handleConfirm}
+                    className="px-8 py-3 rounded bg-white/70 hover:bg-white text-gray-700 border border-black/10 transition-colors"
+                  >
+                    {t('hotovo')}
+                  </button>
+                </div>
+              );
+            })()}
           </motion.div>
         </motion.div>
       )}
@@ -198,48 +208,58 @@ export const DualWheelPickerModal = ({
             </div>
 
             {/* Picker - scrollovatelný kontejner */}
-            <div className="flex flex-col items-center justify-center mb-4 flex-1 min-h-[300px]">
-              <DualWheelPicker
-                leftValue={tempLeftValue}
-                rightValue={tempRightValue}
-                onLeftChange={setTempLeftValue}
-                onRightChange={setTempRightValue}
-                leftLabel={leftLabel ? (typeof leftLabel === 'string' ? leftLabel : t(leftLabel)) : ''}
-                rightLabel={rightLabel ? (typeof rightLabel === 'string' ? rightLabel : t(rightLabel)) : ''}
-                leftMin={leftMin}
-                leftMax={leftMax}
-                leftStep={leftStep}
-                rightMin={rightMin}
-                rightMax={rightMax}
-                rightStep={rightStep}
-                className="w-full max-w-md"
-              />
-            </div>
+            {(() => {
+              const isLargeModal = title === t('rytmus') || title === 'rytmus';
+              return (
+                <div className={`flex flex-col items-center justify-center mb-4 flex-1 ${isLargeModal ? 'min-h-[calc(100vh-280px)]' : 'min-h-[300px]'}`}>
+                  <div className={isLargeModal ? 'transform scale-[2] origin-center' : ''}>
+                    <DualWheelPicker
+                      leftValue={tempLeftValue}
+                      rightValue={tempRightValue}
+                      onLeftChange={setTempLeftValue}
+                      onRightChange={setTempRightValue}
+                      leftLabel={leftLabel ? (typeof leftLabel === 'string' ? leftLabel : t(leftLabel)) : ''}
+                      rightLabel={rightLabel ? (typeof rightLabel === 'string' ? rightLabel : t(rightLabel)) : ''}
+                      leftMin={leftMin}
+                      leftMax={leftMax}
+                      leftStep={leftStep}
+                      rightMin={rightMin}
+                      rightMax={rightMax}
+                      rightStep={rightStep}
+                      className={isLargeModal ? 'w-full max-w-md' : 'w-full max-w-md'}
+                    />
+                  </div>
+                </div>
+              );
+            })()}
 
             {/* Footer - vždy viditelný dole */}
-            <div className="flex flex-col gap-3 pt-4 pb-2 flex-shrink-0 border-t border-black/10">
-              {/* Tlačítko ZVUKY - zobraz pouze pokud je poskytnut callback */}
-              {onSoundButtonClick && (
-                <FramerButton
-                  onClick={() => {
-                    onSoundButtonClick();
-                  }}
-                  variant="secondary"
-                  className="px-6 py-3 flex items-center justify-center gap-2"
-                >
-                  <span>♫</span>
-                  <span>{t('zvuky') || 'zvuky'}</span>
-                </FramerButton>
-              )}
-              {/* Hlavní tlačítko */}
-              <FramerButton
-                onClick={handleConfirm}
-                variant="secondary"
-                className="px-8 py-3"
-              >
-                {t('hotovo')}
-              </FramerButton>
-            </div>
+            {(() => {
+              const isLargeModal = title === t('rytmus') || title === 'rytmus';
+              return (
+                <div className={`flex ${isLargeModal ? 'flex-row' : 'flex-col'} gap-3 pt-4 pb-2 flex-shrink-0 border-t border-black/10 ${isLargeModal ? 'items-center justify-center' : ''}`}>
+                  {/* Tlačítko ZVUKY - zobraz pouze pokud je poskytnut callback */}
+                  {onSoundButtonClick && (
+                    <button
+                      onClick={() => {
+                        onSoundButtonClick();
+                      }}
+                      className="px-6 py-3 rounded bg-white/70 hover:bg-white text-gray-700 border border-black/10 transition-colors flex items-center justify-center gap-2"
+                    >
+                      <Music2 size={18} />
+                      <span>{t('zvuky') || 'zvuky'}</span>
+                    </button>
+                  )}
+                  {/* Hlavní tlačítko */}
+                  <button
+                    onClick={handleConfirm}
+                    className="px-8 py-3 rounded bg-white/70 hover:bg-white text-gray-700 border border-black/10 transition-colors"
+                  >
+                    {t('hotovo')}
+                  </button>
+                </div>
+              );
+            })()}
           </motion.div>
         </motion.div>
       )}
