@@ -12,17 +12,23 @@ export const useBreathSounds = (
   breathPhase,
   breathInSound,
   breathOutSound,
+  breathClickSound,
   breathSoundFadeEnabled,
   breathInDuration,
   breathOutDuration
 ) => {
   const inSoundRef = useRef(null);
   const outSoundRef = useRef(null);
+  const clickSoundRef = useRef(null);
   const inFadeIntervalRef = useRef(null);
   const outFadeIntervalRef = useRef(null);
+  const inFadeOutTimeoutRef = useRef(null);
+  const outFadeOutTimeoutRef = useRef(null);
   const previousPhaseRef = useRef(null);
+  const pendingPhaseRef = useRef(null); // Fáze, která čeká na spuštění
   const [inSoundUrl, setInSoundUrl] = useState(null);
   const [outSoundUrl, setOutSoundUrl] = useState(null);
+  const [clickSoundUrl, setClickSoundUrl] = useState(null);
 
   // Načtení URL pro nádech zvuk
   useEffect(() => {
@@ -82,6 +88,35 @@ export const useBreathSounds = (
     loadSoundUrl();
   }, [breathOutSound]);
 
+  // Načtení URL pro kliknutí zvuk
+  useEffect(() => {
+    if (breathClickSound === 'none') {
+      setClickSoundUrl(null);
+      return;
+    }
+
+    const loadSoundUrl = async () => {
+      try {
+        // Zkus načíst z metadata
+        const metadata = await realtimeMetadataService.getFileMetadata(breathClickSound);
+        if (metadata && (metadata.downloadURL || metadata.audioSrc)) {
+          setClickSoundUrl(metadata.downloadURL || metadata.audioSrc);
+          return;
+        }
+
+        // Pokud není v metadata, zkus načíst přímo z Firebase Storage
+        const audioRef = ref(storage, breathClickSound);
+        const url = await getDownloadURL(audioRef);
+        setClickSoundUrl(url);
+      } catch (error) {
+        console.error('Failed to load breath click sound URL:', error);
+        setClickSoundUrl(null);
+      }
+    };
+
+    loadSoundUrl();
+  }, [breathClickSound]);
+
   // Inicializace audio elementů
   useEffect(() => {
     // Vyčisti staré audio elementy
@@ -97,16 +132,23 @@ export const useBreathSounds = (
     // Vytvoř nové audio elementy s načtenými URL
     if (inSoundUrl && !inSoundRef.current) {
       inSoundRef.current = new Audio(inSoundUrl);
-      inSoundRef.current.loop = true;
+      inSoundRef.current.loop = false; // Zvuk se přehrává jen jednou
       inSoundRef.current.volume = 0;
       inSoundRef.current.preload = 'auto';
     }
 
     if (outSoundUrl && !outSoundRef.current) {
       outSoundRef.current = new Audio(outSoundUrl);
-      outSoundRef.current.loop = true;
+      outSoundRef.current.loop = false; // Zvuk se přehrává jen jednou
       outSoundRef.current.volume = 0;
       outSoundRef.current.preload = 'auto';
+    }
+
+    if (clickSoundUrl && !clickSoundRef.current) {
+      clickSoundRef.current = new Audio(clickSoundUrl);
+      clickSoundRef.current.loop = false;
+      clickSoundRef.current.volume = 1;
+      clickSoundRef.current.preload = 'auto';
     }
 
     return () => {
@@ -116,8 +158,14 @@ export const useBreathSounds = (
       if (outFadeIntervalRef.current) {
         clearInterval(outFadeIntervalRef.current);
       }
+      if (inFadeOutTimeoutRef.current) {
+        clearTimeout(inFadeOutTimeoutRef.current);
+      }
+      if (outFadeOutTimeoutRef.current) {
+        clearTimeout(outFadeOutTimeoutRef.current);
+      }
     };
-  }, [inSoundUrl, outSoundUrl]);
+  }, [inSoundUrl, outSoundUrl, clickSoundUrl]);
 
   // Fade funkce - používají přesný čas pro nádech/výdech
   const fadeIn = (audio, durationSeconds, intervalRef) => {
@@ -159,8 +207,9 @@ export const useBreathSounds = (
     }, stepTime);
   };
 
-  const fadeOut = (audio, durationSeconds, intervalRef) => {
+  const fadeOut = (audio, durationSeconds, intervalRef, onComplete) => {
     if (!audio) {
+      if (onComplete) onComplete();
       return;
     }
 
@@ -168,6 +217,7 @@ export const useBreathSounds = (
       audio.volume = 0;
       audio.pause();
       audio.currentTime = 0;
+      if (onComplete) onComplete();
       return;
     }
 
@@ -196,6 +246,7 @@ export const useBreathSounds = (
         audio.volume = 0;
         audio.pause();
         audio.currentTime = 0;
+        if (onComplete) onComplete();
       }
     }, stepTime);
   };
@@ -205,18 +256,31 @@ export const useBreathSounds = (
     if (!isPlaying) {
       // Zastav všechny zvuky a vyčisti fade intervaly
       if (inSoundRef.current) {
-        fadeOut(inSoundRef.current, 0.5, inFadeIntervalRef);
+        fadeOut(inSoundRef.current, 1.5, inFadeIntervalRef);
       }
       if (outSoundRef.current) {
-        fadeOut(outSoundRef.current, 0.5, outFadeIntervalRef);
+        fadeOut(outSoundRef.current, 1.5, outFadeIntervalRef);
       }
       previousPhaseRef.current = null;
+      pendingPhaseRef.current = null;
       return;
     }
 
     // Zkontroluj, zda se změnila fáze - PŘED aktualizací previousPhaseRef
     const isFirstStart = previousPhaseRef.current === null;
     const phaseChanged = !isFirstStart && previousPhaseRef.current !== breathPhase;
+
+    // Přehrát kliknutí na začátku každé fáze
+    if ((phaseChanged || isFirstStart) && clickSoundRef.current && clickSoundUrl) {
+      try {
+        clickSoundRef.current.currentTime = 0;
+        clickSoundRef.current.play().catch((error) => {
+          console.warn('Failed to play click sound:', error);
+        });
+      } catch (error) {
+        console.warn('Error playing click sound:', error);
+      }
+    }
 
     // Získat aktuální zvuk podle fáze
     const currentSound = breathPhase === 'in'
@@ -228,45 +292,109 @@ export const useBreathSounds = (
       ? (breathOutSound !== 'none' ? outSoundRef.current : null)
       : (breathInSound !== 'none' ? inSoundRef.current : null);
 
-    // Získat délku aktuální fáze (v sekundách)
-    const currentDuration = breathPhase === 'in' ? breathInDuration : breathOutDuration;
+    // Délka fade out při změně fáze
+    const fadeOutDuration = 1.5; // 1.5 sekundy fade out
 
-    // Délka pro rychlý fade out při změně fáze - fixní rychlá délka pro hladký přechod
-    const fadeOutDuration = 1.0; // 1 sekunda pro rychlý fade out při přepnutí
+    // Pomocná funkce pro spuštění nového zvuku
+    const startNewSound = (phaseToPlay) => {
+      // Použij zadanou fázi nebo aktuální
+      const phase = phaseToPlay || breathPhase;
+      const sound = phase === 'in'
+        ? (breathInSound !== 'none' ? inSoundRef.current : null)
+        : (breathOutSound !== 'none' ? outSoundRef.current : null);
+      const duration = phase === 'in' ? breathInDuration : breathOutDuration;
 
-    // Při změně fáze: současně fade out předchozího a fade in nového zvuku
-    if (phaseChanged && soundToStop && soundToStop.volume > 0) {
-      const stopIntervalRef = breathPhase === 'in' ? outFadeIntervalRef : inFadeIntervalRef;
-      // Rychlý fade out předchozího zvuku (1 sekunda)
-      fadeOut(soundToStop, fadeOutDuration, stopIntervalRef);
-    }
+      if (!sound) return;
 
-    // Spustit nový zvuk s fade in - při změně fáze nebo při prvním spuštění
-    if (currentSound && (phaseChanged || isFirstStart)) {
       try {
-        // Zastav a resetuj zvuk, pokud už hraje (pro restart při změně fáze)
-        if (!currentSound.paused) {
-          currentSound.pause();
+        // Zastav a resetuj zvuk, pokud už hraje
+        if (!sound.paused) {
+          sound.pause();
         }
-        currentSound.currentTime = 0;
+        sound.currentTime = 0;
+
+        // Vyčisti předchozí fade out timeout
+        const fadeOutTimeoutRef = phase === 'in' ? inFadeOutTimeoutRef : outFadeOutTimeoutRef;
+        if (fadeOutTimeoutRef.current) {
+          clearTimeout(fadeOutTimeoutRef.current);
+          fadeOutTimeoutRef.current = null;
+        }
 
         // Spusť přehrávání
-        currentSound.play().catch((error) => {
+        sound.play().catch((error) => {
           console.warn('Failed to play breath sound:', error);
         });
 
-        const currentIntervalRef = breathPhase === 'in' ? inFadeIntervalRef : outFadeIntervalRef;
-        // Fade in nového zvuku během celé délky aktuální fáze
-        fadeIn(currentSound, currentDuration, currentIntervalRef);
+        const currentIntervalRef = phase === 'in' ? inFadeIntervalRef : outFadeIntervalRef;
+        // Fade in nového zvuku - 1.5 sekundy fade in
+        fadeIn(sound, 1.5, currentIntervalRef);
+
+        // Pomocná funkce pro nastavení fade out
+        const setupFadeOut = () => {
+          const soundDuration = sound.duration;
+
+          if (!soundDuration || isNaN(soundDuration)) {
+            return;
+          }
+
+          // Pokud je zvuk delší než fáze, spusť fade out na konci fáze
+          if (soundDuration > duration) {
+            // Spusť fade out před koncem fáze (s předstihem pro fade out)
+            const fadeOutStartTime = Math.max(0, duration - 1.5); // 1.5s fade out
+
+            fadeOutTimeoutRef.current = setTimeout(() => {
+              if (sound && !sound.paused && sound.currentTime < soundDuration) {
+                const fadeIntervalRef = phase === 'in' ? inFadeIntervalRef : outFadeIntervalRef;
+                fadeOut(sound, 1.5, fadeIntervalRef);
+              }
+            }, fadeOutStartTime * 1000);
+          } else {
+            // Pokud je zvuk kratší než fáze, fade out na konci zvuku
+            fadeOutTimeoutRef.current = setTimeout(() => {
+              if (sound && !sound.paused) {
+                const fadeIntervalRef = phase === 'in' ? inFadeIntervalRef : outFadeIntervalRef;
+                fadeOut(sound, 1.5, fadeIntervalRef);
+              }
+            }, (soundDuration - 1.5) * 1000);
+          }
+        };
+
+        // Zjisti délku zvuku a nastav fade out na konci fáze, pokud je zvuk delší
+        sound.addEventListener('loadedmetadata', setupFadeOut, { once: true });
+
+        // Pokud už jsou metadata načtená, zavolej okamžitě
+        if (sound.duration && !isNaN(sound.duration)) {
+          setupFadeOut();
+        }
       } catch (error) {
         console.warn('Error playing breath sound:', error);
       }
+    };
+
+    // Při změně fáze: nejdříve fade out předchozího zvuku, poté spusť nový
+    if (phaseChanged && soundToStop && soundToStop.volume > 0) {
+      // Ulož čekající fázi
+      pendingPhaseRef.current = breathPhase;
+
+      const stopIntervalRef = breathPhase === 'in' ? outFadeIntervalRef : inFadeIntervalRef;
+      // Fade out předchozího zvuku (1.5 sekundy), poté spusť nový
+      fadeOut(soundToStop, fadeOutDuration, stopIntervalRef, () => {
+        // Po dokončení fade out spusť nový zvuk pro čekající fázi
+        const nextPhase = pendingPhaseRef.current;
+        pendingPhaseRef.current = null;
+        if (nextPhase) {
+          startNewSound(nextPhase);
+        }
+      });
+    } else if (currentSound && (phaseChanged || isFirstStart)) {
+      // Spustit nový zvuk bez čekání - při prvním spuštění nebo pokud není co zastavit
+      startNewSound();
     }
 
     // Aktualizuj předchozí fázi AŽ PO kontrole a spuštění zvuku
     previousPhaseRef.current = breathPhase;
 
-  }, [isPlaying, breathPhase, breathInSound, breathOutSound, breathSoundFadeEnabled, breathInDuration, breathOutDuration]);
+  }, [isPlaying, breathPhase, breathInSound, breathOutSound, breathClickSound, clickSoundUrl, breathSoundFadeEnabled, breathInDuration, breathOutDuration]);
 
   // Cleanup při unmount
   useEffect(() => {
@@ -277,6 +405,12 @@ export const useBreathSounds = (
       if (outFadeIntervalRef.current) {
         clearInterval(outFadeIntervalRef.current);
       }
+      if (inFadeOutTimeoutRef.current) {
+        clearTimeout(inFadeOutTimeoutRef.current);
+      }
+      if (outFadeOutTimeoutRef.current) {
+        clearTimeout(outFadeOutTimeoutRef.current);
+      }
       if (inSoundRef.current) {
         inSoundRef.current.pause();
         inSoundRef.current = null;
@@ -284,6 +418,10 @@ export const useBreathSounds = (
       if (outSoundRef.current) {
         outSoundRef.current.pause();
         outSoundRef.current = null;
+      }
+      if (clickSoundRef.current) {
+        clickSoundRef.current.pause();
+        clickSoundRef.current = null;
       }
     };
   }, []);

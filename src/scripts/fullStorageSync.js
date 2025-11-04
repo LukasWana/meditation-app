@@ -2,9 +2,10 @@
 
 import { storage } from '../services/firebase';
 import { database } from '../services/firebase';
-import { ref, listAll, getMetadata } from 'firebase/storage';
+import { ref, listAll, getMetadata, getDownloadURL } from 'firebase/storage';
 import { ref as dbRef, set } from 'firebase/database';
 import log from '../services/logger';
+import { generateWaveformFromUrl } from '../utils/waveformGenerator';
 
 // Sanitizace cesty pro Realtime Database
 function sanitizePath(path) {
@@ -101,20 +102,48 @@ export async function fullStorageSync() {
     syncResults.totalFiles = allFiles.length;
     console.log(`📊 Found ${allFiles.length} files in Storage`);
 
-    // Filtruj pouze MP3 soubory
-    const mp3Files = allFiles.filter(file =>
-      file.fullPath.toLowerCase().endsWith('.mp3')
-    );
-    syncResults.mp3Files = mp3Files.length;
-    console.log(`🎵 Found ${mp3Files.length} MP3 files`);
+    // Filtruj pouze audio soubory (MP3, OGG, OGA)
+    const audioFiles = allFiles.filter(file => {
+      const pathLower = file.fullPath.toLowerCase();
+      return pathLower.endsWith('.mp3') || pathLower.endsWith('.ogg') || pathLower.endsWith('.oga');
+    });
+    syncResults.mp3Files = audioFiles.length;
+    console.log(`🎵 Found ${audioFiles.length} audio files (MP3, OGG, OGA)`);
 
-    // Zpracuj každý MP3 soubor
-    for (const file of mp3Files) {
+    // Zpracuj každý audio soubor
+    for (const file of audioFiles) {
       try {
         console.log(`📄 Processing: ${file.fullPath}`);
 
         // Extrahuj metadata
         const metadata = extractMP3Metadata(file.fullPath, file.metadata);
+
+        // Získej download URL
+        let downloadURL = null;
+        try {
+          downloadURL = await getDownloadURL(file.ref);
+          metadata.downloadURL = downloadURL;
+        } catch (error) {
+          console.warn(`⚠️ Failed to get download URL for ${file.fullPath}:`, error.message);
+        }
+
+        // Vygeneruj waveformu pokud máme download URL (pouze pro audio soubory)
+        let waveformData = null;
+        if (downloadURL && (file.fullPath.toLowerCase().endsWith('.mp3') ||
+                           file.fullPath.toLowerCase().endsWith('.ogg') ||
+                           file.fullPath.toLowerCase().endsWith('.oga'))) {
+          try {
+            console.log(`🌊 Generating waveform for ${file.fullPath}...`);
+            waveformData = await generateWaveformFromUrl(downloadURL, 150);
+            metadata.waveformData = waveformData;
+            metadata.waveformGenerated = new Date().toISOString();
+            metadata.waveformSamples = 150;
+            console.log(`✅ Waveform generated for ${file.fullPath}`);
+          } catch (error) {
+            console.warn(`⚠️ Failed to generate waveform for ${file.fullPath}:`, error.message);
+            // Pokračuj i bez waveformy
+          }
+        }
 
         // Ulož do Realtime Database
         const safePath = sanitizePath(file.fullPath);
@@ -145,11 +174,11 @@ export async function fullStorageSync() {
     }
 
     // Spočítej přeskočené soubory
-    syncResults.skippedFiles = mp3Files.length - syncResults.processedFiles;
+    syncResults.skippedFiles = audioFiles.length - syncResults.processedFiles;
 
     console.log('\n📊 Sync Results:');
     console.log(`   Total files in Storage: ${syncResults.totalFiles}`);
-    console.log(`   MP3 files found: ${syncResults.mp3Files}`);
+    console.log(`   Audio files found: ${syncResults.mp3Files}`);
     console.log(`   Files processed: ${syncResults.processedFiles}`);
     console.log(`   Files skipped: ${syncResults.skippedFiles}`);
     console.log(`   Errors: ${syncResults.errors.length}`);
@@ -161,11 +190,11 @@ export async function fullStorageSync() {
       });
     }
 
-    log.success(`Full storage sync completed: ${syncResults.processedFiles}/${syncResults.mp3Files} MP3 files processed`);
+    log.success(`Full storage sync completed: ${syncResults.processedFiles}/${syncResults.mp3Files} audio files processed`);
 
     return {
       success: true,
-      message: `Successfully synced ${syncResults.processedFiles} MP3 files from Storage to Realtime Database`,
+      message: `Successfully synced ${syncResults.processedFiles} audio files from Storage to Realtime Database`,
       results: syncResults
     };
 
@@ -189,23 +218,52 @@ export async function syncFolder(folderName) {
     const folderRef = ref(storage, folderName);
     const allFiles = await getAllStorageFiles(folderRef);
 
-    const mp3Files = allFiles.filter(file =>
-      file.fullPath.toLowerCase().endsWith('.mp3')
-    );
+    const audioFiles = allFiles.filter(file => {
+      const pathLower = file.fullPath.toLowerCase();
+      return pathLower.endsWith('.mp3') || pathLower.endsWith('.ogg') || pathLower.endsWith('.oga');
+    });
 
-    console.log(`📊 Found ${mp3Files.length} MP3 files in ${folderName}/`);
+    console.log(`📊 Found ${audioFiles.length} audio files (MP3, OGG, OGA) in ${folderName}/`);
 
     const syncResults = {
       folder: folderName,
       totalFiles: allFiles.length,
-      mp3Files: mp3Files.length,
+      mp3Files: audioFiles.length,
       processedFiles: 0,
       errors: []
     };
 
-    for (const file of mp3Files) {
+    for (const file of audioFiles) {
       try {
         const metadata = extractMP3Metadata(file.fullPath, file.metadata);
+
+        // Získej download URL
+        let downloadURL = null;
+        try {
+          downloadURL = await getDownloadURL(file.ref);
+          metadata.downloadURL = downloadURL;
+        } catch (error) {
+          console.warn(`⚠️ Failed to get download URL for ${file.fullPath}:`, error.message);
+        }
+
+        // Vygeneruj waveformu pokud máme download URL (pouze pro audio soubory)
+        let waveformData = null;
+        if (downloadURL && (file.fullPath.toLowerCase().endsWith('.mp3') ||
+                           file.fullPath.toLowerCase().endsWith('.ogg') ||
+                           file.fullPath.toLowerCase().endsWith('.oga'))) {
+          try {
+            console.log(`🌊 Generating waveform for ${file.fullPath}...`);
+            waveformData = await generateWaveformFromUrl(downloadURL, 150);
+            metadata.waveformData = waveformData;
+            metadata.waveformGenerated = new Date().toISOString();
+            metadata.waveformSamples = 150;
+            console.log(`✅ Waveform generated for ${file.fullPath}`);
+          } catch (error) {
+            console.warn(`⚠️ Failed to generate waveform for ${file.fullPath}:`, error.message);
+            // Pokračuj i bez waveformy
+          }
+        }
+
         const safePath = sanitizePath(file.fullPath);
         const metadataRef = dbRef(database, `audio-metadata/${safePath}`);
 
@@ -227,7 +285,7 @@ export async function syncFolder(folderName) {
       }
     }
 
-    console.log(`📊 Folder sync completed: ${syncResults.processedFiles}/${syncResults.mp3Files} files processed`);
+    console.log(`📊 Folder sync completed: ${syncResults.processedFiles}/${syncResults.mp3Files} audio files processed`);
 
     return {
       success: true,

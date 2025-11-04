@@ -30,6 +30,8 @@ const BreathScreen = ({
   onReset,
   breathInSound,
   breathOutSound,
+  breathClickSound,
+  breathFinalSound,
   breathSoundFadeEnabled,
   onBreathSoundChange
 }) => {
@@ -45,6 +47,7 @@ const BreathScreen = ({
     breathPhase,
     breathInSound || 'none',
     breathOutSound || 'none',
+    breathClickSound || 'none',
     breathSoundFadeEnabled !== false,
     breathInDuration,
     breathOutDuration
@@ -59,7 +62,11 @@ const BreathScreen = ({
     if (isBreathing) {
       interval = setInterval(() => {
         setBreathTime(prev => {
-          if (prev <= 0) {
+          if (prev <= 1) {
+            // Přehrát finální zvuk, když meditace končí
+            if (prev === 1 && breathFinalSound && breathFinalSound !== 'none') {
+              playFinalSound();
+            }
             setIsBreathing(false);
             return 0;
           }
@@ -73,7 +80,26 @@ const BreathScreen = ({
         clearInterval(interval);
       }
     };
-  }, [isBreathing, setBreathTime, setIsBreathing]);
+  }, [isBreathing, setBreathTime, setIsBreathing, breathFinalSound]);
+
+  // Funkce pro přehrání finálního zvuku
+  const playFinalSound = async () => {
+    if (!breathFinalSound || breathFinalSound === 'none') return;
+
+    try {
+      const { realtimeMetadataService } = await import('@services/realtimeMetadataService');
+      const metadata = await realtimeMetadataService.getFileMetadata(breathFinalSound);
+      if (metadata && (metadata.downloadURL || metadata.audioSrc)) {
+        const audio = new Audio(metadata.downloadURL || metadata.audioSrc);
+        audio.volume = 1;
+        audio.play().catch((error) => {
+          console.warn('Failed to play final sound:', error);
+        });
+      }
+    } catch (error) {
+      console.error('Error playing final sound:', error);
+    }
+  };
 
   // Handler pro play/pause
   const handlePlayPause = () => {
@@ -357,6 +383,8 @@ const BreathScreen = ({
           onSelectSound={onBreathSoundChange}
           selectedInSound={breathInSound}
           selectedOutSound={breathOutSound}
+          selectedClickSound={breathClickSound}
+          selectedFinalSound={breathFinalSound}
         />
       </div>
     </FramerPageTransition>

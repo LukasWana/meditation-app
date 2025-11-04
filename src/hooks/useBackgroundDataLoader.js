@@ -5,6 +5,7 @@ import { useEffect } from 'react';
 export const useBackgroundDataLoader = (showIntro) => {
   useEffect(() => {
     let stopWatching = null;
+    let updateTimeout = null;
 
     if (showIntro) {
       // Spusť načítání dat v pozadí během animace
@@ -74,38 +75,68 @@ export const useBackgroundDataLoader = (showIntro) => {
 
           // Nastav real-time listener pro aktualizace
           console.log('🔄 Setting up real-time metadata listener...');
+          let lastUpdateTime = 0;
+          let isProcessingUpdate = false;
+
           stopWatching = realtimeMetadataService.watchMetadata((data) => {
+            // Debounce: aktualizuj maximálně jednou za 2 sekundy
+            const now = Date.now();
+            if (now - lastUpdateTime < 2000) {
+              console.debug('⏭️ Skipping real-time update (debounce)');
+              return;
+            }
+
+            // Pokud už probíhá aktualizace, přeskoč
+            if (isProcessingUpdate) {
+              console.debug('⏭️ Skipping real-time update (already processing)');
+              return;
+            }
+
+            lastUpdateTime = now;
+            isProcessingUpdate = true;
+
             console.log('📡 Real-time metadata update received:', {
               hasFiles: !!data.files,
               filesCount: data.files ? data.files.length : 0,
               lastSync: data.lastSync
             });
 
-            if (data.files && Array.isArray(data.files)) {
-              // Aktualizuj cache s novými daty
-              const cacheServiceInstance = cacheService;
-              data.files.forEach(file => {
-                if (file.fileName) {
-                  cacheServiceInstance.setMetadata(file.fileName, file);
-                }
-              });
-
-              console.log(`✅ Updated cache with ${data.files.length} files from real-time update`);
-
-              // Aktualizuj fast metadata service
-              fastMetadataService.initialize(true).then(() => {
-                console.log('✅ Fast metadata service updated from real-time data');
-              }).catch(err => {
-                console.warn('⚠️ Failed to update fast metadata service:', err);
-              });
-
-              // Aktualizuj slova data service
-              slovaDataService.initialize().then(() => {
-                console.log('✅ Slova data service updated from real-time data');
-              }).catch(err => {
-                console.warn('⚠️ Failed to update slova data service:', err);
-              });
+            // Debounce aktualizaci o 500ms
+            if (updateTimeout) {
+              clearTimeout(updateTimeout);
             }
+
+            updateTimeout = setTimeout(() => {
+              if (data.files && Array.isArray(data.files)) {
+                // Aktualizuj cache s novými daty
+                const cacheServiceInstance = cacheService;
+                data.files.forEach(file => {
+                  if (file.fileName) {
+                    cacheServiceInstance.setMetadata(file.fileName, file);
+                  }
+                });
+
+                console.log(`✅ Updated cache with ${data.files.length} files from real-time update`);
+
+                // Aktualizuj fast metadata service (bez force reload)
+                fastMetadataService.initialize(false).then(() => {
+                  console.log('✅ Fast metadata service updated from real-time data');
+                  isProcessingUpdate = false;
+                }).catch(err => {
+                  console.warn('⚠️ Failed to update fast metadata service:', err);
+                  isProcessingUpdate = false;
+                });
+
+                // Aktualizuj slova data service
+                slovaDataService.initialize().then(() => {
+                  console.log('✅ Slova data service updated from real-time data');
+                }).catch(err => {
+                  console.warn('⚠️ Failed to update slova data service:', err);
+                });
+              } else {
+                isProcessingUpdate = false;
+              }
+            }, 500); // Debounce 500ms
           });
 
           if (import.meta.env.MODE === 'development') {
@@ -125,6 +156,9 @@ export const useBackgroundDataLoader = (showIntro) => {
       // Cleanup funkce
       return () => {
         clearTimeout(timeoutId);
+        if (updateTimeout) {
+          clearTimeout(updateTimeout);
+        }
         if (stopWatching) {
           console.log('🔄 Cleaning up real-time metadata listener...');
           stopWatching();

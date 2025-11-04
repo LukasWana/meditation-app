@@ -171,6 +171,16 @@ export const useAppState = () => {
     const saved = localStorage.getItem('meditation-app-breath-out-sound');
     return saved || 'none';
   });
+  // Zvuk pro kliknutí/cinknutí na začátku nádechu i výdechu
+  const [breathClickSound, setBreathClickSound] = useState(() => {
+    const saved = localStorage.getItem('meditation-app-breath-click-sound');
+    return saved || 'none';
+  });
+  // Finální zvuk po dokončení meditace
+  const [breathFinalSound, setBreathFinalSound] = useState(() => {
+    const saved = localStorage.getItem('meditation-app-breath-final-sound');
+    return saved || 'none';
+  });
 
   // Fade in/out nastavení
   const [breathSoundFadeEnabled, setBreathSoundFadeEnabled] = useState(() => {
@@ -186,12 +196,23 @@ export const useAppState = () => {
 
   // Handlers pro zvuky dýchání
   const handleBreathSoundChange = useCallback((type, soundId) => {
+    console.log('🔊 handleBreathSoundChange called', { type, soundId });
     if (type === 'in') {
       setBreathInSound(soundId);
       localStorage.setItem('meditation-app-breath-in-sound', soundId);
-    } else {
+    } else if (type === 'out') {
       setBreathOutSound(soundId);
       localStorage.setItem('meditation-app-breath-out-sound', soundId);
+    } else if (type === 'click') {
+      console.log('✅ Setting breathClickSound to:', soundId);
+      setBreathClickSound(soundId);
+      localStorage.setItem('meditation-app-breath-click-sound', soundId);
+    } else if (type === 'final') {
+      console.log('✅ Setting breathFinalSound to:', soundId);
+      setBreathFinalSound(soundId);
+      localStorage.setItem('meditation-app-breath-final-sound', soundId);
+    } else {
+      console.warn('⚠️ Unknown sound type:', type);
     }
   }, []);
 
@@ -244,6 +265,8 @@ export const useAppState = () => {
     // Zvuky dýchání
     breathInSound,
     breathOutSound,
+    breathClickSound,
+    breathFinalSound,
     handleBreathSoundChange,
     breathSoundFadeEnabled,
     handleBreathSoundFadeChange,

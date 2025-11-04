@@ -313,24 +313,66 @@ export const useFirebaseHudbaScanner = () => {
   // Zjednodušeno: pouze aktualizuj fast metadata service, nespouštěj scanCDN
   useEffect(() => {
     let unsubscribe = null;
+    let updateTimeout = null;
+    let isProcessingUpdate = false;
+    let lastUpdateTime = 0;
 
     const startWatching = () => {
       try {
         log.info('📡 Setting up real-time listener for metadata changes...');
 
         unsubscribe = realtimeMetadataService.watchMetadata((data) => {
+          // Debounce: aktualizuj maximálně jednou za 2 sekundy
+          const now = Date.now();
+          if (now - lastUpdateTime < 2000) {
+            log.debug('⏭️ Skipping real-time update (debounce)');
+            return;
+          }
+
+          // Pokud už probíhá aktualizace, přeskoč
+          if (isProcessingUpdate) {
+            log.debug('⏭️ Skipping real-time update (already processing)');
+            return;
+          }
+
+          // Zkontroluj, zda se data skutečně změnila (pokud má data.lastSync)
+          if (data.lastSync && data.lastSync === lastUpdateTime) {
+            log.debug('⏭️ Skipping real-time update (no changes)');
+            return;
+          }
+
+          lastUpdateTime = now;
+          isProcessingUpdate = true;
           log.info('📡 Real-time metadata update detected - updating fast metadata...');
 
-          // Aktualizuj pouze fast metadata service (data jsou už v Realtime DB)
-          fastMetadataService.initialize(false).then(() => {
-            const fastMetadata = fastMetadataService.getAllMetadata();
-            if (fastMetadata && Object.keys(fastMetadata).length > 0) {
-              processFastMetadata(fastMetadata);
-              log.success('✅ Data updated from real-time');
-            }
-          }).catch(err => {
-            log.warn('⚠️ Failed to update fast metadata:', err);
-          });
+          // Debounce aktualizaci o 500ms
+          if (updateTimeout) {
+            clearTimeout(updateTimeout);
+          }
+
+          updateTimeout = setTimeout(() => {
+            // Aktualizuj pouze fast metadata service (data jsou už v Realtime DB)
+            fastMetadataService.initialize(false).then(() => {
+              const fastMetadata = fastMetadataService.getAllMetadata();
+              if (fastMetadata && Object.keys(fastMetadata).length > 0) {
+                // Zkontroluj, zda se data skutečně změnila porovnáním počtu souborů
+                const currentHudbaFiles = Object.values(fastMetadata).filter(m =>
+                  m.fileName && m.fileName.startsWith('hudba/')
+                ).length;
+
+                if (currentHudbaFiles !== audioFiles.length || audioFiles.length === 0) {
+                  processFastMetadata(fastMetadata);
+                  log.success('✅ Data updated from real-time');
+                } else {
+                  log.debug('⏭️ Skipping update (data unchanged)');
+                }
+              }
+              isProcessingUpdate = false;
+            }).catch(err => {
+              log.warn('⚠️ Failed to update fast metadata:', err);
+              isProcessingUpdate = false;
+            });
+          }, 500); // Debounce 500ms
         });
 
         log.success('📡 Real-time listener activated');
@@ -342,12 +384,15 @@ export const useFirebaseHudbaScanner = () => {
     startWatching();
 
     return () => {
+      if (updateTimeout) {
+        clearTimeout(updateTimeout);
+      }
       if (unsubscribe) {
         unsubscribe();
         log.info('📡 Real-time listener stopped');
       }
     };
-  }, []);
+  }, [audioFiles.length]);
 
   const availableFiles = audioFiles.filter(file => file.isAvailable);
 

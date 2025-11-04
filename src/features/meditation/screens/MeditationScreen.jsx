@@ -17,6 +17,8 @@ const MeditationScreen = ({
   breathOutDuration,
   breathInSound,
   breathOutSound,
+  breathClickSound,
+  breathFinalSound,
   breathSoundFadeEnabled,
   onDurationChange,
   onPlayPause,
@@ -38,8 +40,9 @@ const MeditationScreen = ({
   useBreathSounds(
     isPlaying,
     breathPhase,
-    breathInSound,
-    breathOutSound,
+    breathInSound || 'none',
+    breathOutSound || 'none',
+    breathClickSound || 'none',
     breathSoundFadeEnabled,
     breathInDuration,
     breathOutDuration
@@ -320,6 +323,8 @@ const MeditationScreen = ({
           onSelectSound={onBreathSoundChange}
           selectedInSound={breathInSound}
           selectedOutSound={breathOutSound}
+          selectedClickSound={breathClickSound}
+          selectedFinalSound={breathFinalSound}
         />
       </div>
     </FramerPageTransition>

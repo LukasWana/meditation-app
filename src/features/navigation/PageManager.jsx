@@ -40,7 +40,7 @@ const SCREEN_REGISTRY = {
   'meditation': {
     component: MeditationScreen,
     requiresLayout: true,
-    props: ['time', 'selectedDuration', 'isPlaying', 'onDurationChange', 'onPlayPause', 'onReset', 'onNavigateToScreen', 'onTouchStart', 'onTouchMove', 'onTouchEnd', 'breathPhase', 'breathInDuration', 'breathOutDuration', 'breathInSound', 'breathOutSound', 'breathSoundFadeEnabled', 'onBreathSoundChange', 'isPreparing', 'preparationCountdown', 'preparationTime'],
+    props: ['time', 'selectedDuration', 'isPlaying', 'onDurationChange', 'onPlayPause', 'onReset', 'onNavigateToScreen', 'onTouchStart', 'onTouchMove', 'onTouchEnd', 'breathPhase', 'breathInDuration', 'breathOutDuration', 'breathInSound', 'breathOutSound', 'breathClickSound', 'breathFinalSound', 'breathSoundFadeEnabled', 'onBreathSoundChange', 'isPreparing', 'preparationCountdown', 'preparationTime'],
     transition: {
       type: 'slide',
       direction: 'right',
@@ -50,7 +50,7 @@ const SCREEN_REGISTRY = {
   'breath': {
     component: BreathScreen,
     requiresLayout: true,
-    props: ['breathPhase', 'setBreathPhase', 'onNavigateToScreen', 'onTouchStart', 'onTouchMove', 'onTouchEnd', 'breathInDuration', 'breathOutDuration', 'onBreathRhythmChange', 'preparationTime', 'onPreparationTimeChange', 'breathDuration', 'breathTime', 'setBreathTime', 'isBreathing', 'setIsBreathing', 'onBreathDurationChange', 'onReset', 'breathInSound', 'breathOutSound', 'breathSoundFadeEnabled', 'onBreathSoundChange'],
+    props: ['breathPhase', 'setBreathPhase', 'onNavigateToScreen', 'onTouchStart', 'onTouchMove', 'onTouchEnd', 'breathInDuration', 'breathOutDuration', 'onBreathRhythmChange', 'preparationTime', 'onPreparationTimeChange', 'breathDuration', 'breathTime', 'setBreathTime', 'isBreathing', 'setIsBreathing', 'onBreathDurationChange', 'onReset', 'breathInSound', 'breathOutSound', 'breathClickSound', 'breathFinalSound', 'breathSoundFadeEnabled', 'onBreathSoundChange'],
     transition: {
       type: 'scale',
       duration: 0.7
@@ -201,6 +201,8 @@ const PageManager = ({
   onPreparationTimeChange,
   breathInSound,
   breathOutSound,
+  breathClickSound,
+  breathFinalSound,
   onBreathSoundChange,
   breathSoundFadeEnabled,
   onBreathSoundFadeChange,
@@ -307,6 +309,12 @@ const PageManager = ({
         case 'breathOutSound':
           props.breathOutSound = breathOutSound;
           break;
+        case 'breathClickSound':
+          props.breathClickSound = breathClickSound;
+          break;
+        case 'breathFinalSound':
+          props.breathFinalSound = breathFinalSound;
+          break;
         case 'breathSoundFadeEnabled':
           props.breathSoundFadeEnabled = breathSoundFadeEnabled;
           break;
@@ -370,7 +378,7 @@ const PageManager = ({
   }, [
     onNavigateToScreen, onTouchStart, onTouchMove, onTouchEnd,
     gender, onPlayerStateChange, onGenderChange, time, selectedDuration, isPlaying,
-    onDurationChange, onPlayPause, onReset, breathPhase, setBreathPhase, breathInDuration, breathOutDuration, breathInSound, breathOutSound, breathSoundFadeEnabled, onBreathRhythmChange,
+    onDurationChange, onPlayPause, onReset, breathPhase, setBreathPhase, breathInDuration, breathOutDuration, breathInSound, breathOutSound, breathClickSound, breathFinalSound, breathSoundFadeEnabled, onBreathRhythmChange,
     preparationTime, onPreparationTimeChange, onBreathSoundChange, onBreathSoundFadeChange,
     isPreparing, preparationCountdown,
     breathDuration, breathTime, setBreathTime, isBreathing, setIsBreathing, onBreathDurationChange,

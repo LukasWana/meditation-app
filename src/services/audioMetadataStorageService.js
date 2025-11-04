@@ -45,6 +45,10 @@ class AudioMetadataStorageService {
         category: fileData.category,
         language: fileData.language || null,
         downloadURL: fileData.downloadURL,
+        // Ulož waveform data pokud jsou přítomna
+        waveformData: fileData.waveformData || fileData.waveform || null,
+        waveformGenerated: fileData.waveformGenerated || null,
+        waveformSamples: fileData.waveformSamples || null,
         lastUpdated: new Date().toISOString(),
         timestamp: Date.now()
       };
@@ -90,6 +94,10 @@ class AudioMetadataStorageService {
             category: fileData.category,
             language: fileData.language || null,
             downloadURL: fileData.downloadURL,
+            // Ulož waveform data pokud jsou přítomna
+            waveformData: fileData.waveformData || fileData.waveform || null,
+            waveformGenerated: fileData.waveformGenerated || null,
+            waveformSamples: fileData.waveformSamples || null,
             lastUpdated: new Date().toISOString(),
             timestamp: Date.now()
           };
