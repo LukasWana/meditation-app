@@ -43,6 +43,7 @@ export const LanguageProvider = ({ children }) => {
 
       // Dýchanie a rytmus
       dychanie: 'dýchanie',
+      nadechVydech: 'nádech výdech',
       rytmusDychania: 'rytmus dýchania',
       nadech: 'nádech',
       vydech: 'výdech',
@@ -128,6 +129,7 @@ export const LanguageProvider = ({ children }) => {
 
       // Dýchání a rytmus
       dychanie: 'dýchání',
+      nadechVydech: 'nádech výdech',
       rytmusDychania: 'rytmus dýchání',
       nadech: 'nádech',
       vydech: 'výdech',
@@ -212,6 +214,7 @@ export const LanguageProvider = ({ children }) => {
 
       // Breathing and rhythm
       dychanie: 'breathing',
+      nadechVydech: 'inhale exhale',
       rytmusDychania: 'breathing rhythm',
       nadech: 'inhale',
       vydech: 'exhale',

@@ -14,6 +14,7 @@ const SlovaScreen = lazy(() => import('@features/meditation/screens/SlovaScreen'
 const AlbumDetailScreen = lazy(() => import('@features/meditation/screens/AlbumDetailScreen'));
 const AudioPlayer = lazy(() => import('@features/audio/AudioPlayer'));
 const SimpleAdminScreen = lazy(() => import('@features/meditation/screens/SimpleAdminScreen'));
+const SoundThemeGalleryScreen = lazy(() => import('@features/meditation/screens/SoundThemeGalleryScreen'));
 
 
 // Registry stránek s jejich konfigurací
@@ -122,6 +123,16 @@ const SCREEN_REGISTRY = {
     transition: {
       type: 'slide',
       direction: 'up',
+      duration: 0.6
+    }
+  },
+  'sound-theme-gallery': {
+    component: SoundThemeGalleryScreen,
+    requiresLayout: true,
+    props: ['onNavigateToScreen', 'onTouchStart', 'onTouchMove', 'onTouchEnd', 'onSelectSound', 'selectedInSound', 'selectedOutSound', 'selectedClickSound', 'selectedFinalSound', 'selectedCountdownSound'],
+    transition: {
+      type: 'slide',
+      direction: 'left',
       duration: 0.6
     }
   }
@@ -369,6 +380,24 @@ const PageManager = ({
           break;
         case 'onClose':
           props.onClose = onCloseAudio;
+          break;
+        case 'onSelectSound':
+          props.onSelectSound = onBreathSoundChange;
+          break;
+        case 'selectedInSound':
+          props.selectedInSound = breathInSound;
+          break;
+        case 'selectedOutSound':
+          props.selectedOutSound = breathOutSound;
+          break;
+        case 'selectedClickSound':
+          props.selectedClickSound = breathClickSound;
+          break;
+        case 'selectedFinalSound':
+          props.selectedFinalSound = breathFinalSound;
+          break;
+        case 'selectedCountdownSound':
+          props.selectedCountdownSound = breathCountdownSound;
           break;
         default:
           break;
