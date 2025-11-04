@@ -181,6 +181,11 @@ export const useAppState = () => {
     const saved = localStorage.getItem('meditation-app-breath-final-sound');
     return saved || 'none';
   });
+  // Zvuk pro odpočítávání (příprava)
+  const [breathCountdownSound, setBreathCountdownSound] = useState(() => {
+    const saved = localStorage.getItem('meditation-app-breath-countdown-sound');
+    return saved || 'none';
+  });
 
   // Fade in/out nastavení
   const [breathSoundFadeEnabled, setBreathSoundFadeEnabled] = useState(() => {
@@ -211,6 +216,10 @@ export const useAppState = () => {
       console.log('✅ Setting breathFinalSound to:', soundId);
       setBreathFinalSound(soundId);
       localStorage.setItem('meditation-app-breath-final-sound', soundId);
+    } else if (type === 'countdown') {
+      console.log('✅ Setting breathCountdownSound to:', soundId);
+      setBreathCountdownSound(soundId);
+      localStorage.setItem('meditation-app-breath-countdown-sound', soundId);
     } else {
       console.warn('⚠️ Unknown sound type:', type);
     }
@@ -267,6 +276,7 @@ export const useAppState = () => {
     breathOutSound,
     breathClickSound,
     breathFinalSound,
+    breathCountdownSound,
     handleBreathSoundChange,
     breathSoundFadeEnabled,
     handleBreathSoundFadeChange,

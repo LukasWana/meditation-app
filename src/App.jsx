@@ -67,6 +67,9 @@ function MeditationApp() {
     handlePreparationTimeChange,
     breathInSound,
     breathOutSound,
+    breathClickSound,
+    breathFinalSound,
+    breathCountdownSound,
     handleBreathSoundChange,
     breathSoundFadeEnabled,
     handleBreathSoundFadeChange,
@@ -293,6 +296,9 @@ function MeditationApp() {
         onPreparationTimeChange={handlePreparationTimeChange}
         breathInSound={breathInSound}
         breathOutSound={breathOutSound}
+        breathClickSound={breathClickSound}
+        breathFinalSound={breathFinalSound}
+        breathCountdownSound={breathCountdownSound}
         onBreathSoundChange={handleBreathSoundChange}
         breathSoundFadeEnabled={breathSoundFadeEnabled}
         onBreathSoundFadeChange={handleBreathSoundFadeChange}
