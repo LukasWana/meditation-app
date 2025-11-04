@@ -261,22 +261,19 @@ export const useBreathSounds = (
       if (outSoundRef.current) {
         fadeOut(outSoundRef.current, 1.5, outFadeIntervalRef);
       }
-      // NERESETUJ previousPhaseRef - zachováme ho pro případ, že se komponenta znovu mountuje
-      // previousPhaseRef.current = null;
+      previousPhaseRef.current = null;
       pendingPhaseRef.current = null;
       return;
     }
 
-    // Pokud se komponenta znovu mountuje a isPlaying je true, ale audio elementy nejsou inicializované,
-    // počkej na jejich načtení
-    if (!inSoundUrl && !outSoundUrl && breathInSound !== 'none' && breathOutSound !== 'none') {
+    // Pokud audio elementy nejsou inicializované, počkej na jejich načtení
+    if ((breathInSound !== 'none' && !inSoundUrl) || (breathOutSound !== 'none' && !outSoundUrl)) {
       // Zvuky se ještě načítají, počkej
       return;
     }
 
     // Zkontroluj, zda se změnila fáze - PŘED aktualizací previousPhaseRef
     const isFirstStart = previousPhaseRef.current === null;
-    const wasRemounted = isFirstStart && inSoundRef.current && outSoundRef.current; // Komponenta se znovu mountovala
     const phaseChanged = !isFirstStart && previousPhaseRef.current !== breathPhase;
 
     // Získat aktuální zvuk podle fáze
@@ -284,31 +281,8 @@ export const useBreathSounds = (
       ? (breathInSound !== 'none' ? inSoundRef.current : null)
       : (breathOutSound !== 'none' ? outSoundRef.current : null);
 
-    // Pokud se komponenta znovu mountovala a isPlaying je true, spusť zvuky znovu
-    if (wasRemounted && currentSound) {
-      if (currentSound.paused) {
-        // Spusť zvuk znovu, ale bez resetování - pokračuj od aktuálního času
-        try {
-          currentSound.play().catch((error) => {
-            console.warn('Failed to resume breath sound after remount:', error);
-          });
-          // Pokud je zvuk na začátku, spusť fade in
-          if (currentSound.currentTime < 1) {
-            const currentIntervalRef = breathPhase === 'in' ? inFadeIntervalRef : outFadeIntervalRef;
-            const fadeInDuration = 1.5;
-            fadeIn(currentSound, fadeInDuration, currentIntervalRef);
-          }
-        } catch (error) {
-          console.warn('Error resuming breath sound after remount:', error);
-        }
-      }
-      // Pokud je zvuk už přehráván, obnovíme previousPhaseRef a pokračujeme
-      previousPhaseRef.current = breathPhase;
-      return; // Ukončeme zde, abychom neznovu spouštěli zvuk
-    }
-
     // Přehrát kliknutí na začátku každé fáze
-    if ((phaseChanged || isFirstStart) && !wasRemounted && clickSoundRef.current && clickSoundUrl) {
+    if ((phaseChanged || isFirstStart) && clickSoundRef.current && clickSoundUrl) {
       try {
         clickSoundRef.current.currentTime = 0;
         clickSoundRef.current.play().catch((error) => {
@@ -429,47 +403,35 @@ export const useBreathSounds = (
 
   }, [isPlaying, breathPhase, breathInSound, breathOutSound, breathClickSound, clickSoundUrl, breathSoundFadeEnabled, breathInDuration, breathOutDuration]);
 
-  // Cleanup při unmount - pouze pokud je isPlaying false
-  // Pokud je isPlaying true při unmountu, zachováme audio elementy pro případ remountu
+  // Cleanup při unmount
   useEffect(() => {
     return () => {
-      // Vyčisti pouze intervaly a timeouty
       if (inFadeIntervalRef.current) {
         clearInterval(inFadeIntervalRef.current);
-        inFadeIntervalRef.current = null;
       }
       if (outFadeIntervalRef.current) {
         clearInterval(outFadeIntervalRef.current);
-        outFadeIntervalRef.current = null;
       }
       if (inFadeOutTimeoutRef.current) {
         clearTimeout(inFadeOutTimeoutRef.current);
-        inFadeOutTimeoutRef.current = null;
       }
       if (outFadeOutTimeoutRef.current) {
         clearTimeout(outFadeOutTimeoutRef.current);
-        outFadeOutTimeoutRef.current = null;
       }
-      // Pokud isPlaying je false, zastav a vymaž audio elementy
-      // Pokud je true, zachováme je pro případ remountu
-      if (!isPlaying) {
-        if (inSoundRef.current) {
-          inSoundRef.current.pause();
-          inSoundRef.current = null;
-        }
-        if (outSoundRef.current) {
-          outSoundRef.current.pause();
-          outSoundRef.current = null;
-        }
-        if (clickSoundRef.current) {
-          clickSoundRef.current.pause();
-          clickSoundRef.current = null;
-        }
+      if (inSoundRef.current) {
+        inSoundRef.current.pause();
+        inSoundRef.current = null;
       }
-      // Pokud je isPlaying true, zachováme audio elementy a previousPhaseRef
-      // pro případ, že se komponenta znovu mountuje
+      if (outSoundRef.current) {
+        outSoundRef.current.pause();
+        outSoundRef.current = null;
+      }
+      if (clickSoundRef.current) {
+        clickSoundRef.current.pause();
+        clickSoundRef.current = null;
+      }
     };
-  }, [isPlaying]);
+  }, []);
 
   return {
     inSound: inSoundRef.current,
