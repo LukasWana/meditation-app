@@ -69,7 +69,7 @@ export const WheelPickerModal = ({ isOpen, onClose, value, onChange, min, max, s
               const isLargeModal = title === t('dlzka') || title === 'délka' || title === t('priprava') || title === 'příprava' || title === 'priprava';
               return (
                 <div className={`flex flex-col items-center justify-center mb-4 flex-1 w-full ${isLargeModal ? 'min-h-[calc(100vh-280px)]' : 'min-h-[200px]'}`}>
-                  <div className={isLargeModal ? 'transform scale-[2] origin-center' : ''}>
+                  <div className={isLargeModal ? 'transform scale-[1.6] origin-center' : ''}>
                     <WheelPicker
                       value={tempValue}
                       onChange={setTempValue}
@@ -212,7 +212,7 @@ export const DualWheelPickerModal = ({
               const isLargeModal = title === t('rytmus') || title === 'rytmus';
               return (
                 <div className={`flex flex-col items-center justify-center mb-4 flex-1 ${isLargeModal ? 'min-h-[calc(100vh-280px)]' : 'min-h-[300px]'}`}>
-                  <div className={isLargeModal ? 'transform scale-[2] origin-center' : ''}>
+                  <div className={isLargeModal ? 'transform scale-[1.6] origin-center' : ''}>
                     <DualWheelPicker
                       leftValue={tempLeftValue}
                       rightValue={tempRightValue}
