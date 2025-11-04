@@ -20,7 +20,7 @@ if (!admin.apps.length) {
  * Používá PCM data pro přesné generování waveformy
  * @param {string} tempFilePath - Cesta k dočasnému audio souboru
  * @param {number} samples - Počet vzorků pro waveformu (default: 800)
- * @returns {Promise<Array<number>>} - Pole amplitud (0-1)
+ * @returns {Promise<Array<number>>} - Pole amplitud (0-32768) - absolutní hodnoty bez normalizace
  */
 async function generateWaveformFromFile(tempFilePath, samples = 800) {
   const { spawn } = require('child_process');
@@ -99,6 +99,32 @@ async function generateWaveformFromFile(tempFilePath, samples = 800) {
       // Ulož peak hodnotu (0-32768) - zachová skutečný průběh s decay
       // NENORMALIZUJME - uložíme absolutní hodnoty pro normalizaci při vizualizaci!
       waveform.push(maxAmplitude);
+    }
+
+    // ✅ DEBUG: Zkontroluj hodnoty PŘED RETURN - musí být absolutní (0-32768)
+    if (waveform.length > 0) {
+      const checkMax = Math.max(...waveform);
+      const checkMin = Math.min(...waveform);
+      const checkAvg = waveform.reduce((a, b) => a + b, 0) / waveform.length;
+      const first5 = waveform.slice(0, 5);
+      const last5 = waveform.slice(-5);
+
+      console.log(`🔍 generateWaveformFromFile - DEBUG PŘED RETURN:`, {
+        samples: waveform.length,
+        max: checkMax.toFixed(2),
+        min: checkMin.toFixed(2),
+        avg: checkAvg.toFixed(2),
+        first5: first5.map(v => v.toFixed(2)),
+        last5: last5.map(v => v.toFixed(2)),
+        isAbsolute: checkMax > 1000 ? 'ANO (0-32768) ✅' : `NE (0-1) ⚠️ - max je ${checkMax.toFixed(2)}, mělo by být > 1000`,
+        globalMaxAmplitude: globalMaxAmplitude.toFixed(2)
+      });
+
+      // ✅ KRITICKÁ KONTROLA: Pokud jsou hodnoty normalizované, něco je špatně!
+      if (checkMax < 1.5) {
+        console.error(`❌ CHYBA: Waveform data jsou NORMALIZOVANÁ (max=${checkMax.toFixed(2)}), ale měly by být ABSOLUTNÍ (0-32768)!`);
+        console.error(`❌ globalMaxAmplitude=${globalMaxAmplitude.toFixed(2)} - toto by mělo být maximum z PCM dat`);
+      }
     }
 
     // KRITICKÉ: NEUKLÁDEJME normalizované hodnoty - uložíme absolutní hodnoty!

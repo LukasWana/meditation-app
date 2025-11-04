@@ -331,12 +331,151 @@ function MeditationApp() {
         }
       };
 
+      // Funkce pro kontrolu struktury waveform dat v databázi
+      window.checkWaveformStructure = async () => {
+        console.log('🔍 Kontroluji strukturu waveform dat v databázi...');
+        try {
+          const { realtimeMetadataService } = await import('./services/realtimeMetadataService');
+          const allMetadata = await realtimeMetadataService.getAllMetadata();
+
+          // Najdi soubory s waveformy
+          const filesWithWaveform = Object.values(allMetadata).filter(file =>
+            file.waveformData && file.fileName?.startsWith('dychanie/')
+          ).slice(0, 5);
+
+          console.log(`📊 Našel ${filesWithWaveform.length} souborů s waveformy:`);
+
+          filesWithWaveform.forEach((file, index) => {
+            const waveformData = file.waveformData;
+            console.log(`\n📄 ${index + 1}. ${file.fileName}:`);
+            console.log(`   - waveformData type: ${typeof waveformData}`);
+            console.log(`   - Is Array: ${Array.isArray(waveformData)}`);
+            console.log(`   - Is Object: ${typeof waveformData === 'object' && !Array.isArray(waveformData)}`);
+
+            if (Array.isArray(waveformData)) {
+              console.log(`   - Length: ${waveformData.length}`);
+              console.log(`   - First 5 values:`, waveformData.slice(0, 5));
+              console.log(`   - Last 5 values:`, waveformData.slice(-5));
+              const max = Math.max(...waveformData);
+              const min = Math.min(...waveformData);
+              const avg = waveformData.reduce((a, b) => a + b, 0) / waveformData.length;
+              console.log(`   - Max: ${max.toFixed(4)} ${max > 1 ? '(ABSOLUTNÍ 0-32768) ✅' : '(NORMALIZOVANÉ 0-1) ⚠️'}`);
+              console.log(`   - Min: ${min.toFixed(4)}`);
+              console.log(`   - Avg: ${avg.toFixed(4)}`);
+              console.log(`   - Range: ${(max - min).toFixed(4)}`);
+              console.log(`   - Metadata: waveformMax=${file.waveformMax?.toFixed(4) || 'NULL'}, waveformMin=${file.waveformMin?.toFixed(4) || 'NULL'}, waveformAvg=${file.waveformAvg?.toFixed(4) || 'NULL'}`);
+              console.log(`   - waveformGenerated: ${file.waveformGenerated || 'NULL'}`);
+              console.log(`   - waveformSamples: ${file.waveformSamples || 'NULL'}`);
+            } else if (typeof waveformData === 'object' && waveformData !== null) {
+              console.log(`   - Object keys count: ${Object.keys(waveformData).length}`);
+              console.log(`   - First 5 keys:`, Object.keys(waveformData).slice(0, 5));
+              console.log(`   - Sample values:`, Object.values(waveformData).slice(0, 5));
+
+              // Zkus převést na array
+              const asArray = Object.values(waveformData);
+              console.log(`   - Converted to array length: ${asArray.length}`);
+              const max = Math.max(...asArray);
+              const min = Math.min(...asArray);
+              console.log(`   - Converted max: ${max.toFixed(4)} ${max > 1 ? '(ABSOLUTNÍ)' : '(NORMALIZOVANÉ)'}`);
+              console.log(`   - Converted min: ${min.toFixed(4)}`);
+            }
+          });
+
+          return { success: true, filesChecked: filesWithWaveform.length };
+        } catch (error) {
+          console.error('❌ Chyba při kontrole struktury waveform dat:', error);
+          return { success: false, error: error.message };
+        }
+      };
+
+      // Funkce pro analýzu waveform dat - zkontroluje, zda jsou absolutní nebo normalizovaná
+      window.analyzeWaveformData = async () => {
+        console.log('🔬 Analýza waveform dat v databázi...');
+        try {
+          const { realtimeMetadataService } = await import('./services/realtimeMetadataService');
+          const allMetadata = await realtimeMetadataService.getAllMetadata();
+
+          const dychanieFiles = Object.values(allMetadata).filter(file =>
+            file.waveformData && file.fileName?.startsWith('dychanie/')
+          );
+
+          console.log(`📊 Celkem souborů s waveformy: ${dychanieFiles.length}`);
+
+          let absoluteCount = 0;
+          let normalizedCount = 0;
+          let absoluteFiles = [];
+          let normalizedFiles = [];
+
+          dychanieFiles.forEach(file => {
+            const waveformData = file.waveformData;
+            if (!Array.isArray(waveformData) || waveformData.length === 0) return;
+
+            const max = Math.max(...waveformData);
+            const min = Math.min(...waveformData);
+            const avg = waveformData.reduce((a, b) => a + b, 0) / waveformData.length;
+
+            if (max > 1.5) {
+              absoluteCount++;
+              absoluteFiles.push({
+                fileName: file.fileName,
+                max: max.toFixed(2),
+                min: min.toFixed(2),
+                avg: avg.toFixed(2),
+                samples: waveformData.length
+              });
+            } else {
+              normalizedCount++;
+              normalizedFiles.push({
+                fileName: file.fileName,
+                max: max.toFixed(4),
+                min: min.toFixed(4),
+                avg: avg.toFixed(4),
+                samples: waveformData.length,
+                waveformGenerated: file.waveformGenerated
+              });
+            }
+          });
+
+          console.log(`\n📊 VÝSLEDKY:`);
+          console.log(`   ✅ Absolutní hodnoty (0-32768): ${absoluteCount} souborů`);
+          console.log(`   ⚠️  Normalizované hodnoty (0-1): ${normalizedCount} souborů`);
+
+          if (absoluteFiles.length > 0) {
+            console.log(`\n✅ Soubory s ABSOLUTNÍMI hodnotami (správné):`);
+            absoluteFiles.slice(0, 3).forEach(f => {
+              console.log(`   - ${f.fileName}: max=${f.max}, min=${f.min}, avg=${f.avg}, samples=${f.samples}`);
+            });
+          }
+
+          if (normalizedFiles.length > 0) {
+            console.log(`\n⚠️  Soubory s NORMALIZOVANÝMI hodnotami (potřebují regenerovat):`);
+            normalizedFiles.slice(0, 5).forEach(f => {
+              console.log(`   - ${f.fileName}: max=${f.max}, min=${f.min}, avg=${f.avg}, generated=${f.waveformGenerated || 'NULL'}`);
+            });
+          }
+
+          return {
+            success: true,
+            total: dychanieFiles.length,
+            absolute: absoluteCount,
+            normalized: normalizedCount,
+            absoluteFiles: absoluteFiles.slice(0, 5),
+            normalizedFiles: normalizedFiles.slice(0, 5)
+          };
+        } catch (error) {
+          console.error('❌ Chyba při analýze waveform dat:', error);
+          return { success: false, error: error.message };
+        }
+      };
+
       console.log('🔍 Debug funkce dostupné v konzoli:');
       console.log('  - showDatabaseData() - zobrazí database viewer');
       console.log('  - debugSlovaFiles() - zobrazí slova soubory v Realtime Database');
       console.log('  - debugCache() - zobrazí detaily cache');
       console.log('  - syncAllFiles() - synchronizuje všechny soubory pomocí Firebase Function');
       console.log('  - checkWaveforms() - zkontroluje, které soubory mají waveformy v databázi');
+      console.log('  - checkWaveformStructure() - kontroluje strukturu waveform dat v databázi');
+      console.log('  - analyzeWaveformData() - analýzuje waveform dat v databázi');
       console.log('  - clearCache() - vymaže cache');
       console.log('  - testAudioPlayback(fileName) - otestuje přehrávání konkrétního souboru');
       console.log('  - setLogLevel(level) - nastaví úroveň logování (silent, error, warn, info, debug)');

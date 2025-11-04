@@ -30,6 +30,12 @@ class RealtimeMetadataService {
       if (snapshot.exists()) {
         const data = snapshot.val();
         log.debug(`✅ Metadata loaded from Realtime Database: ${safePath}`);
+
+        // ✅ OPRAVA: Normalizuj waveform data - může být objekt místo pole
+        if (data && data.waveformData) {
+          data.waveformData = this.normalizeWaveformData(data.waveformData);
+        }
+
         return data;
       } else {
         log.debug(`📭 No metadata found for: ${filePath}`);
@@ -66,6 +72,10 @@ class RealtimeMetadataService {
           const metadataObject = {};
           data.files.forEach(file => {
             if (file.fileName) {
+              // ✅ OPRAVA: Normalizuj waveform data - může být objekt místo pole
+              if (file.waveformData) {
+                file.waveformData = this.normalizeWaveformData(file.waveformData);
+              }
               metadataObject[file.fileName] = file;
             }
           });
@@ -103,6 +113,10 @@ class RealtimeMetadataService {
           Object.entries(data).forEach(([sanitizedKey, fileData]) => {
             // Pokud má fileData fileName, použij ho jako klíč
             if (fileData && fileData.fileName) {
+              // ✅ OPRAVA: Normalizuj waveform data - může být objekt místo pole
+              if (fileData.waveformData) {
+                fileData.waveformData = this.normalizeWaveformData(fileData.waveformData);
+              }
               metadataObject[fileData.fileName] = fileData;
             } else {
               // Pokud nemá fileName, použij sanitizovaný klíč (pro zpětnou kompatibilitu)
@@ -294,6 +308,77 @@ class RealtimeMetadataService {
         byFolder: {},
         lastUpdated: null
       };
+    }
+  }
+
+  /**
+   * Normalizuje waveform data - pokud jsou uložena jako objekt {0: val, 1: val, ...},
+   * převede je na pole. Realtime Database někdy ukládá pole jako objekty s numerickými klíči.
+   * @param {any} waveformData - Waveform data (může být array, object, nebo base64 string)
+   * @returns {Array<number>|null} - Pole amplitud nebo null
+   */
+  normalizeWaveformData(waveformData) {
+    if (!waveformData) {
+      return null;
+    }
+
+    // Pokud je to pole, vrať jak je
+    if (Array.isArray(waveformData)) {
+      return waveformData;
+    }
+
+    // Pokud je to objekt s numerickými klíči, převeď na pole
+    if (typeof waveformData === 'object' && waveformData !== null) {
+      const keys = Object.keys(waveformData);
+      // Zkontroluj, zda jsou všechny klíče čísla
+      const allNumericKeys = keys.every(key => /^\d+$/.test(key));
+
+      if (allNumericKeys) {
+        // Seřaď klíče numericky a vrať jako pole
+        const sortedKeys = keys.map(k => parseInt(k, 10)).sort((a, b) => a - b);
+        return sortedKeys.map(k => waveformData[k.toString()]);
+      }
+
+      // Pokud to není objekt s numerickými klíči, vrať null
+      return null;
+    }
+
+    // Pokud je to base64 string (pokud by se v budoucnu používalo base64 kódování)
+    if (typeof waveformData === 'string' && waveformData.length > 100) {
+      try {
+        // Zkus dekódovat base64
+        return this.decodeWaveformFromBase64(waveformData);
+      } catch (error) {
+        // Pokud to není base64, vrať null
+        return null;
+      }
+    }
+
+    return null;
+  }
+
+  /**
+   * Dekóduje base64 string zpět na waveform pole
+   * @param {string} base64String - Base64 kódovaný string
+   * @returns {Array<number>} - Pole amplitud (0-32768)
+   */
+  decodeWaveformFromBase64(base64String) {
+    try {
+      // Dekóduj base64 na Uint8Array
+      const binaryString = atob(base64String);
+      const bytes = new Uint8Array(binaryString.length);
+      for (let i = 0; i < binaryString.length; i++) {
+        bytes[i] = binaryString.charCodeAt(i);
+      }
+
+      // Konvertuj na Int16Array (každé 2 byty = 1 číslo)
+      const int16Array = new Int16Array(bytes.buffer, bytes.byteOffset, bytes.byteLength / 2);
+
+      // Konvertuj na pole čísel
+      return Array.from(int16Array);
+    } catch (error) {
+      console.error('❌ Failed to decode base64 waveform:', error);
+      return null;
     }
   }
 }
