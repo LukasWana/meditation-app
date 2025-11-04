@@ -1,13 +1,18 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, Suspense, lazy } from 'react';
 import { motion } from 'framer-motion';
 import { RotateCcw, Music2 } from 'lucide-react';
-import { FramerSection, FramerPageTransition, BackButton, FramerButton, WheelPickerModal, DualWheelPickerModal, SoundThemeGallery } from '@components';
+import { FramerSection, FramerPageTransition, BackButton, FramerButton } from '@components';
 import CircularProgress from '@features/audio/components/CircularProgress';
 import PlayPauseButton from '@features/audio/components/PlayPauseButton';
 import CurrentTimeDisplay from '@features/audio/components/CurrentTimeDisplay';
 import { useLanguage } from '@contexts/LanguageContext';
 import { useBreathSounds } from '@hooks';
 import { useBreathPhase } from '@hooks/useBreathPhase';
+
+// Lazy loading modálů pro lepší performance
+const WheelPickerModal = lazy(() => import('@components/TimePickerModal').then(m => ({ default: m.WheelPickerModal })));
+const DualWheelPickerModal = lazy(() => import('@components/TimePickerModal').then(m => ({ default: m.DualWheelPickerModal })));
+const SoundThemeGallery = lazy(() => import('@components/SoundThemeGallery'));
 
 const BreathScreen = ({
   breathPhase,
@@ -576,74 +581,86 @@ const BreathScreen = ({
           </FramerSection>
         </div>
 
-        {/* Modaly */}
-        <WheelPickerModal
-          isOpen={showPreparationPicker}
-          onClose={() => setShowPreparationPicker(false)}
-          value={preparationTime}
-          onChange={onPreparationTimeChange}
-          min={0}
-          max={60}
-          step={1}
-          label={t('sekund')}
-          title={t('priprava') || 'příprava'}
-          onSoundButtonClick={() => {
-            setShowPreparationPicker(false);
-            setShowSoundGallery(true);
-          }}
-        />
+        {/* Modaly - lazy loaded */}
+        {(showPreparationPicker || showDurationPicker || showRhythmPicker || showSoundGallery) && (
+          <Suspense fallback={null}>
+            {showPreparationPicker && (
+              <WheelPickerModal
+                isOpen={showPreparationPicker}
+                onClose={() => setShowPreparationPicker(false)}
+                value={preparationTime}
+                onChange={onPreparationTimeChange}
+                min={0}
+                max={60}
+                step={1}
+                label={t('sekund')}
+                title={t('priprava') || 'příprava'}
+                onSoundButtonClick={() => {
+                  setShowPreparationPicker(false);
+                  setShowSoundGallery(true);
+                }}
+              />
+            )}
 
-        <WheelPickerModal
-          isOpen={showDurationPicker}
-          onClose={() => setShowDurationPicker(false)}
-          value={breathDuration}
-          onChange={(duration) => {
-            onBreathDurationChange(duration);
-            setBreathTime(duration * 60);
-          }}
-          min={1}
-          max={60}
-          step={1}
-          label={t('minut')}
-          title={t('dlzka') || 'délka'}
-          onSoundButtonClick={() => {
-            setShowDurationPicker(false);
-            setShowSoundGallery(true);
-          }}
-        />
+            {showDurationPicker && (
+              <WheelPickerModal
+                isOpen={showDurationPicker}
+                onClose={() => setShowDurationPicker(false)}
+                value={breathDuration}
+                onChange={(duration) => {
+                  onBreathDurationChange(duration);
+                  setBreathTime(duration * 60);
+                }}
+                min={1}
+                max={60}
+                step={1}
+                label={t('minut')}
+                title={t('dlzka') || 'délka'}
+                onSoundButtonClick={() => {
+                  setShowDurationPicker(false);
+                  setShowSoundGallery(true);
+                }}
+              />
+            )}
 
-        <DualWheelPickerModal
-          isOpen={showRhythmPicker}
-          onClose={() => setShowRhythmPicker(false)}
-          leftValue={breathInDuration}
-          rightValue={breathOutDuration}
-          onChange={(leftValue, rightValue) => onBreathRhythmChange(leftValue, rightValue)}
-          leftLabel={t('nadech') || 'nádech'}
-          rightLabel={t('vydech') || 'výdech'}
-          leftMin={1}
-          leftMax={20}
-          leftStep={1}
-          rightMin={1}
-          rightMax={20}
-          rightStep={1}
-          title={t('rytmus') || 'rytmus'}
-          onSoundButtonClick={() => {
-            setShowRhythmPicker(false);
-            setShowSoundGallery(true);
-          }}
-        />
+            {showRhythmPicker && (
+              <DualWheelPickerModal
+                isOpen={showRhythmPicker}
+                onClose={() => setShowRhythmPicker(false)}
+                leftValue={breathInDuration}
+                rightValue={breathOutDuration}
+                onChange={(leftValue, rightValue) => onBreathRhythmChange(leftValue, rightValue)}
+                leftLabel={t('nadech') || 'nádech'}
+                rightLabel={t('vydech') || 'výdech'}
+                leftMin={1}
+                leftMax={20}
+                leftStep={1}
+                rightMin={1}
+                rightMax={20}
+                rightStep={1}
+                title={t('rytmus') || 'rytmus'}
+                onSoundButtonClick={() => {
+                  setShowRhythmPicker(false);
+                  setShowSoundGallery(true);
+                }}
+              />
+            )}
 
-        {/* Galerie zvuků */}
-        <SoundThemeGallery
-          isOpen={showSoundGallery}
-          onClose={() => setShowSoundGallery(false)}
-          onSelectSound={onBreathSoundChange}
-          selectedInSound={breathInSound}
-          selectedOutSound={breathOutSound}
-          selectedClickSound={breathClickSound}
-          selectedFinalSound={breathFinalSound}
-          selectedCountdownSound={breathCountdownSound}
-        />
+            {/* Galerie zvuků */}
+            {showSoundGallery && (
+              <SoundThemeGallery
+                isOpen={showSoundGallery}
+                onClose={() => setShowSoundGallery(false)}
+                onSelectSound={onBreathSoundChange}
+                selectedInSound={breathInSound}
+                selectedOutSound={breathOutSound}
+                selectedClickSound={breathClickSound}
+                selectedFinalSound={breathFinalSound}
+                selectedCountdownSound={breathCountdownSound}
+              />
+            )}
+          </Suspense>
+        )}
       </div>
     </FramerPageTransition>
   );

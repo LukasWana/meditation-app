@@ -1,12 +1,15 @@
-import React, { useState } from 'react';
+import React, { useState, Suspense, lazy } from 'react';
 import { motion } from 'framer-motion';
 import { RotateCcw, Image as ImageIcon } from 'lucide-react';
-import { FramerButton, FramerSection, FramerPageTransition, BackButton, WheelPickerModal } from '@components';
-import SoundThemeGallery from '@components/SoundThemeGallery';
+import { FramerButton, FramerSection, FramerPageTransition, BackButton } from '@components';
 import CircularProgress from '@features/audio/components/CircularProgress';
 import PlayPauseButton from '@features/audio/components/PlayPauseButton';
 import { useLanguage } from '@contexts/LanguageContext';
 import { useBreathSounds } from '@hooks';
+
+// Lazy loading modálů pro lepší performance
+const WheelPickerModal = lazy(() => import('@components/TimePickerModal').then(m => ({ default: m.WheelPickerModal })));
+const SoundThemeGallery = lazy(() => import('@components/SoundThemeGallery'));
 
 const MeditationScreen = ({
   time,
@@ -279,17 +282,23 @@ const MeditationScreen = ({
                 </span>
               </div>
 
-              <WheelPickerModal
-                isOpen={showDurationPicker}
-                onClose={() => setShowDurationPicker(false)}
-                value={selectedDuration}
-                onChange={onDurationChange}
-                min={1}
-                max={60}
-                step={1}
-                label={t('dlzkaMeditacie')}
-                title={t('dlzkaMeditacie')}
-              />
+              {(showDurationPicker || showGallery) && (
+                <Suspense fallback={null}>
+                  {showDurationPicker && (
+                    <WheelPickerModal
+                      isOpen={showDurationPicker}
+                      onClose={() => setShowDurationPicker(false)}
+                      value={selectedDuration}
+                      onChange={onDurationChange}
+                      min={1}
+                      max={60}
+                      step={1}
+                      label={t('dlzkaMeditacie')}
+                      title={t('dlzkaMeditacie')}
+                    />
+                  )}
+                </Suspense>
+              )}
             </FramerSection>
           )}
 
@@ -317,15 +326,21 @@ const MeditationScreen = ({
         </div>
 
         {/* Galerie zvukových témat */}
-        <SoundThemeGallery
-          isOpen={showGallery}
-          onClose={() => setShowGallery(false)}
-          onSelectSound={onBreathSoundChange}
-          selectedInSound={breathInSound}
-          selectedOutSound={breathOutSound}
-          selectedClickSound={breathClickSound}
-          selectedFinalSound={breathFinalSound}
-        />
+        {(showDurationPicker || showGallery) && (
+          <Suspense fallback={null}>
+            {showGallery && (
+              <SoundThemeGallery
+                isOpen={showGallery}
+                onClose={() => setShowGallery(false)}
+                onSelectSound={onBreathSoundChange}
+                selectedInSound={breathInSound}
+                selectedOutSound={breathOutSound}
+                selectedClickSound={breathClickSound}
+                selectedFinalSound={breathFinalSound}
+              />
+            )}
+          </Suspense>
+        )}
       </div>
     </FramerPageTransition>
   );

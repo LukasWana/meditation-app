@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, Suspense, lazy } from 'react';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { PageManager } from '@features/navigation';
 import { useNavigation, useTouchNavigation, useAppState, useBackgroundDataLoader, useTimer, useBreathPhase } from '@hooks';
@@ -11,7 +11,9 @@ import OfflineIndicator from '@components/OfflineIndicator';
 
 import ErrorBoundary from '@components/ErrorBoundary';
 import { register } from '@services/serviceWorker';
-import SimpleAdminScreen from '@features/meditation/screens/SimpleAdminScreen';
+
+// Lazy loading SimpleAdminScreen pro lepší performance
+const SimpleAdminScreen = lazy(() => import('@features/meditation/screens/SimpleAdminScreen'));
 
 // Hlavní aplikace s routingem
 export default function App() {
@@ -338,7 +340,13 @@ export function AdminApp() {
   return (
     <ErrorBoundary>
       <LanguageProvider>
-        <SimpleAdminScreen />
+        <Suspense fallback={
+          <div className="flex items-center justify-center min-h-screen">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-gray-600"></div>
+          </div>
+        }>
+          <SimpleAdminScreen />
+        </Suspense>
 
         {/* Monitoring Dashboard - pouze v admin */}
         {import.meta.env.MODE === 'development' && (

@@ -1,9 +1,12 @@
-import React from 'react';
+import React, { Suspense, lazy } from 'react';
 import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, Music2 } from 'lucide-react';
-import { WheelPicker, DualWheelPicker } from '@components';
 import { useLanguage } from '@contexts/LanguageContext';
+
+// Lazy loading WheelPicker komponent pro lepší performance
+const WheelPicker = lazy(() => import('@components/WheelPicker').then(m => ({ default: m.default })));
+const DualWheelPicker = lazy(() => import('@components/WheelPicker').then(m => ({ default: m.DualWheelPicker })));
 
 // Modal pro jeden WheelPicker
 export const WheelPickerModal = ({ isOpen, onClose, value, onChange, min, max, step, label, title, onSoundButtonClick }) => {
@@ -70,15 +73,21 @@ export const WheelPickerModal = ({ isOpen, onClose, value, onChange, min, max, s
               return (
                 <div className={`flex flex-col items-center justify-center mb-4 flex-1 w-full ${isLargeModal ? 'min-h-[calc(100vh-280px)]' : 'min-h-[200px]'}`}>
                   <div className={isLargeModal ? 'transform scale-[1.6] origin-center' : ''}>
-                    <WheelPicker
-                      value={tempValue}
-                      onChange={setTempValue}
-                      min={min}
-                      max={max}
-                      step={step}
-                      label={label ? (typeof label === 'string' ? label : t(label)) : ''}
-                      className={isLargeModal ? 'w-48' : 'w-32'}
-                    />
+                    <Suspense fallback={
+                      <div className="flex items-center justify-center w-32 h-32">
+                        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-600"></div>
+                      </div>
+                    }>
+                      <WheelPicker
+                        value={tempValue}
+                        onChange={setTempValue}
+                        min={min}
+                        max={max}
+                        step={step}
+                        label={label ? (typeof label === 'string' ? label : t(label)) : ''}
+                        className={isLargeModal ? 'w-48' : 'w-32'}
+                      />
+                    </Suspense>
                   </div>
                 </div>
               );
@@ -213,21 +222,27 @@ export const DualWheelPickerModal = ({
               return (
                 <div className={`flex flex-col items-center justify-center mb-4 flex-1 ${isLargeModal ? 'min-h-[calc(100vh-280px)]' : 'min-h-[300px]'}`}>
                   <div className={isLargeModal ? 'transform scale-[1.6] origin-center' : ''}>
-                    <DualWheelPicker
-                      leftValue={tempLeftValue}
-                      rightValue={tempRightValue}
-                      onLeftChange={setTempLeftValue}
-                      onRightChange={setTempRightValue}
-                      leftLabel={leftLabel ? (typeof leftLabel === 'string' ? leftLabel : t(leftLabel)) : ''}
-                      rightLabel={rightLabel ? (typeof rightLabel === 'string' ? rightLabel : t(rightLabel)) : ''}
-                      leftMin={leftMin}
-                      leftMax={leftMax}
-                      leftStep={leftStep}
-                      rightMin={rightMin}
-                      rightMax={rightMax}
-                      rightStep={rightStep}
-                      className={isLargeModal ? 'w-full max-w-md' : 'w-full max-w-md'}
-                    />
+                    <Suspense fallback={
+                      <div className="flex items-center justify-center w-full max-w-md h-64">
+                        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-600"></div>
+                      </div>
+                    }>
+                      <DualWheelPicker
+                        leftValue={tempLeftValue}
+                        rightValue={tempRightValue}
+                        onLeftChange={setTempLeftValue}
+                        onRightChange={setTempRightValue}
+                        leftLabel={leftLabel ? (typeof leftLabel === 'string' ? leftLabel : t(leftLabel)) : ''}
+                        rightLabel={rightLabel ? (typeof rightLabel === 'string' ? rightLabel : t(rightLabel)) : ''}
+                        leftMin={leftMin}
+                        leftMax={leftMax}
+                        leftStep={leftStep}
+                        rightMin={rightMin}
+                        rightMax={rightMax}
+                        rightStep={rightStep}
+                        className={isLargeModal ? 'w-full max-w-md' : 'w-full max-w-md'}
+                      />
+                    </Suspense>
                   </div>
                 </div>
               );
