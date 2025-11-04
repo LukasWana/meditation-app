@@ -50,7 +50,7 @@ const SCREEN_REGISTRY = {
   'breath': {
     component: BreathScreen,
     requiresLayout: true,
-    props: ['breathPhase', 'setBreathPhase', 'onNavigateToScreen', 'onTouchStart', 'onTouchMove', 'onTouchEnd', 'breathInDuration', 'breathOutDuration', 'onBreathRhythmChange', 'preparationTime', 'onPreparationTimeChange', 'breathDuration', 'breathTime', 'setBreathTime', 'isBreathing', 'setIsBreathing', 'onBreathDurationChange', 'onReset', 'breathInSound', 'breathOutSound', 'breathClickSound', 'breathFinalSound', 'breathSoundFadeEnabled', 'onBreathSoundChange'],
+    props: ['breathPhase', 'setBreathPhase', 'onNavigateToScreen', 'onTouchStart', 'onTouchMove', 'onTouchEnd', 'breathInDuration', 'breathOutDuration', 'onBreathRhythmChange', 'preparationTime', 'onPreparationTimeChange', 'isPreparing', 'preparationCountdown', 'breathDuration', 'breathTime', 'setBreathTime', 'isBreathing', 'setIsBreathing', 'onBreathDurationChange', 'onReset', 'breathInSound', 'breathOutSound', 'breathClickSound', 'breathFinalSound', 'breathCountdownSound', 'breathSoundFadeEnabled', 'onBreathSoundChange'],
     transition: {
       type: 'scale',
       duration: 0.7
@@ -203,6 +203,7 @@ const PageManager = ({
   breathOutSound,
   breathClickSound,
   breathFinalSound,
+  breathCountdownSound,
   onBreathSoundChange,
   breathSoundFadeEnabled,
   onBreathSoundFadeChange,
@@ -315,6 +316,9 @@ const PageManager = ({
         case 'breathFinalSound':
           props.breathFinalSound = breathFinalSound;
           break;
+        case 'breathCountdownSound':
+          props.breathCountdownSound = breathCountdownSound;
+          break;
         case 'breathSoundFadeEnabled':
           props.breathSoundFadeEnabled = breathSoundFadeEnabled;
           break;
@@ -335,9 +339,6 @@ const PageManager = ({
           break;
         case 'preparationCountdown':
           props.preparationCountdown = preparationCountdown;
-          break;
-        case 'preparationTime':
-          props.preparationTime = preparationTime;
           break;
         case 'breathDuration':
           props.breathDuration = breathDuration;
@@ -378,7 +379,7 @@ const PageManager = ({
   }, [
     onNavigateToScreen, onTouchStart, onTouchMove, onTouchEnd,
     gender, onPlayerStateChange, onGenderChange, time, selectedDuration, isPlaying,
-    onDurationChange, onPlayPause, onReset, breathPhase, setBreathPhase, breathInDuration, breathOutDuration, breathInSound, breathOutSound, breathClickSound, breathFinalSound, breathSoundFadeEnabled, onBreathRhythmChange,
+    onDurationChange, onPlayPause, onReset, breathPhase, setBreathPhase, breathInDuration, breathOutDuration, breathInSound, breathOutSound, breathClickSound, breathFinalSound, breathCountdownSound, breathSoundFadeEnabled, onBreathRhythmChange,
     preparationTime, onPreparationTimeChange, onBreathSoundChange, onBreathSoundFadeChange,
     isPreparing, preparationCountdown,
     breathDuration, breathTime, setBreathTime, isBreathing, setIsBreathing, onBreathDurationChange,

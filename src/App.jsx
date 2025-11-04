@@ -70,6 +70,7 @@ function MeditationApp() {
     breathOutSound,
     breathClickSound,
     breathFinalSound,
+    breathCountdownSound,
     handleBreathSoundChange,
     breathSoundFadeEnabled,
     handleBreathSoundFadeChange,
@@ -383,7 +384,7 @@ function MeditationApp() {
 
           return { success: true, filesChecked: filesWithWaveform.length };
         } catch (error) {
-          console.error('❌ Chyba při kontrole struktury waveform dat:', error);
+          console.error('❌ Chyba při kontrole strukturu waveform dat:', error);
           return { success: false, error: error.message };
         }
       };
@@ -535,6 +536,7 @@ function MeditationApp() {
                 breathOutSound={breathOutSound}
                 breathClickSound={breathClickSound}
                 breathFinalSound={breathFinalSound}
+                breathCountdownSound={breathCountdownSound}
                 onBreathSoundChange={handleBreathSoundChange}
                 breathSoundFadeEnabled={breathSoundFadeEnabled}
                 onBreathSoundFadeChange={handleBreathSoundFadeChange}
