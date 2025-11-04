@@ -866,7 +866,7 @@ const SoundThemeGallery = ({ isOpen, onClose, onSelectSound, selectedInSound, se
                     </div>
 
                     {/* 4 ikonky pro přiřazení zvuku - pod waveformou */}
-                    <div className="flex items-center gap-1.5 mt-2">
+                    <div className="flex flex-wrap gap-1.5 mt-2">
                       {/* Zkontroluj, zda je zvuk krátký (<= 1s) */}
                       {isShortSound(file.duration) ? (
                         <>
@@ -878,7 +878,7 @@ const SoundThemeGallery = ({ isOpen, onClose, onSelectSound, selectedInSound, se
                               console.log('🔊 Clicked COUNTDOWN button for:', file.fileName, 'Current selected:', safeSelectedCountdownSound);
                               handleFileSelect('countdown', file.fileName);
                             }}
-                            className={`flex-1 p-2 rounded transition-colors flex items-center justify-center cursor-pointer ${
+                            className={`flex-1 min-w-[60px] p-2 rounded transition-colors flex items-center justify-center cursor-pointer ${
                               safeSelectedCountdownSound === file.fileName
                                 ? 'bg-black text-white hover:bg-gray-800'
                                 : 'bg-white/70 hover:bg-white text-gray-700 border border-black/10'
@@ -890,10 +890,10 @@ const SoundThemeGallery = ({ isOpen, onClose, onSelectSound, selectedInSound, se
                           </button>
 
                           {/* Nádech a výdech jsou zakázané pro krátké zvuky */}
-                          <div className="flex-1 p-2 rounded flex items-center justify-center opacity-30 cursor-not-allowed">
+                          <div className="flex-1 min-w-[60px] p-2 rounded flex items-center justify-center opacity-30 cursor-not-allowed">
                             <ArrowDown size={16} className="text-gray-400" />
                           </div>
-                          <div className="flex-1 p-2 rounded flex items-center justify-center opacity-30 cursor-not-allowed">
+                          <div className="flex-1 min-w-[60px] p-2 rounded flex items-center justify-center opacity-30 cursor-not-allowed">
                             <ArrowUp size={16} className="text-gray-400" />
                           </div>
                         </>
@@ -907,7 +907,7 @@ const SoundThemeGallery = ({ isOpen, onClose, onSelectSound, selectedInSound, se
                               console.log('🔊 Clicked IN button for:', file.fileName, 'Current selected:', safeSelectedInSound);
                               handleFileSelect('in', file.fileName);
                             }}
-                            className={`flex-1 p-2 rounded transition-colors flex items-center justify-center cursor-pointer ${
+                            className={`flex-1 min-w-[60px] p-2 rounded transition-colors flex items-center justify-center cursor-pointer ${
                               safeSelectedInSound === file.fileName
                                 ? 'bg-black text-white hover:bg-gray-800'
                                 : 'bg-white/70 hover:bg-white text-gray-700 border border-black/10'
@@ -925,7 +925,7 @@ const SoundThemeGallery = ({ isOpen, onClose, onSelectSound, selectedInSound, se
                               console.log('🔊 Clicked OUT button for:', file.fileName, 'Current selected:', safeSelectedOutSound);
                               handleFileSelect('out', file.fileName);
                             }}
-                            className={`flex-1 p-2 rounded transition-colors flex items-center justify-center cursor-pointer ${
+                            className={`flex-1 min-w-[60px] p-2 rounded transition-colors flex items-center justify-center cursor-pointer ${
                               safeSelectedOutSound === file.fileName
                                 ? 'bg-black text-white hover:bg-gray-800'
                                 : 'bg-white/70 hover:bg-white text-gray-700 border border-black/10'
@@ -937,7 +937,7 @@ const SoundThemeGallery = ({ isOpen, onClose, onSelectSound, selectedInSound, se
                           </button>
 
                           {/* Countdown není dostupné pro dlouhé zvuky - zobrazíme ho jako disabled */}
-                          <div className="flex-1 p-2 rounded flex items-center justify-center opacity-30 cursor-not-allowed" title="Dostupné pouze pro krátké zvuky (≤1s)">
+                          <div className="flex-1 min-w-[60px] p-2 rounded flex items-center justify-center opacity-30 cursor-not-allowed" title="Dostupné pouze pro krátké zvuky (≤1s)">
                             <Clock size={16} className="text-gray-400" />
                           </div>
                         </>
@@ -951,7 +951,7 @@ const SoundThemeGallery = ({ isOpen, onClose, onSelectSound, selectedInSound, se
                           console.log('🔊 Clicked CLICK button for:', file.fileName, 'Current selected:', safeSelectedClickSound);
                           handleFileSelect('click', file.fileName);
                         }}
-                        className={`flex-1 p-2 rounded transition-colors flex items-center justify-center cursor-pointer ${
+                        className={`flex-1 min-w-[60px] p-2 rounded transition-colors flex items-center justify-center cursor-pointer ${
                           safeSelectedClickSound === file.fileName
                             ? 'bg-black text-white hover:bg-gray-800'
                             : 'bg-white/70 hover:bg-white text-gray-700 border border-black/10'
@@ -970,7 +970,7 @@ const SoundThemeGallery = ({ isOpen, onClose, onSelectSound, selectedInSound, se
                           console.log('🔊 Clicked FINAL button for:', file.fileName, 'Current selected:', safeSelectedFinalSound);
                           handleFileSelect('final', file.fileName);
                         }}
-                        className={`flex-1 p-2 rounded transition-colors flex items-center justify-center cursor-pointer ${
+                        className={`flex-1 min-w-[60px] p-2 rounded transition-colors flex items-center justify-center cursor-pointer ${
                           safeSelectedFinalSound === file.fileName
                             ? 'bg-black text-white hover:bg-gray-800'
                             : 'bg-white/70 hover:bg-white text-gray-700 border border-black/10'

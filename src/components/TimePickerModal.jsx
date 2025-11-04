@@ -88,14 +88,14 @@ export const WheelPickerModal = ({ isOpen, onClose, value, onChange, min, max, s
             {(() => {
               const isLargeModal = title === t('dlzka') || title === 'délka' || title === t('priprava') || title === 'příprava' || title === 'priprava';
               return (
-                <div className={`flex ${isLargeModal ? 'flex-row' : 'flex-col'} gap-3 pt-4 pb-2 flex-shrink-0 border-t border-black/10 w-full items-center ${isLargeModal ? 'justify-center' : ''}`}>
+                <div className={`grid grid-cols-2 md:flex ${isLargeModal ? 'md:flex-row md:justify-center' : 'md:flex-col'} gap-3 pt-4 pb-2 flex-shrink-0 border-t border-black/10 w-full ${isLargeModal ? 'md:items-center' : ''}`}>
                   {/* Tlačítko ZVUKY - zobraz pouze pokud je poskytnut callback */}
                   {onSoundButtonClick && (
                     <button
                       onClick={() => {
                         onSoundButtonClick();
                       }}
-                      className="px-6 py-3 rounded bg-white/70 hover:bg-white text-gray-700 border border-black/10 transition-colors flex items-center justify-center gap-2"
+                      className="px-6 py-3 rounded bg-white/70 hover:bg-white text-gray-700 border border-black/10 transition-colors flex items-center justify-center gap-2 md:w-auto"
                     >
                       <Music2 size={18} />
                       <span>{t('zvuky') || 'zvuky'}</span>
@@ -104,7 +104,7 @@ export const WheelPickerModal = ({ isOpen, onClose, value, onChange, min, max, s
                   {/* Hlavní tlačítko */}
                   <button
                     onClick={handleConfirm}
-                    className="px-8 py-3 rounded bg-white/70 hover:bg-white text-gray-700 border border-black/10 transition-colors"
+                    className={`px-8 py-3 rounded bg-white/70 hover:bg-white text-gray-700 border border-black/10 transition-colors ${!onSoundButtonClick ? 'col-span-2 md:col-span-1' : ''} md:w-auto`}
                   >
                     {t('hotovo')}
                   </button>
@@ -237,14 +237,14 @@ export const DualWheelPickerModal = ({
             {(() => {
               const isLargeModal = title === t('rytmus') || title === 'rytmus';
               return (
-                <div className={`flex ${isLargeModal ? 'flex-row' : 'flex-col'} gap-3 pt-4 pb-2 flex-shrink-0 border-t border-black/10 ${isLargeModal ? 'items-center justify-center' : ''}`}>
+                <div className={`flex flex-wrap sm:flex-nowrap ${isLargeModal ? 'sm:flex-row justify-center' : 'flex-col sm:flex-col'} gap-3 pt-4 pb-2 flex-shrink-0 border-t border-black/10 ${isLargeModal ? 'sm:items-center' : ''}`}>
                   {/* Tlačítko ZVUKY - zobraz pouze pokud je poskytnut callback */}
                   {onSoundButtonClick && (
                     <button
                       onClick={() => {
                         onSoundButtonClick();
                       }}
-                      className="px-6 py-3 rounded bg-white/70 hover:bg-white text-gray-700 border border-black/10 transition-colors flex items-center justify-center gap-2"
+                      className="px-6 py-3 rounded bg-white/70 hover:bg-white text-gray-700 border border-black/10 transition-colors flex items-center justify-center gap-2 flex-1 sm:flex-initial"
                     >
                       <Music2 size={18} />
                       <span>{t('zvuky') || 'zvuky'}</span>
@@ -253,7 +253,7 @@ export const DualWheelPickerModal = ({
                   {/* Hlavní tlačítko */}
                   <button
                     onClick={handleConfirm}
-                    className="px-8 py-3 rounded bg-white/70 hover:bg-white text-gray-700 border border-black/10 transition-colors"
+                    className="px-8 py-3 rounded bg-white/70 hover:bg-white text-gray-700 border border-black/10 transition-colors flex-1 sm:flex-initial"
                   >
                     {t('hotovo')}
                   </button>
