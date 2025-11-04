@@ -8,6 +8,8 @@ import { ref as dbRef, set } from 'firebase/database';
 import { signInAnonymously } from 'firebase/auth';
 import DataStorageCharts from '@components/admin/DataStorageCharts';
 import { extractAudioMetadata } from '@utils/audioMetadataExtractor';
+import { generateWaveformViaFunction } from '@utils/generateWaveformViaFunction';
+import { syncAllFilesViaFunction } from '@utils/syncAllFilesViaFunction';
 
 const SimpleAdminScreen = () => {
   const [isDarkMode, setIsDarkMode] = useState(false);
@@ -128,12 +130,42 @@ const SimpleAdminScreen = () => {
         console.log(`     DownloadURL: ${file.downloadURL ? 'Yes' : 'No'}`);
       });
 
-      // Ulož do Realtime Database
-      const realtimeRef = dbRef(database, 'audio-metadata');
-      await set(realtimeRef, {
-        files: metadataArray,
+      // Ulož do Realtime Database v novém formátu (každý soubor má svůj vlastní klíč)
+      // Použij sanitizePath pro správné klíče v Realtime Database
+      const { realtimeMetadataService } = await import('@services/realtimeMetadataService');
+
+      let savedCount = 0;
+      for (const fileData of metadataArray) {
+        try {
+          if (!fileData.fileName) {
+            console.warn('⚠️ Skipping file without fileName:', fileData);
+            continue;
+          }
+
+          // Sanitizuj cestu pro Realtime Database
+          const safePath = realtimeMetadataService.sanitizePath(fileData.fileName);
+          const fileRef = dbRef(database, `audio-metadata/${safePath}`);
+
+          // Ulož metadata pro tento soubor
+          await set(fileRef, {
+            ...fileData,
+            fileName: fileData.fileName, // Zachovej původní fileName
+            lastUpdated: new Date().toISOString(),
+            source: 'firestore-sync'
+          });
+
+          savedCount++;
+        } catch (error) {
+          console.error(`❌ Failed to save ${fileData.fileName}:`, error);
+        }
+      }
+
+      // Aktualizuj timestamp synchronizace
+      const syncRef = dbRef(database, 'audio-metadata-sync');
+      await set(syncRef, {
         lastSync: new Date().toISOString(),
         totalFiles: metadataArray.length,
+        savedFiles: savedCount,
         slovaFiles: slovaFiles.length,
         hudbaFiles: hudbaFiles.length,
         dychanieFiles: dychanieFiles.length,
@@ -265,6 +297,48 @@ const SimpleAdminScreen = () => {
             contentType = 'audio/ogg';
           }
 
+          // Vygeneruj waveformu pomocí Firebase Function (server-side, bez CORS problémů)
+          // POUZE pro sekci "dychanie" (pro náhledy ve zvukové galerii)
+          let waveformData = null;
+          const isDychanieFile = file.folder === 'dychanie' || file.fullPath.startsWith('dychanie/');
+
+          if (isDychanieFile && (fileExt.endsWith('.mp3') || fileExt.endsWith('.ogg') || fileExt.endsWith('.oga'))) {
+            try {
+              console.log(`🌊 Generating waveform via Function for ${file.name} (dychanie file)...`);
+              // ✅ OPRAVA: Zvýšeno z 150 na 800 pro lepší detail
+              const result = await generateWaveformViaFunction(file.fullPath, 800);
+              if (result.success && result.waveformData && Array.isArray(result.waveformData) && result.waveformData.length > 0) {
+                waveformData = result.waveformData;
+
+                // Debug: zobraz ukázku hodnot pro kontrolu, že jsou různé
+                const sampleValues = waveformData.slice(0, 10);
+                const minValue = Math.min(...waveformData);
+                const maxValue = Math.max(...waveformData);
+                const avgValue = waveformData.reduce((a, b) => a + b, 0) / waveformData.length;
+
+                console.log(`✅ Waveform generated for ${file.name}:`, {
+                  samples: waveformData.length,
+                  min: minValue.toFixed(3),
+                  max: maxValue.toFixed(3),
+                  avg: avgValue.toFixed(3),
+                  sample: sampleValues.map(v => v.toFixed(3))
+                });
+              } else {
+                console.warn(`⚠️ Waveform generation failed for ${file.name}:`, result.error);
+                waveformData = null;
+              }
+            } catch (error) {
+              console.warn(`⚠️ Failed to generate waveform for ${file.name}:`, error.message);
+              // Pokračuj i bez waveformy - není to kritická chyba
+              waveformData = null;
+            }
+          } else if (!isDychanieFile) {
+            // Nezobrazuj log pro soubory mimo dychanie
+            console.log(`⏭️ Skipping waveform generation for ${file.name} (not dychanie file)`);
+          } else {
+            console.log(`⏭️ Skipping waveform generation for ${file.name} (not audio file)`);
+          }
+
           // Vytvoř kompletní metadata objekt
           // fileName musí být celá cesta včetně složky (např. "dychanie/prana-breath/file.ogg")
           const metadata = {
@@ -282,6 +356,10 @@ const SimpleAdminScreen = () => {
             contentType: contentType,
             lastModified: new Date().toISOString(),
             extracted: audioMetadata.isValid,
+            // Waveform data
+            waveformData: waveformData,
+            waveformGenerated: waveformData ? new Date().toISOString() : null,
+            waveformSamples: waveformData ? 800 : null,
             // Dodatečné informace pro slova soubory
             ...(file.folder === 'slova' ? {
               gender: extractGender(file.name),
@@ -906,11 +984,58 @@ const SimpleAdminScreen = () => {
             </button>
           </motion.div>
 
-          {/* Vymazat cache a načíst data */}
+          {/* Automatická synchronizace všech souborů pomocí Firebase Function */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.3 }}
+            className={`p-6 rounded-lg border ${cardClasses}`}
+          >
+            <h3 className="text-xl font-semibold mb-4 flex items-center">
+              <Database className="mr-2 text-blue-500" size={24} />
+              Automatická synchronizace všech souborů
+            </h3>
+            <p className="text-gray-500 mb-4">
+              Vygeneruje metadata pro všechny MP3, OGG, OGA soubory a obrázky pomocí Firebase Function (server-side). Generuje také waveformy.
+            </p>
+            <button
+              onClick={async () => {
+                setLoading(true);
+                setStatus('🔄 Spouštím automatickou synchronizaci všech souborů...');
+                try {
+                  const result = await syncAllFilesViaFunction((current, total) => {
+                    setStatus(`🔄 Synchronizuji... ${current}/${total} souborů`);
+                  });
+                  if (result.success) {
+                    setStatus(`✅ Synchronizace dokončena! ${result.message}`);
+                    console.log('✅ Sync results:', result.results);
+                  } else {
+                    setStatus(`❌ Chyba při synchronizaci: ${result.error}`);
+                  }
+                } catch (error) {
+                  setStatus(`❌ Chyba: ${error.message}`);
+                  console.error('❌ Sync failed:', error);
+                } finally {
+                  setLoading(false);
+                }
+              }}
+              disabled={loading}
+              className="w-full bg-blue-500 hover:bg-blue-600 disabled:bg-gray-400 text-white py-3 px-4 rounded-lg transition-colors flex items-center justify-center"
+            >
+              {loading ? (
+                <RefreshCw className="animate-spin mr-2" size={20} />
+              ) : (
+                <Database className="mr-2" size={20} />
+              )}
+              {loading ? 'Synchronizuji...' : '🚀 Automatická synchronizace všech souborů'}
+            </button>
+          </motion.div>
+
+          {/* Vymazat cache a načíst data */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.4 }}
             className={`p-6 rounded-lg border ${cardClasses}`}
           >
             <h3 className="text-xl font-semibold mb-4 flex items-center">

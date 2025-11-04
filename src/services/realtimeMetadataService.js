@@ -93,21 +93,60 @@ class RealtimeMetadataService {
 
           return metadataObject;
         } else {
-          // Pokud jsou data už ve správné struktuře
+          // Pokud jsou data už ve správné struktuře (sanitizované klíče)
           log.debug(`✅ All metadata loaded from Realtime Database: ${Object.keys(data).length} files`);
 
+          // Převeď objekt s sanitizovanými klíči na objekt s fileName jako klíč
+          // Klíče jsou sanitizované (např. dychanie_SLASH_prana-breath_SLASH_bg80_DOT_ogg)
+          // ale uvnitř je fileName normální (např. dychanie/prana-breath/bg80.ogg)
+          const metadataObject = {};
+          Object.entries(data).forEach(([sanitizedKey, fileData]) => {
+            // Pokud má fileData fileName, použij ho jako klíč
+            if (fileData && fileData.fileName) {
+              metadataObject[fileData.fileName] = fileData;
+            } else {
+              // Pokud nemá fileName, použij sanitizovaný klíč (pro zpětnou kompatibilitu)
+              metadataObject[sanitizedKey] = fileData;
+            }
+          });
+
+          log.debug(`✅ Converted sanitized keys to fileName keys: ${Object.keys(metadataObject).length} files`);
+
           // Debug: zobraz slova soubory i pro druhou strukturu
-          const slovaFiles = Object.values(data).filter(file =>
+          const slovaFiles = Object.values(metadataObject).filter(file =>
             file.fileName && file.fileName.includes('slova/')
           );
           log.debug(`🎤 Slova files in Realtime Database: ${slovaFiles.length}`);
           log.debug('🎤 Sample slova files from DB:', slovaFiles.slice(0, 3).map(f => ({
             fileName: f.fileName,
             folder: f.folder,
-            hasDownloadURL: !!(f.downloadURL || f.audioSrc)
+            hasDownloadURL: !!(f.downloadURL || f.audioSrc),
+            hasWaveformData: !!(f.waveformData)
           })));
 
-          return data;
+          // Debug: zobraz dychanie soubory s waveformy
+          const dychanieFiles = Object.values(metadataObject).filter(file =>
+            file.fileName && file.fileName.includes('dychanie/')
+          );
+          log.debug(`🫁 Dychanie files in Realtime Database: ${dychanieFiles.length}`);
+          const filesWithWaveform = dychanieFiles.filter(f => f.waveformData);
+          log.debug(`🌊 Dychanie files with waveform: ${filesWithWaveform.length}/${dychanieFiles.length}`);
+          if (filesWithWaveform.length > 0) {
+            log.debug('🌊 Sample dychanie files with waveform:', filesWithWaveform.slice(0, 3).map(f => ({
+              fileName: f.fileName,
+              hasWaveformData: !!f.waveformData,
+              waveformSamples: f.waveformData?.length || 0
+            })));
+          }
+          if (dychanieFiles.length > filesWithWaveform.length) {
+            const filesWithoutWaveform = dychanieFiles.filter(f => !f.waveformData);
+            log.debug('⚠️ Dychanie files without waveform:', filesWithoutWaveform.slice(0, 3).map(f => ({
+              fileName: f.fileName,
+              hasWaveformData: !!f.waveformData
+            })));
+          }
+
+          return metadataObject;
         }
       } else {
         log.debug('📭 No metadata found in Realtime Database');

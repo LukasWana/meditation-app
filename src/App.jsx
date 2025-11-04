@@ -67,6 +67,8 @@ function MeditationApp() {
     handlePreparationTimeChange,
     breathInSound,
     breathOutSound,
+    breathClickSound,
+    breathFinalSound,
     handleBreathSoundChange,
     breathSoundFadeEnabled,
     handleBreathSoundFadeChange,
@@ -232,10 +234,108 @@ function MeditationApp() {
       console.log('Dostupné úrovně: silent, error, warn, info, debug');
     };
 
+    // Funkce pro synchronizaci všech souborů pomocí Firebase Function
+    window.syncAllFiles = async () => {
+      console.log('🚀 Spouštím synchronizaci všech souborů...');
+      try {
+        const { syncAllFilesViaFunction } = await import('./utils/syncAllFilesViaFunction');
+        const result = await syncAllFilesViaFunction((current, total) => {
+          console.log(`🔄 Synchronizuji... ${current}/${total} souborů`);
+        });
+        if (result.success) {
+          console.log('✅ Synchronizace dokončena!', result.message);
+          console.log('📊 Results:', result.results);
+          return result;
+        } else {
+          console.error('❌ Chyba při synchronizaci:', result.error);
+          return result;
+        }
+      } catch (error) {
+        console.error('❌ Chyba:', error);
+        return { success: false, error: error.message };
+      }
+    };
+
+    // Funkce pro kontrolu waveformů v databázi
+    window.checkWaveforms = async () => {
+      console.log('🔍 Kontroluji waveformy v databázi...');
+      try {
+        const { realtimeMetadataService } = await import('./services/realtimeMetadataService');
+        const allMetadata = await realtimeMetadataService.getAllMetadata();
+
+        // Filtruj hudební soubory
+        const hudbaFiles = Object.values(allMetadata).filter(file =>
+          file.fileName && file.fileName.startsWith('hudba/')
+        );
+
+        // Filtruj soubory s waveformy
+        const hudbaFilesWithWaveform = hudbaFiles.filter(file =>
+          file.waveformData && Array.isArray(file.waveformData) && file.waveformData.length > 0
+        );
+
+        // Filtruj soubory bez waveformů
+        const hudbaFilesWithoutWaveform = hudbaFiles.filter(file =>
+          !file.waveformData || !Array.isArray(file.waveformData) || file.waveformData.length === 0
+        );
+
+        console.log('🎵 Hudební soubory v databázi:');
+        console.log(`   Celkem: ${hudbaFiles.length}`);
+        console.log(`   S waveformy: ${hudbaFilesWithWaveform.length}`);
+        console.log(`   Bez waveformů: ${hudbaFilesWithoutWaveform.length}`);
+
+        if (hudbaFilesWithWaveform.length > 0) {
+          console.log('✅ Příklady souborů s waveformy:', hudbaFilesWithWaveform.slice(0, 5).map(f => ({
+            fileName: f.fileName,
+            waveformSamples: f.waveformData?.length || 0,
+            waveformGenerated: f.waveformGenerated
+          })));
+        }
+
+        if (hudbaFilesWithoutWaveform.length > 0) {
+          console.log('⚠️ Příklady souborů bez waveformů:', hudbaFilesWithoutWaveform.slice(0, 5).map(f => ({
+            fileName: f.fileName,
+            hasWaveformData: !!f.waveformData,
+            hasWaveform: !!f.waveform
+          })));
+        }
+
+        // Stejně pro dychanie
+        const dychanieFiles = Object.values(allMetadata).filter(file =>
+          file.fileName && file.fileName.startsWith('dychanie/')
+        );
+        const dychanieFilesWithWaveform = dychanieFiles.filter(file =>
+          file.waveformData && Array.isArray(file.waveformData) && file.waveformData.length > 0
+        );
+
+        console.log('🫁 Dýchací soubory v databázi:');
+        console.log(`   Celkem: ${dychanieFiles.length}`);
+        console.log(`   S waveformy: ${dychanieFilesWithWaveform.length}`);
+        console.log(`   Bez waveformů: ${dychanieFiles.length - dychanieFilesWithWaveform.length}`);
+
+        return {
+          hudba: {
+            total: hudbaFiles.length,
+            withWaveform: hudbaFilesWithWaveform.length,
+            withoutWaveform: hudbaFilesWithoutWaveform.length
+          },
+          dychanie: {
+            total: dychanieFiles.length,
+            withWaveform: dychanieFilesWithWaveform.length,
+            withoutWaveform: dychanieFiles.length - dychanieFilesWithWaveform.length
+          }
+        };
+      } catch (error) {
+        console.error('❌ Chyba při kontrole waveformů:', error);
+        return { success: false, error: error.message };
+      }
+    };
+
     console.log('🔍 Debug funkce dostupné v konzoli:');
     console.log('  - showDatabaseData() - zobrazí database viewer');
     console.log('  - debugSlovaFiles() - zobrazí slova soubory v Realtime Database');
     console.log('  - debugCache() - zobrazí detaily cache');
+    console.log('  - syncAllFiles() - synchronizuje všechny soubory pomocí Firebase Function');
+    console.log('  - checkWaveforms() - zkontroluje, které soubory mají waveformy v databázi');
     console.log('  - clearCache() - vymaže cache');
     console.log('  - testAudioPlayback(fileName) - otestuje přehrávání konkrétního souboru');
     console.log('  - setLogLevel(level) - nastaví úroveň logování (silent, error, warn, info, debug)');
@@ -293,6 +393,8 @@ function MeditationApp() {
         onPreparationTimeChange={handlePreparationTimeChange}
         breathInSound={breathInSound}
         breathOutSound={breathOutSound}
+        breathClickSound={breathClickSound}
+        breathFinalSound={breathFinalSound}
         onBreathSoundChange={handleBreathSoundChange}
         breathSoundFadeEnabled={breathSoundFadeEnabled}
         onBreathSoundFadeChange={handleBreathSoundFadeChange}
