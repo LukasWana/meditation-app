@@ -1,4 +1,4 @@
-import React, { useState, Suspense } from 'react';
+import React, { useState, Suspense, lazy } from 'react';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { PageManager } from '@features/navigation';
 import { useNavigation, useTouchNavigation, useAppState, useBackgroundDataLoader, useTimer, useBreathPhase } from '@hooks';
@@ -11,7 +11,8 @@ import OfflineIndicator from '@components/OfflineIndicator';
 
 import ErrorBoundary from '@components/ErrorBoundary';
 import { register } from '@services/serviceWorker';
-import { lazy } from 'react';
+
+// Lazy loading admin screen for better performance
 const NewAdminScreen = lazy(() => import('@features/meditation/screens/NewAdminScreen'));
 
 // Hlavní aplikace s routingem
@@ -384,7 +385,7 @@ function MeditationApp() {
 
           return { success: true, filesChecked: filesWithWaveform.length };
         } catch (error) {
-          console.error('❌ Chyba při kontrole strukturu waveform dat:', error);
+          console.error('❌ Chyba při kontrole struktury waveform dat:', error);
           return { success: false, error: error.message };
         }
       };
