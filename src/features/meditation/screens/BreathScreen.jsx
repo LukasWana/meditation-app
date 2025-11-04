@@ -12,7 +12,6 @@ import { useBreathPhase } from '@hooks/useBreathPhase';
 // Lazy loading modálů pro lepší performance
 const WheelPickerModal = lazy(() => import('@components/TimePickerModal').then(m => ({ default: m.WheelPickerModal })));
 const DualWheelPickerModal = lazy(() => import('@components/TimePickerModal').then(m => ({ default: m.DualWheelPickerModal })));
-const SoundThemeGallery = lazy(() => import('@components/SoundThemeGallery'));
 
 const BreathScreen = ({
   breathPhase,
@@ -47,7 +46,6 @@ const BreathScreen = ({
   const [showPreparationPicker, setShowPreparationPicker] = useState(false);
   const [showDurationPicker, setShowDurationPicker] = useState(false);
   const [showRhythmPicker, setShowRhythmPicker] = useState(false);
-  const [showSoundGallery, setShowSoundGallery] = useState(false);
 
   // Lokální state pro přípravný čas (vždy používáme lokální state pro BreathScreen)
   const [localIsPreparing, setLocalIsPreparing] = useState(false);
@@ -326,11 +324,6 @@ const BreathScreen = ({
               <h1 className="text-5xl font-light mb-2">
                 {t('priprava') || 'příprava'}
               </h1>
-              <div className="flex justify-center gap-2 mt-4 mb-4">
-                <div className="w-2 h-2 bg-black rounded-full"></div>
-                <div className="w-2 h-2 bg-black rounded-full"></div>
-                <div className="w-2 h-2 bg-black rounded-full"></div>
-              </div>
             </FramerSection>
 
             <FramerSection
@@ -399,15 +392,36 @@ const BreathScreen = ({
         <BackButton onClick={() => onNavigateToScreen('home')} />
 
         <div className="max-w-md w-full mt-16">
-          {/* Nadpis - velký elegantní serif font */}
+          {/* Nadpis - velký elegantní serif font - dynamicky se mění podle stavu dýchání */}
           <FramerSection
             className="text-center mb-6"
             animationType="fadeIn"
             delay={0.1}
           >
-            <h1 className="text-5xl font-serif text-gray-800 leading-normal pb-3 overflow-visible" style={{ lineHeight: '1.2' }}>
-              {t('dychanie') || 'dýchání'}
-            </h1>
+            <motion.h1
+              key={isBreathing ? breathPhase : 'default'}
+              className="text-5xl font-serif text-gray-800 leading-normal pb-3 overflow-visible"
+              style={{ lineHeight: '1.2' }}
+              initial={{ opacity: 0, y: -10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: 10 }}
+              transition={{ duration: 0.3 }}
+            >
+              {isBreathing
+                ? (breathPhase === 'in' ? t('nadech') || 'nádech' : t('vydech') || 'výdech')
+                : t('dychanie') || 'dýchání'
+              }
+            </motion.h1>
+            {/* Current Time Display - pod nadpisem */}
+            <div className="flex items-center justify-center mt-4 mb-2 pointer-events-auto w-full gap-4">
+              <div className="pointer-events-none z-10 text-center">
+                <CurrentTimeDisplay
+                  currentTime={totalTime - breathTime}
+                  formatTime={formatTime}
+                  className="text-black font-medium text-center text-clamp-time"
+                />
+              </div>
+            </div>
           </FramerSection>
 
           {/* CircularProgress s tmavě šedým kruhem a bílou play ikonou - stejný jako v hudbě */}
@@ -466,30 +480,6 @@ const BreathScreen = ({
                       duration: 0.5
                     }}
                   />
-                </motion.div>
-              )}
-            </div>
-
-            {/* Current Time Display - pod CircularProgress - s informací o fázi dýchání vpravo */}
-            <div className="flex items-center justify-center mt-4 mb-2 pointer-events-auto w-full gap-4">
-              <div className="pointer-events-none z-10 text-center">
-                <CurrentTimeDisplay
-                  currentTime={totalTime - breathTime}
-                  formatTime={formatTime}
-                  className="text-black font-medium text-center text-clamp-time"
-                />
-              </div>
-              {/* Textový indikátor fáze dýchání - vpravo vedle času */}
-              {isBreathing && (
-                <motion.div
-                  key={breathPhase}
-                  initial={{ opacity: 0, x: -10 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  exit={{ opacity: 0, x: 10 }}
-                  transition={{ duration: 0.3 }}
-                  className="pointer-events-none z-10 text-black font-medium text-clamp-time"
-                >
-                  {breathPhase === 'in' ? t('nadech') || 'nádech' : t('vydech') || 'výdech'}
                 </motion.div>
               )}
             </div>
@@ -572,7 +562,7 @@ const BreathScreen = ({
 
             {/* Tlačítko pro zvukovou galerii - bílé kulaté tlačítko s dark grey notičkou */}
             <button
-              onClick={() => setShowSoundGallery(true)}
+              onClick={() => onNavigateToScreen('sound-theme-gallery')}
               className="w-20 h-20 rounded-full bg-white flex items-center justify-center shadow-sm hover:shadow-md transition-shadow cursor-pointer"
               title={t('zvukovaGalerie') || 'Zvuková galerie'}
             >
@@ -582,7 +572,7 @@ const BreathScreen = ({
         </div>
 
         {/* Modaly - lazy loaded */}
-        {(showPreparationPicker || showDurationPicker || showRhythmPicker || showSoundGallery) && (
+        {(showPreparationPicker || showDurationPicker || showRhythmPicker) && (
           <Suspense fallback={null}>
             {showPreparationPicker && (
               <WheelPickerModal
@@ -597,7 +587,7 @@ const BreathScreen = ({
                 title={t('priprava') || 'příprava'}
                 onSoundButtonClick={() => {
                   setShowPreparationPicker(false);
-                  setShowSoundGallery(true);
+                  onNavigateToScreen('sound-theme-gallery');
                 }}
               />
             )}
@@ -618,7 +608,7 @@ const BreathScreen = ({
                 title={t('dlzka') || 'délka'}
                 onSoundButtonClick={() => {
                   setShowDurationPicker(false);
-                  setShowSoundGallery(true);
+                  onNavigateToScreen('sound-theme-gallery');
                 }}
               />
             )}
@@ -641,22 +631,8 @@ const BreathScreen = ({
                 title={t('rytmus') || 'rytmus'}
                 onSoundButtonClick={() => {
                   setShowRhythmPicker(false);
-                  setShowSoundGallery(true);
+                  onNavigateToScreen('sound-theme-gallery');
                 }}
-              />
-            )}
-
-            {/* Galerie zvuků */}
-            {showSoundGallery && (
-              <SoundThemeGallery
-                isOpen={showSoundGallery}
-                onClose={() => setShowSoundGallery(false)}
-                onSelectSound={onBreathSoundChange}
-                selectedInSound={breathInSound}
-                selectedOutSound={breathOutSound}
-                selectedClickSound={breathClickSound}
-                selectedFinalSound={breathFinalSound}
-                selectedCountdownSound={breathCountdownSound}
               />
             )}
           </Suspense>
