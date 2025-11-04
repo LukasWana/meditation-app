@@ -1,6 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, ArrowDown, ArrowUp, MousePointerClick, CheckCircle } from 'lucide-react';
+import { X, ArrowDown, ArrowUp, MousePointerClick, CheckCircle, Play, Pause } from 'lucide-react';
 import { useLanguage } from '@contexts/LanguageContext';
 import { realtimeMetadataService } from '@services/realtimeMetadataService';
 import Waveform from './Waveform';
@@ -27,6 +27,8 @@ const SoundThemeGallery = ({ isOpen, onClose, onSelectSound, selectedInSound, se
   }, [isOpen, selectedInSound, selectedOutSound, selectedClickSound, selectedFinalSound]);
   const [audioFiles, setAudioFiles] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [playingPreview, setPlayingPreview] = useState(null); // Aktuálně přehrávaný soubor
+  const previewAudioRef = useRef(null); // Audio element pro preview
 
 
   useEffect(() => {
@@ -36,7 +38,13 @@ const SoundThemeGallery = ({ isOpen, onClose, onSelectSound, selectedInSound, se
 
     // Cleanup při zavření galerie
     return () => {
-      // Cleanup (žádný preview audio)
+      // Zastav preview při zavření
+      if (previewAudioRef.current) {
+        previewAudioRef.current.pause();
+        previewAudioRef.current.src = '';
+        previewAudioRef.current = null;
+      }
+      setPlayingPreview(null);
     };
   }, [isOpen]);
 
@@ -199,6 +207,52 @@ const SoundThemeGallery = ({ isOpen, onClose, onSelectSound, selectedInSound, se
     }
   };
 
+  const handlePreview = async (file) => {
+    if (!file.downloadURL) {
+      console.warn('⚠️ Není dostupná download URL pro preview');
+      return;
+    }
+
+    // Pokud už se přehrává tento soubor, zastav ho
+    if (playingPreview === file.fileName && previewAudioRef.current) {
+      previewAudioRef.current.pause();
+      previewAudioRef.current.src = '';
+      previewAudioRef.current = null;
+      setPlayingPreview(null);
+      return;
+    }
+
+    // Zastav aktuálně přehrávaný soubor
+    if (previewAudioRef.current) {
+      previewAudioRef.current.pause();
+      previewAudioRef.current.src = '';
+      previewAudioRef.current = null;
+    }
+
+    // Vytvoř nový audio element a přehraj
+    const audio = new Audio(file.downloadURL);
+    audio.volume = 0.7; // Nastav hlasitost na 70%
+
+    audio.onended = () => {
+      setPlayingPreview(null);
+      previewAudioRef.current = null;
+    };
+
+    audio.onerror = (error) => {
+      console.error('❌ Chyba při přehrávání preview:', error);
+      setPlayingPreview(null);
+      previewAudioRef.current = null;
+    };
+
+    try {
+      await audio.play();
+      previewAudioRef.current = audio;
+      setPlayingPreview(file.fileName);
+    } catch (error) {
+      console.error('❌ Nelze přehrát audio:', error);
+    }
+  };
+
 
   if (!isOpen) return null;
 
@@ -258,8 +312,8 @@ const SoundThemeGallery = ({ isOpen, onClose, onSelectSound, selectedInSound, se
                     whileHover={{ scale: 1.02 }}
                     whileTap={{ scale: 0.98 }}
                   >
-                    {/* Waveforma */}
-                    <div className="w-full mb-2 flex items-center justify-center">
+                    {/* Waveforma a preview tlačítko */}
+                    <div className="w-full mb-2 flex items-center justify-between gap-2">
                       {/* ✅ DEBUG: Zobraz globalMax před předáním */}
                       {console.log(`🔍 SoundThemeGallery rendering ${file.fileName}:`, {
                         hasWaveformData: !!file.waveformData,
@@ -267,15 +321,39 @@ const SoundThemeGallery = ({ isOpen, onClose, onSelectSound, selectedInSound, se
                         globalMax: file.globalMax?.toFixed(4) || 'NULL',
                         first5: file.waveformData?.slice(0, 5).map(v => v.toFixed(2)) || []
                       })}
-                      <Waveform
-                        key={`${file.fileName}-${file.globalMax || 'no-globalMax'}`} // ✅ KEY: Force re-render when globalMax changes
-                        audioUrl={file.downloadURL}
-                        waveformData={file.waveformData}
-                        globalMax={file.globalMax} // ✅ Přidej globální maximum pro globální normalizaci
-                        width={150}
-                        height={50}
-                        color="#6b7280"
-                      />
+                      {/* Waveforma - vyplní zbytek prostoru */}
+                      <div className="flex-1 min-w-0">
+                        <Waveform
+                          key={`${file.fileName}-${file.globalMax || 'no-globalMax'}`} // ✅ KEY: Force re-render when globalMax changes
+                          audioUrl={file.downloadURL}
+                          waveformData={file.waveformData}
+                          globalMax={file.globalMax} // ✅ Přidej globální maximum pro globální normalizaci
+                          width="100%"
+                          height={50}
+                          color="#6b7280"
+                        />
+                      </div>
+                      {/* Preview tlačítko - zarovnané doprava */}
+                      <button
+                        onClick={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          handlePreview(file);
+                        }}
+                        className={`p-2 rounded-full transition-colors flex items-center justify-center flex-shrink-0 ${
+                          playingPreview === file.fileName
+                            ? 'bg-black text-white hover:bg-gray-800'
+                            : 'bg-white/70 hover:bg-white text-gray-700 border border-black/10'
+                        }`}
+                        title={playingPreview === file.fileName ? 'Zastavit' : 'Přehrát'}
+                        type="button"
+                      >
+                        {playingPreview === file.fileName ? (
+                          <Pause size={16} />
+                        ) : (
+                          <Play size={16} />
+                        )}
+                      </button>
                     </div>
 
                     {/* 4 ikonky pro přiřazení zvuku - pod waveformou */}
@@ -289,8 +367,8 @@ const SoundThemeGallery = ({ isOpen, onClose, onSelectSound, selectedInSound, se
                         }}
                         className={`flex-1 p-2 rounded transition-colors flex items-center justify-center cursor-pointer ${
                           safeSelectedInSound === file.fileName
-                            ? 'bg-blue-500 text-white'
-                            : 'bg-white/70 hover:bg-white text-gray-700'
+                            ? 'bg-black text-white hover:bg-gray-800'
+                            : 'bg-white/70 hover:bg-white text-gray-700 border border-black/10'
                         }`}
                         title={t('zvolteZvukNadech') || 'Nádech'}
                         type="button"
@@ -307,8 +385,8 @@ const SoundThemeGallery = ({ isOpen, onClose, onSelectSound, selectedInSound, se
                         }}
                         className={`flex-1 p-2 rounded transition-colors flex items-center justify-center cursor-pointer ${
                           safeSelectedOutSound === file.fileName
-                            ? 'bg-blue-500 text-white'
-                            : 'bg-white/70 hover:bg-white text-gray-700'
+                            ? 'bg-black text-white hover:bg-gray-800'
+                            : 'bg-white/70 hover:bg-white text-gray-700 border border-black/10'
                         }`}
                         title={t('zvolteZvukVydech') || 'Výdech'}
                         type="button"
@@ -325,8 +403,8 @@ const SoundThemeGallery = ({ isOpen, onClose, onSelectSound, selectedInSound, se
                         }}
                         className={`flex-1 p-2 rounded transition-colors flex items-center justify-center cursor-pointer ${
                           safeSelectedClickSound === file.fileName
-                            ? 'bg-blue-500 text-white'
-                            : 'bg-white/70 hover:bg-white text-gray-700'
+                            ? 'bg-black text-white hover:bg-gray-800'
+                            : 'bg-white/70 hover:bg-white text-gray-700 border border-black/10'
                         }`}
                         title={t('zvolteZvukKliknuti') || 'Kliknutí'}
                         type="button"
@@ -343,8 +421,8 @@ const SoundThemeGallery = ({ isOpen, onClose, onSelectSound, selectedInSound, se
                         }}
                         className={`flex-1 p-2 rounded transition-colors flex items-center justify-center cursor-pointer ${
                           safeSelectedFinalSound === file.fileName
-                            ? 'bg-blue-500 text-white'
-                            : 'bg-white/70 hover:bg-white text-gray-700'
+                            ? 'bg-black text-white hover:bg-gray-800'
+                            : 'bg-white/70 hover:bg-white text-gray-700 border border-black/10'
                         }`}
                         title={t('zvolteZvukFinalni') || 'Finální'}
                         type="button"
@@ -384,8 +462,8 @@ const SoundThemeGallery = ({ isOpen, onClose, onSelectSound, selectedInSound, se
                       }}
                       className={`flex-1 p-2 rounded transition-colors flex items-center justify-center cursor-pointer ${
                         safeSelectedInSound === 'none' && safeSelectedOutSound === 'none' && safeSelectedClickSound === 'none' && safeSelectedFinalSound === 'none'
-                          ? 'bg-blue-500 text-white'
-                          : 'bg-white/70 hover:bg-white text-gray-700'
+                          ? 'bg-black text-white hover:bg-gray-800'
+                          : 'bg-white/70 hover:bg-white text-gray-700 border border-black/10'
                       }`}
                       title={t('ziadnyZvuk') || 'Žádný zvuk'}
                       type="button"
