@@ -71,22 +71,25 @@ class BreathProfilesService {
    * @returns {Promise<string>} - ID uloženého profilu
    */
   async saveProfile(profile, profileId = null, includeSoundMetadata = false) {
-    const user = this.getCurrentUser();
-    const profileData = {
-      name: profile.name || 'Bez názvu',
-      breathInDuration: profile.breathInDuration || 6,
-      breathOutDuration: profile.breathOutDuration || 8,
-      breathDuration: profile.breathDuration || 3,
-      preparationTime: profile.preparationTime || 0,
-      breathInSound: profile.breathInSound || 'none',
-      breathOutSound: profile.breathOutSound || 'none',
-      breathClickSound: profile.breathClickSound || 'none',
-      breathFinalSound: profile.breathFinalSound || 'none',
-      breathCountdownSound: profile.breathCountdownSound || 'none',
-      breathSoundFadeEnabled: profile.breathSoundFadeEnabled !== undefined ? profile.breathSoundFadeEnabled : true,
-      createdAt: profile.createdAt || new Date().toISOString(),
-      lastUpdated: new Date().toISOString()
-    };
+    try {
+      const user = this.getCurrentUser();
+      log.debug('💾 Saving profile:', { profileId, hasUser: !!user, profileName: profile.name });
+
+      const profileData = {
+        name: profile.name || 'Bez názvu',
+        breathInDuration: profile.breathInDuration || 6,
+        breathOutDuration: profile.breathOutDuration || 8,
+        breathDuration: profile.breathDuration || 3,
+        preparationTime: profile.preparationTime || 0,
+        breathInSound: profile.breathInSound || 'none',
+        breathOutSound: profile.breathOutSound || 'none',
+        breathClickSound: profile.breathClickSound || 'none',
+        breathFinalSound: profile.breathFinalSound || 'none',
+        breathCountdownSound: profile.breathCountdownSound || 'none',
+        breathSoundFadeEnabled: profile.breathSoundFadeEnabled !== undefined ? profile.breathSoundFadeEnabled : true,
+        createdAt: profile.createdAt || new Date().toISOString(),
+        lastUpdated: new Date().toISOString()
+      };
 
     // Pokud je požadováno, načti kompletní metadata zvuků
     if (includeSoundMetadata) {
@@ -107,36 +110,43 @@ class BreathProfilesService {
       };
     }
 
-    if (user) {
-      // Uložit do Firebase - používejme Firebase SDK přímo bez sanitizace lomítek
-      try {
-        if (profileId) {
-          // Aktualizace existujícího profilu
-          const profileRef = ref(database, `users/${user.uid}/breathProfiles/${profileId}`);
-          await update(profileRef, {
-            ...profileData,
-            lastUpdated: new Date().toISOString()
-          });
-          log.debug(`✅ Profile updated in Firebase: ${profileId}`);
-          return profileId;
-        } else {
-          // Vytvoření nového profilu
-          const profilesRef = ref(database, `users/${user.uid}/breathProfiles`);
-          const newRef = push(profilesRef, {
-            ...profileData,
-            createdAt: new Date().toISOString()
-          });
-          log.debug(`✅ Profile saved to Firebase: ${newRef.key}`);
-          return newRef.key;
+      if (user) {
+        // Uložit do Firebase - používejme Firebase SDK přímo bez sanitizace lomítek
+        try {
+          if (profileId) {
+            // Aktualizace existujícího profilu
+            const profileRef = ref(database, `users/${user.uid}/breathProfiles/${profileId}`);
+            await update(profileRef, {
+              ...profileData,
+              lastUpdated: new Date().toISOString()
+            });
+            log.debug(`✅ Profile updated in Firebase: ${profileId}`);
+            return profileId;
+          } else {
+            // Vytvoření nového profilu
+            const profilesRef = ref(database, `users/${user.uid}/breathProfiles`);
+            const newRef = push(profilesRef, {
+              ...profileData,
+              createdAt: new Date().toISOString()
+            });
+            log.debug(`✅ Profile saved to Firebase: ${newRef.key}`);
+            return newRef.key;
+          }
+        } catch (error) {
+          log.error('❌ Failed to save profile to Firebase:', error);
+          console.error('Firebase save error details:', error);
+          // Fallback na localStorage
+          return this.saveProfileToLocalStorage(profileData, profileId);
         }
-      } catch (error) {
-        log.error('❌ Failed to save profile to Firebase:', error);
-        // Fallback na localStorage
+      } else {
+        // Uložit do localStorage
+        log.debug('💾 No user, saving to localStorage');
         return this.saveProfileToLocalStorage(profileData, profileId);
       }
-    } else {
-      // Uložit do localStorage
-      return this.saveProfileToLocalStorage(profileData, profileId);
+    } catch (error) {
+      log.error('❌ Failed to save profile:', error);
+      console.error('Save profile error:', error);
+      throw error;
     }
   }
 
@@ -146,27 +156,43 @@ class BreathProfilesService {
   saveProfileToLocalStorage(profileData, profileId = null) {
     try {
       const profiles = this.getAllProfilesFromLocalStorage();
+      log.debug(`💾 Saving to localStorage: ${profiles.length} existing profiles`);
 
       if (profileId) {
         // Aktualizace existujícího profilu
         const index = profiles.findIndex(p => p.id === profileId);
         if (index !== -1) {
           profiles[index] = { ...profileData, id: profileId };
+          log.debug(`✅ Updated existing profile: ${profileId}`);
         } else {
           profiles.push({ ...profileData, id: profileId });
+          log.debug(`✅ Added profile with existing ID: ${profileId}`);
         }
       } else {
         // Vytvoření nového profilu
         const newId = `local_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
         profiles.push({ ...profileData, id: newId });
         profileId = newId;
+        log.debug(`✅ Created new profile: ${profileId}`);
       }
 
-      localStorage.setItem(this.localStorageKey, JSON.stringify(profiles));
-      log.debug(`✅ Profile saved to localStorage: ${profileId}`);
+      const jsonString = JSON.stringify(profiles);
+      localStorage.setItem(this.localStorageKey, jsonString);
+      log.debug(`✅ Profile saved to localStorage: ${profileId} (${jsonString.length} bytes)`);
+
+      // Ověření, že se uložilo
+      const verify = localStorage.getItem(this.localStorageKey);
+      if (!verify) {
+        throw new Error('Failed to verify localStorage save');
+      }
+
       return profileId;
     } catch (error) {
       log.error('❌ Failed to save profile to localStorage:', error);
+      console.error('localStorage save error details:', error);
+      if (error.name === 'QuotaExceededError') {
+        console.error('⚠️ localStorage quota exceeded!');
+      }
       throw error;
     }
   }
@@ -176,59 +202,72 @@ class BreathProfilesService {
    * @returns {Promise<Array>} - Pole profilů
    */
   async getAllProfiles() {
-    const user = this.getCurrentUser();
+    try {
+      const user = this.getCurrentUser();
+      log.debug('📥 Loading profiles:', { hasUser: !!user });
 
-    if (user) {
-      // Načíst z Firebase - používejme Firebase SDK přímo bez sanitizace lomítek
-      try {
-        const profilesRef = ref(database, `users/${user.uid}/breathProfiles`);
-        const snapshot = await get(profilesRef);
+      if (user) {
+        // Načíst z Firebase - používejme Firebase SDK přímo bez sanitizace lomítek
+        try {
+          const profilesRef = ref(database, `users/${user.uid}/breathProfiles`);
+          const snapshot = await get(profilesRef);
 
-        if (snapshot.exists()) {
-          // Převede objekt na pole
-          const data = snapshot.val();
-          const profiles = Object.keys(data).map(id => ({
-            id,
-            ...data[id]
-          }));
-          log.debug(`✅ Loaded ${profiles.length} profiles from Firebase`);
-          return profiles;
-        }
+          if (snapshot.exists()) {
+            // Převede objekt na pole
+            const data = snapshot.val();
+            const profiles = Object.keys(data).map(id => ({
+              id,
+              ...data[id]
+            }));
+            log.debug(`✅ Loaded ${profiles.length} profiles from Firebase`);
+            return profiles;
+          }
 
-        // Pokud nejsou data v Firebase, zkus načíst z localStorage (migrace)
-        const localProfiles = this.getAllProfilesFromLocalStorage();
-        if (localProfiles.length > 0) {
-          log.debug(`ℹ️ Migrating ${localProfiles.length} profiles from localStorage to Firebase`);
-          // Migrace profilů do Firebase
-          for (const profile of localProfiles) {
-            try {
-              await this.saveProfile(profile, profile.id);
-            } catch (error) {
-              log.warn(`Failed to migrate profile ${profile.id}:`, error);
+          // Pokud nejsou data v Firebase, zkus načíst z localStorage (migrace)
+          const localProfiles = this.getAllProfilesFromLocalStorage();
+          if (localProfiles.length > 0) {
+            log.debug(`ℹ️ Migrating ${localProfiles.length} profiles from localStorage to Firebase`);
+            // Migrace profilů do Firebase
+            for (const profile of localProfiles) {
+              try {
+                await this.saveProfile(profile, profile.id);
+              } catch (error) {
+                log.warn(`Failed to migrate profile ${profile.id}:`, error);
+              }
+            }
+            // Vymaž localStorage po migraci
+            localStorage.removeItem(this.localStorageKey);
+            // Načti znovu z Firebase
+            const snapshotAfterMigration = await get(profilesRef);
+            if (snapshotAfterMigration.exists()) {
+              const dataAfterMigration = snapshotAfterMigration.val();
+              return Object.keys(dataAfterMigration).map(id => ({
+                id,
+                ...dataAfterMigration[id]
+              }));
             }
           }
-          // Vymaž localStorage po migraci
-          localStorage.removeItem(this.localStorageKey);
-          // Načti znovu z Firebase
-          const snapshotAfterMigration = await get(profilesRef);
-          if (snapshotAfterMigration.exists()) {
-            const dataAfterMigration = snapshotAfterMigration.val();
-            return Object.keys(dataAfterMigration).map(id => ({
-              id,
-              ...dataAfterMigration[id]
-            }));
-          }
-        }
 
-        return [];
-      } catch (error) {
-        log.error('❌ Failed to load profiles from Firebase:', error);
-        // Fallback na localStorage
-        return this.getAllProfilesFromLocalStorage();
+          log.debug('📭 No profiles found in Firebase');
+          return [];
+        } catch (error) {
+          log.error('❌ Failed to load profiles from Firebase:', error);
+          console.error('Firebase load error details:', error);
+          // Fallback na localStorage
+          const localProfiles = this.getAllProfilesFromLocalStorage();
+          log.debug(`📦 Fallback: Loaded ${localProfiles.length} profiles from localStorage`);
+          return localProfiles;
+        }
+      } else {
+        // Načíst z localStorage
+        const localProfiles = this.getAllProfilesFromLocalStorage();
+        log.debug(`📦 Loaded ${localProfiles.length} profiles from localStorage`);
+        return localProfiles;
       }
-    } else {
-      // Načíst z localStorage
-      return this.getAllProfilesFromLocalStorage();
+    } catch (error) {
+      log.error('❌ Failed to load profiles:', error);
+      console.error('Load profiles error:', error);
+      return [];
     }
   }
 
@@ -240,11 +279,15 @@ class BreathProfilesService {
       const stored = localStorage.getItem(this.localStorageKey);
       if (stored) {
         const profiles = JSON.parse(stored);
-        return Array.isArray(profiles) ? profiles : [];
+        const result = Array.isArray(profiles) ? profiles : [];
+        log.debug(`📦 Loaded ${result.length} profiles from localStorage`);
+        return result;
       }
+      log.debug('📭 No profiles found in localStorage');
       return [];
     } catch (error) {
       log.error('❌ Failed to load profiles from localStorage:', error);
+      console.error('localStorage load error details:', error);
       return [];
     }
   }

@@ -48,10 +48,16 @@ const BreathProfilesScreen = ({
   const loadProfiles = async () => {
     try {
       setLoading(true);
+      console.log('🔄 Loading profiles...');
       const loadedProfiles = await breathProfilesService.getAllProfiles();
+      console.log('✅ Loaded profiles:', loadedProfiles);
       setProfiles(loadedProfiles);
+      if (loadedProfiles.length === 0) {
+        console.log('📭 No profiles found');
+      }
     } catch (error) {
-      console.error('Failed to load profiles:', error);
+      console.error('❌ Failed to load profiles:', error);
+      alert(t('chybaNacteniProfilu') || 'Chyba při načítání profilů: ' + error.message);
     } finally {
       setLoading(false);
     }
@@ -66,6 +72,7 @@ const BreathProfilesScreen = ({
 
     try {
       setSaving(true);
+      console.log('💾 Saving profile:', newProfileName.trim());
       const profile = {
         name: newProfileName.trim(),
         breathInDuration,
@@ -80,13 +87,16 @@ const BreathProfilesScreen = ({
         breathSoundFadeEnabled: breathSoundFadeEnabled !== undefined ? breathSoundFadeEnabled : true
       };
 
-      await breathProfilesService.saveProfile(profile);
+      console.log('📋 Profile data:', profile);
+      const profileId = await breathProfilesService.saveProfile(profile);
+      console.log('✅ Profile saved with ID:', profileId);
       setNewProfileName('');
       setShowNameInput(false);
       await loadProfiles();
+      alert(t('profilUlozen') || 'Profil byl úspěšně uložen');
     } catch (error) {
-      console.error('Failed to save profile:', error);
-      alert(t('chybaUlozeniProfilu') || 'Chyba při ukládání profilu');
+      console.error('❌ Failed to save profile:', error);
+      alert(t('chybaUlozeniProfilu') || 'Chyba při ukládání profilu: ' + (error.message || error));
     } finally {
       setSaving(false);
     }
