@@ -577,13 +577,6 @@ const BreathScreen = ({
                   </motion.div>
                 </div>
               </div>
-
-              {/* Text pod odpočítáváním */}
-              <div className="mt-6 text-center">
-                <div className="text-black font-medium text-xl">
-                  {t('pripravaNaMeditaci') || 'Příprava na meditaci'}
-                </div>
-              </div>
             </FramerSection>
 
             <FramerSection
