@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { motion } from 'framer-motion';
 import { ArrowDown, ArrowUp, MousePointerClick, CheckCircle, Play, Pause, Clock } from 'lucide-react';
-import { FramerPageTransition, BackButton } from '@components';
+import { FramerPageTransition, BackButton, FramerSection } from '@components';
 import { useLanguage } from '@contexts/LanguageContext';
 import { realtimeMetadataService } from '@services/realtimeMetadataService';
 import Waveform from '@components/Waveform';
@@ -377,20 +377,26 @@ const SoundThemeGalleryScreen = ({
   return (
     <FramerPageTransition screenKey="sound-theme-gallery">
       <div
-        className="min-h-screen w-full max-w-full bg-[#f4ddc4] flex flex-col items-center justify-center p-2 sm:p-8 pb-20 overflow-x-hidden relative"
+        className="min-h-screen w-full max-w-full bg-[#f4ddc4] flex flex-col items-center justify-start p-2 sm:p-8 pb-20 overflow-x-hidden relative"
         onTouchStart={onTouchStart}
         onTouchMove={onTouchMove}
         onTouchEnd={onTouchEnd}
       >
         <BackButton onClick={() => onNavigateToScreen('breath')} />
 
-        <div className="max-w-md w-full mt-16 overflow-y-auto">
+        <div className="max-w-md w-full overflow-y-auto" style={{ marginTop: '5rem', paddingTop: 0, position: 'relative', display: 'flex', flexDirection: 'column', alignItems: 'stretch' }}>
           {/* Header */}
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="text-2xl font-light">
-              {t('galeriaZvukovychTemat')}
-            </h2>
-          </div>
+          <FramerSection
+            className="text-center mb-6"
+            animationType="fadeIn"
+            delay={0.1}
+          >
+            <div style={{ height: '3.5rem', display: 'flex', flexDirection: 'column', justifyContent: 'flex-start', alignItems: 'center', marginBottom: '0.5rem' }}>
+              <h1 className="text-4xl font-light" style={{ minHeight: '2.5rem', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                {t('vyberteZvuky')}
+              </h1>
+            </div>
+          </FramerSection>
 
           {/* Kategorie záložky */}
           {!loading && (

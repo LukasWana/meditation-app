@@ -67,22 +67,24 @@ const MeditationScreen = ({
     return (
       <FramerPageTransition screenKey="meditation">
         <div
-          className="min-h-screen w-full max-w-full bg-[#f4ddc4] flex flex-col items-center justify-center p-2 sm:p-8 pb-20 overflow-x-hidden relative"
+          className="min-h-screen w-full max-w-full bg-[#f4ddc4] flex flex-col items-center justify-start p-2 sm:p-8 pb-20 overflow-x-hidden relative"
           onTouchStart={onTouchStart}
           onTouchMove={onTouchMove}
           onTouchEnd={onTouchEnd}
         >
           <BackButton onClick={() => onNavigateToScreen('home')} />
 
-          <div className="max-w-md w-full mt-16">
+          <div className="max-w-md w-full" style={{ marginTop: '4rem', paddingTop: 0, position: 'relative', display: 'flex', flexDirection: 'column', alignItems: 'stretch' }}>
             <FramerSection
-              className="text-center mb-16"
+              className="text-center mb-6"
               animationType="fadeIn"
               delay={0.1}
             >
-              <h1 className="text-5xl font-light mb-2">
-                {t('priprava')}
-              </h1>
+              <div style={{ height: '3.5rem', display: 'flex', flexDirection: 'column', justifyContent: 'flex-start', alignItems: 'center', marginBottom: '0.5rem' }}>
+                <h1 className="text-4xl font-light" style={{ minHeight: '2.5rem', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  {t('priprava')}
+                </h1>
+              </div>
               <div className="flex justify-center gap-2 mt-4 mb-4">
                 <div className="w-2 h-2 bg-black rounded-full"></div>
                 <div className="w-2 h-2 bg-black rounded-full"></div>
@@ -147,22 +149,24 @@ const MeditationScreen = ({
   return (
     <FramerPageTransition screenKey="meditation">
       <div
-        className="min-h-screen w-full max-w-full bg-[#f4ddc4] flex flex-col items-center justify-center p-2 sm:p-8 pb-20 overflow-x-hidden relative"
+        className="min-h-screen w-full max-w-full bg-[#f4ddc4] flex flex-col items-center justify-start p-2 sm:p-8 pb-20 overflow-x-hidden relative"
         onTouchStart={onTouchStart}
         onTouchMove={onTouchMove}
         onTouchEnd={onTouchEnd}
       >
         <BackButton onClick={() => onNavigateToScreen('home')} />
 
-        <div className="max-w-md w-full mt-16">
+        <div className="max-w-md w-full" style={{ marginTop: '4rem', paddingTop: 0, position: 'relative', display: 'flex', flexDirection: 'column', alignItems: 'stretch' }}>
           <FramerSection
-            className="text-center mb-16"
+            className="text-center mb-6"
             animationType="fadeIn"
             delay={0.1}
           >
-            <h1 className="text-5xl font-light mb-2">
-              {t('meditacia')}
-            </h1>
+            <div style={{ height: '3.5rem', display: 'flex', flexDirection: 'column', justifyContent: 'flex-start', alignItems: 'center', marginBottom: '0.5rem' }}>
+              <h1 className="text-4xl font-light" style={{ minHeight: '2.5rem', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                {t('meditacia')}
+              </h1>
+            </div>
             <div className="flex justify-center gap-2 mt-4 mb-4">
               <div className="w-2 h-2 bg-black rounded-full"></div>
               <div className="w-2 h-2 bg-black rounded-full"></div>
@@ -207,26 +211,12 @@ const MeditationScreen = ({
 
             {/* CircularProgress s Play/Pause Button - stejný jako v přehrávači */}
             <div className="relative flex-shrink-0 flex items-center justify-center">
-              <CircularProgress
-                progress={progress}
-                onSeek={null} // Pro meditaci nepotřebujeme seek
-                className="w-[50vw] h-[50vw] max-w-[400px] max-h-[400px] min-w-[250px] min-h-[250px]"
-              />
-
-              {/* Play/Pause Button - Center */}
-              <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                <PlayPauseButton
-                  isPlaying={isPlaying}
-                  onToggle={onPlayPause}
-                  className="w-[18vw] h-[18vw] max-w-[120px] max-h-[120px] min-w-[80px] min-h-[80px] sm:w-[16vw] sm:h-[16vw] sm:max-w-[140px] sm:max-h-[140px] sm:min-w-[100px] sm:min-h-[100px]"
-                />
-              </div>
-
-              {/* Dýchací animace během meditace - overlay na CircularProgress */}
+              {/* Dýchací animace během meditace - pod kruhem a tlačítkem */}
               {isPlaying && (
-                <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                <div className="absolute inset-0 flex items-center justify-center pointer-events-none" style={{ zIndex: 1 }}>
                   {/* Animace s maskou - bílý kruh uprostřed, černý okolo, vycentrovaná na tlačítko */}
                   <motion.div
+                    key={breathPhase}
                     className="rounded-full"
                     style={{
                       width: '45vw',
@@ -235,24 +225,28 @@ const MeditationScreen = ({
                       maxHeight: '350px',
                       minWidth: '220px',
                       minHeight: '220px',
-                      background: 'radial-gradient(circle, rgba(255,255,255,0.2) 0%, rgba(255,255,255,0.2) 25%, rgba(0,0,0,0.05) 25%, rgba(0,0,0,0.05) 100%)',
+                      background: 'radial-gradient(circle, rgba(255,255,255,0.5) 0%, rgba(255,255,255,0.5) 25%, rgba(0,0,0,0.15) 25%, rgba(0,0,0,0.15) 100%)',
                       transformOrigin: 'center center',
                     }}
-                    initial={{ opacity: 0 }}
+                    initial={{
+                      opacity: 0.9,
+                      scale: breathPhase === 'in' ? 0.5 : 1.5
+                    }}
                     animate={isPlaying ? {
                       scale: breathPhase === 'in'
-                        ? [1.0, 0.2]  // Nádech - zmenšování až na 20%
+                        ? [0.5, 1.5]  // Nádech - zvětšování až na 120%
                         : breathPhase === 'out'
-                        ? [0.2, 1.0]  // Výdech - zvětšování
-                        : 1.0,
-                      opacity: [0.6, 1, 0.6]
+                        ? [1.5, 0.5]  // Výdech - zmenšování až na 20%
+                        : 1.5,
+                      opacity: [0.9, 1, 0.9]
                     } : {
                       scale: 1.0,
-                      opacity: 0.6
+                      opacity: 0.8
                     }}
                     exit={{ opacity: 0 }}
                     transition={isPlaying ? {
                       duration: breathPhase === 'in' ? breathInDuration : breathOutDuration,
+                      delay: breathPhase === 'out' ? 3 : 0,  // Pozdržení výdechu, aby počkal na zvuk
                       ease: "easeInOut",
                       repeat: Infinity,
                       repeatType: "reverse"
@@ -262,6 +256,22 @@ const MeditationScreen = ({
                   />
                 </div>
               )}
+
+              <CircularProgress
+                progress={progress}
+                onSeek={null} // Pro meditaci nepotřebujeme seek
+                className="w-[50vw] h-[50vw] max-w-[400px] max-h-[400px] min-w-[250px] min-h-[250px]"
+                style={{ position: 'relative', zIndex: 2 }}
+              />
+
+              {/* Play/Pause Button - Center */}
+              <div className="absolute inset-0 flex items-center justify-center pointer-events-none" style={{ zIndex: 3 }}>
+                <PlayPauseButton
+                  isPlaying={isPlaying}
+                  onToggle={onPlayPause}
+                  className="w-[18vw] h-[18vw] max-w-[120px] max-h-[120px] min-w-[80px] min-h-[80px] sm:w-[16vw] sm:h-[16vw] sm:max-w-[140px] sm:max-h-[140px] sm:min-w-[100px] sm:min-h-[100px]"
+                />
+              </div>
             </div>
 
             {/* Current Time Display - pod CircularProgress */}

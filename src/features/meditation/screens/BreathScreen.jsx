@@ -530,7 +530,7 @@ const BreathScreen = ({
   return (
     <FramerPageTransition screenKey="breath">
       <div
-        className="min-h-screen w-full max-w-full bg-[#f4ddc4] flex flex-col items-center justify-center p-2 sm:p-8 pb-20 overflow-x-hidden relative"
+        className="min-h-screen w-full max-w-full bg-[#f4ddc4] flex flex-col items-center justify-start p-2 sm:p-8 pb-20 overflow-x-hidden relative"
         onTouchStart={onTouchStart}
         onTouchMove={onTouchMove}
         onTouchEnd={onTouchEnd}
@@ -552,11 +552,11 @@ const BreathScreen = ({
             {/* Nadpis - přesně stejná struktura jako obrazovka dýchání */}
             <div
               className="text-center flex flex-col justify-start"
-              style={{ height: 'calc(clamp(60px, 8vw, 80px) + clamp(32px, 3.5vw, 40px) + 1rem + 0.5rem)', paddingTop: 0, paddingBottom: 0, marginTop: 0, marginBottom: '1.5rem', position: 'relative', top: 0 }}
+              style={{ height: 'calc(3.5rem + clamp(32px, 3.5vw, 40px) + 1rem + 0.5rem)', paddingTop: 0, paddingBottom: 0, marginTop: 0, marginBottom: '1.5rem', position: 'relative', top: 0 }}
             >
               <motion.h1
-                className="text-5xl font-serif text-gray-800 leading-normal overflow-visible"
-                style={{ height: 'clamp(60px, 8vw, 80px)', minHeight: 'clamp(60px, 8vw, 80px)', maxHeight: 'clamp(60px, 8vw, 80px)', display: 'flex', alignItems: 'center', justifyContent: 'center', lineHeight: '1.2', marginTop: 0, paddingTop: 0, paddingBottom: 0, marginBottom: 0 }}
+                className="text-4xl font-serif text-gray-800 leading-normal overflow-visible"
+                style={{ height: '3.5rem', minHeight: '3.5rem', maxHeight: '3.5rem', display: 'flex', alignItems: 'center', justifyContent: 'center', lineHeight: '1.2', marginTop: 0, paddingTop: 0, paddingBottom: 0, marginBottom: 0 }}
                 initial={{ opacity: 0, y: -10 }}
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: 10 }}
@@ -694,12 +694,12 @@ const BreathScreen = ({
           {/* Nadpis - velký elegantní serif font - dynamicky se mění podle stavu dýchání */}
           <div
             className="text-center flex flex-col justify-start"
-            style={{ height: 'calc(clamp(60px, 8vw, 80px) + clamp(32px, 3.5vw, 40px) + 1rem + 0.5rem)', paddingTop: 0, paddingBottom: 0, marginTop: 0, marginBottom: '1.5rem', position: 'relative', top: 0 }}
+            style={{ height: 'calc(3.5rem + clamp(32px, 3.5vw, 40px) + 1rem + 0.5rem)', paddingTop: 0, paddingBottom: 0, marginTop: 0, marginBottom: '1.5rem', position: 'relative', top: 0 }}
           >
             <motion.h1
               key={isBreathing ? breathPhase : 'default'}
-              className="text-5xl font-serif text-gray-800 leading-normal overflow-visible"
-              style={{ height: 'clamp(60px, 8vw, 80px)', minHeight: 'clamp(60px, 8vw, 80px)', maxHeight: 'clamp(60px, 8vw, 80px)', display: 'flex', alignItems: 'center', justifyContent: 'center', lineHeight: '1.2', marginTop: 0, paddingTop: 0, paddingBottom: 0, marginBottom: 0 }}
+              className="text-4xl font-serif text-gray-800 leading-normal overflow-visible"
+              style={{ height: '3.5rem', minHeight: '3.5rem', maxHeight: '3.5rem', display: 'flex', alignItems: 'center', justifyContent: 'center', lineHeight: '1.2', marginTop: 0, paddingTop: 0, paddingBottom: 0, marginBottom: 0 }}
               initial={{ opacity: 0, y: -10 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: 10 }}
@@ -731,28 +731,12 @@ const BreathScreen = ({
 
             {/* Circular Progress with Play Button - Always Centered - stejný design jako v hudbě a meditaci */}
             <div className="relative flex-shrink-0">
-              <CircularProgress
-                progress={progress}
-                onSeek={null}
-                className="w-[50vw] h-[50vw] max-w-[400px] max-h-[400px] min-w-[250px] min-h-[250px]"
-              />
-
-              {/* Play/Pause Button - Center */}
-              <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                <div className="pointer-events-auto">
-                  <PlayPauseButton
-                    isPlaying={isBreathing}
-                    onToggle={handlePlayPause}
-                    className="w-[18vw] h-[18vw] max-w-[120px] max-h-[120px] min-w-[80px] min-h-[80px] sm:w-[16vw] sm:h-[16vw] sm:max-w-[140px] sm:max-h-[140px] sm:min-w-[100px] sm:min-h-[100px]"
-                  />
-                </div>
-              </div>
-
-                            {/* Dýchací animace během dýchání - overlay */}
+              {/* Dýchací animace během dýchání - pod kruhem a tlačítkem */}
               {isBreathing && (
-                <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                <div className="absolute inset-0 flex items-center justify-center pointer-events-none" style={{ zIndex: 1 }}>
                   {/* Animace s maskou - bílý kruh uprostřed, černý okolo, vycentrovaná na tlačítko */}
                   <motion.div
+                    key={breathPhase}
                     className="rounded-full"
                     style={{
                       width: '45vw',
@@ -761,24 +745,28 @@ const BreathScreen = ({
                       maxHeight: '330px',
                       minWidth: '200px',
                       minHeight: '200px',
-                      background: 'radial-gradient(circle, rgba(255,255,255,0.2) 0%, rgba(255,255,255,0.2) 25%, rgba(0,0,0,0.05) 25%, rgba(0,0,0,0.05) 100%)',
+                      background: 'radial-gradient(circle, rgba(255,255,255,0.5) 0%, rgba(255,255,255,0.5) 25%, rgba(0,0,0,0.15) 25%, rgba(0,0,0,0.15) 100%)',
                       transformOrigin: 'center center',
                     }}
-                    initial={{ opacity: 0 }}
+                    initial={{
+                      opacity: 0.8,
+                      scale: breathPhase === 'in' ? 0.2 : 1.2
+                    }}
                     animate={isBreathing ? {
                       scale: breathPhase === 'in'
-                        ? [1.0, 0.2]
+                        ? [0.2, 1.2]  // Nádech - zvětšování až na 120%
                         : breathPhase === 'out'
-                        ? [0.2, 1.0]
-                        : 1.0,
-                      opacity: [0.6, 1, 0.6]
+                        ? [1.2, 0.2]  // Výdech - zmenšování až na 20%
+                        : 1.2,
+                      opacity: [0.8, 1, 0.8]
                     } : {
                       scale: 1.0,
-                      opacity: 0.6
+                      opacity: 0.8
                     }}
                     exit={{ opacity: 0 }}
                     transition={isBreathing ? {
                       duration: breathPhase === 'in' ? breathInDuration : breathOutDuration,
+                      delay: breathPhase === 'out' ? 0.2 : 0,  // Pozdržení výdechu, aby počkal na zvuk
                       ease: "easeInOut",
                       repeat: Infinity,
                       repeatType: "reverse"
@@ -788,6 +776,24 @@ const BreathScreen = ({
                   />
                 </div>
               )}
+
+              <CircularProgress
+                progress={progress}
+                onSeek={null}
+                className="w-[50vw] h-[50vw] max-w-[400px] max-h-[400px] min-w-[250px] min-h-[250px]"
+                style={{ position: 'relative', zIndex: 2 }}
+              />
+
+              {/* Play/Pause Button - Center */}
+              <div className="absolute inset-0 flex items-center justify-center pointer-events-none" style={{ zIndex: 3 }}>
+                <div className="pointer-events-auto">
+                  <PlayPauseButton
+                    isPlaying={isBreathing}
+                    onToggle={handlePlayPause}
+                    className="w-[18vw] h-[18vw] max-w-[120px] max-h-[120px] min-w-[80px] min-h-[80px] sm:w-[16vw] sm:h-[16vw] sm:max-w-[140px] sm:max-h-[140px] sm:min-w-[100px] sm:min-h-[100px]"
+                  />
+                </div>
+              </div>
             </div>
           </div>
 

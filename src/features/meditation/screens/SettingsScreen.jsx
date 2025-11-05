@@ -127,18 +127,20 @@ const SettingsScreen = ({
 
   return (
     <FramerPageTransition screenKey="settings">
-      <div className="min-h-screen w-full max-w-full bg-[#f4ddc4] flex flex-col items-center justify-center p-2 sm:p-8 pb-20 overflow-x-hidden relative">
+      <div className="min-h-screen w-full max-w-full bg-[#f4ddc4] flex flex-col items-center justify-start p-2 sm:p-8 pb-20 overflow-x-hidden relative">
         <BackButton onClick={() => onNavigateToScreen('home')} />
 
-        <div className="max-w-md w-full mt-16">
+        <div className="max-w-md w-full" style={{ marginTop: '4rem', paddingTop: 0, position: 'relative', display: 'flex', flexDirection: 'column', alignItems: 'stretch' }}>
           <FramerSection
-            className="text-center mb-8"
+            className="text-center mb-6"
             animationType="fadeIn"
             delay={0.1}
           >
-            <h1 className="text-6xl font-light leading-normal pb-3 overflow-visible" style={{ lineHeight: '1.2' }}>
-              {t('nastavenie')}
-            </h1>
+            <div style={{ height: '3.5rem', display: 'flex', flexDirection: 'column', justifyContent: 'flex-start', alignItems: 'center', marginBottom: '0.5rem' }}>
+              <h1 className="text-4xl font-light" style={{ minHeight: '2.5rem', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                {t('nastavenie')}
+              </h1>
+            </div>
           </FramerSection>
 
           <div className="space-y-4">

@@ -96,7 +96,7 @@ const SlovaScreen = ({
   return (
     <FramerPageTransition screenKey="slova">
       <div
-        className={`min-h-screen w-full max-w-full bg-[#f4ddc4] flex flex-col items-center justify-center p-2 sm:p-8 pb-20 overflow-x-hidden relative ${
+        className={`min-h-screen w-full max-w-full bg-[#f4ddc4] flex flex-col items-center justify-start p-2 sm:p-8 pb-20 overflow-x-hidden relative ${
           activeAudio ? 'pointer-events-none' : ''
         }`}
         onTouchStart={activeAudio ? undefined : onTouchStart}
@@ -121,15 +121,17 @@ const SlovaScreen = ({
           </div>
         </div>
 
-        <div className="max-w-md w-full mt-24">
+        <div className="max-w-md w-full" style={{ marginTop: '4rem', paddingTop: 0, position: 'relative', display: 'flex', flexDirection: 'column', alignItems: 'stretch' }}>
           <FramerSection
-            className="text-center mb-8"
+            className="text-center mb-6"
             animationType="fadeIn"
             delay={0.1}
           >
-            <h1 className="text-6xl font-light leading-normal pb-3 overflow-visible" style={{ lineHeight: '1.2' }}>
-              {t('slova')}
-            </h1>
+            <div style={{ height: '3.5rem', display: 'flex', flexDirection: 'column', justifyContent: 'flex-start', alignItems: 'center', marginBottom: '0.5rem' }}>
+              <h1 className="text-4xl font-light" style={{ minHeight: '2.5rem', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                {t('slova')}
+              </h1>
+            </div>
             <p className="text-xl text-center text-gray-700 mb-8">
               {t('mluvene')}
             </p>
