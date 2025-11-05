@@ -224,14 +224,21 @@ const MeditationScreen = ({
 
               {/* Dýchací animace během meditace - overlay na CircularProgress */}
               {isPlaying && (
-                <motion.div
-                  className="absolute inset-0 flex items-center justify-center pointer-events-none"
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  exit={{ opacity: 0 }}
-                >
+                <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                  {/* Animace s maskou - bílý kruh uprostřed, černý okolo, vycentrovaná na tlačítko */}
                   <motion.div
-                    className="w-[45vw] h-[45vw] max-w-[350px] max-h-[350px] min-w-[220px] min-h-[220px] rounded-full bg-black/5"
+                    className="rounded-full"
+                    style={{
+                      width: '45vw',
+                      height: '45vw',
+                      maxWidth: '350px',
+                      maxHeight: '350px',
+                      minWidth: '220px',
+                      minHeight: '220px',
+                      background: 'radial-gradient(circle, rgba(255,255,255,0.2) 0%, rgba(255,255,255,0.2) 25%, rgba(0,0,0,0.05) 25%, rgba(0,0,0,0.05) 100%)',
+                      transformOrigin: 'center center',
+                    }}
+                    initial={{ opacity: 0 }}
                     animate={isPlaying ? {
                       scale: breathPhase === 'in'
                         ? [1.0, 0.2]  // Nádech - zmenšování až na 20%
@@ -243,6 +250,7 @@ const MeditationScreen = ({
                       scale: 1.0,
                       opacity: 0.6
                     }}
+                    exit={{ opacity: 0 }}
                     transition={isPlaying ? {
                       duration: breathPhase === 'in' ? breathInDuration : breathOutDuration,
                       ease: "easeInOut",
@@ -252,7 +260,7 @@ const MeditationScreen = ({
                       duration: 0.5
                     }}
                   />
-                </motion.div>
+                </div>
               )}
             </div>
 
