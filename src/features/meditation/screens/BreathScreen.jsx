@@ -733,7 +733,7 @@ const BreathScreen = ({
             <div className="relative flex-shrink-0">
               {/* Dýchací animace během dýchání - pod kruhem a tlačítkem */}
               {isBreathing && (
-                <div className="absolute inset-0 flex items-center justify-center pointer-events-none" style={{ zIndex: 1 }}>
+                <div className="absolute inset-0 flex items-center justify-center pointer-events-none" style={{ zIndex: 0 }}>
                   {/* Animace s maskou - bílý kruh uprostřed, černý okolo, vycentrovaná na tlačítko */}
                   <motion.div
                     key={breathPhase}
@@ -745,7 +745,7 @@ const BreathScreen = ({
                       maxHeight: '330px',
                       minWidth: '200px',
                       minHeight: '200px',
-                      background: 'radial-gradient(circle, rgba(255,255,255,0.5) 0%, rgba(255,255,255,0.5) 25%, rgba(0,0,0,0.15) 25%, rgba(0,0,0,0.15) 100%)',
+                      background: 'radial-gradient(circle, rgba(255,255,255,1) 0%, rgba(255,255,255,1) 25%, rgba(255,255,255,1) 25%, rgba(255,255,255,1) 100%)',
                       transformOrigin: 'center center',
                     }}
                     initial={{
@@ -785,7 +785,7 @@ const BreathScreen = ({
               />
 
               {/* Play/Pause Button - Center */}
-              <div className="absolute inset-0 flex items-center justify-center pointer-events-none" style={{ zIndex: 3 }}>
+              <div className="absolute inset-0 flex items-center justify-center pointer-events-none" style={{ zIndex: 10 }}>
                 <div className="pointer-events-auto">
                   <PlayPauseButton
                     isPlaying={isBreathing}

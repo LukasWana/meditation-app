@@ -158,7 +158,7 @@ const CircularProgress = ({
       onMouseUp={handleMouseUp}
       onMouseLeave={handleMouseUp}
       viewBox="0 0 450 450"
-      style={{ aspectRatio: '1/1', userSelect: 'none' }}
+      style={{ aspectRatio: '1/1', userSelect: 'none', position: 'relative', zIndex: 10, isolation: 'isolate' }}
     >
       {/* Background Circle */}
       <circle
