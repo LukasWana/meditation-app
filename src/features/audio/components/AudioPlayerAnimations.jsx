@@ -1,5 +1,6 @@
 import React from 'react';
-import { motion } from 'framer-motion';
+import { motion } from 'framer-motion';
+
 export const AudioPlayerAnimations = ({
   children,
   albumCover,
@@ -9,7 +10,7 @@ export const AudioPlayerAnimations = ({
 }) => {
   return (
     <motion.div
-      className={`fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 pointer-events-auto ${className}`}
+      className={`fixed inset-0 bg-black/50 backdrop-blur-lg flex items-center justify-center z-50 pointer-events-auto ${className}`}
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
@@ -28,7 +29,7 @@ export const AudioPlayerAnimations = ({
       <motion.div
         className="w-full h-full flex flex-col items-center justify-center relative overflow-hidden"
         style={{
-          backgroundColor: albumCover ? 'rgba(244, 221, 196, 0.7)' : '#f4ddc4'
+          backgroundColor: albumCover ? 'rgba(244, 221, 196, 0.7)' : 'transparent' // Transparentní pozadí, aby shader byl vidět
         }}
         initial={{ scale: 0.95, opacity: 0 }}
         animate={{ scale: 1, opacity: 1 }}

@@ -22,8 +22,8 @@ const BreathProgressCircle = ({
   onPlayPause
 }) => {
   return (
-    <div className="relative flex-shrink-0">
-      {/* Dýchací animace během dýchání - pod kruhem a tlačítkem */}
+    <div className="relative flex-shrink-0" style={{ isolation: 'isolate' }}>
+      {/* Dýchací animace během dýchání - pod kruhem a tlačítkem, pod shaderem */}
       <BreathingAnimation
         isBreathing={isBreathing}
         breathPhase={breathPhase}

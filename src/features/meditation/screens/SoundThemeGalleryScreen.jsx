@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { motion } from 'framer-motion';
 import { ArrowDown, ArrowUp, MousePointerClick, CheckCircle, Play, Pause, Clock } from 'lucide-react';
-import { FramerPageTransition, BackButton, FramerSection } from '@components';
+import { FramerPageTransition, BackButton, FramerSection, BackgroundShader } from '@components';
 import { useLanguage } from '@contexts/LanguageContext';
 import { realtimeMetadataService } from '@services/realtimeMetadataService';
 import Waveform from '@components/Waveform';
@@ -376,8 +376,10 @@ const SoundThemeGalleryScreen = ({
 
   return (
     <FramerPageTransition screenKey="sound-theme-gallery">
+      <BackgroundShader variant="hudba" intensity={0.3} enabled={true} />
       <div
         className="min-h-screen w-full max-w-full bg-[#f4ddc4] flex flex-col items-center justify-start p-2 sm:p-8 pb-20 overflow-x-hidden relative"
+        style={{ position: 'relative', zIndex: 10 }}
         onTouchStart={onTouchStart}
         onTouchMove={onTouchMove}
         onTouchEnd={onTouchEnd}

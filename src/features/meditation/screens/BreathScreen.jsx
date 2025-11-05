@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 import { AnimatePresence } from 'framer-motion';
-import { FramerPageTransition, BackButton } from '@components';
+import { FramerPageTransition, BackButton, BackgroundShader } from '@components';
 import { useLanguage } from '@contexts/LanguageContext';
+import { useShaderSettings } from '@contexts/ShaderSettingsContext';
 import { useBreathSounds } from '@hooks';
 import { useBreathPhase } from '@hooks/useBreathPhase';
 import { useCountdownSound } from '@hooks/useCountdownSound';
@@ -38,6 +39,7 @@ const BreathScreen = ({
   breathSoundFadeEnabled
 }) => {
   const { t } = useLanguage();
+  const { getShaderForSection } = useShaderSettings();
   const [showPreparationPicker, setShowPreparationPicker] = useState(false);
   const [showDurationPicker, setShowDurationPicker] = useState(false);
   const [showRhythmPicker, setShowRhythmPicker] = useState(false);
@@ -167,8 +169,37 @@ const BreathScreen = ({
 
   return (
     <FramerPageTransition screenKey="breath">
+      {/* Vrstvení:
+          - Pozadí (bg-[#f4ddc4]): zIndex 0 (nejnižší)
+          - BackgroundShader: zIndex 0 (pod obsahem, nad background color)
+          - Obsah: zIndex 10 (nad shaderem)
+      */}
+      {/* Pozadí stránky - pod shaderem - průhledné při dýchání, aby shader prosvítal */}
       <div
-        className="min-h-screen w-full max-w-full bg-[#f4ddc4] flex flex-col items-center justify-start p-2 sm:p-8 pb-20 overflow-x-hidden overflow-y-auto relative"
+        className="min-h-screen w-full max-w-full bg-[#f4ddc4] fixed inset-0"
+        style={{
+          zIndex: 0,
+          opacity: isBreathing ? 0.3 : 1, // Průhledné při dýchání, aby shader prosvítal
+          transition: 'opacity 3s ease-in-out' // Plynulé prolnutí (3 sekundy)
+        }}
+      />
+
+      {/* BackgroundShader - zobraz pouze při dýchání s plynulým prolnutím */}
+      <BackgroundShader
+        variant={getShaderForSection('breath')}
+        intensity={0.8}
+        enabled={isBreathing}
+        opacity={isBreathing ? 1.0 : 0.0}
+      />
+
+      {/* Hlavní obsah stránky - nad shaderem - průhledné pozadí, aby shader prosvítal */}
+      <div
+        className="min-h-screen w-full max-w-full flex flex-col items-center justify-start p-2 sm:p-8 pb-20 overflow-x-hidden overflow-y-auto relative"
+        style={{
+          position: 'relative',
+          zIndex: 10,
+          backgroundColor: 'transparent' // Průhledné pozadí, aby shader prosvítal
+        }}
         onTouchStart={onTouchStart}
         onTouchMove={onTouchMove}
         onTouchEnd={onTouchEnd}

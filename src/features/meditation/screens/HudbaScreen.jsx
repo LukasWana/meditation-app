@@ -1,10 +1,11 @@
 import React, { useState } from 'react';
 import { AnimatePresence } from 'framer-motion';
-import { FramerSection, FramerPageTransition, BackButton } from '@components';
+import { FramerSection, FramerPageTransition, BackButton, BackgroundShader } from '@components';
 import { AudioPlayer } from '@features/audio';
 import { AlbumGrid } from '../components';
 import { useHudbaScreenData } from '../hooks';
 import { useLanguage } from '@contexts/LanguageContext';
+import { useShaderSettings } from '@contexts/ShaderSettingsContext';
 
 
 const HudbaScreen = ({
@@ -17,6 +18,7 @@ const HudbaScreen = ({
 }) => {
   const [activeAudio, setActiveAudio] = useState(null);
   const { t } = useLanguage();
+  const { getShaderForSection } = useShaderSettings();
 
   // Hlavní logika pro data HudbaScreen
   const {
@@ -97,10 +99,12 @@ const HudbaScreen = ({
 
   return (
     <FramerPageTransition screenKey="hudba">
+      <BackgroundShader variant={getShaderForSection('hudba')} intensity={0.3} enabled={true} />
       <div
         className={`min-h-screen w-full max-w-full bg-[#f4ddc4] flex flex-col items-center justify-start p-2 sm:p-8 pb-20 overflow-x-hidden relative ${
           activeAudio ? 'pointer-events-none' : ''
         }`}
+        style={{ position: 'relative', zIndex: 10 }}
         onTouchStart={activeAudio ? undefined : onTouchStart}
         onTouchMove={activeAudio ? undefined : onTouchMove}
         onTouchEnd={activeAudio ? undefined : onTouchEnd}

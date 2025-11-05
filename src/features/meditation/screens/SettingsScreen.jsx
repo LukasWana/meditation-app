@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { FramerButton, FramerSection, FramerPageTransition, BackButton } from '@components';
+import { FramerButton, FramerSection, FramerPageTransition, BackButton, BackgroundShader, ShaderGallery } from '@components';
 import LanguageSwitcher from '@components/LanguageSwitcher';
 import { useLanguage } from '@contexts/LanguageContext';
+import { useShaderSettings } from '@contexts/ShaderSettingsContext';
 import { Download, Wifi, WifiOff, HardDrive, RefreshCw, Trash2 } from 'lucide-react';
 import useOfflineCache from '@hooks/useOfflineCache';
 import { useFirebaseHudbaScanner } from '@hooks/useFirebaseHudbaScanner';
@@ -18,6 +19,7 @@ const SettingsScreen = ({
   onGenderChange
 }) => {
   const { t } = useLanguage();
+  const { shaderSettings, setShaderForSection, getShaderForSection } = useShaderSettings();
 
   // Offline cache hook
   const {
@@ -127,7 +129,8 @@ const SettingsScreen = ({
 
   return (
     <FramerPageTransition screenKey="settings">
-      <div className="min-h-screen w-full max-w-full bg-[#f4ddc4] flex flex-col items-center justify-start p-2 sm:p-8 pb-20 overflow-x-hidden relative">
+      <BackgroundShader variant="settings" intensity={0.3} enabled={true} />
+      <div className="min-h-screen w-full max-w-full bg-[#f4ddc4] flex flex-col items-center justify-start p-2 sm:p-8 pb-20 overflow-x-hidden relative" style={{ position: 'relative', zIndex: 10 }}>
         <BackButton onClick={() => onNavigateToScreen('home')} />
 
         <div className="max-w-md w-full" style={{ marginTop: '4rem', paddingTop: 0, position: 'relative', display: 'flex', flexDirection: 'column', alignItems: 'stretch' }}>
@@ -212,6 +215,67 @@ const SettingsScreen = ({
                     {t('obecnyObsah')}
                   </motion.button>
                 </motion.div>
+              </div>
+            </FramerSection>
+
+            {/* Shader Gallery */}
+            <FramerSection
+              animationType="slideInUp"
+              delay={0.22}
+            >
+              <div className="w-full p-6 bg-white/50 backdrop-blur rounded-none border border-black/10">
+                <h3 className="text-2xl font-light mb-4">
+                  {t('shadery') || 'Shadery'}
+                </h3>
+                <div className="space-y-6">
+                  {/* Meditace */}
+                  <div>
+                    <h4 className="text-lg font-light mb-3">
+                      {t('meditacia') || 'Meditace'}
+                    </h4>
+                    <ShaderGallery
+                      selectedVariant={getShaderForSection('meditation')}
+                      onSelect={(variant) => setShaderForSection('meditation', variant)}
+                      section="meditation"
+                    />
+                  </div>
+
+                  {/* Dýchání */}
+                  <div>
+                    <h4 className="text-lg font-light mb-3">
+                      {t('dychanie') || 'Dýchání'}
+                    </h4>
+                    <ShaderGallery
+                      selectedVariant={getShaderForSection('breath')}
+                      onSelect={(variant) => setShaderForSection('breath', variant)}
+                      section="breath"
+                    />
+                  </div>
+
+                  {/* Hudba */}
+                  <div>
+                    <h4 className="text-lg font-light mb-3">
+                      {t('hudba') || 'Hudba'}
+                    </h4>
+                    <ShaderGallery
+                      selectedVariant={getShaderForSection('hudba')}
+                      onSelect={(variant) => setShaderForSection('hudba', variant)}
+                      section="hudba"
+                    />
+                  </div>
+
+                  {/* Slova */}
+                  <div>
+                    <h4 className="text-lg font-light mb-3">
+                      {t('slova') || 'Slova'}
+                    </h4>
+                    <ShaderGallery
+                      selectedVariant={getShaderForSection('slova')}
+                      onSelect={(variant) => setShaderForSection('slova', variant)}
+                      section="slova"
+                    />
+                  </div>
+                </div>
               </div>
             </FramerSection>
 

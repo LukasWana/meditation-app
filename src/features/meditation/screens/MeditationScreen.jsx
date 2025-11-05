@@ -1,10 +1,11 @@
 import React, { useState, useEffect, useRef, Suspense, lazy } from 'react';
 import { motion } from 'framer-motion';
 import { RotateCcw, Image as ImageIcon } from 'lucide-react';
-import { FramerButton, FramerSection, FramerPageTransition, BackButton } from '@components';
+import { FramerButton, FramerSection, FramerPageTransition, BackButton, BackgroundShader } from '@components';
 import CircularProgress from '@features/audio/components/CircularProgress';
 import PlayPauseButton from '@features/audio/components/PlayPauseButton';
 import { useLanguage } from '@contexts/LanguageContext';
+import { useShaderSettings } from '@contexts/ShaderSettingsContext';
 import { useBreathSounds } from '@hooks';
 
 // Lazy loading modálů pro lepší performance
@@ -36,6 +37,7 @@ const MeditationScreen = ({
   preparationTime
 }) => {
   const { t } = useLanguage();
+  const { getShaderForSection } = useShaderSettings();
   const [showGallery, setShowGallery] = useState(false);
   const [showDurationPicker, setShowDurationPicker] = useState(false);
   const [breathCycleTime, setBreathCycleTime] = useState(0); // Čas v aktuálním cyklu dýchání (0 až breathInDuration + breathOutDuration)
@@ -212,8 +214,10 @@ const MeditationScreen = ({
   }
   return (
     <FramerPageTransition screenKey="meditation">
+      <BackgroundShader variant={getShaderForSection('meditation')} intensity={0.3} enabled={true} />
       <div
         className="min-h-screen w-full max-w-full bg-[#f4ddc4] flex flex-col items-center justify-start p-2 sm:p-8 pb-20 overflow-x-hidden relative"
+        style={{ position: 'relative', zIndex: 10 }}
         onTouchStart={onTouchStart}
         onTouchMove={onTouchMove}
         onTouchEnd={onTouchEnd}

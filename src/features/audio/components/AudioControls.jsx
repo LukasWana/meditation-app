@@ -5,6 +5,7 @@ import SkipButton from './SkipButton';
 import CurrentTimeDisplay from './CurrentTimeDisplay';
 import VoiceSwitcher from './VoiceSwitcher';
 import TrackSwitcher from './TrackSwitcher';
+import AudioShaderBackground from '@components/AudioShaderBackground';
 
 const AudioControls = ({
   progress,
@@ -57,19 +58,24 @@ const AudioControls = ({
       </div>
 
       {/* Circular Progress with Play Button - Always Centered */}
-      <div className="relative flex-shrink-0">
-        <CircularProgress
-          progress={progress}
-          onSeek={durationStable ? onSeek : null}
-        />
-
-        {/* Play/Pause Button - Center */}
-        <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-          <PlayPauseButton
-            isPlaying={isPlaying}
-            onToggle={onTogglePlayPause}
-            className="w-[18vw] h-[18vw] max-w-[120px] max-h-[120px] min-w-[80px] min-h-[80px] sm:w-[16vw] sm:h-[16vw] sm:max-w-[140px] sm:max-h-[140px] sm:min-w-[100px] sm:min-h-[100px]"
+      <div className="relative flex-shrink-0" style={{ isolation: 'isolate' }}>
+        {/* CircularProgress - nad shaderem */}
+        <div style={{ position: 'relative', zIndex: 2 }}>
+          <CircularProgress
+            progress={progress}
+            onSeek={durationStable ? onSeek : null}
           />
+        </div>
+
+        {/* Play/Pause Button - Center - nad CircularProgress */}
+        <div className="absolute inset-0 flex items-center justify-center pointer-events-none" style={{ zIndex: 3 }}>
+          <div className="pointer-events-auto">
+            <PlayPauseButton
+              isPlaying={isPlaying}
+              onToggle={onTogglePlayPause}
+              className="w-[18vw] h-[18vw] max-w-[120px] max-h-[120px] min-w-[80px] min-h-[80px] sm:w-[16vw] sm:h-[16vw] sm:max-w-[140px] sm:max-h-[140px] sm:min-w-[100px] sm:min-h-[100px]"
+            />
+          </div>
         </div>
       </div>
 

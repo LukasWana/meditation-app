@@ -1,6 +1,6 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { AnimatePresence } from 'framer-motion';
-import { FramerButton, FramerSection, FramerPageTransition, BackButton } from '@components';
+import { FramerButton, FramerSection, FramerPageTransition, BackButton, BackgroundShader, AudioShaderBackground } from '@components';
 import { useLanguage } from '@contexts/LanguageContext';
 // Odstraněny skeleton loadery
 import { AudioPlayer } from '@features/audio';
@@ -63,6 +63,72 @@ const SlovaScreen = ({
     onPlayerStateChange?.(false); // Informuj o zavřeném přehrávači
   };
 
+  // Detekuj, zda audio skutečně hraje - musí být před early returns
+  const [isAudioPlaying, setIsAudioPlaying] = useState(false);
+
+  useEffect(() => {
+    if (!activeAudio) {
+      setIsAudioPlaying(false);
+      return;
+    }
+
+    // Čekej na audio element - může být renderován asynchronně
+    const checkForAudio = () => {
+      const audioElements = document.querySelectorAll('audio');
+      if (audioElements.length === 0) {
+        // Zkus znovu za 100ms
+        setTimeout(checkForAudio, 100);
+        return;
+      }
+
+      const checkAudioPlaying = () => {
+        let playing = false;
+        audioElements.forEach((audio) => {
+          if (!audio.paused && !audio.ended && audio.currentTime > 0) {
+            playing = true;
+          }
+        });
+        setIsAudioPlaying(playing);
+        console.log('🔊 SlovaScreen: Audio playing check:', playing, 'audio elements:', audioElements.length);
+      };
+
+      // První kontrola
+      checkAudioPlaying();
+      const interval = setInterval(checkAudioPlaying, 300);
+
+      const handlePlay = () => {
+        console.log('▶️ SlovaScreen: Audio play event');
+        setIsAudioPlaying(true);
+      };
+      const handlePause = () => {
+        console.log('⏸️ SlovaScreen: Audio pause event');
+        setIsAudioPlaying(false);
+      };
+      const handleEnded = () => {
+        console.log('⏹️ SlovaScreen: Audio ended event');
+        setIsAudioPlaying(false);
+      };
+
+      audioElements.forEach((audio) => {
+        audio.addEventListener('play', handlePlay);
+        audio.addEventListener('pause', handlePause);
+        audio.addEventListener('ended', handleEnded);
+      });
+
+      return () => {
+        clearInterval(interval);
+        audioElements.forEach((audio) => {
+          audio.removeEventListener('play', handlePlay);
+          audio.removeEventListener('pause', handlePause);
+          audio.removeEventListener('ended', handleEnded);
+        });
+      };
+    };
+
+    const cleanup = checkForAudio();
+    return cleanup;
+  }, [activeAudio]);
+
   // Loading state - show loading during data fetch
   if (isLoading) {
     return (
@@ -95,10 +161,29 @@ const SlovaScreen = ({
 
   return (
     <FramerPageTransition screenKey="slova">
+      {/* Vrstvení:
+          - Pozadí (bg-[#f4ddc4]): zIndex 0 (nejnižší)
+          - Shader: zIndex 5 (nad pozadím, pod obsahem)
+          - Obsah: zIndex 10 (nad shaderem)
+      */}
+      {/* Pozadí stránky - pod shaderem */}
       <div
-        className={`min-h-screen w-full max-w-full bg-[#f4ddc4] flex flex-col items-center justify-start p-2 sm:p-8 pb-20 overflow-x-hidden relative ${
+        className="min-h-screen w-full max-w-full bg-[#f4ddc4] fixed inset-0"
+        style={{ zIndex: 0 }}
+      />
+
+      {/* Shader přes celou stránku - viditelný na béžovém pozadí při přehrávání */}
+      {activeAudio && <AudioShaderBackground isPlayerActive={isAudioPlaying} />}
+
+      {/* Hlavní obsah stránky - nad shaderem */}
+      <div
+        className={`min-h-screen w-full max-w-full flex flex-col items-center justify-start p-2 sm:p-8 pb-20 overflow-x-hidden relative ${
           activeAudio ? 'pointer-events-none' : ''
         }`}
+        style={{
+          position: 'relative',
+          zIndex: 10 // Obsah je nad shaderem (zIndex 5) a pozadím (zIndex 0)
+        }}
         onTouchStart={activeAudio ? undefined : onTouchStart}
         onTouchMove={activeAudio ? undefined : onTouchMove}
         onTouchEnd={activeAudio ? undefined : onTouchEnd}

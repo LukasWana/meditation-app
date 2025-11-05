@@ -12,3 +12,7 @@ export { default as SimpleLoading } from './SimpleLoading';
 export { default as SoundThemeGallery } from './SoundThemeGallery';
 export { default as WheelPicker, DualWheelPicker } from './WheelPicker';
 export { WheelPickerModal, DualWheelPickerModal } from './TimePickerModal';
+export { default as BackgroundShader } from './BackgroundShader';
+export { default as AudioShaderBackground } from './AudioShaderBackground';
+export { default as ShaderGallery } from './ShaderGallery';
+export { default as ShaderPreview } from './ShaderPreview';

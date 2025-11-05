@@ -1,7 +1,7 @@
 import React, { useState, useEffect, Suspense, lazy, useRef } from 'react';
 import { motion } from 'framer-motion';
 import { Trash2, Plus, Play, Download, Upload } from 'lucide-react';
-import { FramerSection, FramerPageTransition, BackButton, FramerButton } from '@components';
+import { FramerSection, FramerPageTransition, BackButton, FramerButton, BackgroundShader } from '@components';
 import { useLanguage } from '@contexts/LanguageContext';
 import breathProfilesService from '@services/breathProfilesService';
 
@@ -211,8 +211,10 @@ const BreathProfilesScreen = ({
 
   return (
     <FramerPageTransition screenKey="breath-profiles">
+      <BackgroundShader variant="breath" intensity={0.3} enabled={true} />
       <div
         className="min-h-screen w-full max-w-full bg-[#f4ddc4] flex flex-col items-center justify-start p-2 sm:p-8 pb-20 overflow-x-hidden relative"
+        style={{ position: 'relative', zIndex: 10 }}
         onTouchStart={onTouchStart}
         onTouchMove={onTouchMove}
         onTouchEnd={onTouchEnd}

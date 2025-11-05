@@ -11,7 +11,7 @@ body, html {
   overflow-x: hidden;
   width: 100%;
   max-width: 100vw;
-  background-color: #f4ddc4;
+  background-color: transparent; /* Transparentní, aby shader prosvítal */
   -webkit-tap-highlight-color: transparent;
   -webkit-touch-callout: none;
   -webkit-user-select: none;
@@ -32,7 +32,7 @@ body, html {
   width: 100%;
   max-width: 100vw;
   overflow-x: hidden;
-  background-color: #f4ddc4;
+  background-color: transparent; /* Transparentní, aby shader prosvítal */
   font-family: 'Petrona', serif;
 
   /* Android Chrome safe area support */
