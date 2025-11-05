@@ -1,6 +1,6 @@
-import React, { useState, useEffect, Suspense, lazy } from 'react';
+import React, { useState, useEffect, Suspense, lazy, useRef } from 'react';
 import { motion } from 'framer-motion';
-import { Trash2, Plus, Play } from 'lucide-react';
+import { Trash2, Plus, Play, Download, Upload } from 'lucide-react';
 import { FramerSection, FramerPageTransition, BackButton, FramerButton } from '@components';
 import { useLanguage } from '@contexts/LanguageContext';
 import breathProfilesService from '@services/breathProfilesService';
@@ -37,6 +37,8 @@ const BreathProfilesScreen = ({
   const [showNameInput, setShowNameInput] = useState(false);
   const [newProfileName, setNewProfileName] = useState('');
   const [saving, setSaving] = useState(false);
+  const [importing, setImporting] = useState(false);
+  const fileInputRef = useRef(null);
 
   // Načtení profilů při načtení stránky
   useEffect(() => {
@@ -131,6 +133,58 @@ const BreathProfilesScreen = ({
     }
   };
 
+  // Export profilu do JSON
+  const handleExportProfile = async (profile, e) => {
+    e.stopPropagation();
+    try {
+      await breathProfilesService.downloadProfileAsJSON(profile);
+      alert(t('profilExportovan') || 'Profil byl exportován');
+    } catch (error) {
+      console.error('Failed to export profile:', error);
+      alert(t('chybaExportuProfilu') || 'Chyba při exportu profilu');
+    }
+  };
+
+  // Import profilu ze souboru
+  const handleImportProfile = async (event) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    try {
+      setImporting(true);
+      const importedProfile = await breathProfilesService.importProfileFromFile(file);
+
+      // Zeptej se uživatele, zda chce uložit importovaný profil
+      const saveProfile = window.confirm(
+        (t('ulozitImportovanyProfil') || 'Uložit importovaný profil: ') + importedProfile.name + '?'
+      );
+
+      if (saveProfile) {
+        await breathProfilesService.saveProfile(importedProfile);
+        await loadProfiles();
+        alert(t('profilImportovanAUlozen') || 'Profil byl importován a uložen');
+      } else {
+        // Pokud nechce uložit, načti ho do aplikace
+        handleLoadProfile(importedProfile);
+        alert(t('profilImportovanANacten') || 'Profil byl importován a načten');
+      }
+    } catch (error) {
+      console.error('Failed to import profile:', error);
+      alert(t('chybaImportuProfilu') || 'Chyba při importu profilu: ' + error.message);
+    } finally {
+      setImporting(false);
+      // Reset file input
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
+    }
+  };
+
+  // Otevření dialogu pro výběr souboru
+  const handleOpenImportDialog = () => {
+    fileInputRef.current?.click();
+  };
+
   // Formátování času
   const formatTime = (seconds) => {
     const mins = Math.floor(seconds / 60);
@@ -154,6 +208,15 @@ const BreathProfilesScreen = ({
         onTouchEnd={onTouchEnd}
       >
         <BackButton onClick={() => onNavigateToScreen('breath')} />
+
+        {/* Skrytý input pro import souboru */}
+        <input
+          ref={fileInputRef}
+          type="file"
+          accept=".brprf,.json"
+          onChange={handleImportProfile}
+          style={{ display: 'none' }}
+        />
 
         <div className="max-w-2xl w-full mt-16">
           {/* Nadpis */}
@@ -280,6 +343,16 @@ const BreathProfilesScreen = ({
                         <button
                           onClick={(e) => {
                             e.stopPropagation();
+                            handleExportProfile(profile, e);
+                          }}
+                          className="p-2 text-gray-600 hover:text-blue-600 hover:bg-blue-50 rounded-full transition-colors"
+                          title={t('exportovatProfil') || 'Exportovat profil'}
+                        >
+                          <Download size={20} />
+                        </button>
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
                             handleDeleteProfile(profile.id, e);
                           }}
                           className="p-2 text-gray-600 hover:text-red-600 hover:bg-red-50 rounded-full transition-colors"
@@ -294,6 +367,22 @@ const BreathProfilesScreen = ({
                 ))}
               </div>
             )}
+          </FramerSection>
+
+          {/* Tlačítko pro import profilu */}
+          <FramerSection
+            className="mb-6"
+            animationType="fadeIn"
+            delay={0.4}
+          >
+            <FramerButton
+              onClick={handleOpenImportDialog}
+              disabled={importing}
+              className="w-full py-3 bg-gray-800 text-white rounded-lg hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+            >
+              <Upload size={20} />
+              {importing ? (t('importovani') || 'Importování...') : (t('importovatProfil') || 'Importovat profil')}
+            </FramerButton>
           </FramerSection>
         </div>
       </div>
