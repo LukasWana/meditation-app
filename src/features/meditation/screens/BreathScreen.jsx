@@ -1,6 +1,6 @@
-import React, { useState, useEffect, useRef, Suspense, lazy } from 'react';
+import React, { useState, useEffect, useRef, useCallback, Suspense, lazy } from 'react';
 import { motion } from 'framer-motion';
-import { RotateCcw, Music2 } from 'lucide-react';
+import { RotateCcw, Music2, Bookmark } from 'lucide-react';
 import { FramerSection, FramerPageTransition, BackButton, FramerButton } from '@components';
 import CircularProgress from '@features/audio/components/CircularProgress';
 import PlayPauseButton from '@features/audio/components/PlayPauseButton';
@@ -133,8 +133,13 @@ const BreathScreen = ({
       previousCountdownRef.current = null;
       // Zastav a zruš audio element při zastavení přípravy
       if (countdownSoundRef.current) {
-        countdownSoundRef.current.pause();
-        countdownSoundRef.current.src = '';
+        const audio = countdownSoundRef.current;
+        // Vyčisti fade out timeout, pokud existuje
+        if (audio._fadeOutTimeout) {
+          clearTimeout(audio._fadeOutTimeout);
+        }
+        audio.pause();
+        audio.src = '';
         countdownSoundRef.current = null;
       }
       return;
@@ -157,11 +162,59 @@ const BreathScreen = ({
         try {
           // Vytvoř nový audio element a přehraj ho
           const audio = new Audio(countdownSoundUrl);
-          audio.volume = 1;
+          audio.volume = 1; // Začni na plné hlasitosti (bez fade in)
           countdownSoundRef.current = audio;
+
+          // Funkce pro nastavení fade out na konci zvuku
+          const setupFadeOut = () => {
+            const soundDuration = audio.duration;
+            if (!soundDuration || isNaN(soundDuration) || soundDuration <= 0) {
+              return;
+            }
+
+            // Fade out trvá 0.3 sekundy (pro krátké zvuky)
+            const fadeOutDuration = Math.min(0.3, soundDuration * 0.5); // Max 30% délky zvuku nebo 0.3s
+            const fadeOutStartTime = soundDuration - fadeOutDuration;
+
+            // Spusť fade out před koncem zvuku
+            const fadeOutTimeout = setTimeout(() => {
+              if (audio && !audio.paused) {
+                const startVolume = audio.volume || 1;
+                const fps = 60;
+                const stepTime = 1000 / fps;
+                const totalSteps = Math.max(5, Math.floor((fadeOutDuration * 1000) / stepTime));
+                let currentStep = 0;
+
+                const fadeOutInterval = setInterval(() => {
+                  currentStep++;
+                  const progress = Math.min(1, currentStep / totalSteps);
+                  audio.volume = Math.max(0, startVolume * (1 - progress));
+
+                  if (currentStep >= totalSteps || audio.volume <= 0) {
+                    clearInterval(fadeOutInterval);
+                    audio.volume = 0;
+                  }
+                }, stepTime);
+              }
+            }, fadeOutStartTime * 1000);
+
+            // Ulož timeout pro případné vyčištění
+            audio._fadeOutTimeout = fadeOutTimeout;
+          };
+
+          // Zjisti délku zvuku a nastav fade out
+          audio.addEventListener('loadedmetadata', setupFadeOut, { once: true });
+
+          // Pokud už jsou metadata načtená, zavolej okamžitě
+          if (audio.duration && !isNaN(audio.duration) && audio.duration > 0) {
+            setupFadeOut();
+          }
 
           audio.play().catch((error) => {
             console.warn('Failed to play countdown sound:', error);
+            if (audio._fadeOutTimeout) {
+              clearTimeout(audio._fadeOutTimeout);
+            }
             countdownSoundRef.current = null;
           });
         } catch (error) {
@@ -181,50 +234,200 @@ const BreathScreen = ({
     }
   }, [localIsPreparing, localPreparationCountdown, countdownSoundUrl, breathCountdownSound]);
 
+  // Ref pro kontrolu, zda už byl finální zvuk přehrán
+  const finalSoundPlayedRef = useRef(false);
+  // Ref pro označení, že čekáme na dokončení dýchacího cyklu před finálním zvukem
+  const waitingForCycleCompletionRef = useRef(false);
+  // Ref pro timeout dokončení cyklu
+  const completionTimeoutRef = useRef(null);
+  // Ref pro uložení aktuální fáze při začátku čekání
+  const waitingPhaseRef = useRef(null);
+  // Ref pro uložení aktuální breathPhase (aby se useEffect nespouštěl při každé změně)
+  const currentPhaseRef = useRef(breathPhase);
+
+  // Aktualizuj ref při změně fáze
+  useEffect(() => {
+    currentPhaseRef.current = breathPhase;
+  }, [breathPhase]);
+
+  // Funkce pro přehrání finálního zvuku
+  const playFinalSound = useCallback(async () => {
+    console.log('🔊 playFinalSound called', { breathFinalSound, alreadyPlayed: finalSoundPlayedRef.current });
+
+    if (!breathFinalSound || breathFinalSound === 'none') {
+      console.log('⚠️ No final sound configured');
+      return;
+    }
+
+    if (finalSoundPlayedRef.current) {
+      console.log('⚠️ Final sound already played');
+      return;
+    }
+
+    // Označ, že finální zvuk byl přehrán
+    finalSoundPlayedRef.current = true;
+
+    try {
+      console.log('🔍 Loading final sound metadata:', breathFinalSound);
+      const { realtimeMetadataService } = await import('@services/realtimeMetadataService');
+      const { ref, getDownloadURL } = await import('firebase/storage');
+      const { storage } = await import('@services/firebase');
+
+      let url = null;
+
+      // Zkus načíst z metadata
+      const metadata = await realtimeMetadataService.getFileMetadata(breathFinalSound);
+      console.log('📦 Final sound metadata:', metadata);
+
+      if (metadata && (metadata.downloadURL || metadata.audioSrc)) {
+        url = metadata.downloadURL || metadata.audioSrc;
+        console.log('✅ Found URL in metadata:', url);
+      } else {
+        // Pokud není v metadata, zkus načíst přímo z Firebase Storage (fallback)
+        console.log('⚠️ Metadata missing, trying Firebase Storage directly');
+        try {
+          const audioRef = ref(storage, breathFinalSound);
+          url = await getDownloadURL(audioRef);
+          console.log('✅ Found URL from Firebase Storage:', url);
+        } catch (storageError) {
+          console.error('❌ Failed to load final sound from Firebase Storage:', storageError);
+          finalSoundPlayedRef.current = false;
+          return;
+        }
+      }
+
+      if (url) {
+        console.log('▶️ Playing final sound from URL:', url);
+        const audio = new Audio(url);
+        audio.volume = 1;
+        audio.play().catch((error) => {
+          console.error('❌ Failed to play final sound:', error);
+          // Resetuj flag při chybě, aby se mohl zkusit znovu
+          finalSoundPlayedRef.current = false;
+        });
+        console.log('✅ Final sound playback started');
+      } else {
+        console.warn('⚠️ No download URL found');
+        finalSoundPlayedRef.current = false;
+      }
+    } catch (error) {
+      console.error('❌ Error playing final sound:', error);
+      // Resetuj flag při chybě
+      finalSoundPlayedRef.current = false;
+    }
+  }, [breathFinalSound]);
+
+  // Resetuj flagy když se spustí nové dýchání
+  useEffect(() => {
+    if (isBreathing) {
+      finalSoundPlayedRef.current = false;
+      waitingForCycleCompletionRef.current = false;
+      waitingPhaseRef.current = null;
+    }
+  }, [isBreathing]);
+
+  // Ref pro interval timeru
+  const breathTimerIntervalRef = useRef(null);
+
   // Timer logika pro dýchání - odpočítávání času
   useEffect(() => {
-    let interval;
-    if (isBreathing) {
-      interval = setInterval(() => {
+    // Vyčisti předchozí interval, pokud existuje
+    if (breathTimerIntervalRef.current) {
+      clearInterval(breathTimerIntervalRef.current);
+      breathTimerIntervalRef.current = null;
+    }
+
+    if (isBreathing && !waitingForCycleCompletionRef.current) {
+      breathTimerIntervalRef.current = setInterval(() => {
+        // Zkontroluj na začátku každého ticku, zda už čekáme (ochrana proti duplicitnímu spuštění)
+        if (waitingForCycleCompletionRef.current) {
+          // Pokud už čekáme, zastav interval a ukonči
+          if (breathTimerIntervalRef.current) {
+            clearInterval(breathTimerIntervalRef.current);
+            breathTimerIntervalRef.current = null;
+          }
+          return;
+        }
+
         setBreathTime(prev => {
-          if (prev <= 1) {
-            // Přehrát finální zvuk, když meditace končí
-            if (prev === 1 && breathFinalSound && breathFinalSound !== 'none') {
-              playFinalSound();
+          // Pokud je čas 0 nebo méně, začni čekat na dokončení cyklu
+          if (prev <= 0) {
+            // Zkontroluj znovu, zda už čekáme (dvojitá ochrana)
+            if (waitingForCycleCompletionRef.current) {
+              return 0;
             }
-            setIsBreathing(false);
+
+            // Zastav interval OKAMŽITĚ
+            if (breathTimerIntervalRef.current) {
+              clearInterval(breathTimerIntervalRef.current);
+              breathTimerIntervalRef.current = null;
+            }
+
+            // Označ, že čekáme na dokončení cyklu (PŘED nastavením timeoutu)
+            waitingForCycleCompletionRef.current = true;
+
+            // Použij aktuální fázi z refu (ne z props, aby se to neměnilo při re-renderu)
+            const currentPhase = currentPhaseRef.current;
+            console.log('⏰ Breath time reached 0, stopping timer and waiting for cycle completion', { currentPhase, breathInDuration, breathOutDuration });
+
+            // Ulož aktuální fázi pro výpočet čekacího času
+            waitingPhaseRef.current = currentPhase;
+
+            // Vypočti, kolik času zbývá do dokončení aktuální fáze (použij uloženou fázi)
+            const currentPhaseDuration = currentPhase === 'in' ? breathInDuration : breathOutDuration;
+            const fadeOutDuration = 1.5; // Délka fade out
+            const silenceDuration = 1.0; // 1 sekunda ticha před finálním zvukem
+            const totalWaitTime = (currentPhaseDuration * 1000) + (fadeOutDuration * 1000) + (silenceDuration * 1000);
+
+            console.log(`⏳ Waiting ${totalWaitTime}ms for cycle completion (phase: ${currentPhase}, duration: ${currentPhaseDuration}s + fade: ${fadeOutDuration}s + silence: ${silenceDuration}s)`);
+
+            // Vyčisti předchozí timeout, pokud existuje (ochrana proti duplicitnímu timeoutu)
+            if (completionTimeoutRef.current) {
+              clearTimeout(completionTimeoutRef.current);
+              completionTimeoutRef.current = null;
+            }
+
+            // Počkej na dokončení aktuální fáze + fade out + 1 sekunda ticha, pak přehraj finální zvuk
+            completionTimeoutRef.current = setTimeout(() => {
+              console.log('✅ Cycle completed, playing final sound and stopping breathing');
+              if (breathFinalSound && breathFinalSound !== 'none') {
+                playFinalSound();
+              } else {
+                console.log('⚠️ No final sound configured');
+              }
+              setIsBreathing(false);
+              waitingForCycleCompletionRef.current = false;
+              waitingPhaseRef.current = null;
+              completionTimeoutRef.current = null;
+            }, totalWaitTime);
+
             return 0;
           }
+          // Jinak sniž čas o 1 sekundu
           return prev - 1;
         });
       }, 1000);
+    } else {
+      // Resetuj flagy a vyčisti timeout když se dýchání zastaví
+      if (!isBreathing) {
+        waitingForCycleCompletionRef.current = false;
+        waitingPhaseRef.current = null;
+        if (completionTimeoutRef.current) {
+          clearTimeout(completionTimeoutRef.current);
+          completionTimeoutRef.current = null;
+        }
+      }
     }
 
     return () => {
-      if (interval) {
-        clearInterval(interval);
+      if (breathTimerIntervalRef.current) {
+        clearInterval(breathTimerIntervalRef.current);
+        breathTimerIntervalRef.current = null;
       }
+      // NEDELAJ cleanup timeoutu tady - to by mohlo zrušit timeout předčasně
+      // Timeout se vyčistí buď v else bloku výše, nebo po dokončení
     };
-  }, [isBreathing, setBreathTime, setIsBreathing, breathFinalSound]);
-
-  // Funkce pro přehrání finálního zvuku
-  const playFinalSound = async () => {
-    if (!breathFinalSound || breathFinalSound === 'none') return;
-
-    try {
-      const { realtimeMetadataService } = await import('@services/realtimeMetadataService');
-      const metadata = await realtimeMetadataService.getFileMetadata(breathFinalSound);
-      if (metadata && (metadata.downloadURL || metadata.audioSrc)) {
-        const audio = new Audio(metadata.downloadURL || metadata.audioSrc);
-        audio.volume = 1;
-        audio.play().catch((error) => {
-          console.warn('Failed to play final sound:', error);
-        });
-      }
-    } catch (error) {
-      console.error('Error playing final sound:', error);
-    }
-  };
+  }, [isBreathing, setBreathTime, setIsBreathing, breathFinalSound, playFinalSound, breathInDuration, breathOutDuration]);
 
   // Handler pro play/pause s podporou přípravného času
   const handlePlayPause = () => {
@@ -232,6 +435,13 @@ const BreathScreen = ({
 
     // Pokud už dýchání probíhá, zastav ho
     if (isBreathing) {
+      // Vyčisti timeout a flagy, pokud čekáme na dokončení cyklu
+      waitingForCycleCompletionRef.current = false;
+      waitingPhaseRef.current = null;
+      if (completionTimeoutRef.current) {
+        clearTimeout(completionTimeoutRef.current);
+        completionTimeoutRef.current = null;
+      }
       setIsBreathing(false);
       setLocalIsPreparing(false);
       setLocalPreparationCountdown(0);
@@ -270,13 +480,15 @@ const BreathScreen = ({
         setLocalPreparationCountdown(prev => {
           const newCountdown = prev - 1;
           if (newCountdown <= 0) {
-            // Po dokončení přípravy spusť dýchání
-            setLocalIsPreparing(false);
-            if (breathTime <= 0) {
-              const newTime = breathDuration * 60;
-              setBreathTime(newTime);
-            }
-            setIsBreathing(true);
+            // Po dokončení přípravy spusť dýchání - použij setTimeout, aby se to nestalo během renderu
+            setTimeout(() => {
+              setLocalIsPreparing(false);
+              if (breathTime <= 0) {
+                const newTime = breathDuration * 60;
+                setBreathTime(newTime);
+              }
+              setIsBreathing(true);
+            }, 0);
             return 0;
           }
           return newCountdown;
@@ -565,7 +777,7 @@ const BreathScreen = ({
             </div>
           </FramerSection>
 
-          {/* Reset tlačítko a tlačítko pro zvukovou galerii - vedle sebe */}
+          {/* Reset tlačítko, tlačítko pro zvukovou galerii a tlačítko pro profily - vedle sebe */}
           <FramerSection
             className="flex justify-center gap-4"
             animationType="fadeIn"
@@ -587,6 +799,15 @@ const BreathScreen = ({
               title={t('zvukovaGalerie') || 'Zvuková galerie'}
             >
               <Music2 size={28} className="text-gray-800" />
+            </button>
+
+            {/* Tlačítko pro profily dýchání - bílé kulaté tlačítko s dark grey bookmark ikonou */}
+            <button
+              onClick={() => onNavigateToScreen('breath-profiles')}
+              className="w-20 h-20 rounded-full bg-white flex items-center justify-center shadow-sm hover:shadow-md transition-shadow cursor-pointer"
+              title={t('profilyDychani') || 'Profily dýchání'}
+            >
+              <Bookmark size={28} className="text-gray-800" />
             </button>
           </FramerSection>
         </div>
