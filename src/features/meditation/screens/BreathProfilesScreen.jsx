@@ -1,0 +1,306 @@
+import React, { useState, useEffect, Suspense, lazy } from 'react';
+import { motion } from 'framer-motion';
+import { Trash2, Plus, Play } from 'lucide-react';
+import { FramerSection, FramerPageTransition, BackButton, FramerButton } from '@components';
+import { useLanguage } from '@contexts/LanguageContext';
+import breathProfilesService from '@services/breathProfilesService';
+
+// Lazy loading modálu
+const WheelPickerModal = lazy(() => import('@components/TimePickerModal').then(m => ({ default: m.WheelPickerModal })));
+
+const BreathProfilesScreen = ({
+  onNavigateToScreen,
+  onTouchStart,
+  onTouchMove,
+  onTouchEnd,
+  // Aktuální nastavení dýchání pro uložení
+  breathInDuration,
+  breathOutDuration,
+  breathDuration,
+  preparationTime,
+  breathInSound,
+  breathOutSound,
+  breathClickSound,
+  breathFinalSound,
+  breathCountdownSound,
+  breathSoundFadeEnabled,
+  // Handlers pro načtení profilu
+  onBreathRhythmChange,
+  onBreathDurationChange,
+  onPreparationTimeChange,
+  onBreathSoundChange,
+  onBreathSoundFadeChange
+}) => {
+  const { t } = useLanguage();
+  const [profiles, setProfiles] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [showNameInput, setShowNameInput] = useState(false);
+  const [newProfileName, setNewProfileName] = useState('');
+  const [saving, setSaving] = useState(false);
+
+  // Načtení profilů při načtení stránky
+  useEffect(() => {
+    loadProfiles();
+  }, []);
+
+  const loadProfiles = async () => {
+    try {
+      setLoading(true);
+      const loadedProfiles = await breathProfilesService.getAllProfiles();
+      setProfiles(loadedProfiles);
+    } catch (error) {
+      console.error('Failed to load profiles:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Uložení aktuálního nastavení jako nový profil
+  const handleSaveCurrentProfile = async () => {
+    if (!newProfileName.trim()) {
+      alert(t('zadejteNazevProfilu') || 'Zadejte název profilu');
+      return;
+    }
+
+    try {
+      setSaving(true);
+      const profile = {
+        name: newProfileName.trim(),
+        breathInDuration,
+        breathOutDuration,
+        breathDuration,
+        preparationTime,
+        breathInSound: breathInSound || 'none',
+        breathOutSound: breathOutSound || 'none',
+        breathClickSound: breathClickSound || 'none',
+        breathFinalSound: breathFinalSound || 'none',
+        breathCountdownSound: breathCountdownSound || 'none',
+        breathSoundFadeEnabled: breathSoundFadeEnabled !== undefined ? breathSoundFadeEnabled : true
+      };
+
+      await breathProfilesService.saveProfile(profile);
+      setNewProfileName('');
+      setShowNameInput(false);
+      await loadProfiles();
+    } catch (error) {
+      console.error('Failed to save profile:', error);
+      alert(t('chybaUlozeniProfilu') || 'Chyba při ukládání profilu');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  // Načtení profilu
+  const handleLoadProfile = (profile) => {
+    // Načíst všechna nastavení z profilu
+    if (onBreathRhythmChange) {
+      onBreathRhythmChange(profile.breathInDuration, profile.breathOutDuration);
+    }
+    if (onBreathDurationChange) {
+      onBreathDurationChange(profile.breathDuration);
+    }
+    if (onPreparationTimeChange) {
+      onPreparationTimeChange(profile.preparationTime);
+    }
+    if (onBreathSoundChange) {
+      onBreathSoundChange('in', profile.breathInSound);
+      onBreathSoundChange('out', profile.breathOutSound);
+      onBreathSoundChange('click', profile.breathClickSound);
+      onBreathSoundChange('final', profile.breathFinalSound);
+      onBreathSoundChange('countdown', profile.breathCountdownSound);
+    }
+    if (onBreathSoundFadeChange) {
+      onBreathSoundFadeChange(profile.breathSoundFadeEnabled);
+    }
+
+    // Vrátit se zpět na stránku dýchání
+    onNavigateToScreen('breath');
+  };
+
+  // Smazání profilu
+  const handleDeleteProfile = async (profileId, e) => {
+    e.stopPropagation(); // Zabraň spuštění načtení profilu při kliknutí na smazat
+    if (window.confirm(t('opravduSmazatProfil') || 'Opravdu chcete smazat tento profil?')) {
+      try {
+        await breathProfilesService.deleteProfile(profileId);
+        await loadProfiles();
+      } catch (error) {
+        console.error('Failed to delete profile:', error);
+        alert(t('chybaMazaniProfilu') || 'Chyba při mazání profilu');
+      }
+    }
+  };
+
+  // Formátování času
+  const formatTime = (seconds) => {
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return `${mins}:${secs.toString().padStart(2, '0')}`;
+  };
+
+  // Formátování času přípravy
+  const formatPreparationTime = (seconds) => {
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return `${mins}:${secs.toString().padStart(2, '0')}`;
+  };
+
+  return (
+    <FramerPageTransition screenKey="breath-profiles">
+      <div
+        className="min-h-screen w-full max-w-full bg-[#f4ddc4] flex flex-col items-center justify-start p-2 sm:p-8 pb-20 overflow-x-hidden relative"
+        onTouchStart={onTouchStart}
+        onTouchMove={onTouchMove}
+        onTouchEnd={onTouchEnd}
+      >
+        <BackButton onClick={() => onNavigateToScreen('breath')} />
+
+        <div className="max-w-2xl w-full mt-16">
+          {/* Nadpis */}
+          <FramerSection
+            className="text-center mb-8"
+            animationType="fadeIn"
+            delay={0.1}
+          >
+            <h1 className="text-5xl font-light mb-2">
+              {t('profilyDychani') || 'Profily dýchání'}
+            </h1>
+          </FramerSection>
+
+          {/* Tlačítko pro uložení aktuálního nastavení */}
+          <FramerSection
+            className="mb-6"
+            animationType="fadeIn"
+            delay={0.2}
+          >
+            {!showNameInput ? (
+              <FramerButton
+                onClick={() => setShowNameInput(true)}
+                variant="ghost"
+                className="w-full p-4 text-left"
+              >
+                <div className="flex items-center gap-3">
+                  <Plus size={24} className="text-gray-800" />
+                  <span className="text-xl font-light">
+                    {t('ulozitAktualniNastaveni') || 'Uložit aktuální nastavení'}
+                  </span>
+                </div>
+              </FramerButton>
+            ) : (
+              <div className="bg-white rounded-lg p-4 shadow-sm">
+                <input
+                  type="text"
+                  value={newProfileName}
+                  onChange={(e) => setNewProfileName(e.target.value)}
+                  placeholder={t('nazevProfilu') || 'Název profilu'}
+                  className="w-full px-4 py-2 text-lg border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-gray-500 mb-3"
+                  autoFocus
+                  onKeyPress={(e) => {
+                    if (e.key === 'Enter') {
+                      handleSaveCurrentProfile();
+                    } else if (e.key === 'Escape') {
+                      setShowNameInput(false);
+                      setNewProfileName('');
+                    }
+                  }}
+                />
+                <div className="flex gap-2">
+                  <button
+                    onClick={handleSaveCurrentProfile}
+                    disabled={saving || !newProfileName.trim()}
+                    className="flex-1 px-4 py-2 bg-gray-800 text-white rounded hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    {saving ? (t('ukladani') || 'Ukládání...') : (t('ulozit') || 'Uložit')}
+                  </button>
+                  <button
+                    onClick={() => {
+                      setShowNameInput(false);
+                      setNewProfileName('');
+                    }}
+                    className="px-4 py-2 bg-gray-200 text-gray-800 rounded hover:bg-gray-300"
+                  >
+                    {t('zrusit') || 'Zrušit'}
+                  </button>
+                </div>
+              </div>
+            )}
+          </FramerSection>
+
+          {/* Seznam profilů */}
+          <FramerSection
+            className="mb-6"
+            animationType="fadeIn"
+            delay={0.3}
+          >
+            {loading ? (
+              <div className="text-center py-8 text-gray-600">
+                {t('nacteni') || 'Načítání...'}
+              </div>
+            ) : profiles.length === 0 ? (
+              <div className="text-center py-8 text-gray-600">
+                {t('zadneProfily') || 'Žádné uložené profily'}
+              </div>
+            ) : (
+              <div className="space-y-3">
+                {profiles.map((profile, index) => (
+                  <motion.div
+                    key={profile.id}
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.3 + index * 0.05 }}
+                  >
+                    <div className="w-full p-4 bg-white rounded-lg shadow-sm hover:shadow-md transition-shadow flex items-center justify-between gap-4">
+                      <div
+                        onClick={() => handleLoadProfile(profile)}
+                        className="flex-1 cursor-pointer"
+                      >
+                        <div className="text-xl font-medium mb-2">
+                          {profile.name}
+                        </div>
+                        <div className="text-sm text-gray-600 space-y-1">
+                          <div>
+                            {t('rytmus') || 'Rytmus'}: {profile.breathInDuration} : {profile.breathOutDuration}
+                          </div>
+                          <div>
+                            {t('dlzka') || 'Délka'}: {formatTime(profile.breathDuration * 60)}
+                          </div>
+                          {profile.preparationTime > 0 && (
+                            <div>
+                              {t('priprava') || 'Příprava'}: {formatPreparationTime(profile.preparationTime)}
+                            </div>
+                          )}
+                          {(profile.breathInSound !== 'none' || profile.breathOutSound !== 'none') && (
+                            <div className="text-xs text-gray-500">
+                              {t('zvukyNastaveny') || 'Zvuky nastaveny'}
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-2 flex-shrink-0">
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleDeleteProfile(profile.id, e);
+                          }}
+                          className="p-2 text-gray-600 hover:text-red-600 hover:bg-red-50 rounded-full transition-colors"
+                          title={t('smazat') || 'Smazat'}
+                        >
+                          <Trash2 size={20} />
+                        </button>
+                        <Play size={20} className="text-gray-400" />
+                      </div>
+                    </div>
+                  </motion.div>
+                ))}
+              </div>
+            )}
+          </FramerSection>
+        </div>
+      </div>
+    </FramerPageTransition>
+  );
+};
+
+export default BreathProfilesScreen;
+
+

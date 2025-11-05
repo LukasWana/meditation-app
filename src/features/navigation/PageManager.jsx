@@ -15,6 +15,7 @@ const AlbumDetailScreen = lazy(() => import('@features/meditation/screens/AlbumD
 const AudioPlayer = lazy(() => import('@features/audio/AudioPlayer'));
 const SimpleAdminScreen = lazy(() => import('@features/meditation/screens/SimpleAdminScreen'));
 const SoundThemeGalleryScreen = lazy(() => import('@features/meditation/screens/SoundThemeGalleryScreen'));
+const BreathProfilesScreen = lazy(() => import('@features/meditation/screens/BreathProfilesScreen'));
 
 
 // Registry stránek s jejich konfigurací
@@ -130,6 +131,16 @@ const SCREEN_REGISTRY = {
     component: SoundThemeGalleryScreen,
     requiresLayout: true,
     props: ['onNavigateToScreen', 'onTouchStart', 'onTouchMove', 'onTouchEnd', 'onSelectSound', 'selectedInSound', 'selectedOutSound', 'selectedClickSound', 'selectedFinalSound', 'selectedCountdownSound'],
+    transition: {
+      type: 'slide',
+      direction: 'left',
+      duration: 0.6
+    }
+  },
+  'breath-profiles': {
+    component: BreathProfilesScreen,
+    requiresLayout: true,
+    props: ['onNavigateToScreen', 'onTouchStart', 'onTouchMove', 'onTouchEnd', 'breathInDuration', 'breathOutDuration', 'breathDuration', 'preparationTime', 'breathInSound', 'breathOutSound', 'breathClickSound', 'breathFinalSound', 'breathCountdownSound', 'breathSoundFadeEnabled', 'onBreathRhythmChange', 'onBreathDurationChange', 'onPreparationTimeChange', 'onBreathSoundChange', 'onBreathSoundFadeChange'],
     transition: {
       type: 'slide',
       direction: 'left',
@@ -398,6 +409,9 @@ const PageManager = ({
           break;
         case 'selectedCountdownSound':
           props.selectedCountdownSound = breathCountdownSound;
+          break;
+        case 'onBreathSoundFadeChange':
+          props.onBreathSoundFadeChange = onBreathSoundFadeChange;
           break;
         default:
           break;
