@@ -494,7 +494,7 @@ const SoundThemeGallery = ({ isOpen, onClose, onSelectSound, selectedInSound, se
             {/* Header */}
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-2xl font-light">
-                {t('galeriaZvukovychTemat')}
+                {t('vyberteZvuky')}
               </h2>
               <button
                 onClick={onClose}

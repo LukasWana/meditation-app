@@ -218,16 +218,18 @@ const BreathProfilesScreen = ({
           style={{ display: 'none' }}
         />
 
-        <div className="max-w-2xl w-full mt-16">
+        <div className="max-w-2xl w-full" style={{ marginTop: '5rem', paddingTop: 0, position: 'relative', display: 'flex', flexDirection: 'column', alignItems: 'stretch' }}>
           {/* Nadpis */}
           <FramerSection
             className="text-center mb-6"
             animationType="fadeIn"
             delay={0.1}
           >
-            <h1 className="text-4xl font-light mb-2">
-              {t('profilyDychani') || 'Profily dýchání'}
-            </h1>
+            <div style={{ height: '3.5rem', display: 'flex', flexDirection: 'column', justifyContent: 'flex-start', alignItems: 'center', marginBottom: '0.5rem' }}>
+              <h1 className="text-4xl font-light" style={{ minHeight: '2.5rem', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                {t('profilyDychani') || 'Profily dýchání'}
+              </h1>
+            </div>
           </FramerSection>
 
           {/* Tlačítka pro uložení a import - hned pod nadpisem */}
@@ -239,26 +241,23 @@ const BreathProfilesScreen = ({
             <div className="flex flex-row gap-3">
               {/* Tlačítko pro uložení aktuálního nastavení */}
               {!showNameInput ? (
-                <FramerButton
+                <button
                   onClick={() => setShowNameInput(true)}
-                  variant="ghost"
-                  className="flex-1 p-4 text-left"
+                  className="flex-1 p-4 bg-white/70 hover:bg-white text-gray-700 rounded-lg transition-colors flex items-center gap-3 border border-black/10"
                 >
-                  <div className="flex items-center gap-3">
-                    <Plus size={24} className="text-gray-800" />
-                    <span className="text-xl font-light">
-                      {t('ulozit') || 'Uložit'}
-                    </span>
-                  </div>
-                </FramerButton>
+                  <Plus size={24} className="text-gray-700" />
+                  <span className="text-xl font-light">
+                    {t('ulozit') || 'Uložit'}
+                  </span>
+                </button>
               ) : (
-                <div className="flex-1 bg-white rounded-lg p-4 shadow-sm">
+                <div className="flex-1 bg-white rounded-lg p-4 shadow-sm border border-black/10">
                   <input
                     type="text"
                     value={newProfileName}
                     onChange={(e) => setNewProfileName(e.target.value)}
                     placeholder={t('nazevProfilu') || 'Název profilu'}
-                    className="w-full px-4 py-2 text-lg border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-gray-500 mb-3"
+                    className="w-full px-4 py-2 text-lg border border-black/10 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-500 mb-3"
                     autoFocus
                     onKeyPress={(e) => {
                       if (e.key === 'Enter') {
@@ -273,7 +272,7 @@ const BreathProfilesScreen = ({
                     <button
                       onClick={handleSaveCurrentProfile}
                       disabled={saving || !newProfileName.trim()}
-                      className="flex-1 px-4 py-2 bg-gray-800 text-white rounded hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                      className="flex-1 px-4 py-2 bg-white/70 hover:bg-white text-gray-700 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed border border-black/10"
                     >
                       {saving ? (t('ukladani') || 'Ukládání...') : (t('ulozit') || 'Uložit')}
                     </button>
@@ -282,7 +281,7 @@ const BreathProfilesScreen = ({
                         setShowNameInput(false);
                         setNewProfileName('');
                       }}
-                      className="px-4 py-2 bg-gray-200 text-gray-800 rounded hover:bg-gray-300"
+                      className="px-4 py-2 bg-white/70 hover:bg-white text-gray-700 rounded-lg border border-black/10"
                     >
                       {t('zrusit') || 'Zrušit'}
                     </button>
@@ -291,14 +290,14 @@ const BreathProfilesScreen = ({
               )}
 
               {/* Tlačítko pro import profilu */}
-              <FramerButton
+              <button
                 onClick={handleOpenImportDialog}
                 disabled={importing}
-                className="flex-1 py-3 bg-gray-800 text-white rounded-lg hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                className="flex-1 py-3 bg-white/70 hover:bg-white text-gray-700 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 border border-black/10"
               >
-                <Upload size={20} />
+                <Upload size={20} className="text-gray-700" />
                 {importing ? (t('nahravani') || 'Nahrávání...') : (t('nahrat') || 'Nahrát')}
-              </FramerButton>
+              </button>
             </div>
           </FramerSection>
 
