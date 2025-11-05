@@ -103,7 +103,13 @@ export const LanguageProvider = ({ children }) => {
       jsemMuz: 'jsem Muž',
       jsemZena: 'jsem Žena',
       pohlavie: 'Pohlavie',
-      obecnyObsah: 'Obecný obsah'
+      obecnyObsah: 'Obecný obsah',
+
+      // Profily dýchania
+      profilyDychani: 'Profily dýchania',
+      ulozit: 'uložiť',
+      nahrat: 'nahrať',
+      nahravani: 'Nahrávanie...'
     },
     CZ: {
       // Hlavní navigace
@@ -189,7 +195,13 @@ export const LanguageProvider = ({ children }) => {
       jsemMuz: 'jsem Muž',
       jsemZena: 'jsem Žena',
       pohlavie: 'Pohlavie',
-      obecnyObsah: 'Obecný obsah'
+      obecnyObsah: 'Obecný obsah',
+
+      // Profily dýchání
+      profilyDychani: 'Profily dýchání',
+      ulozit: 'uložit',
+      nahrat: 'nahrát',
+      nahravani: 'Nahrávání...'
     },
     EN: {
       // Main navigation
@@ -274,7 +286,13 @@ export const LanguageProvider = ({ children }) => {
       jsemMuz: 'I am Male',
       jsemZena: 'I am Female',
       pohlavie: 'Gender',
-      obecnyObsah: 'General content'
+      obecnyObsah: 'General content',
+
+      // Breathing profiles
+      profilyDychani: 'Breathing Profiles',
+      ulozit: 'save',
+      nahrat: 'upload',
+      nahravani: 'Uploading...'
     }
   });
 
