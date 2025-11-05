@@ -6,14 +6,17 @@ export const useBreathPhase = (isPlaying, time, setBreathPhase, breathInDuration
   const timeoutRef = useRef(null);
   const isInitializedRef = useRef(false);
 
-  // Breath phase effect - spouští se pouze při změně isPlaying nebo časů dýchání
+    // Breath phase effect - spouští se pouze při změně isPlaying nebo časů dýchání
   useEffect(() => {
     if (!isPlaying || time <= 0) {
       if (timeoutRef.current) {
         clearTimeout(timeoutRef.current);
         timeoutRef.current = null;
       }
-      setBreathPhase('in');
+      // Použij queueMicrotask pro asynchronní aktualizaci, aby se zabránilo aktualizaci během renderu
+      queueMicrotask(() => {
+        setBreathPhase('in');
+      });
       phaseRef.current = 'in';
       isInitializedRef.current = false;
       return;
@@ -30,7 +33,10 @@ export const useBreathPhase = (isPlaying, time, setBreathPhase, breathInDuration
 
     const switchPhase = () => {
       phaseRef.current = phaseRef.current === 'in' ? 'out' : 'in';
-      setBreathPhase(phaseRef.current);
+      // Použij queueMicrotask pro asynchronní aktualizaci
+      queueMicrotask(() => {
+        setBreathPhase(phaseRef.current);
+      });
 
       const nextDuration = phaseRef.current === 'in' ? breathInDuration : breathOutDuration;
 
@@ -38,9 +44,11 @@ export const useBreathPhase = (isPlaying, time, setBreathPhase, breathInDuration
       timeoutRef.current = setTimeout(switchPhase, nextDuration * 1000);
     };
 
-    // Začni s nádechem
+    // Začni s nádechem - použij queueMicrotask pro asynchronní aktualizaci
     phaseRef.current = 'in';
-    setBreathPhase('in');
+    queueMicrotask(() => {
+      setBreathPhase('in');
+    });
     timeoutRef.current = setTimeout(switchPhase, breathInDuration * 1000);
 
     return () => {

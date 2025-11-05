@@ -86,6 +86,9 @@ const BreathScreen = ({
     const loadCountdownSoundUrl = async () => {
       try {
         const { realtimeMetadataService } = await import('@services/realtimeMetadataService');
+        const { ref, getDownloadURL } = await import('firebase/storage');
+        const { storage } = await import('@services/firebase');
+
         const metadata = await realtimeMetadataService.getFileMetadata(breathCountdownSound);
         console.log('🔊 Countdown sound metadata:', metadata);
         if (metadata && (metadata.downloadURL || metadata.audioSrc)) {
@@ -93,8 +96,17 @@ const BreathScreen = ({
           console.log('🔊 Setting countdown sound URL:', url);
           setCountdownSoundUrl(url);
         } else {
-          console.warn('⚠️ Countdown sound metadata missing downloadURL or audioSrc');
-          setCountdownSoundUrl(null);
+          // Pokud není v metadata, zkus načíst přímo z Firebase Storage
+          console.log('🔊 Metadata missing URL, trying Firebase Storage directly');
+          try {
+            const audioRef = ref(storage, breathCountdownSound);
+            const url = await getDownloadURL(audioRef);
+            console.log('🔊 Setting countdown sound URL from Firebase Storage:', url);
+            setCountdownSoundUrl(url);
+          } catch (storageError) {
+            console.warn('⚠️ Failed to load countdown sound from Firebase Storage:', storageError);
+            setCountdownSoundUrl(null);
+          }
         }
       } catch (error) {
         console.error('Failed to load countdown sound URL:', error);
@@ -450,16 +462,23 @@ const BreathScreen = ({
                 </div>
               </div>
 
-              {/* Dýchací animace během dýchání - overlay */}
+                            {/* Dýchací animace během dýchání - overlay */}
               {isBreathing && (
-                <motion.div
-                  className="absolute inset-0 flex items-center justify-center pointer-events-none"
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  exit={{ opacity: 0 }}
-                >
+                <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                  {/* Animace s maskou - bílý kruh uprostřed, černý okolo, vycentrovaná na tlačítko */}
                   <motion.div
-                    className="w-[45vw] h-[45vw] max-w-[330px] max-h-[330px] min-w-[200px] min-h-[200px] rounded-full bg-black/5"
+                    className="rounded-full"
+                    style={{
+                      width: '45vw',
+                      height: '45vw',
+                      maxWidth: '330px',
+                      maxHeight: '330px',
+                      minWidth: '200px',
+                      minHeight: '200px',
+                      background: 'radial-gradient(circle, rgba(255,255,255,0.2) 0%, rgba(255,255,255,0.2) 25%, rgba(0,0,0,0.05) 25%, rgba(0,0,0,0.05) 100%)',
+                      transformOrigin: 'center center',
+                    }}
+                    initial={{ opacity: 0 }}
                     animate={isBreathing ? {
                       scale: breathPhase === 'in'
                         ? [1.0, 0.2]
@@ -471,6 +490,7 @@ const BreathScreen = ({
                       scale: 1.0,
                       opacity: 0.6
                     }}
+                    exit={{ opacity: 0 }}
                     transition={isBreathing ? {
                       duration: breathPhase === 'in' ? breathInDuration : breathOutDuration,
                       ease: "easeInOut",
@@ -480,7 +500,7 @@ const BreathScreen = ({
                       duration: 0.5
                     }}
                   />
-                </motion.div>
+                </div>
               )}
             </div>
           </FramerSection>
