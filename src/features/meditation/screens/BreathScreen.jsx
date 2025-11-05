@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback, Suspense, lazy } from 'react';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import { RotateCcw, Music2, Bookmark } from 'lucide-react';
 import { FramerSection, FramerPageTransition, BackButton, FramerButton } from '@components';
 import CircularProgress from '@features/audio/components/CircularProgress';
@@ -527,44 +527,71 @@ const BreathScreen = ({
     return `${mins}:${secs.toString().padStart(2, '0')}`;
   };
 
-  // Pokud probíhá příprava, zobraz odpočítávání přípravy
-  if (currentIsPreparing) {
-    return (
-      <FramerPageTransition screenKey="breath">
-        <div
-          className="min-h-screen w-full max-w-full bg-[#f4ddc4] flex flex-col items-center justify-center p-2 sm:p-8 pb-20 overflow-x-hidden relative"
-          onTouchStart={onTouchStart}
-          onTouchMove={onTouchMove}
-          onTouchEnd={onTouchEnd}
-        >
-          <BackButton onClick={() => onNavigateToScreen('home')} />
+  return (
+    <FramerPageTransition screenKey="breath">
+      <div
+        className="min-h-screen w-full max-w-full bg-[#f4ddc4] flex flex-col items-center justify-center p-2 sm:p-8 pb-20 overflow-x-hidden relative"
+        onTouchStart={onTouchStart}
+        onTouchMove={onTouchMove}
+        onTouchEnd={onTouchEnd}
+      >
+        <BackButton onClick={() => onNavigateToScreen('home')} />
 
-          <div className="max-w-md w-full mt-16">
-            <FramerSection
-              className="text-center mb-16"
-              animationType="fadeIn"
-              delay={0.1}
+        <div className="max-w-md w-full" style={{ marginTop: '4rem', paddingTop: 0, position: 'relative', display: 'flex', flexDirection: 'column', alignItems: 'stretch', minHeight: '600px' }}>
+          <AnimatePresence>
+            {/* Sekce přípravy */}
+            {currentIsPreparing && (
+              <motion.div
+                key="preparation"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 0.2, ease: 'easeInOut' }}
+                style={{ position: 'absolute', top: 0, left: 0, right: 0, width: '100%' }}
+              >
+            {/* Nadpis - přesně stejná struktura jako obrazovka dýchání */}
+            <div
+              className="text-center flex flex-col justify-start"
+              style={{ height: 'calc(clamp(60px, 8vw, 80px) + clamp(32px, 3.5vw, 40px) + 1rem + 0.5rem)', paddingTop: 0, paddingBottom: 0, marginTop: 0, marginBottom: '1.5rem', position: 'relative', top: 0 }}
             >
-              <h1 className="text-5xl font-light mb-2">
+              <motion.h1
+                className="text-5xl font-serif text-gray-800 leading-normal overflow-visible"
+                style={{ height: 'clamp(60px, 8vw, 80px)', minHeight: 'clamp(60px, 8vw, 80px)', maxHeight: 'clamp(60px, 8vw, 80px)', display: 'flex', alignItems: 'center', justifyContent: 'center', lineHeight: '1.2', marginTop: 0, paddingTop: 0, paddingBottom: 0, marginBottom: 0 }}
+                initial={{ opacity: 0, y: -10 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: 10 }}
+                transition={{ duration: 0.3 }}
+              >
                 {t('priprava') || 'příprava'}
-              </h1>
-            </FramerSection>
+              </motion.h1>
+              {/* Current Time Display - pod nadpisem - stejná struktura jako na obrazovce dýchání, ale skryté */}
+              <div className="flex items-center justify-center mt-4 mb-2 pointer-events-auto w-full gap-4" style={{ height: 'clamp(32px, 3.5vw, 40px)', minHeight: 'clamp(32px, 3.5vw, 40px)', maxHeight: 'clamp(32px, 3.5vw, 40px)' }}>
+                <div className="pointer-events-none z-10 text-center" style={{ display: 'flex', alignItems: 'center', height: '100%' }}>
+                  <CurrentTimeDisplay
+                    currentTime={0}
+                    formatTime={formatTime}
+                    className="text-black font-medium text-center text-clamp-time"
+                    style={{ height: '100%', display: 'flex', alignItems: 'center', visibility: 'hidden' }}
+                  />
+                </div>
+              </div>
+            </div>
 
-            <FramerSection
-              className="mb-12"
-              animationType="scaleIn"
-              delay={0.2}
+            {/* CircularProgress - přesně stejná struktura jako obrazovka dýchání */}
+            <div
+              className="flex flex-col items-center"
+              style={{ marginTop: 0, marginBottom: '1.5rem' }}
             >
-              {/* CircularProgress pro přípravu */}
-              <div className="relative flex-shrink-0 flex items-center justify-center">
+              {/* Circular Progress - stejná struktura jako na obrazovce dýchání */}
+              <div className="relative flex-shrink-0">
                 <CircularProgress
                   progress={currentPreparationCountdown > 0 && preparationTime > 0 ? ((preparationTime - currentPreparationCountdown) / preparationTime) * 100 : 0}
                   onSeek={null}
                   className="w-[50vw] h-[50vw] max-w-[400px] max-h-[400px] min-w-[250px] min-h-[250px]"
                 />
 
-                {/* Odpočítávání v centru */}
-                <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
+                {/* Odpočítávání v centru - stejná struktura jako Play/Pause tlačítko na obrazovce dýchání */}
+                <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
                   <motion.div
                     key={currentPreparationCountdown}
                     className="text-6xl font-light text-black"
@@ -577,48 +604,102 @@ const BreathScreen = ({
                   </motion.div>
                 </div>
               </div>
-            </FramerSection>
+            </div>
 
+            {/* Prázdná sekce s parametry - pro zachování stejné struktury jako na stránce dýchání */}
             <FramerSection
-              className="flex justify-center gap-6 mb-6"
+              className="mb-6"
               animationType="fadeIn"
               delay={0.3}
             >
-              <FramerButton
-                onClick={handlePlayPause}
-                variant="secondary"
-                className="w-20 h-20 rounded-full flex items-center justify-center p-0"
-              >
-                <RotateCcw size={28} />
-              </FramerButton>
+              <div className="flex justify-center items-start gap-8 md:gap-12 mb-4">
+                {/* Příprava - prázdné */}
+                <div className="flex flex-col items-center" style={{ opacity: 0, pointerEvents: 'none' }}>
+                  <div className="text-4xl md:text-5xl font-sans font-medium mb-1" style={{ height: 'clamp(2.5rem, 5vw, 3rem)' }}>
+                    &nbsp;
+                  </div>
+                  <div className="text-base md:text-lg font-serif" style={{ height: '1.25rem' }}>
+                    &nbsp;
+                  </div>
+                </div>
+
+                {/* Délka - prázdné */}
+                <div className="flex flex-col items-center" style={{ opacity: 0, pointerEvents: 'none' }}>
+                  <div className="text-4xl md:text-5xl font-sans font-medium mb-1" style={{ height: 'clamp(2.5rem, 5vw, 3rem)' }}>
+                    &nbsp;
+                  </div>
+                  <div className="text-base md:text-lg font-serif" style={{ height: '1.25rem' }}>
+                    &nbsp;
+                  </div>
+                </div>
+
+                {/* Rytmus - prázdné */}
+                <div className="flex flex-col items-center" style={{ opacity: 0, pointerEvents: 'none' }}>
+                  <div className="text-4xl md:text-5xl font-sans font-medium mb-1" style={{ height: 'clamp(2.5rem, 5vw, 3rem)' }}>
+                    &nbsp;
+                  </div>
+                  <div className="text-base md:text-lg font-serif" style={{ height: '1.25rem' }}>
+                    &nbsp;
+                  </div>
+                </div>
+              </div>
             </FramerSection>
-          </div>
-        </div>
-      </FramerPageTransition>
-    );
-  }
 
-  return (
-    <FramerPageTransition screenKey="breath">
-      <div
-        className="min-h-screen w-full max-w-full bg-[#f4ddc4] flex flex-col items-center justify-center p-2 sm:p-8 pb-20 overflow-x-hidden relative"
-        onTouchStart={onTouchStart}
-        onTouchMove={onTouchMove}
-        onTouchEnd={onTouchEnd}
-      >
-        <BackButton onClick={() => onNavigateToScreen('home')} />
+            {/* Reset tlačítko, tlačítko pro zvukovou galerii a tlačítko pro profily - vedle sebe - stejná struktura jako na stránce dýchání */}
+            <FramerSection
+              className="flex justify-center gap-4"
+              animationType="fadeIn"
+              delay={0.4}
+            >
+              {/* Reset tlačítko - bílé kulaté tlačítko s dark grey refresh ikonou */}
+              <button
+                onClick={handlePlayPause}
+                className="w-20 h-20 rounded-full bg-white flex items-center justify-center shadow-sm hover:shadow-md transition-shadow cursor-pointer"
+                title={t('reset') || 'Reset'}
+              >
+                <RotateCcw size={28} className="text-gray-800" />
+              </button>
 
-        <div className="max-w-md w-full mt-16">
+              {/* Tlačítko pro zvukovou galerii - bílé kulaté tlačítko s dark grey notičkou */}
+              <button
+                onClick={() => onNavigateToScreen('sound-theme-gallery')}
+                className="w-20 h-20 rounded-full bg-white flex items-center justify-center shadow-sm hover:shadow-md transition-shadow cursor-pointer"
+                title={t('zvukovaGalerie') || 'Zvuková galerie'}
+              >
+                <Music2 size={28} className="text-gray-800" />
+              </button>
+
+              {/* Tlačítko pro profily dýchání - bílé kulaté tlačítko s dark grey bookmark ikonou */}
+              <button
+                onClick={() => onNavigateToScreen('breath-profiles')}
+                className="w-20 h-20 rounded-full bg-white flex items-center justify-center shadow-sm hover:shadow-md transition-shadow cursor-pointer"
+                title={t('profilyDychani') || 'Profily dýchání'}
+              >
+                <Bookmark size={28} className="text-gray-800" />
+              </button>
+            </FramerSection>
+              </motion.div>
+            )}
+
+            {/* Sekce dýchání */}
+            {!currentIsPreparing && (
+              <motion.div
+                key="breathing"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 0.2, ease: 'easeInOut' }}
+                style={{ position: 'absolute', top: 0, left: 0, right: 0, width: '100%' }}
+              >
           {/* Nadpis - velký elegantní serif font - dynamicky se mění podle stavu dýchání */}
-          <FramerSection
-            className="text-center mb-6"
-            animationType="fadeIn"
-            delay={0.1}
+          <div
+            className="text-center flex flex-col justify-start"
+            style={{ height: 'calc(clamp(60px, 8vw, 80px) + clamp(32px, 3.5vw, 40px) + 1rem + 0.5rem)', paddingTop: 0, paddingBottom: 0, marginTop: 0, marginBottom: '1.5rem', position: 'relative', top: 0 }}
           >
             <motion.h1
               key={isBreathing ? breathPhase : 'default'}
-              className="text-5xl font-serif text-gray-800 leading-normal pb-3 overflow-visible"
-              style={{ lineHeight: '1.2' }}
+              className="text-5xl font-serif text-gray-800 leading-normal overflow-visible"
+              style={{ height: 'clamp(60px, 8vw, 80px)', minHeight: 'clamp(60px, 8vw, 80px)', maxHeight: 'clamp(60px, 8vw, 80px)', display: 'flex', alignItems: 'center', justifyContent: 'center', lineHeight: '1.2', marginTop: 0, paddingTop: 0, paddingBottom: 0, marginBottom: 0 }}
               initial={{ opacity: 0, y: -10 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: 10 }}
@@ -630,22 +711,22 @@ const BreathScreen = ({
               }
             </motion.h1>
             {/* Current Time Display - pod nadpisem */}
-            <div className="flex items-center justify-center mt-4 mb-2 pointer-events-auto w-full gap-4">
-              <div className="pointer-events-none z-10 text-center">
+            <div className="flex items-center justify-center mt-4 mb-2 pointer-events-auto w-full gap-4" style={{ height: 'clamp(32px, 3.5vw, 40px)', minHeight: 'clamp(32px, 3.5vw, 40px)', maxHeight: 'clamp(32px, 3.5vw, 40px)' }}>
+              <div className="pointer-events-none z-10 text-center" style={{ display: 'flex', alignItems: 'center', height: '100%' }}>
                 <CurrentTimeDisplay
                   currentTime={totalTime - breathTime}
                   formatTime={formatTime}
                   className="text-black font-medium text-center text-clamp-time"
+                  style={{ height: '100%', display: 'flex', alignItems: 'center' }}
                 />
               </div>
             </div>
-          </FramerSection>
+          </div>
 
           {/* CircularProgress s tmavě šedým kruhem a bílou play ikonou - stejný jako v hudbě */}
-          <FramerSection
-            className="mb-6 flex flex-col items-center"
-            animationType="scaleIn"
-            delay={0.2}
+          <div
+            className="flex flex-col items-center"
+            style={{ marginTop: 0, marginBottom: '1.5rem' }}
           >
 
             {/* Circular Progress with Play Button - Always Centered - stejný design jako v hudbě a meditaci */}
@@ -708,7 +789,7 @@ const BreathScreen = ({
                 </div>
               )}
             </div>
-          </FramerSection>
+          </div>
 
           {/* Tři parametry: příprava, délka, rytmus - horizontálně pod kruhem */}
           <FramerSection
@@ -803,6 +884,9 @@ const BreathScreen = ({
               <Bookmark size={28} className="text-gray-800" />
             </button>
           </FramerSection>
+              </motion.div>
+            )}
+          </AnimatePresence>
         </div>
 
         {/* Modaly - lazy loaded */}
