@@ -1,4 +1,4 @@
-import React, { useState, Suspense, lazy } from 'react';
+import React, { useState, useEffect, useRef, Suspense, lazy } from 'react';
 import { motion } from 'framer-motion';
 import { RotateCcw, Image as ImageIcon } from 'lucide-react';
 import { FramerButton, FramerSection, FramerPageTransition, BackButton } from '@components';
@@ -38,6 +38,7 @@ const MeditationScreen = ({
   const { t } = useLanguage();
   const [showGallery, setShowGallery] = useState(false);
   const [showDurationPicker, setShowDurationPicker] = useState(false);
+  const [breathCycleTime, setBreathCycleTime] = useState(0); // Čas v aktuálním cyklu dýchání (0 až breathInDuration + breathOutDuration)
 
   // Použij hook pro přehrávání zvuků dýchání
   useBreathSounds(
@@ -51,9 +52,72 @@ const MeditationScreen = ({
     breathOutDuration
   );
 
+  // Sledování času v cyklu dýchání - synchronizováno s fázemi
+  const phaseStartTimeRef = useRef(Date.now());
+  const previousPhaseRef = useRef(breathPhase);
+
+  useEffect(() => {
+    if (!isPlaying) {
+      setBreathCycleTime(0);
+      return;
+    }
+
+    // Pokud se změnila fáze, resetuj čas začátku fáze
+    if (previousPhaseRef.current !== breathPhase) {
+      phaseStartTimeRef.current = Date.now();
+      previousPhaseRef.current = breathPhase;
+
+      // Pokud začínáme nový cyklus (nádech), resetuj čas cyklu
+      if (breathPhase === 'in') {
+        setBreathCycleTime(0);
+      } else {
+        // Pokud začíná výdech, nastav čas na začátek výdechové části
+        setBreathCycleTime(breathInDuration);
+      }
+    }
+
+    const interval = setInterval(() => {
+      const now = Date.now();
+      const elapsed = (now - phaseStartTimeRef.current) / 1000; // sekundy
+      const cycleDuration = breathInDuration + breathOutDuration;
+
+      if (breathPhase === 'in') {
+        // Během nádechu: čas cyklu = elapsed (0 až breathInDuration)
+        setBreathCycleTime(Math.min(elapsed, breathInDuration));
+      } else {
+        // Během výdechu: čas cyklu = breathInDuration + elapsed (breathInDuration až cycleDuration)
+        setBreathCycleTime(Math.min(breathInDuration + elapsed, cycleDuration));
+      }
+    }, 100);
+
+    return () => clearInterval(interval);
+  }, [isPlaying, breathPhase, breathInDuration, breathOutDuration]);
+
   // Vypočítat progress pro CircularProgress (0-100)
   const totalTime = selectedDuration * 60; // v sekundách
   const progress = totalTime > 0 ? ((totalTime - time) / totalTime) * 100 : 0;
+
+  // Vypočítat progress pro rytmus dýchání (vnitřní kruhový ukazatel)
+  const cycleDuration = breathInDuration + breathOutDuration;
+  const breathRhythmProgress = isPlaying && cycleDuration > 0 ? (breathCycleTime / cycleDuration) * 100 : 0;
+
+  // Pro výpočet, kde jsme v cyklu (nádech nebo výdech část)
+  const inPhaseProgress = cycleDuration > 0 ? (breathInDuration / cycleDuration) * 100 : 50; // Procenta pro nádech část
+
+  // Debug logování
+  useEffect(() => {
+    if (isPlaying) {
+      console.log('🔵 Breath Rhythm:', {
+        breathPhase,
+        breathCycleTime: breathCycleTime.toFixed(2),
+        cycleDuration,
+        breathRhythmProgress: breathRhythmProgress.toFixed(2),
+        inPhaseProgress: inPhaseProgress.toFixed(2),
+        breathInDuration,
+        breathOutDuration
+      });
+    }
+  }, [isPlaying, breathPhase, breathCycleTime, cycleDuration, breathRhythmProgress, inPhaseProgress, breathInDuration, breathOutDuration]);
 
   // Formátování času
   const formatTime = (seconds) => {
@@ -210,10 +274,17 @@ const MeditationScreen = ({
             </div>
 
             {/* CircularProgress s Play/Pause Button - stejný jako v přehrávači */}
-            <div className="relative flex-shrink-0 flex items-center justify-center">
-              {/* Dýchací animace během meditace - pod kruhem a tlačítkem */}
+            <div className="relative flex-shrink-0 flex items-center justify-center" style={{ isolation: 'isolate' }}>
+              {/* Dýchací animace během meditace - SPODNÍ vrstva - pod kruhovým ukazatelem */}
               {isPlaying && (
-                <div className="absolute inset-0 flex items-center justify-center pointer-events-none" style={{ zIndex: 1 }}>
+                <div
+                  className="absolute inset-0 flex items-center justify-center pointer-events-none"
+                  style={{
+                    zIndex: 0,
+                    isolation: 'isolate',
+                    transform: 'translateZ(0)' // Force hardware acceleration and create stacking context
+                  }}
+                >
                   {/* Animace s maskou - bílý kruh uprostřed, černý okolo, vycentrovaná na tlačítko */}
                   <motion.div
                     key={breathPhase}
@@ -225,8 +296,11 @@ const MeditationScreen = ({
                       maxHeight: '350px',
                       minWidth: '220px',
                       minHeight: '220px',
-                      background: 'radial-gradient(circle, rgba(255,255,255,0.5) 0%, rgba(255,255,255,0.5) 25%, rgba(0,0,0,0.15) 25%, rgba(0,0,0,0.15) 100%)',
+                      background: 'radial-gradient(circle, rgba(255,255,255,1) 0%, rgba(255,255,255,1) 25%, rgba(255,255,255,1) 25%, rgba(255,255,255,1) 100%)',
                       transformOrigin: 'center center',
+                      position: 'absolute',
+                      zIndex: 0,
+                      willChange: 'transform, opacity' // Optimize animation performance
                     }}
                     initial={{
                       opacity: 0.9,
@@ -257,15 +331,63 @@ const MeditationScreen = ({
                 </div>
               )}
 
-              <CircularProgress
-                progress={progress}
-                onSeek={null} // Pro meditaci nepotřebujeme seek
-                className="w-[50vw] h-[50vw] max-w-[400px] max-h-[400px] min-w-[250px] min-h-[250px]"
-                style={{ position: 'relative', zIndex: 2 }}
-              />
+              {/* CircularProgress - nad animací - vytvoří nový stacking context s vyšším z-index */}
+              <div style={{ position: 'relative', zIndex: 10, isolation: 'isolate', transform: 'translateZ(0)' }}>
+                <CircularProgress
+                  progress={progress}
+                  onSeek={null} // Pro meditaci nepotřebujeme seek
+                  className="w-[50vw] h-[50vw] max-w-[400px] max-h-[400px] min-w-[250px] min-h-[250px]"
+                  style={{ position: 'relative', zIndex: 10 }}
+                />
+                {/* Vnitřní kruhový ukazatel pro rytmus dýchání - tenký černý */}
+                {isPlaying && cycleDuration > 0 && (
+                  <div className="absolute inset-0 flex items-center justify-center pointer-events-none" style={{ zIndex: 1 }}>
+                    <svg
+                      className="w-[40vw] h-[40vw] max-w-[320px] max-h-[320px] min-w-[200px] min-h-[200px] transform -rotate-90"
+                      viewBox="0 0 450 450"
+                      style={{ aspectRatio: '1/1', position: 'absolute' }}
+                    >
+                      {/* Pozadí - celý kruh */}
+                      <circle
+                        cx="225"
+                        cy="225"
+                        r="200"
+                        stroke="rgba(0,0,0,0.15)"
+                        strokeWidth="6"
+                        fill="none"
+                      />
+                      {/* Nádech část - zvýrazněná podle poměru */}
+                      <circle
+                        cx="225"
+                        cy="225"
+                        r="200"
+                        stroke="rgba(0,0,0,0.4)"
+                        strokeWidth="6"
+                        fill="none"
+                        strokeDasharray={`${2 * Math.PI * 200 * (inPhaseProgress / 100)} ${2 * Math.PI * 200}`}
+                        strokeDashoffset="0"
+                        style={{ strokeLinecap: 'butt' }}
+                      />
+                      {/* Progress - aktuální pozice v cyklu - černý */}
+                      <motion.circle
+                        cx="225"
+                        cy="225"
+                        r="200"
+                        stroke="black"
+                        strokeWidth="8"
+                        fill="none"
+                        strokeDasharray={`${2 * Math.PI * 200}`}
+                        strokeDashoffset={`${2 * Math.PI * 200 * (1 - breathRhythmProgress / 100)}`}
+                        style={{ strokeLinecap: 'round' }}
+                        transition={{ duration: 0.1 }}
+                      />
+                    </svg>
+                  </div>
+                )}
+              </div>
 
               {/* Play/Pause Button - Center */}
-              <div className="absolute inset-0 flex items-center justify-center pointer-events-none" style={{ zIndex: 3 }}>
+              <div className="absolute inset-0 flex items-center justify-center pointer-events-none" style={{ zIndex: 20 }}>
                 <PlayPauseButton
                   isPlaying={isPlaying}
                   onToggle={onPlayPause}
