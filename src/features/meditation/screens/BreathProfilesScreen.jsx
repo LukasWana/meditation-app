@@ -221,79 +221,92 @@ const BreathProfilesScreen = ({
         <div className="max-w-2xl w-full mt-16">
           {/* Nadpis */}
           <FramerSection
-            className="text-center mb-8"
+            className="text-center mb-6"
             animationType="fadeIn"
             delay={0.1}
           >
-            <h1 className="text-5xl font-light mb-2">
+            <h1 className="text-4xl font-light mb-2">
               {t('profilyDychani') || 'Profily dýchání'}
             </h1>
           </FramerSection>
 
-          {/* Tlačítko pro uložení aktuálního nastavení */}
+          {/* Tlačítka pro uložení a import - hned pod nadpisem */}
           <FramerSection
             className="mb-6"
             animationType="fadeIn"
-            delay={0.2}
+            delay={0.15}
           >
-            {!showNameInput ? (
-              <FramerButton
-                onClick={() => setShowNameInput(true)}
-                variant="ghost"
-                className="w-full p-4 text-left"
-              >
-                <div className="flex items-center gap-3">
-                  <Plus size={24} className="text-gray-800" />
-                  <span className="text-xl font-light">
-                    {t('ulozitAktualniNastaveni') || 'Uložit aktuální nastavení'}
-                  </span>
-                </div>
-              </FramerButton>
-            ) : (
-              <div className="bg-white rounded-lg p-4 shadow-sm">
-                <input
-                  type="text"
-                  value={newProfileName}
-                  onChange={(e) => setNewProfileName(e.target.value)}
-                  placeholder={t('nazevProfilu') || 'Název profilu'}
-                  className="w-full px-4 py-2 text-lg border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-gray-500 mb-3"
-                  autoFocus
-                  onKeyPress={(e) => {
-                    if (e.key === 'Enter') {
-                      handleSaveCurrentProfile();
-                    } else if (e.key === 'Escape') {
-                      setShowNameInput(false);
-                      setNewProfileName('');
-                    }
-                  }}
-                />
-                <div className="flex gap-2">
-                  <button
-                    onClick={handleSaveCurrentProfile}
-                    disabled={saving || !newProfileName.trim()}
-                    className="flex-1 px-4 py-2 bg-gray-800 text-white rounded hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed"
-                  >
-                    {saving ? (t('ukladani') || 'Ukládání...') : (t('ulozit') || 'Uložit')}
-                  </button>
-                  <button
-                    onClick={() => {
-                      setShowNameInput(false);
-                      setNewProfileName('');
+            <div className="flex flex-row gap-3">
+              {/* Tlačítko pro uložení aktuálního nastavení */}
+              {!showNameInput ? (
+                <FramerButton
+                  onClick={() => setShowNameInput(true)}
+                  variant="ghost"
+                  className="flex-1 p-4 text-left"
+                >
+                  <div className="flex items-center gap-3">
+                    <Plus size={24} className="text-gray-800" />
+                    <span className="text-xl font-light">
+                      {t('ulozit') || 'Uložit'}
+                    </span>
+                  </div>
+                </FramerButton>
+              ) : (
+                <div className="flex-1 bg-white rounded-lg p-4 shadow-sm">
+                  <input
+                    type="text"
+                    value={newProfileName}
+                    onChange={(e) => setNewProfileName(e.target.value)}
+                    placeholder={t('nazevProfilu') || 'Název profilu'}
+                    className="w-full px-4 py-2 text-lg border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-gray-500 mb-3"
+                    autoFocus
+                    onKeyPress={(e) => {
+                      if (e.key === 'Enter') {
+                        handleSaveCurrentProfile();
+                      } else if (e.key === 'Escape') {
+                        setShowNameInput(false);
+                        setNewProfileName('');
+                      }
                     }}
-                    className="px-4 py-2 bg-gray-200 text-gray-800 rounded hover:bg-gray-300"
-                  >
-                    {t('zrusit') || 'Zrušit'}
-                  </button>
+                  />
+                  <div className="flex gap-2">
+                    <button
+                      onClick={handleSaveCurrentProfile}
+                      disabled={saving || !newProfileName.trim()}
+                      className="flex-1 px-4 py-2 bg-gray-800 text-white rounded hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      {saving ? (t('ukladani') || 'Ukládání...') : (t('ulozit') || 'Uložit')}
+                    </button>
+                    <button
+                      onClick={() => {
+                        setShowNameInput(false);
+                        setNewProfileName('');
+                      }}
+                      className="px-4 py-2 bg-gray-200 text-gray-800 rounded hover:bg-gray-300"
+                    >
+                      {t('zrusit') || 'Zrušit'}
+                    </button>
+                  </div>
                 </div>
-              </div>
-            )}
+              )}
+
+              {/* Tlačítko pro import profilu */}
+              <FramerButton
+                onClick={handleOpenImportDialog}
+                disabled={importing}
+                className="flex-1 py-3 bg-gray-800 text-white rounded-lg hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+              >
+                <Upload size={20} />
+                {importing ? (t('nahravani') || 'Nahrávání...') : (t('nahrat') || 'Nahrát')}
+              </FramerButton>
+            </div>
           </FramerSection>
 
           {/* Seznam profilů */}
           <FramerSection
             className="mb-6"
             animationType="fadeIn"
-            delay={0.3}
+            delay={0.2}
           >
             {loading ? (
               <div className="text-center py-8 text-gray-600">
@@ -367,22 +380,6 @@ const BreathProfilesScreen = ({
                 ))}
               </div>
             )}
-          </FramerSection>
-
-          {/* Tlačítko pro import profilu */}
-          <FramerSection
-            className="mb-6"
-            animationType="fadeIn"
-            delay={0.4}
-          >
-            <FramerButton
-              onClick={handleOpenImportDialog}
-              disabled={importing}
-              className="w-full py-3 bg-gray-800 text-white rounded-lg hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
-            >
-              <Upload size={20} />
-              {importing ? (t('importovani') || 'Importování...') : (t('importovatProfil') || 'Importovat profil')}
-            </FramerButton>
           </FramerSection>
         </div>
       </div>
