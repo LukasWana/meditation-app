@@ -101,9 +101,9 @@ const HudbaScreen = ({
 
   return (
     <FramerPageTransition screenKey="hudba">
-      <BackgroundShader 
-        variant={getShaderForSection('hudba')} 
-        intensity={0.3} 
+      <BackgroundShader
+        variant={getShaderForSection('hudba')}
+        intensity={0.3}
         enabled={true}
         audioData={activeAudio ? audioData : null}
       />

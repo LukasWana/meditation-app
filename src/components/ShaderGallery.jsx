@@ -163,8 +163,8 @@ const ShaderGallery = ({ selectedVariant, onSelect, section, category }) => {
       // Výchozí vestavěné shadery
       shaderList = [
         { id: 'default', name: 'Default', variant: 'default' },
-        { id: 'meditation', name: 'Meditation', variant: 'meditation' },
-        { id: 'breath', name: 'Breath', variant: 'breath' },
+        { id: 'meditace', name: 'Meditace', variant: 'meditace' },
+        { id: 'dychani', name: 'Dýchání', variant: 'dychani' },
         { id: 'hudba', name: 'Hudba', variant: 'hudba' },
         { id: 'settings', name: 'Settings', variant: 'settings' }
       ];

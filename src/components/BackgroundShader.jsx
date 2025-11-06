@@ -7,7 +7,7 @@ import { createProgramManager } from '@utils/webgl/programManager';
  * Podporuje různé varianty shaderů a načítání shaderů ze souborů (px-stream formát)
  */
 const BackgroundShader = ({
-  variant = 'default', // 'default', 'meditation', 'breath', 'hudba', 'settings', nebo ID shaderu (např. 'mini-ShaderName', 'shader-ShaderName')
+  variant = 'default', // 'default', 'meditace', 'dychani', 'hudba', 'settings', nebo ID shaderu (např. 'mini-ShaderName', 'shader-ShaderName')
   intensity = 0.3, // Intenzita shaderu (0-1)
   enabled = true, // Zda je shader aktivní
   opacity = 1.0, // Opacity pro plynulé prolnutí (0-1)
@@ -107,7 +107,7 @@ void main() {
         gl_FragColor = vec4(finalColor, alpha);
       }
     `,
-    meditation: `
+    meditace: `
       precision mediump float;
       uniform float u_time;
       uniform vec2 u_resolution;
@@ -158,7 +158,7 @@ void main() {
         gl_FragColor = vec4(color * u_intensity, u_intensity);
       }
     `,
-      breath: `
+      dychani: `
       precision mediump float;
       uniform float u_time;
       uniform vec2 u_resolution;

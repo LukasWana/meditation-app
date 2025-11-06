@@ -41,7 +41,7 @@ const MeditationScreen = ({
 
   // Získej shader pro meditaci - použij shaderSettings přímo pro reaktivitu
   const meditationShader = useMemo(() => {
-    const shader = shaderSettings?.meditation || 'meditation';
+    const shader = shaderSettings?.meditace || 'meditace';
     console.log('🎨 MeditationScreen: Shader variant:', shader, 'shaderSettings:', shaderSettings);
     return shader;
   }, [shaderSettings]);

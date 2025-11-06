@@ -211,7 +211,7 @@ const BreathProfilesScreen = ({
 
   return (
     <FramerPageTransition screenKey="breath-profiles">
-      <BackgroundShader variant="breath" intensity={0.3} enabled={true} />
+      <BackgroundShader variant="dychani" intensity={0.3} enabled={true} />
       <div
         className="min-h-screen w-full max-w-full bg-[#f4ddc4] flex flex-col items-center justify-start p-2 sm:p-8 pb-20 overflow-x-hidden relative"
         style={{ position: 'relative', zIndex: 10 }}

@@ -3,7 +3,7 @@ import { useRef, useEffect, useState } from 'react';
 /**
  * Hook pro audio analýzu pomocí Web Audio API
  * Vrací frekvenční data a amplitudu pro vizualizaci
- * 
+ *
  * @param {React.RefObject<HTMLAudioElement>} audioRef - Reference na audio element
  * @param {boolean} isPlaying - Zda se audio přehrává
  * @returns {Object} - Audio analýza data { frequencies, amplitude, bass, mid, treble }

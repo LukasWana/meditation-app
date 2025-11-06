@@ -256,7 +256,7 @@ const SettingsScreen = ({
                             {t('meditacia') || 'Meditace'}
                           </h5>
                           <p className="text-sm text-gray-600 mb-2">
-                            Aktuální: {getShaderForSection('meditation')}
+                            Aktuální: {getShaderForSection('meditace')}
                           </p>
                         </div>
 
@@ -266,7 +266,7 @@ const SettingsScreen = ({
                             {t('dychanie') || 'Dýchání'}
                           </h5>
                           <p className="text-sm text-gray-600 mb-2">
-                            Aktuální: {getShaderForSection('breath')}
+                            Aktuální: {getShaderForSection('dychani')}
                           </p>
                         </div>
 
@@ -318,8 +318,8 @@ const SettingsScreen = ({
                         className="w-full p-2 bg-white/90 border border-black/20 rounded text-sm"
                       >
                         <option value="">Vyberte sekci...</option>
-                        <option value="meditation">{t('meditacia') || 'Meditace'}</option>
-                        <option value="breath">{t('dychanie') || 'Dýchání'}</option>
+                        <option value="meditace">{t('meditacia') || 'Meditace'}</option>
+                        <option value="dychani">{t('dychanie') || 'Dýchání'}</option>
                         <option value="hudba">{t('hudba') || 'Hudba'}</option>
                         <option value="slova">{t('slova') || 'Slova'}</option>
                       </select>

@@ -16,15 +16,25 @@ export const ShaderSettingsProvider = ({ children }) => {
     try {
       const saved = localStorage.getItem('meditation-app-shader-settings');
       if (saved) {
-        return JSON.parse(saved);
+        const parsed = JSON.parse(saved);
+        // Migrace starých klíčů na nové (backward compatibility)
+        if (parsed.meditation && !parsed.meditace) {
+          parsed.meditace = parsed.meditation;
+          delete parsed.meditation;
+        }
+        if (parsed.breath && !parsed.dychani) {
+          parsed.dychani = parsed.breath;
+          delete parsed.breath;
+        }
+        return parsed;
       }
     } catch (e) {
       console.error('Failed to load shader settings:', e);
     }
-    // Výchozí hodnoty
+    // Výchozí hodnoty - podle názvů v menu
     return {
-      meditation: 'meditation',
-      breath: 'breath',
+      meditace: 'meditace',
+      dychani: 'dychani',
       hudba: 'hudba',
       settings: 'settings',
       slova: 'default'

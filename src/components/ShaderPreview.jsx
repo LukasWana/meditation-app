@@ -84,7 +84,7 @@ void main() {
         gl_FragColor = vec4(finalColor, alpha);
       }
     `,
-    meditation: `
+    meditace: `
       precision mediump float;
       uniform float u_time;
       uniform vec2 u_resolution;
@@ -135,7 +135,7 @@ void main() {
         gl_FragColor = vec4(color * u_intensity, u_intensity);
       }
     `,
-    breath: `
+    dychani: `
       precision mediump float;
       uniform float u_time;
       uniform vec2 u_resolution;

@@ -186,7 +186,7 @@ const BreathScreen = ({
 
       {/* BackgroundShader - zobraz pouze při dýchání s plynulým prolnutím */}
       <BackgroundShader
-        variant={getShaderForSection('breath')}
+        variant={getShaderForSection('dychani')}
         intensity={0.8}
         enabled={isBreathing}
         opacity={isBreathing ? 1.0 : 0.0}
