@@ -100,11 +100,16 @@ const AudioShaderBackground = ({
 
     console.log('🎨 AudioShaderBackground: Canvas nalezen, inicializuji WebGL...');
 
-    const glContext = canvas.getContext('webgl') || canvas.getContext('experimental-webgl');
+    // Zkus WebGL 2.0, pokud není podporováno, použij WebGL 1.0
+    let glContext = canvas.getContext('webgl2');
+    if (!glContext) {
+      glContext = canvas.getContext('webgl') || canvas.getContext('experimental-webgl');
+    }
     if (!glContext) {
       console.warn('⚠️ WebGL není podporován');
       return;
     }
+    console.log('✅ AudioShaderBackground: WebGL verze:', glContext.getParameter(glContext.VERSION));
 
     console.log('✅ AudioShaderBackground: WebGL kontext vytvořen');
 
@@ -248,9 +253,11 @@ const AudioShaderBackground = ({
 
       if (timeLocation) gl.uniform1f(timeLocation, timeRef.current);
       if (resolutionLocation) {
-        const width = gl.canvas.width || 1;
-        const height = gl.canvas.height || 1;
-        gl.uniform2f(resolutionLocation, width, height);
+        // Použij viewport rozlišení (bez devicePixelRatio), aby shadery byly vycentrované na play button
+        // Play buttony jsou ve viewport souřadnicích, ne v canvas souřadnicích
+        const viewportWidth = window.innerWidth || 1;
+        const viewportHeight = window.innerHeight || 1;
+        gl.uniform2f(resolutionLocation, viewportWidth, viewportHeight);
       }
 
       // Předaj RGB barvu do shaderu (hodnoty 0.0 - 1.0)

@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { FramerButton, FramerSection, FramerPageTransition, BackButton, BackgroundShader, ShaderGallery } from '@components';
+import ShaderCategorySelector from '@components/ShaderCategorySelector';
 import LanguageSwitcher from '@components/LanguageSwitcher';
 import { useLanguage } from '@contexts/LanguageContext';
 import { useShaderSettings } from '@contexts/ShaderSettingsContext';
@@ -20,6 +21,8 @@ const SettingsScreen = ({
 }) => {
   const { t } = useLanguage();
   const { shaderSettings, setShaderForSection, getShaderForSection } = useShaderSettings();
+  const [selectedCategory, setSelectedCategory] = useState(null);
+  const [selectedSection, setSelectedSection] = useState('');
 
   // Offline cache hook
   const {
@@ -227,55 +230,116 @@ const SettingsScreen = ({
                 <h3 className="text-2xl font-light mb-4">
                   {t('shadery') || 'Shadery'}
                 </h3>
-                <div className="space-y-6">
-                  {/* Meditace */}
-                  <div>
-                    <h4 className="text-lg font-light mb-3">
-                      {t('meditacia') || 'Meditace'}
-                    </h4>
-                    <ShaderGallery
-                      selectedVariant={getShaderForSection('meditation')}
-                      onSelect={(variant) => setShaderForSection('meditation', variant)}
-                      section="meditation"
-                    />
-                  </div>
 
-                  {/* Dýchání */}
-                  <div>
-                    <h4 className="text-lg font-light mb-3">
-                      {t('dychanie') || 'Dýchání'}
-                    </h4>
-                    <ShaderGallery
-                      selectedVariant={getShaderForSection('breath')}
-                      onSelect={(variant) => setShaderForSection('breath', variant)}
-                      section="breath"
-                    />
-                  </div>
+                {!selectedCategory ? (
+                  // Výběr kategorie
+                  <div className="space-y-6">
+                    <div>
+                      <h4 className="text-lg font-light mb-4">
+                        {t('vyberteKategorii') || 'Vyberte kategorii shaderů'}
+                      </h4>
+                      <ShaderCategorySelector
+                        selectedCategory={selectedCategory}
+                        onSelect={setSelectedCategory}
+                      />
+                    </div>
 
-                  {/* Hudba */}
-                  <div>
-                    <h4 className="text-lg font-light mb-3">
-                      {t('hudba') || 'Hudba'}
-                    </h4>
-                    <ShaderGallery
-                      selectedVariant={getShaderForSection('hudba')}
-                      onSelect={(variant) => setShaderForSection('hudba', variant)}
-                      section="hudba"
-                    />
-                  </div>
+                    {/* Rychlý výběr sekce */}
+                    <div>
+                      <h4 className="text-lg font-light mb-3">
+                        {t('proSekci') || 'Pro sekci'}
+                      </h4>
+                      <div className="space-y-4">
+                        {/* Meditace */}
+                        <div>
+                          <h5 className="text-base font-light mb-2">
+                            {t('meditacia') || 'Meditace'}
+                          </h5>
+                          <p className="text-sm text-gray-600 mb-2">
+                            Aktuální: {getShaderForSection('meditation')}
+                          </p>
+                        </div>
 
-                  {/* Slova */}
-                  <div>
-                    <h4 className="text-lg font-light mb-3">
-                      {t('slova') || 'Slova'}
-                    </h4>
+                        {/* Dýchání */}
+                        <div>
+                          <h5 className="text-base font-light mb-2">
+                            {t('dychanie') || 'Dýchání'}
+                          </h5>
+                          <p className="text-sm text-gray-600 mb-2">
+                            Aktuální: {getShaderForSection('breath')}
+                          </p>
+                        </div>
+
+                        {/* Hudba */}
+                        <div>
+                          <h5 className="text-base font-light mb-2">
+                            {t('hudba') || 'Hudba'}
+                          </h5>
+                          <p className="text-sm text-gray-600 mb-2">
+                            Aktuální: {getShaderForSection('hudba')}
+                          </p>
+                        </div>
+
+                        {/* Slova */}
+                        <div>
+                          <h5 className="text-base font-light mb-2">
+                            {t('slova') || 'Slova'}
+                          </h5>
+                          <p className="text-sm text-gray-600 mb-2">
+                            Aktuální: {getShaderForSection('slova')}
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                ) : (
+                  // Galerie shaderů
+                  <div className="space-y-6">
+                    <div className="flex items-center justify-between mb-4">
+                      <h4 className="text-lg font-light">
+                        {selectedCategory === 'mini-shaders' ? 'Mini Shaders' : 'Shaders'}
+                      </h4>
+                      <button
+                        onClick={() => setSelectedCategory(null)}
+                        className="px-4 py-2 bg-white/90 border border-black/20 rounded text-sm hover:bg-white"
+                      >
+                        ← Zpět
+                      </button>
+                    </div>
+
+                    {/* Výběr sekce pro přiřazení shaderu */}
+                    <div className="mb-4">
+                      <label className="block text-sm font-light mb-2">
+                        {t('priraditK') || 'Přiřadit k sekci:'}
+                      </label>
+                      <select
+                        value={selectedSection}
+                        onChange={(e) => setSelectedSection(e.target.value)}
+                        className="w-full p-2 bg-white/90 border border-black/20 rounded text-sm"
+                      >
+                        <option value="">Vyberte sekci...</option>
+                        <option value="meditation">{t('meditacia') || 'Meditace'}</option>
+                        <option value="breath">{t('dychanie') || 'Dýchání'}</option>
+                        <option value="hudba">{t('hudba') || 'Hudba'}</option>
+                        <option value="slova">{t('slova') || 'Slova'}</option>
+                      </select>
+                    </div>
+
                     <ShaderGallery
-                      selectedVariant={getShaderForSection('slova')}
-                      onSelect={(variant) => setShaderForSection('slova', variant)}
-                      section="slova"
+                      selectedVariant={selectedSection ? getShaderForSection(selectedSection) : null}
+                      onSelect={(shaderId) => {
+                        if (selectedSection) {
+                          setShaderForSection(selectedSection, shaderId);
+                          alert(`Shader přiřazen k sekci ${selectedSection}`);
+                        } else {
+                          alert('Nejdříve vyberte sekci pro přiřazení shaderu');
+                        }
+                      }}
+                      section={selectedSection}
+                      category={selectedCategory}
                     />
                   </div>
-                </div>
+                )}
               </div>
             </FramerSection>
 

@@ -5,6 +5,8 @@ import {
   CloseButton,
   AudioPlayerAnimations
 } from './components';
+import { useAudioAnalysis as useAudioAnalysisHook } from '@hooks/useAudioAnalysis';
+import { useAudioAnalysis as useAudioAnalysisContext } from '@contexts/AudioAnalysisContext';
 
 
 const AudioPlayer = ({
@@ -56,6 +58,15 @@ const AudioPlayer = ({
     fadeOutAndClose,
     cachedAudioUrl
   } = useAudioPlayer(audioUrl, albumTracks, currentTrackIndex, onTrackChange, autoplayEnabled);
+
+  // Audio analýza pro shadery
+  const audioAnalysisData = useAudioAnalysisHook(audioRef, isPlaying);
+  const { setAudioData } = useAudioAnalysisContext();
+
+  // Aktualizuj audio data v contextu
+  React.useEffect(() => {
+    setAudioData(audioAnalysisData);
+  }, [audioAnalysisData, setAudioData]);
 
   return (
     <AudioPlayerAnimations

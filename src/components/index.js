@@ -16,3 +16,4 @@ export { default as BackgroundShader } from './BackgroundShader';
 export { default as AudioShaderBackground } from './AudioShaderBackground';
 export { default as ShaderGallery } from './ShaderGallery';
 export { default as ShaderPreview } from './ShaderPreview';
+export { default as ShaderCategorySelector } from './ShaderCategorySelector'; // Shader category selector

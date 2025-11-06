@@ -7,6 +7,7 @@ import { LazyIntroScreen } from '@components/LazyWrapper';
 import { LanguageProvider } from '@contexts/LanguageContext';
 import { UIConfigProvider } from '@contexts/UIConfigContext';
 import { ShaderSettingsProvider } from '@contexts/ShaderSettingsContext';
+import { AudioAnalysisProvider } from '@contexts/AudioAnalysisContext';
 import MonitoringDashboard from '@components/MonitoringDashboard';
 import OfflineIndicator from '@components/OfflineIndicator';
 
@@ -259,7 +260,8 @@ function MeditationApp() {
       <LanguageProvider>
         <UIConfigProvider>
           <ShaderSettingsProvider>
-            <div className="min-h-screen w-full bg-[#f4ddc4] overflow-x-hidden relative">
+            <AudioAnalysisProvider>
+              <div className="min-h-screen w-full bg-[#f4ddc4] overflow-x-hidden relative">
       {/* Intro animace s písmem "Meditácia" */}
       {showIntro && (
         <LazyIntroScreen onIntroComplete={handleIntroComplete} />
@@ -328,6 +330,7 @@ function MeditationApp() {
       {/* <OfflineIndicator isOffline={isOffline} showOfflineMessage={showOfflineMessage} /> */}
 
       </div>
+            </AudioAnalysisProvider>
           </ShaderSettingsProvider>
         </UIConfigProvider>
       </LanguageProvider>

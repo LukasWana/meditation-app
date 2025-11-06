@@ -190,6 +190,9 @@ const BreathScreen = ({
         intensity={0.8}
         enabled={isBreathing}
         opacity={isBreathing ? 1.0 : 0.0}
+        breathPhase={isBreathing ? breathPhase : null}
+        breathInDuration={breathInDuration}
+        breathOutDuration={breathOutDuration}
       />
 
       {/* Hlavní obsah stránky - nad shaderem - průhledné pozadí, aby shader prosvítal */}

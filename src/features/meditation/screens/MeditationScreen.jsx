@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, Suspense, lazy } from 'react';
+import React, { useState, useEffect, useRef, Suspense, lazy, useMemo } from 'react';
 import { motion } from 'framer-motion';
 import { RotateCcw, Image as ImageIcon } from 'lucide-react';
 import { FramerButton, FramerSection, FramerPageTransition, BackButton, BackgroundShader } from '@components';
@@ -37,7 +37,15 @@ const MeditationScreen = ({
   preparationTime
 }) => {
   const { t } = useLanguage();
-  const { getShaderForSection } = useShaderSettings();
+  const { getShaderForSection, shaderSettings } = useShaderSettings();
+
+  // Získej shader pro meditaci - použij shaderSettings přímo pro reaktivitu
+  const meditationShader = useMemo(() => {
+    const shader = shaderSettings?.meditation || 'meditation';
+    console.log('🎨 MeditationScreen: Shader variant:', shader, 'shaderSettings:', shaderSettings);
+    return shader;
+  }, [shaderSettings]);
+
   const [showGallery, setShowGallery] = useState(false);
   const [showDurationPicker, setShowDurationPicker] = useState(false);
   const [breathCycleTime, setBreathCycleTime] = useState(0); // Čas v aktuálním cyklu dýchání (0 až breathInDuration + breathOutDuration)
@@ -214,7 +222,7 @@ const MeditationScreen = ({
   }
   return (
     <FramerPageTransition screenKey="meditation">
-      <BackgroundShader variant={getShaderForSection('meditation')} intensity={0.3} enabled={true} />
+      <BackgroundShader variant={meditationShader} intensity={0.3} enabled={true} />
       <div
         className="min-h-screen w-full max-w-full bg-[#f4ddc4] flex flex-col items-center justify-start p-2 sm:p-8 pb-20 overflow-x-hidden relative"
         style={{ position: 'relative', zIndex: 10 }}
