@@ -3,15 +3,15 @@
  */
 
 // Načti všechny mini-shader soubory
-const miniShadersModules = import.meta.glob('/src/assets/mini-shaders/*.glsl', { 
+const miniShadersModules = import.meta.glob('/src/assets/mini-shaders/*.glsl', {
   as: 'raw',
-  eager: false 
+  eager: false
 });
 
 // Načti všechny shader soubory
-const shadersModules = import.meta.glob('/src/assets/shaders/*.fs', { 
+const shadersModules = import.meta.glob('/src/assets/shaders/*.fs', {
   as: 'raw',
-  eager: false 
+  eager: false
 });
 
 /**
@@ -78,7 +78,7 @@ export const convertShaderToWebGL = (shaderCode, shaderPath) => {
     // Mini-shaders často používají FC (fragCoord), r (resolution), t (time), o (output)
     // Musíme je převést na standardní WebGL
     let converted = shaderCode;
-    
+
     // Pokud shader používá FC (fragCoord), nahraď za v_uv * u_resolution
     if (converted.includes('FC.xy')) {
       converted = `
@@ -87,7 +87,7 @@ export const convertShaderToWebGL = (shaderCode, shaderPath) => {
         uniform vec2 u_resolution;
         uniform float u_intensity;
         varying vec2 v_uv;
-        
+
         void main() {
           vec2 FC = v_uv * u_resolution;
           vec2 r = u_resolution;
@@ -106,15 +106,15 @@ export const convertShaderToWebGL = (shaderCode, shaderPath) => {
           uniform vec2 u_resolution;
           uniform float u_intensity;
           varying vec2 v_uv;
-          
+
           ${converted}
         `;
       }
     }
-    
+
     return converted;
   }
-  
+
   // Pro shaders (.fs) - ISF formát
   if (shaderPath.includes('shaders')) {
     // Odstraň JSON metadata (pokud existuje)
@@ -123,11 +123,11 @@ export const convertShaderToWebGL = (shaderCode, shaderPath) => {
     if (jsonEnd !== -1) {
       code = shaderCode.substring(jsonEnd + 2).trim();
     }
-    
+
     // ISF používá isf_FragNormCoord místo v_uv
     code = code.replace(/isf_FragNormCoord/g, 'v_uv');
     code = code.replace(/IMG_NORM_PIXEL\(/g, 'texture2D(');
-    
+
     // Přidej standardní hlavičku
     if (!code.includes('precision mediump float')) {
       code = `
@@ -136,14 +136,14 @@ export const convertShaderToWebGL = (shaderCode, shaderPath) => {
         uniform vec2 u_resolution;
         uniform float u_intensity;
         varying vec2 v_uv;
-        
+
         ${code}
       `;
     }
-    
+
     return code;
   }
-  
+
   return shaderCode;
 };
 
