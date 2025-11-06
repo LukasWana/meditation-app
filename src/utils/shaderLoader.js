@@ -1591,8 +1591,14 @@ const addISFHeader = (code, constantDeclarations, helperFunctionsStr, isWebGL2 =
   let processedCode = code;
 
   // Odstraň existující #version řádky (může být #version 300 es, #version 100, atd.)
-  processedCode = processedCode.replace(/^\s*#version\s+\d+\s+\w+\s*$/gm, '');
-  processedCode = processedCode.replace(/\n\s*#version\s+\d+\s+\w+\s*\n/g, '\n');
+  // Zlepšený regex, který zachytí všechny případy, včetně případů na začátku souboru
+  processedCode = processedCode.replace(/^\s*#version\s+\d+\s*\w*\s*$/gm, '');
+  processedCode = processedCode.replace(/\n\s*#version\s+\d+\s*\w*\s*\n/g, '\n');
+  processedCode = processedCode.replace(/\r?\n\s*#version\s+\d+\s*\w*\s*\r?\n/g, '\n');
+  // Odstraň také případ, kdy je #version na samostatném řádku na začátku
+  if (processedCode.trim().startsWith('#version')) {
+    processedCode = processedCode.replace(/^\s*#version\s+\d+\s*\w*\s*\r?\n?/m, '');
+  }
 
   // Odstraň existující precision řádky
   processedCode = processedCode.replace(/^\s*precision\s+\w+\s+\w+\s*;?\s*$/gm, '');
@@ -1600,6 +1606,23 @@ const addISFHeader = (code, constantDeclarations, helperFunctionsStr, isWebGL2 =
 
   // Vyčisti prázdné řádky na začátku
   processedCode = processedCode.replace(/^\s*\n+/, '');
+
+  // Pro WebGL 1.0: zajisti, že se odstraní všechny #version řádky (včetně případů, které regex nezachytil)
+  if (!isWebGL2) {
+    // Odstraň všechny #version řádky pro WebGL 1.0
+    processedCode = processedCode.replace(/^\s*#version\s+.*$/gm, '');
+    processedCode = processedCode.replace(/\r?\n\s*#version\s+.*\r?\n?/g, '\n');
+    // Zkontroluj, zda na začátku není #version
+    const trimmed = processedCode.trim();
+    if (trimmed.startsWith('#version')) {
+      const firstNewline = trimmed.indexOf('\n');
+      if (firstNewline !== -1) {
+        processedCode = trimmed.substring(firstNewline + 1);
+      } else {
+        processedCode = '';
+      }
+    }
+  }
 
   // Zkontroluj, zda už není precision v kódu (po odstranění)
   const hasPrecision = processedCode.includes('precision mediump float') ||

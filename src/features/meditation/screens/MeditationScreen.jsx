@@ -222,7 +222,33 @@ const MeditationScreen = ({
   }
   return (
     <FramerPageTransition screenKey="meditation">
-      <BackgroundShader variant={meditationShader} intensity={0.3} enabled={true} />
+      {/* Vrstvení:
+          - Pozadí (bg-[#f4ddc4]): zIndex 0 (nejnižší)
+          - BackgroundShader: zIndex 1 (nad pozadím, pod obsahem)
+          - Obsah: zIndex 10 (nad shaderem)
+      */}
+      {/* Pozadí stránky - pod shaderem - průhledné při přehrávání, aby shader prosvítal */}
+      <div
+        className="min-h-screen w-full max-w-full bg-[#f4ddc4] fixed inset-0"
+        style={{
+          zIndex: 0,
+          opacity: isPlaying ? 0.3 : 1, // Průhledné při přehrávání, aby shader prosvítal
+          transition: 'opacity 3s ease-in-out' // Plynulé prolnutí (3 sekundy)
+        }}
+      />
+
+      {/* BackgroundShader - zobraz pouze při přehrávání s plynulým prolnutím */}
+      <BackgroundShader
+        variant={meditationShader}
+        intensity={0.8}
+        enabled={true}
+        opacity={isPlaying ? 1.0 : 0.0}
+        breathPhase={isPlaying ? breathPhase : null}
+        breathInDuration={breathInDuration}
+        breathOutDuration={breathOutDuration}
+      />
+
+      {/* Hlavní obsah stránky - nad shaderem - průhledné pozadí, aby shader prosvítal */}
       <div
         className="min-h-screen w-full max-w-full bg-[#f4ddc4] flex flex-col items-center justify-start p-2 sm:p-8 pb-20 overflow-x-hidden relative"
         style={{ position: 'relative', zIndex: 10 }}

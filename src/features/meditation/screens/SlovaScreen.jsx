@@ -1,7 +1,8 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { AnimatePresence } from 'framer-motion';
-import { FramerButton, FramerSection, FramerPageTransition, BackButton, BackgroundShader, AudioShaderBackground } from '@components';
+import { FramerButton, FramerSection, FramerPageTransition, BackButton, BackgroundShader } from '@components';
 import { useLanguage } from '@contexts/LanguageContext';
+import { useShaderSettings } from '@contexts/ShaderSettingsContext';
 // Odstraněny skeleton loadery
 import { AudioPlayer } from '@features/audio';
 // Preloadery odstraněny - data se načítají při startu
@@ -18,6 +19,7 @@ const SlovaScreen = ({
 }) => {
   const [activeAudio, setActiveAudio] = useState(null);
   const { t, language } = useLanguage();
+  const { getShaderForSection } = useShaderSettings();
 
   // Debug: zobraz aktuální jazyk a gender
   console.log(`🔍 SlovaScreen - Current language: ${language}`);
@@ -163,17 +165,26 @@ const SlovaScreen = ({
     <FramerPageTransition screenKey="slova">
       {/* Vrstvení:
           - Pozadí (bg-[#f4ddc4]): zIndex 0 (nejnižší)
-          - Shader: zIndex 5 (nad pozadím, pod obsahem)
+          - BackgroundShader: zIndex 1 (nad pozadím, pod obsahem)
           - Obsah: zIndex 10 (nad shaderem)
       */}
-      {/* Pozadí stránky - pod shaderem */}
+      {/* Pozadí stránky - pod shaderem - průhledné při přehrávání, aby shader prosvítal */}
       <div
         className="min-h-screen w-full max-w-full bg-[#f4ddc4] fixed inset-0"
-        style={{ zIndex: 0 }}
+        style={{
+          zIndex: 0,
+          opacity: activeAudio ? 0.3 : 1, // Průhledné při přehrávání, aby shader prosvítal
+          transition: 'opacity 3s ease-in-out' // Plynulé prolnutí (3 sekundy)
+        }}
       />
 
-      {/* Shader přes celou stránku - viditelný na béžovém pozadí při přehrávání */}
-      {activeAudio && <AudioShaderBackground isPlayerActive={isAudioPlaying} />}
+      {/* BackgroundShader - zobraz pouze při přehrávání s plynulým prolnutím */}
+      <BackgroundShader
+        variant={getShaderForSection('slova')}
+        intensity={0.8}
+        enabled={true}
+        opacity={activeAudio && isAudioPlaying ? 1.0 : 0.0}
+      />
 
       {/* Hlavní obsah stránky - nad shaderem */}
       <div

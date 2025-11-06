@@ -171,7 +171,7 @@ const BreathScreen = ({
     <FramerPageTransition screenKey="breath">
       {/* Vrstvení:
           - Pozadí (bg-[#f4ddc4]): zIndex 0 (nejnižší)
-          - BackgroundShader: zIndex 0 (pod obsahem, nad background color)
+          - BackgroundShader: zIndex 1 (nad pozadím, pod obsahem)
           - Obsah: zIndex 10 (nad shaderem)
       */}
       {/* Pozadí stránky - pod shaderem - průhledné při dýchání, aby shader prosvítal */}
@@ -188,7 +188,7 @@ const BreathScreen = ({
       <BackgroundShader
         variant={getShaderForSection('dychani')}
         intensity={0.8}
-        enabled={isBreathing}
+        enabled={true}
         opacity={isBreathing ? 1.0 : 0.0}
         breathPhase={isBreathing ? breathPhase : null}
         breathInDuration={breathInDuration}

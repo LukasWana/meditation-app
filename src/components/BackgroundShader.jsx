@@ -466,12 +466,14 @@ void main() {
       previousVariantRef.current = variant;
     }
 
-    if (!enabled) {
-      console.log('🔴 BackgroundShader: Disabled, resetuji stav');
-      setGl(null);
-      setProgramInfo(null);
-      return;
-    }
+    // Poznámka: Shader se inicializuje i když je enabled=false, aby byl připraven pro rychlé zapnutí
+    // Opacity se řídí opacity prop, ne enabled prop
+    // if (!enabled) {
+    //   console.log('🔴 BackgroundShader: Disabled, resetuji stav');
+    //   setGl(null);
+    //   setProgramInfo(null);
+    //   return;
+    // }
 
     // Pokud načítáme shader ze souboru, počkej na načtení
     if (isFileShader && !loadedShaderCode && !shaderError) {
@@ -614,7 +616,7 @@ void main() {
       window.removeEventListener('resize', resizeCanvas);
       // Program Manager si spravuje životnost programů, takže neodstraňujeme programy zde
     };
-  }, [enabled, variant, isFileShader, loadedShaderCode, shaderError, fragmentShaderSource]);
+  }, [variant, isFileShader, loadedShaderCode, shaderError, fragmentShaderSource]);
 
   // Render loop
   useEffect(() => {
@@ -625,7 +627,18 @@ void main() {
       variant
     });
 
-    if (!gl || !programInfo || !enabled) {
+    // Render loop běží i když je enabled=false, ale opacity je 0
+    // To umožňuje plynulé prolnutí při změně opacity
+    if (!gl || !programInfo) {
+      if (animationFrameRef.current) {
+        cancelAnimationFrame(animationFrameRef.current);
+        animationFrameRef.current = null;
+      }
+      return;
+    }
+
+    // Pokud je opacity 0, zastav renderování (ale shader zůstane inicializován)
+    if (opacity <= 0) {
       if (animationFrameRef.current) {
         cancelAnimationFrame(animationFrameRef.current);
         animationFrameRef.current = null;
@@ -737,12 +750,12 @@ void main() {
     };
   }, [gl, programInfo, enabled, intensity, breathPhase, breathInDuration, breathOutDuration]);
 
-  // Pokud je shader disabled a opacity je 0, můžeme canvas zcela odstranit
-  // Jinak ho necháme zobrazený pro plynulé prolnutí
-  if (!enabled && opacity <= 0) {
-    console.log('⏸️ BackgroundShader: Není zobrazen - disabled a opacity 0');
-    return null;
-  }
+  // Canvas se zobrazuje vždy, opacity se řídí opacity prop
+  // To umožňuje plynulé prolnutí při změně opacity
+  // if (!enabled && opacity <= 0) {
+  //   console.log('⏸️ BackgroundShader: Není zobrazen - disabled a opacity 0');
+  //   return null;
+  // }
 
   console.log('🎨 BackgroundShader: Renderuji canvas, variant:', variant, 'intensity:', intensity, 'opacity:', opacity, 'enabled:', enabled, 'error:', shaderError);
 
@@ -787,7 +800,7 @@ void main() {
           left: 0,
           width: '100vw',
           height: '100vh',
-          zIndex: 0, // Pod obsahem, nad background color
+          zIndex: 1, // Nad pozadím (zIndex 0), pod obsahem (zIndex 10)
           pointerEvents: 'none',
           opacity: opacity,
           backgroundColor: 'transparent',
