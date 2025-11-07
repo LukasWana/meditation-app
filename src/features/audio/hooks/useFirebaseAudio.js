@@ -13,6 +13,14 @@ export const useFirebaseAudio = (audioFileName) => {
   const [fallbackUsed, setFallbackUsed] = useState(false);
   const [dataSource, setDataSource] = useState(null); // 'cache' nebo 'internet'
 
+  const mapUrlForDevProxy = (url) => {
+    if (!url) return url;
+    if (import.meta.env.DEV && url.startsWith('https://firebasestorage.googleapis.com')) {
+      return url.replace('https://firebasestorage.googleapis.com', '/firebase-storage');
+    }
+    return url;
+  };
+
   // Pokud není fileName, vrať prázdné hodnoty
   if (!audioFileName) {
     return { audioUrl: null, loading: false, error: 'No fileName provided' };
@@ -46,7 +54,7 @@ export const useFirebaseAudio = (audioFileName) => {
         const offlineUrl = await enhancedOfflineCacheService.getOfflineUrl(audioFileName);
         if (offlineUrl) {
           console.log('🔗 Using offline URL for:', audioFileName, '(saving mobile data)');
-          setAudioUrl(offlineUrl);
+          setAudioUrl(mapUrlForDevProxy(offlineUrl));
           setCurrentFileName(audioFileName);
           setDataSource('cache');
           setLoading(false);
@@ -57,7 +65,7 @@ export const useFirebaseAudio = (audioFileName) => {
         const cachedUrl = cacheService.getAudioUrl(audioFileName);
         if (cachedUrl) {
           console.log('🔗 Using cached URL for:', audioFileName);
-          setAudioUrl(cachedUrl);
+          setAudioUrl(mapUrlForDevProxy(cachedUrl));
           setCurrentFileName(audioFileName);
           setDataSource('cache');
           setLoading(false);
@@ -80,7 +88,7 @@ export const useFirebaseAudio = (audioFileName) => {
         // Ulož do cache
         cacheService.setAudioUrl(audioFileName, url);
 
-        setAudioUrl(url);
+        setAudioUrl(mapUrlForDevProxy(url));
         setCurrentFileName(audioFileName);
         setDataSource('internet');
         setFallbackUsed(false); // Reset fallback flag při úspěchu
@@ -101,7 +109,7 @@ export const useFirebaseAudio = (audioFileName) => {
           const fallbackUrl = `/media/${audioFileName}`;
           console.log('🔗 Using fallback URL:', fallbackUrl);
 
-          setAudioUrl(fallbackUrl);
+          setAudioUrl(mapUrlForDevProxy(fallbackUrl));
           setCurrentFileName(audioFileName);
           setDataSource('cache');
           setFallbackUsed(true);

@@ -147,28 +147,29 @@ const AudioPlayerHudbaScreen = ({
     }
   }, [activeAudio, onNavigateToScreen]);
 
+  // Debug: Zkontroluj, co se zobrazuje (hook musí být před podmíněným returnem)
+  React.useEffect(() => {
+    if (!DEBUG_AUDIO_PLAYER_LOGS) {
+      return;
+    }
+    console.log('🎨 AudioPlayerHudbaScreen: Shader info', {
+      currentShader,
+      isColorMode,
+      backgroundColor,
+      overlayColor,
+      transitionStateKey: transitionState?.toShaderKey,
+      shaderFromSettings: getShaderForSection('hudba'),
+      colorFromSettings: getColorForSection('hudba'),
+      willShowShader: !isColorMode,
+      willShowColor: isColorMode,
+      opacity: 1.0
+    });
+  }, [currentShader, isColorMode, backgroundColor, overlayColor, transitionState, getShaderForSection, getColorForSection]);
+
   // Pokud není načteno žádné audio, nezobrazuj nic
   if (!activeAudio) {
     return null;
   }
-
-  // Debug: Zkontroluj, co se zobrazuje
-  React.useEffect(() => {
-    if (DEBUG_AUDIO_PLAYER_LOGS) {
-      console.log('🎨 AudioPlayerHudbaScreen: Shader info', {
-        currentShader,
-        isColorMode,
-        backgroundColor,
-        overlayColor,
-        transitionStateKey: transitionState?.toShaderKey,
-        shaderFromSettings: getShaderForSection('hudba'),
-        colorFromSettings: getColorForSection('hudba'),
-        willShowShader: !isColorMode,
-        willShowColor: isColorMode,
-        opacity: 1.0
-      });
-    }
-  }, [currentShader, isColorMode, backgroundColor, overlayColor, transitionState, getShaderForSection, getColorForSection]);
 
   return (
     <FramerPageTransition screenKey="audio-player-hudba">
@@ -194,6 +195,7 @@ const AudioPlayerHudbaScreen = ({
         enabled={true}
         opacity={isColorMode ? 1.0 : 1.0} // Vždy zobraz s plnou opacity na stránce s přehrávačem
         audioData={audioData} // Použij audio data pro audio-reactive shadery
+        forceSquare={currentShader?.startsWith('shader-') ? true : null}
       />
 
       {/* Audio Player - zobraz jako fullscreen overlay */}

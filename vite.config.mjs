@@ -110,6 +110,14 @@ export default defineConfig({
       'meditation-app.loca.lt',
       'tough-oranges-return.loca.lt',
       '.loca.lt'
-    ]
+    ],
+    proxy: {
+      '/firebase-storage': {
+        target: 'https://firebasestorage.googleapis.com',
+        changeOrigin: true,
+        secure: true,
+        rewrite: (path) => path.replace(/^\/firebase-storage/, '')
+      }
+    }
   }
 })

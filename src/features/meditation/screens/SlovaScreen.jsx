@@ -188,12 +188,11 @@ const SlovaScreen = ({
 
       {/* Hlavní obsah stránky - nad shaderem */}
       <div
-        className={`min-h-screen w-full max-w-full flex flex-col items-center justify-start p-2 sm:p-8 pb-20 overflow-x-hidden relative ${
-          activeAudio ? 'pointer-events-none' : ''
-        }`}
+        className="min-h-screen w-full max-w-full flex flex-col items-center justify-start p-2 sm:p-8 pb-20 overflow-x-hidden relative"
         style={{
           position: 'relative',
-          zIndex: 10 // Obsah je nad shaderem (zIndex 5) a pozadím (zIndex 0)
+          zIndex: 10, // Obsah je nad shaderem (zIndex 5) a pozadím (zIndex 0)
+          pointerEvents: activeAudio ? 'none' : 'auto'
         }}
         onTouchStart={activeAudio ? undefined : onTouchStart}
         onTouchMove={activeAudio ? undefined : onTouchMove}
@@ -299,37 +298,35 @@ const SlovaScreen = ({
               ))
             )}
           </div>
-
         </div>
-
-        {/* Audio Player Modal */}
-        <AnimatePresence>
-          {activeAudio && (
-            <AudioPlayer
-              key="audio-player"
-              audioSrc={activeAudio.audioSrc}
-              title={activeAudio.title}
-              onClose={handleCloseAudio}
-              albumTracks={activeAudio.albumTracks}
-              currentTrackIndex={activeAudio.currentTrackIndex}
-              onTrackChange={(newIndex) => {
-                if (activeAudio.albumTracks && activeAudio.albumTracks[newIndex]) {
-                  const track = activeAudio.albumTracks[newIndex];
-                  setActiveAudio({
-                    ...activeAudio,
-                    audioSrc: track.audioSrc,
-                    title: track.trackName,
-                    fileName: track.fileName,
-                    currentTrackIndex: newIndex
-                  });
-                }
-              }}
-              allFiles={activeAudio.allFiles || []}
-              autoplayEnabled={true}
-            />
-          )}
-        </AnimatePresence>
       </div>
+      {/* Audio Player Modal */}
+      <AnimatePresence>
+        {activeAudio && (
+          <AudioPlayer
+            key="audio-player"
+            audioSrc={activeAudio.audioSrc}
+            title={activeAudio.title}
+            onClose={handleCloseAudio}
+            albumTracks={activeAudio.albumTracks}
+            currentTrackIndex={activeAudio.currentTrackIndex}
+            onTrackChange={(newIndex) => {
+              if (activeAudio.albumTracks && activeAudio.albumTracks[newIndex]) {
+                const track = activeAudio.albumTracks[newIndex];
+                setActiveAudio({
+                  ...activeAudio,
+                  audioSrc: track.audioSrc,
+                  title: track.trackName,
+                  fileName: track.fileName,
+                  currentTrackIndex: newIndex
+                });
+              }
+            }}
+            allFiles={activeAudio.allFiles || []}
+            autoplayEnabled={true}
+          />
+        )}
+      </AnimatePresence>
     </FramerPageTransition>
   );
 };

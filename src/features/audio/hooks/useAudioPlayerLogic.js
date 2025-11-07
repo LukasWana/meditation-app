@@ -1,8 +1,10 @@
 import { useState, useEffect, useMemo, useCallback } from 'react';
+import { ref, getDownloadURL } from 'firebase/storage';
 import { useFirebaseAudio } from './useFirebaseAudio';
 import { useAudioContext } from './useAudioContext';
 import { useAutoplay } from './useAutoplay';
 import { useVoiceSwitcher } from './useVoiceSwitcher';
+import { storage } from '@services/firebase';
 
 export const useAudioPlayerLogic = ({
   audioSrc,
@@ -69,13 +71,85 @@ export const useAudioPlayerLogic = ({
     return null;
   }, []);
 
-  const fileName = useMemo(() => getFileNameFromUrl(currentAudioFile), [currentAudioFile, getFileNameFromUrl]);
+  const fileName = useMemo(() => {
+    const extracted = getFileNameFromUrl(currentAudioFile);
+    if (!extracted && currentAudioFile) {
+      console.warn('⚠️ useAudioPlayerLogic: Failed to extract file name from URL', {
+        currentAudioFile
+      });
+    }
+    return extracted;
+  }, [currentAudioFile]);
 
   // Načtení URL z Firebase Storage
   const { audioUrl, loading: firebaseLoading, error: firebaseError, dataSource } = useFirebaseAudio(fileName);
 
+  const [manualAudioUrl, setManualAudioUrl] = useState(null);
+  const [manualDataSource, setManualDataSource] = useState(null);
+
+  const mapUrlForDevProxy = useCallback((url) => {
+    if (!url) return url;
+    if (import.meta.env.DEV && url.startsWith('https://firebasestorage.googleapis.com')) {
+      return url.replace('https://firebasestorage.googleapis.com', '/firebase-storage');
+    }
+    return url;
+  }, []);
+
+  useEffect(() => {
+    let isMounted = true;
+
+    const resolveFallbackUrl = async () => {
+      if (audioUrl) {
+        if (isMounted) {
+          setManualAudioUrl(null);
+          setManualDataSource(null);
+        }
+        return;
+      }
+
+      const fallbackDownloadUrl = typeof currentAudioFile === 'string' && currentAudioFile.startsWith('http')
+        ? currentAudioFile
+        : null;
+
+      if (fileName) {
+        try {
+          const storageRef = ref(storage, fileName);
+          const url = await getDownloadURL(storageRef);
+          if (isMounted) {
+            setManualAudioUrl(mapUrlForDevProxy(url));
+            setManualDataSource('firebase');
+            console.warn('⚠️ useAudioPlayerLogic: Resolved audio URL via manual getDownloadURL fallback', { fileName });
+          }
+          return;
+        } catch (fallbackError) {
+          console.error('❌ useAudioPlayerLogic: getDownloadURL fallback failed', {
+            fileName,
+            error: fallbackError
+          });
+        }
+      }
+
+      if (fallbackDownloadUrl && isMounted) {
+        setManualAudioUrl(mapUrlForDevProxy(fallbackDownloadUrl));
+        setManualDataSource('direct');
+        console.warn('⚠️ useAudioPlayerLogic: Falling back to direct audio URL', {
+          fallbackDownloadUrl
+        });
+      }
+    };
+
+    resolveFallbackUrl();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [audioUrl, fileName, currentAudioFile, mapUrlForDevProxy]);
+
+  const effectiveAudioUrl = mapUrlForDevProxy(audioUrl) || manualAudioUrl;
+  const effectiveDataSource = audioUrl ? dataSource : (manualDataSource || dataSource);
+
   // AudioContext management
-  const { audioContext, isAudioActivated } = useAudioContext(audioUrl);
+  const { audioContext, isAudioActivated } = useAudioContext(effectiveAudioUrl);
 
   // Debug logy pro audio URL
   useEffect(() => {
@@ -105,7 +179,7 @@ export const useAudioPlayerLogic = ({
 
   return {
     // Audio data
-    audioUrl,
+    audioUrl: effectiveAudioUrl,
     firebaseLoading,
     firebaseError,
     fileName,
@@ -127,6 +201,6 @@ export const useAudioPlayerLogic = ({
     setCurrentAudioFile,
 
     // Data source indicator
-    dataSource
+    dataSource: effectiveDataSource
   };
 };

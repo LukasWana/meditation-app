@@ -30,6 +30,14 @@ export const useBreathSounds = (
   const [outSoundUrl, setOutSoundUrl] = useState(null);
   const [clickSoundUrl, setClickSoundUrl] = useState(null);
 
+  const mapUrlForDevProxy = (url) => {
+    if (!url) return url;
+    if (import.meta.env.DEV && typeof url === 'string' && url.startsWith('https://firebasestorage.googleapis.com')) {
+      return url.replace('https://firebasestorage.googleapis.com', '/firebase-storage');
+    }
+    return url;
+  };
+
   // Načtení URL pro nádech zvuk
   useEffect(() => {
     if (breathInSound === 'none') {
@@ -42,14 +50,14 @@ export const useBreathSounds = (
         // Zkus načíst z metadata
         const metadata = await realtimeMetadataService.getFileMetadata(breathInSound);
         if (metadata && (metadata.downloadURL || metadata.audioSrc)) {
-          setInSoundUrl(metadata.downloadURL || metadata.audioSrc);
+          setInSoundUrl(mapUrlForDevProxy(metadata.downloadURL || metadata.audioSrc));
           return;
         }
 
         // Pokud není v metadata, zkus načíst přímo z Firebase Storage
         const audioRef = ref(storage, breathInSound);
         const url = await getDownloadURL(audioRef);
-        setInSoundUrl(url);
+        setInSoundUrl(mapUrlForDevProxy(url));
       } catch (error) {
         console.error('Failed to load breath in sound URL:', error);
         setInSoundUrl(null);
@@ -71,14 +79,14 @@ export const useBreathSounds = (
         // Zkus načíst z metadata
         const metadata = await realtimeMetadataService.getFileMetadata(breathOutSound);
         if (metadata && (metadata.downloadURL || metadata.audioSrc)) {
-          setOutSoundUrl(metadata.downloadURL || metadata.audioSrc);
+          setOutSoundUrl(mapUrlForDevProxy(metadata.downloadURL || metadata.audioSrc));
           return;
         }
 
         // Pokud není v metadata, zkus načíst přímo z Firebase Storage
         const audioRef = ref(storage, breathOutSound);
         const url = await getDownloadURL(audioRef);
-        setOutSoundUrl(url);
+        setOutSoundUrl(mapUrlForDevProxy(url));
       } catch (error) {
         console.error('Failed to load breath out sound URL:', error);
         setOutSoundUrl(null);
@@ -100,14 +108,14 @@ export const useBreathSounds = (
         // Zkus načíst z metadata
         const metadata = await realtimeMetadataService.getFileMetadata(breathClickSound);
         if (metadata && (metadata.downloadURL || metadata.audioSrc)) {
-          setClickSoundUrl(metadata.downloadURL || metadata.audioSrc);
+          setClickSoundUrl(mapUrlForDevProxy(metadata.downloadURL || metadata.audioSrc));
           return;
         }
 
         // Pokud není v metadata, zkus načíst přímo z Firebase Storage
         const audioRef = ref(storage, breathClickSound);
         const url = await getDownloadURL(audioRef);
-        setClickSoundUrl(url);
+        setClickSoundUrl(mapUrlForDevProxy(url));
       } catch (error) {
         console.error('Failed to load breath click sound URL:', error);
         setClickSoundUrl(null);

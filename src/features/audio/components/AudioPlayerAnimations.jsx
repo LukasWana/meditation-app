@@ -34,7 +34,7 @@ export const AudioPlayerAnimations = ({
       )}
 
       <motion.div
-        className={`fixed inset-0 ${backgroundColor ? '' : ''} flex items-center justify-center z-50 pointer-events-none ${className}`}
+        className={`fixed inset-0 ${backgroundColor ? '' : ''} flex items-center justify-center z-50 pointer-events-auto ${className}`}
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
@@ -52,7 +52,7 @@ export const AudioPlayerAnimations = ({
       >
         {/* Responsive Player Container */}
         <motion.div
-          className="w-full h-full flex flex-col items-center justify-center relative overflow-hidden pointer-events-auto"
+          className="w-full h-full flex flex-col items-center justify-center relative overflow-hidden"
           style={{ backgroundColor: 'transparent' }} // Kontejner je průhledný, barva je v samostatném divu
         initial={{ scale: 0.95, opacity: 0 }}
         animate={{ scale: 1, opacity: 1 }}

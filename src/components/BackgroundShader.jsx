@@ -19,7 +19,8 @@ const BackgroundShader = ({
   breathInDuration = 4, // Délka nádechu v sekundách
   breathOutDuration = 4, // Délka výdechu v sekundách
   // Audio data pro synchronizaci s hudbou
-  audioData = null // { frequencies: Array<number>, amplitude: number, bass: number, mid: number, treble: number }
+  audioData = null, // { frequencies: Array<number>, amplitude: number, bass: number, mid: number, treble: number }
+  forceSquare = null // Pokud je true, shader drží poměr stran 1:1 (výchozí auto podle varianty)
 }) => {
   const canvasRef = useRef(null);
   const animationFrameRef = useRef(null);
@@ -68,6 +69,8 @@ const BackgroundShader = ({
   // Zkontroluj, zda je to barva místo shaderu (formát: __COLOR__#hex)
   const isColorMode = effectiveVariant && effectiveVariant.startsWith('__COLOR__');
   const colorValue = isColorMode ? effectiveVariant.replace('__COLOR__', '') : null;
+  const isShaderAsset = effectiveVariant && effectiveVariant.startsWith('shader-');
+  const shouldForceSquare = forceSquare !== null ? forceSquare : isShaderAsset;
 
   // Inicializuj Program Manager
   useEffect(() => {
@@ -489,8 +492,14 @@ void main() {
     if (DEBUG_SHADER_LOGS) {
       console.log('🔄 BackgroundShader: fragmentShaderSource useMemo, variant:', effectiveVariant, 'isFileShader:', isFileShader, 'loadedShaderCode:', !!loadedShaderCode);
     }
-    if (isFileShader && loadedShaderCode) {
-      return loadedShaderCode;
+    if (isFileShader) {
+      if (loadedShaderCode && !shaderError) {
+        return loadedShaderCode;
+      }
+      if (shaderError) {
+        console.warn('⚠️ BackgroundShader: Falling back to default shader due to error:', shaderError);
+      }
+      return getFragmentShader('default', false);
     }
     // Pro vestavěné shadery použij getFragmentShader s WebGL 1.0 jako základ
     // (bude převedeno na WebGL 2.0 při kompilaci pokud je potřeba)
@@ -796,14 +805,17 @@ void main() {
       if (programInfo.uniforms.u_time) {
         gl.uniform1f(programInfo.uniforms.u_time, timeRef.current);
       }
+      const squareDimension = Math.min(viewportWidth, viewportHeight);
+      const shaderWidth = shouldForceSquare ? squareDimension : viewportWidth;
+      const shaderHeight = shouldForceSquare ? squareDimension : viewportHeight;
+
       if (programInfo.uniforms.u_resolution) {
-        // Použij viewport rozlišení (bez devicePixelRatio), aby shadery byly vycentrované na play button
-        // Play buttony jsou ve viewport souřadnicích, ne v canvas souřadnicích
-        gl.uniform2f(programInfo.uniforms.u_resolution, viewportWidth, viewportHeight);
+        // Nastav rozlišení shaderu – pro forceSquare použij čtvercové rozměry
+        gl.uniform2f(programInfo.uniforms.u_resolution, shaderWidth, shaderHeight);
       }
       if (programInfo.uniforms.u_mouse !== undefined && programInfo.uniforms.u_mouse !== null) {
-        const mouseX = viewportWidth * 0.5;
-        const mouseY = viewportHeight * 0.5;
+        const mouseX = shaderWidth * 0.5;
+        const mouseY = shaderHeight * 0.5;
         gl.uniform2f(programInfo.uniforms.u_mouse, mouseX, mouseY);
       }
       if (programInfo.uniforms.u_intensity) {
@@ -941,8 +953,6 @@ void main() {
   // Zobraz chybu v UI, pokud je shader error a je enabled
   if (shaderError && enabled) {
     console.error('❌ BackgroundShader: Shader error:', shaderError);
-    // Zobraz chybu v konzoli, ale neblokuj renderování - použij fallback
-    // Můžeme zobrazit chybu jako overlay nebo v konzoli
   }
 
   return (
