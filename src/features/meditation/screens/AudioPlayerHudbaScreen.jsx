@@ -7,6 +7,8 @@ import { useAudioAnalysis } from '@contexts/AudioAnalysisContext';
 import { usePlayback } from '@contexts/ShaderPlaybackContext';
 import { shouldUseDarkMode } from '@utils/colorUtils';
 
+const DEBUG_AUDIO_PLAYER_LOGS = false;
+
 const AudioPlayerHudbaScreen = ({
   onNavigateToScreen,
   onTouchStart,
@@ -46,17 +48,21 @@ const AudioPlayerHudbaScreen = ({
         // Pokud je nastaven shader, použij shader místo barvy (barva bude v přehrávači)
         const shader = getShaderForSection('hudba');
         if (shader && shader !== 'default') {
-          console.log('🎨 AudioPlayerHudbaScreen: Používám shader místo barvy z transitionState', {
-            shader,
-            color: transitionKey
-          });
+          if (DEBUG_AUDIO_PLAYER_LOGS) {
+            console.log('🎨 AudioPlayerHudbaScreen: Používám shader místo barvy z transitionState', {
+              shader,
+              color: transitionKey
+            });
+          }
           return shader;
         }
       }
 
-      console.log('🎨 AudioPlayerHudbaScreen: Používám shader/barvu z transitionState', {
-        key: transitionKey
-      });
+      if (DEBUG_AUDIO_PLAYER_LOGS) {
+        console.log('🎨 AudioPlayerHudbaScreen: Používám shader/barvu z transitionState', {
+          key: transitionKey
+        });
+      }
       return transitionKey;
     }
 
@@ -64,29 +70,36 @@ const AudioPlayerHudbaScreen = ({
     const shader = getShaderForSection('hudba');
     // Pokud je shader nastaven a není null, použij ho (včetně 'hudba', 'default', atd.)
     if (shader) {
-      console.log('🎨 AudioPlayerHudbaScreen: Používám shader z settings', {
-        shader
-      });
+      if (DEBUG_AUDIO_PLAYER_LOGS) {
+        console.log('🎨 AudioPlayerHudbaScreen: Používám shader z settings', {
+          shader
+        });
+      }
       return shader;
     }
 
     // Pokud není shader, zkontroluj barvu
     const color = getColorForSection('hudba');
     if (color) {
-      console.log('🎨 AudioPlayerHudbaScreen: Používám barvu z settings', {
-        color
-      });
+      if (DEBUG_AUDIO_PLAYER_LOGS) {
+        console.log('🎨 AudioPlayerHudbaScreen: Používám barvu z settings', {
+          color
+        });
+      }
       return `__COLOR__${color}`;
     }
 
     // Default shader
-    console.log('🎨 AudioPlayerHudbaScreen: Používám default shader');
+    if (DEBUG_AUDIO_PLAYER_LOGS) {
+      console.log('🎨 AudioPlayerHudbaScreen: Používám default shader');
+    }
     return 'default';
   }, [transitionState?.toShaderKey, getColorForSection, getShaderForSection]);
 
   // Handler pro zavření přehrávače
   const handleCloseAudio = () => {
     try {
+      setActiveAudio(null);
       localStorage.removeItem('meditation-app-active-audio-hudba');
       const previousScreen = localStorage.getItem('meditation-app-previous-screen') || 'hudba';
       onPlayerStateChange?.(false);
@@ -144,18 +157,20 @@ const AudioPlayerHudbaScreen = ({
 
   // Debug: Zkontroluj, co se zobrazuje
   React.useEffect(() => {
-    console.log('🎨 AudioPlayerHudbaScreen: Shader info', {
-      currentShader,
-      isColorMode,
-      backgroundColor,
-      overlayColor,
-      transitionStateKey: transitionState?.toShaderKey,
-      shaderFromSettings: getShaderForSection('hudba'),
-      colorFromSettings: getColorForSection('hudba'),
-      willShowShader: !isColorMode,
-      willShowColor: isColorMode,
-      opacity: 1.0
-    });
+    if (DEBUG_AUDIO_PLAYER_LOGS) {
+      console.log('🎨 AudioPlayerHudbaScreen: Shader info', {
+        currentShader,
+        isColorMode,
+        backgroundColor,
+        overlayColor,
+        transitionStateKey: transitionState?.toShaderKey,
+        shaderFromSettings: getShaderForSection('hudba'),
+        colorFromSettings: getColorForSection('hudba'),
+        willShowShader: !isColorMode,
+        willShowColor: isColorMode,
+        opacity: 1.0
+      });
+    }
   }, [currentShader, isColorMode, backgroundColor, overlayColor, transitionState, getShaderForSection, getColorForSection]);
 
   return (

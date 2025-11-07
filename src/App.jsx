@@ -240,13 +240,27 @@ function MeditationApp() {
       console.log('Dostupné úrovně: silent, error, warn, info, debug');
     };
 
+    window.logLevels = {
+      silent: 'silent',
+      error: 'error',
+      warn: 'warn',
+      info: 'info',
+      debug: 'debug'
+    };
+
+    Object.entries(window.logLevels).forEach(([key, value]) => {
+      if (typeof window[key] === 'undefined') {
+        window[key] = value;
+      }
+    });
+
     console.log('🔍 Debug funkce dostupné v konzoli:');
     console.log('  - showDatabaseData() - zobrazí database viewer');
     console.log('  - debugSlovaFiles() - zobrazí slova soubory v Realtime Database');
     console.log('  - debugCache() - zobrazí detaily cache');
     console.log('  - clearCache() - vymaže cache');
     console.log('  - testAudioPlayback(fileName) - otestuje přehrávání konkrétního souboru');
-    console.log('  - setLogLevel(level) - nastaví úroveň logování (silent, error, warn, info, debug)');
+    console.log("  - setLogLevel(level) - nastaví úroveň logování (např. setLogLevel('silent') nebo setLogLevel(logLevels.silent))");
     }
   }, []);
 
