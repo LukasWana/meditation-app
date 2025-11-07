@@ -78,6 +78,7 @@ function extractLocations(gl, program) {
     uniforms: {
       u_time: gl.getUniformLocation(program, 'u_time'),
       u_resolution: gl.getUniformLocation(program, 'u_resolution'),
+      u_mouse: gl.getUniformLocation(program, 'u_mouse'),
       u_intensity: gl.getUniformLocation(program, 'u_intensity'),
       u_breathPhase: gl.getUniformLocation(program, 'u_breathPhase'),
       u_breathProgress: gl.getUniformLocation(program, 'u_breathProgress'),

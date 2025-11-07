@@ -272,7 +272,23 @@ const createAndCompileShader = (gl, type, source, shaderId = 'unknown') => {
     return null;
   }
 
-  gl.shaderSource(shader, source);
+  const isWebGL2 = gl instanceof WebGL2RenderingContext;
+  let adaptedSource = source;
+
+  if (isWebGL2) {
+    if (!adaptedSource.trimStart().startsWith('#version')) {
+      adaptedSource = `#version 300 es\n${adaptedSource}`;
+    }
+  } else {
+    adaptedSource = adaptedSource
+      .replace(/^\s*#version\s+.*$/gm, '')
+      .replace(/\bout\s+vec4\s+fragColor\s*;?\s*/g, '')
+      .replace(/(^|\s)in\s+(vec[234]\s+v_\w+)/g, '$1varying $2')
+      .replace(/(^|\s)out\s+(vec[234]\s+v_\w+)/g, '$1varying $2')
+      .replace(/\bfragColor\b/g, 'gl_FragColor');
+  }
+
+  gl.shaderSource(shader, adaptedSource);
   gl.compileShader(shader);
 
   if (gl.getShaderParameter(shader, gl.COMPILE_STATUS)) {
@@ -517,11 +533,19 @@ export const generateShaderPreviews = async (
               // Nastav uniformy
               const timeLocation = gl.getUniformLocation(program, 'u_time');
               const resolutionLocation = gl.getUniformLocation(program, 'u_resolution');
+              const mouseLocation = gl.getUniformLocation(program, 'u_mouse');
               const intensityLocation = gl.getUniformLocation(program, 'u_intensity');
 
               if (timeLocation) gl.uniform1f(timeLocation, fixedTime);
+              const width = previewCanvas.width || 1;
+              const height = previewCanvas.height || 1;
               if (resolutionLocation) {
-                gl.uniform2f(resolutionLocation, previewCanvas.width, previewCanvas.height);
+                gl.uniform2f(resolutionLocation, width, height);
+              }
+              if (mouseLocation) {
+                const mouseX = width * 0.5;
+                const mouseY = height * 0.5;
+                gl.uniform2f(mouseLocation, mouseX, mouseY);
               }
               if (intensityLocation) gl.uniform1f(intensityLocation, intensity);
 

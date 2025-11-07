@@ -1769,6 +1769,15 @@ const convertMainImageShader = (shaderCode, isWebGL2 = false) => {
   code = code.replace(/\biAudio\.w\b/g, 'u_audioAmplitude');
   code = code.replace(/\biAudio\b/g, 'vec4(u_audioBass, u_audioMid, u_audioTreble, u_audioAmplitude)');
 
+  // Konvertuj iMouse na u_mouse (simulovaná pozice kurzoru ve středu obrazovky)
+  code = code.replace(/\biMouse\.xy\b/g, 'u_mouse');
+  code = code.replace(/\biMouse\.x\b/g, 'u_mouse.x');
+  code = code.replace(/\biMouse\.y\b/g, 'u_mouse.y');
+  code = code.replace(/\biMouse\.zw\b/g, 'vec2(0.0)');
+  code = code.replace(/\biMouse\.z\b/g, '0.0');
+  code = code.replace(/\biMouse\.w\b/g, '0.0');
+  code = code.replace(/\biMouse\b/g, 'vec4(u_mouse, 0.0, 0.0)');
+
   // Konvertuj fragCoord na v_uv
   // fragCoord je v pixelech, v_uv je v normalizovaných souřadnicích [0,1]
   // fragCoord / iResolution.xy -> v_uv
@@ -1823,41 +1832,30 @@ const convertMainImageShader = (shaderCode, isWebGL2 = false) => {
                        code.includes('precision highp float') ||
                        code.includes('precision lowp float');
 
-  // Sestav finální shader
-  if (isWebGL2) {
-    // Pro WebGL 2.0: zkontroluj, zda už není fragColor deklarováno v kódu
-    let finalCode = code;
-    if (!code.includes('out vec4 fragColor') && !code.includes('fragColor')) {
-      // Přidej deklaraci fragColor před void main()
-      finalCode = code.replace(/void\s+main\s*\(/g, 'out vec4 fragColor;\nvoid main(');
-    }
+  const headerLines = [
+    versionHeader,
+    'precision mediump float;',
+    'uniform float u_time;',
+    'uniform vec2 u_resolution;',
+    'uniform vec2 u_mouse;',
+    'uniform float u_intensity;',
+    'uniform float u_audioBass;',
+    'uniform float u_audioMid;',
+    'uniform float u_audioTreble;',
+    'uniform float u_audioAmplitude;',
+    `${varyingOut} vec2 v_uv;`
+  ].filter(Boolean);
 
-    return `${versionHeader}
-precision mediump float;
-uniform float u_time;
-uniform vec2 u_resolution;
-uniform float u_intensity;
-uniform float u_audioBass;
-uniform float u_audioMid;
-uniform float u_audioTreble;
-uniform float u_audioAmplitude;
-${varyingOut} vec2 v_uv;
-${finalCode}
-`;
-  } else {
-    // Pro WebGL 1.0: zkontroluj, zda není fragColor v kódu (mělo by být nahrazeno za gl_FragColor)
-    // Pokud je, přidej deklaraci gl_FragColor není potřeba (je vestavěné)
-    return `
-precision mediump float;
-uniform float u_time;
-uniform vec2 u_resolution;
-uniform float u_intensity;
-uniform float u_audioBass;
-uniform float u_audioMid;
-uniform float u_audioTreble;
-uniform float u_audioAmplitude;
-${varyingOut} vec2 v_uv;
-${code}
+  if (isWebGL2) {
+    const hasFragColorDecl = /\bout\s+vec4\s+fragColor\b/.test(code);
+    const fragColorDecl = hasFragColorDecl ? '' : 'out vec4 fragColor;\n';
+
+    return `${headerLines.join('\n')}
+${fragColorDecl}${code}
 `;
   }
+
+  return `${headerLines.join('\n')}
+${code}
+`;
 };

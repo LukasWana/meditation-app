@@ -606,17 +606,23 @@ void main() {
       const shaderPath = effectiveVariant.startsWith('mini-')
         ? `/src/assets/mini-shaders/${effectiveVariant.replace('mini-', '')}.glsl`
         : effectiveVariant.startsWith('shader-')
-        ? `/src/assets/shaders/${effectiveVariant.replace('shader-', '')}.fs`
+        ? `/src/assets/shaders/${effectiveVariant.replace('shader-', '')}.ts`
         : null;
       if (shaderPath) {
         try {
+          console.log('🔄 BackgroundShader: Konvertuji shader...', {
+            variant: effectiveVariant,
+            shaderPath,
+            isWebGL2,
+            loadedShaderCodeLength: loadedShaderCode?.length
+          });
           convertedFragmentSource = convertShaderToWebGL(loadedShaderCode, shaderPath, isWebGL2);
-          console.log('✅ BackgroundShader: Shader konvertován, variant:', effectiveVariant);
+          console.log('✅ BackgroundShader: Shader konvertován, variant:', effectiveVariant, 'délka:', convertedFragmentSource?.length);
           // Vymaž chybu při úspěšné konverzi
           setShaderError(null);
         } catch (error) {
           const errorMessage = `Failed to convert shader (${effectiveVariant}): ${error?.message || error?.toString() || 'Unknown error'}`;
-          console.error('❌ BackgroundShader:', errorMessage);
+          console.error('❌ BackgroundShader:', errorMessage, error);
           setShaderError(errorMessage);
           return;
         }
@@ -744,6 +750,9 @@ void main() {
 
       gl.useProgram(programInfo.program);
 
+      const viewportWidth = window.innerWidth || 1;
+      const viewportHeight = window.innerHeight || 1;
+
       // Použij cached uniform locations
       if (programInfo.uniforms.u_time) {
         gl.uniform1f(programInfo.uniforms.u_time, timeRef.current);
@@ -751,9 +760,12 @@ void main() {
       if (programInfo.uniforms.u_resolution) {
         // Použij viewport rozlišení (bez devicePixelRatio), aby shadery byly vycentrované na play button
         // Play buttony jsou ve viewport souřadnicích, ne v canvas souřadnicích
-        const viewportWidth = window.innerWidth || 1;
-        const viewportHeight = window.innerHeight || 1;
         gl.uniform2f(programInfo.uniforms.u_resolution, viewportWidth, viewportHeight);
+      }
+      if (programInfo.uniforms.u_mouse !== undefined && programInfo.uniforms.u_mouse !== null) {
+        const mouseX = viewportWidth * 0.5;
+        const mouseY = viewportHeight * 0.5;
+        gl.uniform2f(programInfo.uniforms.u_mouse, mouseX, mouseY);
       }
       if (programInfo.uniforms.u_intensity) {
         gl.uniform1f(programInfo.uniforms.u_intensity, intensity);

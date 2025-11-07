@@ -477,6 +477,19 @@ void main() {
       // Aplikuj také sanitizaci syntax chyb
       sanitizedSource = sanitizeSyntaxErrors(sanitizedSource);
 
+      if (isWebGL2) {
+        if (!sanitizedSource.trimStart().startsWith('#version')) {
+          sanitizedSource = `#version 300 es\n${sanitizedSource}`;
+        }
+      } else {
+        sanitizedSource = sanitizedSource
+          .replace(/^\s*#version\s+.*$/gm, '')
+          .replace(/\bout\s+vec4\s+fragColor\s*;?\s*/g, '')
+          .replace(/(^|\s)in\s+(vec[234]\s+v_\w+)/g, '$1varying $2')
+          .replace(/(^|\s)out\s+(vec[234]\s+v_\w+)/g, '$1varying $2')
+          .replace(/\bfragColor\b/g, 'gl_FragColor');
+      }
+
       // Debug: log shader source před kompilací (pouze pokud je chyba)
       // Uložíme source pro případné debugging
       const shader = glContext.createShader(type);
@@ -904,6 +917,7 @@ void main() {
 
         const timeLocation = gl.getUniformLocation(shaderProgram, 'u_time');
         const resolutionLocation = gl.getUniformLocation(shaderProgram, 'u_resolution');
+        const mouseLocation = gl.getUniformLocation(shaderProgram, 'u_mouse');
         const intensityLocation = gl.getUniformLocation(shaderProgram, 'u_intensity');
 
         // Zkontroluj znovu před nastavením uniformů
@@ -912,10 +926,15 @@ void main() {
         }
 
         if (timeLocation) gl.uniform1f(timeLocation, timeRef.current);
+        let width = gl.canvas.width || 1;
+        let height = gl.canvas.height || 1;
         if (resolutionLocation) {
-          const width = gl.canvas.width || 1;
-          const height = gl.canvas.height || 1;
           gl.uniform2f(resolutionLocation, width, height);
+        }
+        if (mouseLocation) {
+          const mouseX = width * 0.5;
+          const mouseY = height * 0.5;
+          gl.uniform2f(mouseLocation, mouseX, mouseY);
         }
         if (intensityLocation) gl.uniform1f(intensityLocation, intensity);
 

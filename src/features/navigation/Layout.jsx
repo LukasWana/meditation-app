@@ -40,6 +40,11 @@ const Layout = ({
     changeLanguage(next);
   };
 
+  const isHudbaSection = currentScreen === 'hudba' || currentScreen === 'audio-player-hudba';
+  const showLanguageControls = !isPlayerActive && !isHudbaSection;
+  const showGenderControls = !isPlayerActive && currentScreen === 'slova';
+  const shouldRenderTopControls = showLanguageControls || showGenderControls;
+
 
 
   return (
@@ -47,11 +52,12 @@ const Layout = ({
       {/* Hlavní obsah */}
       {children}
 
-      {/* Top Right Controls - Hidden when player is active, show on all pages */}
-      {!isPlayerActive && (
+      {/* Top Right Controls - hidden when player is active; language switcher se v sekci hudba nezobrazuje */}
+      {shouldRenderTopControls && (
         <div className="fixed top-6 right-6 z-50 flex items-center space-x-3">
           {/* Language Switcher - desktop/tablet */}
-          <motion.div
+          {showLanguageControls && (
+            <motion.div
             className="hidden sm:flex bg-white/90 backdrop-blur-sm border border-gray-200 rounded-full p-1 shadow-sm"
             initial={{ opacity: 0, scale: 0.9 }}
             animate={{ opacity: 1, scale: 1 }}
@@ -97,9 +103,11 @@ const Layout = ({
               <img src={UKFlagUrl} alt="United Kingdom" className="w-6 h-6" />
             </motion.button>
           </motion.div>
+          )}
 
           {/* Language Switcher - mobile (one flag, cycles on tap) */}
-          <motion.button
+          {showLanguageControls && (
+            <motion.button
             onClick={cycleLanguage}
             className="sm:hidden flex bg-gray-800 backdrop-blur-sm border border-gray-200 rounded-full p-1 shadow-sm items-center justify-center"
             initial={{ opacity: 0, scale: 0.9 }}
@@ -110,9 +118,10 @@ const Layout = ({
           >
             <img src={getFlagUrl(language)} alt={language} className="w-6 h-6" />
           </motion.button>
+          )}
 
           {/* Gender Switcher - desktop/tablet - zobraz pouze v sekci meditace */}
-          {currentScreen === 'slova' && (
+          {showGenderControls && (
             <motion.div
               className="hidden sm:flex bg-white/90 backdrop-blur-sm border border-gray-200 rounded-full p-1 shadow-sm"
               initial={{ opacity: 0, scale: 0.9 }}
@@ -149,7 +158,7 @@ const Layout = ({
           )}
 
           {/* Gender Switcher - mobile (show only current selection, tap toggles) - zobraz pouze v sekci meditace */}
-          {currentScreen === 'slova' && (
+          {showGenderControls && (
             <motion.button
               onClick={() => handleGenderSelect(gender === 'male' ? 'female' : 'male')}
               className="sm:hidden px-3 py-2 bg-gray-800 backdrop-blur-sm border border-gray-200 rounded-full shadow-sm text-sm font-medium text-white"
