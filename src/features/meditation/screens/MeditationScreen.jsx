@@ -251,7 +251,7 @@ const DychaniScreen = ({
         variant={breathShader}
         intensity={0.6}
         enabled={true}
-        opacity={isPlaying ? 0.9 : 0.0}
+        opacity={isPlaying ? 0.75 : 0.0}
         breathPhase={isPlaying ? breathPhase : null}
         breathInDuration={breathInDuration}
         breathOutDuration={breathOutDuration}
@@ -261,10 +261,10 @@ const DychaniScreen = ({
       <div
         className="fixed inset-0 pointer-events-none"
         style={{
-          zIndex: 5,
+          zIndex: 4000,
           background: isPlaying
-            ? 'linear-gradient(180deg, rgba(244,221,196,0.55) 0%, rgba(244,221,196,0.35) 100%)'
-            : 'rgba(244,221,196,0.85)',
+            ? 'linear-gradient(180deg, rgba(244,221,196,0.6) 0%, rgba(244,221,196,0.4) 100%)'
+            : 'rgba(244,221,196,0.9)',
           transition: 'background 0.6s ease, opacity 0.6s ease'
         }}
       />

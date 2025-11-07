@@ -249,72 +249,44 @@ const SettingsScreen = ({
                       <h4 className="text-lg font-light mb-3">
                         {t('proSekci') || 'Pro sekci'}
                       </h4>
-                      <div className="space-y-4">
-                        {/* Meditace */}
-                        <div>
-                          <h5 className="text-base font-light mb-2">
-                            {t('meditace') || 'Meditace'}
-                          </h5>
-                          <p className="text-sm text-gray-600 mb-2">
-                            Aktuální: {getShaderForSection('meditace')}
-                          </p>
-                        </div>
-
-                        {/* Dýchání */}
-                        <div>
-                          <h5 className="text-base font-light mb-2">
-                            {t('dychani') || 'Dýchání'}
-                          </h5>
-                          <p className="text-sm text-gray-600 mb-2">
-                            Aktuální: {getShaderForSection('dychani')}
-                          </p>
-                        </div>
-
-                        {/* Hudba */}
-                        <div>
-                          <h5 className="text-base font-light mb-2">
-                            {t('hudba') || 'Hudba'}
-                          </h5>
-                          <p className="text-sm text-gray-600 mb-2">
-                            Aktuální: {getShaderForSection('hudba')}
-                          </p>
-                        </div>
-
+                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                        {[
+                          { key: 'meditace', label: t('meditace') || 'Meditace' },
+                          { key: 'dychani', label: t('dychani') || 'Dýchání' },
+                          { key: 'hudba', label: t('hudba') || 'Hudba' }
+                        ].map(section => {
+                          const isMeditaceSection = section.key === 'meditace';
+                          const activeShader = getShaderForSection(section.key) || 'default';
+                          return (
+                            <button
+                              key={section.key}
+                              type="button"
+                              onClick={() => {
+                                setSelectedSection(section.key);
+                                setSelectedCategory(selectedCategory || 'shaders');
+                              }}
+                              className={`w-full h-full text-left px-4 py-3 rounded-xl border border-black/10 bg-white/80 backdrop-blur hover:bg-white transition-shadow shadow-sm hover:shadow-md focus:outline-none focus:ring-2 focus:ring-black/20 ${
+                                isMeditaceSection ? 'sm:col-span-1' : ''
+                              }`}
+                            >
+                              <span className="block text-sm font-medium uppercase tracking-wide text-gray-500 mb-2">
+                                {section.label}
+                              </span>
+                              <span className="block text-xs text-gray-600">
+                                {(t('aktualniShader') || 'Aktuální shader') + ':'}
+                                <span className="block text-base font-light text-gray-800 mt-1 break-all">
+                                  {activeShader}
+                                </span>
+                              </span>
+                            </button>
+                          );
+                        })}
                       </div>
                     </div>
                   </div>
                 ) : (
                   // Galerie shaderů
                   <div className="space-y-6">
-                    <div className="flex items-center justify-between mb-4">
-                      <h4 className="text-lg font-light">
-                        {selectedCategory === 'mini-shaders' ? 'Mini Shaders' : 'Shaders'}
-                      </h4>
-                      <button
-                        onClick={() => setSelectedCategory(null)}
-                        className="px-4 py-2 bg-white/90 border border-black/20 rounded text-sm hover:bg-white"
-                      >
-                        ← Zpět
-                      </button>
-                    </div>
-
-                    {/* Výběr sekce pro přiřazení shaderu */}
-                    <div className="mb-4">
-                      <label className="block text-sm font-light mb-2">
-                        {t('priraditK') || 'Přiřadit k sekci:'}
-                      </label>
-                      <select
-                        value={selectedSection}
-                        onChange={(e) => setSelectedSection(e.target.value)}
-                        className="w-full p-2 bg-white/90 border border-black/20 rounded text-sm"
-                      >
-                        <option value="">Vyberte sekci...</option>
-                        <option value="meditace">{t('meditace') || 'Meditace'}</option>
-                        <option value="dychani">{t('dychani') || 'Dýchání'}</option>
-                        <option value="hudba">{t('hudba') || 'Hudba'}</option>
-                      </select>
-                    </div>
-
                     <ShaderGallery
                       selectedVariant={selectedSection ? getShaderForSection(selectedSection) : null}
                       onSelect={(shaderId) => {

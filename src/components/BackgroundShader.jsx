@@ -991,7 +991,7 @@ void main() {
             left: 0,
             width: '100vw',
             height: '100vh',
-            zIndex: 5,
+            zIndex: 4000,
             pointerEvents: 'none',
             opacity: opacity,
             backgroundColor: colorValue,
@@ -1010,7 +1010,7 @@ void main() {
             left: 0,
             width: '100vw',
             height: '100vh',
-            zIndex: 8000, // Nad pozadím (zIndex 0) a nad barvou přehrávače (zIndex 7000), ale pod obsahem přehrávače (zIndex 9999)
+            zIndex: 4500, // Nad pozadím/overlay, ale pod hlavním UI (přehrávač má 9999)
             pointerEvents: 'none',
             opacity: opacity,
             backgroundColor: 'transparent',
