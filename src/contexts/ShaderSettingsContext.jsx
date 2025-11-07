@@ -41,6 +41,19 @@ export const ShaderSettingsProvider = ({ children }) => {
     };
   });
 
+  // Barvy pro každou sekci (místo shaderu)
+  const [colorSettings, setColorSettings] = useState(() => {
+    try {
+      const saved = localStorage.getItem('meditation-app-color-settings');
+      if (saved) {
+        return JSON.parse(saved);
+      }
+    } catch (e) {
+      console.error('Failed to load color settings:', e);
+    }
+    return {};
+  });
+
   // Ulož do localStorage při změně
   useEffect(() => {
     try {
@@ -50,6 +63,15 @@ export const ShaderSettingsProvider = ({ children }) => {
     }
   }, [shaderSettings]);
 
+  // Ulož barvy do localStorage při změně
+  useEffect(() => {
+    try {
+      localStorage.setItem('meditation-app-color-settings', JSON.stringify(colorSettings));
+    } catch (e) {
+      console.error('Failed to save color settings:', e);
+    }
+  }, [colorSettings]);
+
   const setShaderForSection = (section, variant) => {
     setShaderSettings(prev => ({
       ...prev,
@@ -58,15 +80,48 @@ export const ShaderSettingsProvider = ({ children }) => {
   };
 
   const getShaderForSection = (section) => {
+    // Pokud je shader explicitně null, vrať null (barva má prioritu)
+    // Jinak vrať shader nebo default
+    if (shaderSettings[section] === null) {
+      return null;
+    }
     return shaderSettings[section] || 'default';
+  };
+
+  const clearColorForSection = (section) => {
+    setColorSettings(prev => {
+      const newSettings = { ...prev };
+      delete newSettings[section];
+      return newSettings;
+    });
+  };
+
+  const setColorForSection = (section, color) => {
+    if (color) {
+      setColorSettings(prev => ({
+        ...prev,
+        [section]: color
+      }));
+    } else {
+      // Pokud je color null, zruš barvu
+      clearColorForSection(section);
+    }
+  };
+
+  const getColorForSection = (section) => {
+    return colorSettings[section] || null;
   };
 
   return (
     <ShaderSettingsContext.Provider
       value={{
         shaderSettings,
+        colorSettings,
         setShaderForSection,
-        getShaderForSection
+        getShaderForSection,
+        setColorForSection,
+        getColorForSection,
+        clearColorForSection
       }}
     >
       {children}

@@ -5,6 +5,7 @@ import SkipButton from './SkipButton';
 import CurrentTimeDisplay from './CurrentTimeDisplay';
 import VoiceSwitcher from './VoiceSwitcher';
 import TrackSwitcher from './TrackSwitcher';
+import ShaderSelector from './ShaderSelector';
 import AudioShaderBackground from '@components/AudioShaderBackground';
 
 const AudioControls = ({
@@ -28,22 +29,31 @@ const AudioControls = ({
   albumTracks = null,
   currentTrackIndex = 0,
   onTrackChange = null,
+  // Shader selector props
+  selectedShader = null,
+  onShaderChange = null,
+  onNavigateToScreen = null,
   // Data source indicator
   dataSource = null,
+  // Dark mode
+  isDarkMode = false,
   className = "w-full flex flex-col items-center justify-center h-full"
 }) => {
+  // Barvy pro dark mode
+  const textColor = isDarkMode ? 'text-white' : 'text-black';
+  const textGrayColor = isDarkMode ? 'text-gray-300' : 'text-gray-600';
   return (
     <div className={className}>
       {/* Title and Duration - Above Circular Progress with fixed height */}
       <div className="mb-6 z-10 w-full pl-10 pr-10 sm:pl-20 sm:pr-20 flex flex-col items-center space-y-0 audio-controls-container">
         {/* Duration - Total Time - Above title - zobraz pouze když je stabilní */}
         {duration && duration > 0 && durationStable && (
-          <div className="text-gray-600 text-center mb-2 text-clamp-duration">
+          <div className={`${textGrayColor} text-center mb-2 text-clamp-duration`}>
             {formatTime(duration)}
           </div>
         )}
         {/* Title - Fixed height container for 2-line support */}
-        <div className="font-light text-center text-black leading-tight text-clamp-title min-h-[60px] flex items-center justify-center" style={{lineHeight: '1.2'}}>
+        <div className={`font-light text-center ${textColor} leading-tight text-clamp-title min-h-[60px] flex items-center justify-center`} style={{lineHeight: '1.2'}}>
           <span>{title || 'Meditácia'}</span>
           {/* Data source indicator */}
           {dataSource && (
@@ -85,6 +95,7 @@ const AudioControls = ({
           direction="backward"
           onClick={onSkipBackward}
           className="w-[10vw] h-[10vw] max-w-[60px] max-h-[60px] min-w-[45px] min-h-[45px] sm:w-[8vw] sm:h-[8vw] sm:max-w-[70px] sm:max-h-[70px] sm:min-w-[55px] sm:min-h-[55px]"
+          isDarkMode={isDarkMode}
         />
 
         {/* Current Time Display - Between skip buttons with fixed width */}
@@ -92,7 +103,7 @@ const AudioControls = ({
           <CurrentTimeDisplay
             currentTime={currentTime}
             formatTime={formatTime}
-            className="text-black font-medium text-center text-clamp-time"
+            className={`${textColor} font-medium text-center text-clamp-time`}
           />
         </div>
 
@@ -100,6 +111,7 @@ const AudioControls = ({
           direction="forward"
           onClick={onSkipForward}
           className="w-[10vw] h-[10vw] max-w-[60px] max-h-[60px] min-w-[45px] min-h-[45px] sm:w-[8vw] sm:h-[8vw] sm:max-w-[70px] sm:max-h-[70px] sm:min-w-[55px] sm:min-h-[55px]"
+          isDarkMode={isDarkMode}
         />
       </div>
 
@@ -110,6 +122,7 @@ const AudioControls = ({
             selectedVoice={selectedVoice}
             availableVoices={availableVoices}
             onVoiceChange={onVoiceChange}
+            isDarkMode={isDarkMode}
           />
         </div>
       )}
@@ -120,7 +133,20 @@ const AudioControls = ({
           tracks={albumTracks}
           currentTrackIndex={currentTrackIndex}
           onTrackChange={onTrackChange}
+          isDarkMode={isDarkMode}
         />
+      )}
+
+      {/* Shader Selector - Bottom - pro výběr shaderu na pozadí */}
+      {onShaderChange && (
+        <div className="mt-6 pointer-events-auto z-10">
+          <ShaderSelector
+            selectedShader={selectedShader}
+            onShaderChange={onShaderChange}
+            onNavigateToScreen={onNavigateToScreen}
+            isDarkMode={isDarkMode}
+          />
+        </div>
       )}
 
     </div>

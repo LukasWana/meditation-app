@@ -1,6 +1,7 @@
-import React, { useRef, useEffect, useState, useMemo } from 'react';
+import React, { useRef, useEffect, useState, useMemo, useContext } from 'react';
 import { loadShader, convertShaderToWebGL } from '@utils/shaderLoader';
 import { createProgramManager } from '@utils/webgl/programManager';
+import { PlaybackContext } from '@contexts/ShaderPlaybackContext';
 
 /**
  * Univerzální shader komponenta pro pozadí stránek
@@ -29,6 +30,42 @@ const BackgroundShader = ({
   const phaseStartTimeRef = useRef(Date.now());
   const previousPhaseRef = useRef(breathPhase);
   const previousVariantRef = useRef(variant);
+  const renderDebugTimeRef = useRef(null);
+
+  // Zkus použít přehrávání shaderů z kontextu (pokud je k dispozici)
+  // Použijeme useContext přímo, aby to fungovalo i když kontext není k dispozici
+  const playbackContext = useContext(PlaybackContext);
+
+  // Urči efektivní variantu shaderu
+  // PRIORITA: variant prop > transitionState.toShaderKey
+  // Důvod: variant prop je explicitně předán z rodiče (např. AudioPlayerHudbaScreen),
+  // který už má správnou logiku pro určení shaderu (kombinuje settings + transitionState)
+  const effectiveVariant = useMemo(() => {
+    // Pokud je variant prop explicitně předán a není '__BLACK__', použij ho (má prioritu)
+    if (variant && variant !== '__BLACK__') {
+      // Pokud je variant barva (__COLOR__), použij ho
+      if (variant.startsWith('__COLOR__')) {
+        return variant;
+      }
+      // Pokud je variant shader (ne default), použij ho
+      if (variant !== 'default') {
+        return variant;
+      }
+    }
+
+    // Fallback: použij transitionState z kontextu (pokud není BLACK)
+    if (playbackContext?.transitionState?.toShaderKey &&
+        playbackContext.transitionState.toShaderKey !== '__BLACK__') {
+      return playbackContext.transitionState.toShaderKey;
+    }
+
+    // Finální fallback: použij variant prop (může být 'default')
+    return variant || 'default';
+  }, [variant, playbackContext?.transitionState?.toShaderKey]);
+
+  // Zkontroluj, zda je to barva místo shaderu (formát: __COLOR__#hex)
+  const isColorMode = effectiveVariant && effectiveVariant.startsWith('__COLOR__');
+  const colorValue = isColorMode ? effectiveVariant.replace('__COLOR__', '') : null;
 
   // Inicializuj Program Manager
   useEffect(() => {
@@ -365,7 +402,7 @@ void main() {
   };
 
   // Zjisti, zda je variant ID shaderu ze souboru
-  const isFileShader = variant && (variant.startsWith('mini-') || variant.startsWith('shader-'));
+  const isFileShader = effectiveVariant && (effectiveVariant.startsWith('mini-') || effectiveVariant.startsWith('shader-'));
 
   // Načti shader ze souboru, pokud je to ID shaderu
   useEffect(() => {
@@ -380,16 +417,16 @@ void main() {
 
     // Získej cestu k shaderu z ID
     let shaderPath = null;
-    if (variant.startsWith('mini-')) {
-      const shaderName = variant.replace('mini-', '');
+    if (effectiveVariant.startsWith('mini-')) {
+      const shaderName = effectiveVariant.replace('mini-', '');
       shaderPath = `/src/assets/mini-shaders/${shaderName}.glsl`;
-    } else if (variant.startsWith('shader-')) {
-      const shaderName = variant.replace('shader-', '');
-      shaderPath = `/src/assets/shaders/${shaderName}.fs`;
+    } else if (effectiveVariant.startsWith('shader-')) {
+      const shaderName = effectiveVariant.replace('shader-', '');
+      shaderPath = `/src/assets/shaders/${shaderName}.ts`;
     }
 
     if (!shaderPath) {
-      console.error('❌ BackgroundShader: Invalid shader ID:', variant);
+      console.error('❌ BackgroundShader: Invalid shader ID:', effectiveVariant);
       setShaderError('Invalid shader ID');
       return;
     }
@@ -400,7 +437,7 @@ void main() {
     setLoadedShaderCode(null);
     setShaderError(null);
 
-    console.log('📥 BackgroundShader: Načítám shader z:', shaderPath, 'variant:', variant);
+    console.log('📥 BackgroundShader: Načítám shader z:', shaderPath, 'variant:', effectiveVariant);
 
     loadShader(shaderPath)
       .then(code => {
@@ -410,7 +447,7 @@ void main() {
           try {
             // Neukonvertuj shader tady - počkáme až při kompilaci, kdy známe WebGL verzi
             if (isMounted) {
-              console.log('✅ BackgroundShader: Shader načten, délka:', code.length, 'variant:', variant);
+              console.log('✅ BackgroundShader: Shader načten, délka:', code.length, 'variant:', effectiveVariant);
               setLoadedShaderCode(code); // Ulož původní kód
               setShaderError(null);
             }
@@ -437,33 +474,33 @@ void main() {
     return () => {
       isMounted = false;
     };
-  }, [variant, isFileShader, enabled]);
+  }, [effectiveVariant, isFileShader, enabled]);
 
   // Získej fragment shader source - buď vestavěný nebo načtený ze souboru
   // Pro vestavěné shadery použijeme getFragmentShader s WebGL 1.0 jako základ
   // (skutečná verze se použije při kompilaci)
   const fragmentShaderSource = useMemo(() => {
-    console.log('🔄 BackgroundShader: fragmentShaderSource useMemo, variant:', variant, 'isFileShader:', isFileShader, 'loadedShaderCode:', !!loadedShaderCode);
+    console.log('🔄 BackgroundShader: fragmentShaderSource useMemo, variant:', effectiveVariant, 'isFileShader:', isFileShader, 'loadedShaderCode:', !!loadedShaderCode);
     if (isFileShader && loadedShaderCode) {
       return loadedShaderCode;
     }
     // Pro vestavěné shadery použij getFragmentShader s WebGL 1.0 jako základ
     // (bude převedeno na WebGL 2.0 při kompilaci pokud je potřeba)
-    const shader = getFragmentShader(variant, false);
-    console.log('🔄 BackgroundShader: Vytvořen vestavěný shader pro variant:', variant, 'délka:', shader?.length);
+    const shader = getFragmentShader(effectiveVariant, false);
+    console.log('🔄 BackgroundShader: Vytvořen vestavěný shader pro variant:', effectiveVariant, 'délka:', shader?.length);
     return shader;
-  }, [isFileShader, loadedShaderCode, variant]);
+  }, [isFileShader, loadedShaderCode, effectiveVariant]);
 
   // Inicializace WebGL
   useEffect(() => {
-    console.log('🔄 BackgroundShader: useEffect spuštěn, variant:', variant, 'enabled:', enabled, 'isFileShader:', isFileShader, 'previousVariant:', previousVariantRef.current);
+    console.log('🔄 BackgroundShader: useEffect spuštěn, variant:', effectiveVariant, 'enabled:', enabled, 'isFileShader:', isFileShader, 'previousVariant:', previousVariantRef.current);
 
     // Resetuj stav pouze při změně varianty
-    if (previousVariantRef.current !== variant) {
-      console.log('🔄 BackgroundShader: Varianta se změnila z', previousVariantRef.current, 'na', variant, '- resetuji stav');
+    if (previousVariantRef.current !== effectiveVariant) {
+      console.log('🔄 BackgroundShader: Varianta se změnila z', previousVariantRef.current, 'na', effectiveVariant, '- resetuji stav');
       setGl(null);
       setProgramInfo(null);
-      previousVariantRef.current = variant;
+      previousVariantRef.current = effectiveVariant;
     }
 
     // Poznámka: Shader se inicializuje i když je enabled=false, aby byl připraven pro rychlé zapnutí
@@ -477,7 +514,7 @@ void main() {
 
     // Pokud načítáme shader ze souboru, počkej na načtení
     if (isFileShader && !loadedShaderCode && !shaderError) {
-      console.log('⏳ BackgroundShader: Čekám na načtení shaderu ze souboru...', variant);
+      console.log('⏳ BackgroundShader: Čekám na načtení shaderu ze souboru...', effectiveVariant);
       // Resetuj stav při čekání na načtení
       setGl(null);
       setProgramInfo(null);
@@ -504,7 +541,15 @@ void main() {
       return;
     }
 
-    console.log('🎨 BackgroundShader: Inicializuji WebGL, variant:', variant, 'isFileShader:', isFileShader, 'fragmentShaderSource length:', fragmentShaderSource?.length);
+    console.log('🎨 BackgroundShader: Inicializuji WebGL', {
+      variant,
+      effectiveVariant,
+      isFileShader,
+      fragmentShaderSourceLength: fragmentShaderSource?.length,
+      hasLoadedShaderCode: !!loadedShaderCode,
+      hasShaderError: !!shaderError,
+      isColorMode
+    });
 
     // Zkus WebGL 2.0, pokud není podporováno, použij WebGL 1.0
     let glContext = canvas.getContext('webgl2');
@@ -519,6 +564,10 @@ void main() {
     console.log('✅ BackgroundShader: WebGL verze:', glContext.getParameter(glContext.VERSION), 'isWebGL2:', isWebGL2);
 
     console.log('✅ BackgroundShader: WebGL kontext vytvořen');
+
+    // Nastav blend mode pro průhlednost
+    glContext.enable(glContext.BLEND);
+    glContext.blendFunc(glContext.SRC_ALPHA, glContext.ONE_MINUS_SRC_ALPHA);
 
     // Nastav velikost canvasu - použij velikost okna s devicePixelRatio
     // Ale pro shadery použijeme viewport rozlišení (bez devicePixelRatio), aby byly vycentrované na play button
@@ -550,23 +599,23 @@ void main() {
 
     // Pro vestavěné shadery použij getFragmentShader s správnou WebGL verzí
     if (!isFileShader && fragmentShaderSource) {
-      convertedFragmentSource = getFragmentShader(variant, isWebGL2);
+      convertedFragmentSource = getFragmentShader(effectiveVariant, isWebGL2);
     }
 
     if (isFileShader && loadedShaderCode) {
-      const shaderPath = variant.startsWith('mini-')
-        ? `/src/assets/mini-shaders/${variant.replace('mini-', '')}.glsl`
-        : variant.startsWith('shader-')
-        ? `/src/assets/shaders/${variant.replace('shader-', '')}.fs`
+      const shaderPath = effectiveVariant.startsWith('mini-')
+        ? `/src/assets/mini-shaders/${effectiveVariant.replace('mini-', '')}.glsl`
+        : effectiveVariant.startsWith('shader-')
+        ? `/src/assets/shaders/${effectiveVariant.replace('shader-', '')}.fs`
         : null;
       if (shaderPath) {
         try {
           convertedFragmentSource = convertShaderToWebGL(loadedShaderCode, shaderPath, isWebGL2);
-          console.log('✅ BackgroundShader: Shader konvertován, variant:', variant);
+          console.log('✅ BackgroundShader: Shader konvertován, variant:', effectiveVariant);
           // Vymaž chybu při úspěšné konverzi
           setShaderError(null);
         } catch (error) {
-          const errorMessage = `Failed to convert shader (${variant}): ${error?.message || error?.toString() || 'Unknown error'}`;
+          const errorMessage = `Failed to convert shader (${effectiveVariant}): ${error?.message || error?.toString() || 'Unknown error'}`;
           console.error('❌ BackgroundShader:', errorMessage);
           setShaderError(errorMessage);
           return;
@@ -582,7 +631,7 @@ void main() {
     }
 
     // Vytvoř unikátní klíč pro cachování shader programu
-    const programKey = `${variant}-${isWebGL2 ? 'webgl2' : 'webgl1'}`;
+    const programKey = `${effectiveVariant}-${isWebGL2 ? 'webgl2' : 'webgl1'}`;
 
     const programInfo = manager.getProgram(
       glContext,
@@ -602,7 +651,7 @@ void main() {
     );
 
     if (!programInfo) {
-      const errorMessage = `Failed to create shader program for variant: ${variant} (key: ${programKey})`;
+      const errorMessage = `Failed to create shader program for variant: ${effectiveVariant} (key: ${programKey})`;
       console.error(`❌ BackgroundShader: ${errorMessage}`);
       setShaderError(errorMessage);
       return;
@@ -610,13 +659,13 @@ void main() {
 
     setGl(glContext);
     setProgramInfo(programInfo);
-    console.log('✅ BackgroundShader: Shader program vytvořen/načten z cache, variant:', variant, 'key:', programKey);
+    console.log('✅ BackgroundShader: Shader program vytvořen/načten z cache, variant:', effectiveVariant, 'key:', programKey);
 
     return () => {
       window.removeEventListener('resize', resizeCanvas);
       // Program Manager si spravuje životnost programů, takže neodstraňujeme programy zde
     };
-  }, [variant, isFileShader, loadedShaderCode, shaderError, fragmentShaderSource]);
+  }, [effectiveVariant, isFileShader, loadedShaderCode, shaderError, fragmentShaderSource]);
 
   // Render loop
   useEffect(() => {
@@ -624,12 +673,30 @@ void main() {
       hasGl: !!gl,
       hasProgram: !!programInfo,
       enabled,
-      variant
+      variant,
+      effectiveVariant,
+      isColorMode,
+      opacity
     });
 
     // Render loop běží i když je enabled=false, ale opacity je 0
     // To umožňuje plynulé prolnutí při změně opacity
     if (!gl || !programInfo) {
+      // Pro barvu nepotřebujeme WebGL - render loop se nespouští
+      if (isColorMode) {
+        console.log('✅ BackgroundShader: Color mode - není potřeba WebGL render loop');
+        return;
+      }
+      if (animationFrameRef.current) {
+        cancelAnimationFrame(animationFrameRef.current);
+        animationFrameRef.current = null;
+      }
+      return;
+    }
+
+    // Pokud je to barva, nespouštěj render loop (barva se zobrazuje jako div)
+    if (isColorMode) {
+      console.log('✅ BackgroundShader: Color mode - není potřeba render loop');
       if (animationFrameRef.current) {
         cancelAnimationFrame(animationFrameRef.current);
         animationFrameRef.current = null;
@@ -639,6 +706,12 @@ void main() {
 
     // Pokud je opacity 0, zastav renderování (ale shader zůstane inicializován)
     if (opacity <= 0) {
+      console.log('⏸️ BackgroundShader: Opacity je 0, zastavuji renderování', {
+        opacity,
+        enabled,
+        variant,
+        effectiveVariant
+      });
       if (animationFrameRef.current) {
         cancelAnimationFrame(animationFrameRef.current);
         animationFrameRef.current = null;
@@ -646,10 +719,26 @@ void main() {
       return;
     }
 
-    console.log('✅ BackgroundShader: Spouštím render loop');
+    console.log('✅ BackgroundShader: Spouštím render loop', {
+      opacity,
+      enabled,
+      variant,
+      effectiveVariant,
+      isColorMode,
+      hasGl: !!gl,
+      hasProgram: !!programInfo
+    });
 
     const render = (currentTime) => {
-      if (!gl || !programInfo) return;
+      if (!gl || !programInfo) {
+        console.warn('⚠️ BackgroundShader: Render loop - chybí gl nebo programInfo', {
+          hasGl: !!gl,
+          hasProgram: !!programInfo,
+          opacity,
+          enabled
+        });
+        return;
+      }
 
       timeRef.current = currentTime * 0.001;
 
@@ -737,6 +826,19 @@ void main() {
       gl.clear(gl.COLOR_BUFFER_BIT);
       gl.drawArrays(gl.TRIANGLES, 0, 6);
 
+      // Debug: Ověř, že se skutečně renderuje (pouze jednou za sekundu)
+      const currentSeconds = Math.floor(timeRef.current);
+      if (!renderDebugTimeRef.current || renderDebugTimeRef.current !== currentSeconds) {
+        renderDebugTimeRef.current = currentSeconds;
+        console.log('✅ BackgroundShader: Renderování probíhá', {
+          time: timeRef.current.toFixed(2),
+          opacity,
+          enabled,
+          variant: effectiveVariant,
+          canvasVisible: canvasRef.current?.style.opacity
+        });
+      }
+
       animationFrameRef.current = requestAnimationFrame(render);
     };
 
@@ -748,7 +850,7 @@ void main() {
         animationFrameRef.current = null;
       }
     };
-  }, [gl, programInfo, enabled, intensity, breathPhase, breathInDuration, breathOutDuration]);
+  }, [gl, programInfo, enabled, intensity, breathPhase, breathInDuration, breathOutDuration, opacity, isColorMode, effectiveVariant]);
 
   // Canvas se zobrazuje vždy, opacity se řídí opacity prop
   // To umožňuje plynulé prolnutí při změně opacity
@@ -757,7 +859,29 @@ void main() {
   //   return null;
   // }
 
-  console.log('🎨 BackgroundShader: Renderuji canvas, variant:', variant, 'intensity:', intensity, 'opacity:', opacity, 'enabled:', enabled, 'error:', shaderError);
+  console.log('🎨 BackgroundShader: Renderuji canvas', {
+    variant,
+    effectiveVariant: effectiveVariant,
+    isColorMode,
+    colorValue,
+    intensity,
+    opacity,
+    enabled,
+    willShowColor: isColorMode && colorValue && opacity > 0,
+    willShowShader: !isColorMode && opacity > 0 && enabled,
+    shaderError: shaderError ? 'HAS ERROR' : null,
+    hasGl: !!gl,
+    hasProgram: !!programInfo,
+    canvasDisplay: !isColorMode && opacity > 0 ? 'block' : (isColorMode ? 'none' : 'block'),
+    canvasOpacity: opacity,
+    canvasRefExists: !!canvasRef.current,
+    canvasWidth: canvasRef.current?.width,
+    canvasHeight: canvasRef.current?.height,
+    canvasStyleZIndex: 5,
+    renderLoopActive: !!animationFrameRef.current,
+    transitionStateKey: playbackContext?.transitionState?.toShaderKey,
+    transitionStateTransitioning: playbackContext?.transitionState?.isTransitioning
+  });
 
   // Zobraz chybu v UI, pokud je shader error a je enabled
   if (shaderError && enabled) {
@@ -792,22 +916,46 @@ void main() {
           </div>
         </div>
       )}
-      <canvas
-        ref={canvasRef}
-        style={{
-          position: 'fixed',
-          top: 0,
-          left: 0,
-          width: '100vw',
-          height: '100vh',
-          zIndex: 1, // Nad pozadím (zIndex 0), pod obsahem (zIndex 10)
-          pointerEvents: 'none',
-          opacity: opacity,
-          backgroundColor: 'transparent',
-          display: 'block',
-          transition: 'opacity 3s ease-in-out' // Plynulé prolnutí (3 sekundy)
-        }}
-      />
+      {/* Pokud je to barva místo shaderu, zobraz barvu přímo */}
+      {isColorMode && colorValue ? (
+        <div
+          key={`color-${colorValue}`}
+          style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            width: '100vw',
+            height: '100vh',
+            zIndex: 5,
+            pointerEvents: 'none',
+            opacity: opacity,
+            backgroundColor: colorValue,
+            display: opacity > 0 ? 'block' : 'none',
+            transition: 'opacity 0.5s ease-in-out',
+            mixBlendMode: 'normal',
+            willChange: 'opacity'
+          }}
+        />
+      ) : (
+        <canvas
+          ref={canvasRef}
+          style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            width: '100vw',
+            height: '100vh',
+            zIndex: 8000, // Nad pozadím (zIndex 0) a nad barvou přehrávače (zIndex 7000), ale pod obsahem přehrávače (zIndex 9999)
+            pointerEvents: 'none',
+            opacity: opacity,
+            backgroundColor: 'transparent',
+            display: (!isColorMode && opacity > 0 && enabled) ? 'block' : 'none', // Zobraz pouze pokud není barva, opacity > 0 a enabled
+            transition: 'opacity 0.5s ease-in-out', // Plynulejší přechod
+            visibility: (!isColorMode && opacity > 0 && enabled) ? 'visible' : 'hidden' // Pomocná kontrola viditelnosti
+            // mixBlendMode není potřeba - shader je nad barvou díky z-index
+          }}
+        />
+      )}
     </>
   );
 };

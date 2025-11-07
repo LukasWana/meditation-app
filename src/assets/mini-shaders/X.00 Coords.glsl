@@ -1,1 +1,0 @@
-o = vec4(FC.x / r.x, FC.y / r.y, 1., 1.);

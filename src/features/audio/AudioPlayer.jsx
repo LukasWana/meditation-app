@@ -7,6 +7,8 @@ import {
 } from './components';
 import { useAudioAnalysis as useAudioAnalysisHook } from '@hooks/useAudioAnalysis';
 import { useAudioAnalysis as useAudioAnalysisContext } from '@contexts/AudioAnalysisContext';
+import { useShaderSettings } from '@contexts/ShaderSettingsContext';
+import { usePlayback } from '@contexts/ShaderPlaybackContext';
 
 
 const AudioPlayer = ({
@@ -20,7 +22,10 @@ const AudioPlayer = ({
   onTrackChange = null,
   allFiles = [],
   autoplayEnabled = true,
-  onAutoplayChange = null
+  onAutoplayChange = null,
+  onNavigateToScreen = null, // Pro navigaci na stránku výběru shaderů
+  isDarkMode = false, // Dark mode pro tmavé shadery/barvy
+  backgroundColor = null // Barva pozadí přehrávače (může být kombinována se shaderem)
 }) => {
   // Hlavní logika komponenty
   const {
@@ -63,6 +68,78 @@ const AudioPlayer = ({
   const audioAnalysisData = useAudioAnalysisHook(audioRef, isPlaying);
   const { setAudioData } = useAudioAnalysisContext();
 
+  // Shader settings pro výběr shaderu na pozadí
+  const { getShaderForSection, setShaderForSection, getColorForSection } = useShaderSettings();
+  const selectedShader = getShaderForSection('hudba');
+  const selectedColor = getColorForSection('hudba');
+
+  // Shader playback context pro přehrávání shaderů
+  const { transitionState, startTransition } = usePlayback();
+
+  // Umožni kombinovat barvu + shader
+  // Pokud je předána barva jako prop, použij ji, jinak použij barvu z settings
+  const finalBackgroundColor = backgroundColor !== null ? backgroundColor : (selectedColor || null);
+
+  // Handler pro změnu shaderu
+  const handleShaderChange = (shaderId) => {
+    // Ulož do ShaderSettingsContext
+    setShaderForSection('hudba', shaderId);
+
+    // Nastav shader v PlaybackContext pomocí startTransition
+    const from = { shaderKey: transitionState?.toShaderKey || '__BLACK__' };
+    const to = { shaderKey: shaderId || '__BLACK__' };
+    startTransition(from, to);
+  };
+
+  // Synchronizuj shader z ShaderSettingsContext do PlaybackContext při načtení
+  // Barva se použije jako overlay v AudioPlayerAnimations (ne v PlaybackContext)
+  React.useEffect(() => {
+    // Urči, co se má zobrazit jako pozadí - priorita: shader > barva
+    // Pokud je shader, použij ho (barva bude overlay v přehrávači)
+    // Pokud není shader, použij barvu jako pozadí
+    let targetShaderKey = null;
+
+    if (selectedShader && selectedShader !== 'default') {
+      // Pokud je nastaven shader, použij ho (barva bude overlay)
+      targetShaderKey = selectedShader;
+    } else if (selectedColor) {
+      // Pokud není shader, použij barvu jako pozadí
+      targetShaderKey = `__COLOR__${selectedColor}`;
+    } else {
+      // Default shader
+      targetShaderKey = 'default';
+    }
+
+    // Synchronizuj pouze pokud máme target a liší se od aktuálního stavu
+    // A POUZE pokud transitionState není právě v procesu transition (aby se nepřepsal shader nastavený v ShaderSelectionScreen)
+    if (targetShaderKey) {
+      const currentKey = transitionState?.toShaderKey || '__BLACK__';
+      const isCurrentlyTransitioning = transitionState?.isTransitioning || false;
+
+      // Pokud není v procesu transition a klíč se liší, synchronizuj
+      if (!isCurrentlyTransitioning && currentKey !== targetShaderKey) {
+        console.log('🔄 AudioPlayer: Synchronizuji shader/barvu (z settings)', {
+          from: currentKey,
+          to: targetShaderKey,
+          selectedColor,
+          selectedShader,
+          willUseColorOverlay: !!selectedColor && !!selectedShader,
+          isCurrentlyTransitioning
+        });
+        const from = { shaderKey: currentKey };
+        const to = { shaderKey: targetShaderKey };
+        startTransition(from, to);
+      } else if (isCurrentlyTransitioning) {
+        console.log('⏸️ AudioPlayer: Přeskakuji synchronizaci - právě probíhá transition', {
+          currentKey,
+          targetShaderKey,
+          isCurrentlyTransitioning
+        });
+      }
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedShader, selectedColor]); // Sleduj změny shaderu i barvy
+
   // Aktualizuj audio data v contextu
   React.useEffect(() => {
     setAudioData(audioAnalysisData);
@@ -70,7 +147,8 @@ const AudioPlayer = ({
 
   return (
     <AudioPlayerAnimations
-      albumCover={albumCover}
+      albumCover={albumCover} // Album cover se zobrazí i když je barva (barva může být kombinována se shaderem)
+      backgroundColor={finalBackgroundColor || undefined} // Předaj barvu pozadí (může být kombinována se shaderem)
       className={className}
       onClose={onClose}
       fadeOutAndClose={fadeOutAndClose}
@@ -89,6 +167,7 @@ const AudioPlayer = ({
           <CloseButton
             onClose={() => fadeOutAndClose(onClose, 3000)}
             className="w-10 h-10 sm:w-12 sm:h-12"
+            isDarkMode={isDarkMode}
           />
         </div>
 
@@ -116,8 +195,14 @@ const AudioPlayer = ({
           albumTracks={albumTracks}
           currentTrackIndex={currentTrackIndex}
           onTrackChange={onTrackChange}
+          // Shader selector props
+          selectedShader={selectedShader}
+          onShaderChange={handleShaderChange}
+          onNavigateToScreen={onNavigateToScreen}
           // Data source indicator
           dataSource={dataSource}
+          // Dark mode
+          isDarkMode={isDarkMode}
           className="w-full flex flex-col items-center justify-center h-full"
         />
 

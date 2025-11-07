@@ -27,9 +27,8 @@ const miniShadersModules = import.meta.glob('/src/assets/mini-shaders/*.glsl', {
   eager: false
 });
 
-// Načti všechny shader soubory
-const shadersModules = import.meta.glob('/src/assets/shaders/*.fs', {
-  as: 'raw',
+// Načti všechny shader soubory (nový formát: .ts soubory s export default source)
+const shadersModules = import.meta.glob('/src/assets/shaders/*.ts', {
   eager: false
 });
 
@@ -55,7 +54,7 @@ export const getMiniShaderList = () => {
 export const getShaderList = () => {
   return Object.keys(shadersModules).map(path => {
     const fileName = path.split('/').pop();
-    const name = fileName.replace('.fs', '');
+    const name = fileName.replace('.ts', '');
     return {
       id: `shader-${name}`,
       name: name,
@@ -78,7 +77,18 @@ export const loadShader = async (shaderPath) => {
     } else if (shaderPath.includes('shaders')) {
       const module = shadersModules[shaderPath];
       if (module) {
-        return await module();
+        // Nový formát: .ts soubory exportují default source
+        const moduleExports = await module();
+        // Pokud je to objekt s default, vezmi default, jinak vezmi přímo
+        if (moduleExports && typeof moduleExports === 'object' && 'default' in moduleExports) {
+          return moduleExports.default;
+        }
+        // Pokud je to string, vrať ho přímo
+        if (typeof moduleExports === 'string') {
+          return moduleExports;
+        }
+        // Fallback: zkus najít source
+        return moduleExports?.source || moduleExports;
       }
     }
     return null;
@@ -149,9 +159,15 @@ export const convertShaderToWebGL = (shaderCode, shaderPath, isWebGL2 = false) =
       return convertMiniShader(shaderCode, isWebGL2);
     }
 
-    // Pro ISF shaders
+    // Pro shaders (nový formát: .ts soubory s mainImage)
     if (shaderPath && shaderPath.includes('shaders')) {
-      return convertISFShader(shaderCode, isWebGL2);
+      // Zkontroluj, zda je to nový formát (mainImage) nebo starý formát (ISF)
+      if (shaderCode.includes('void mainImage(') || shaderCode.includes('mainImage(')) {
+        return convertMainImageShader(shaderCode, isWebGL2);
+      } else {
+        // Starý ISF formát
+        return convertISFShader(shaderCode, isWebGL2);
+      }
     }
 
     // Pro ostatní - vrátí beze změny
@@ -1708,4 +1724,140 @@ ${finalHelpers}${finalConstants}${processedCode}
   }
 
   return processedCode;
+};
+
+/**
+ * Konverze shaderu s mainImage (nový formát: .ts soubory)
+ * @param {string} shaderCode - Původní shader kód
+ * @param {boolean} isWebGL2 - Zda používáme WebGL 2.0 (GLSL ES 3.00) nebo WebGL 1.0 (GLSL ES 1.0)
+ */
+const convertMainImageShader = (shaderCode, isWebGL2 = false) => {
+  let code = shaderCode;
+
+  // Odstraň #version řádky (budou přidány později)
+  code = code.replace(/^\s*#version\s+\d+\s*\w*\s*$/gm, '');
+  code = code.replace(/\n\s*#version\s+\d+\s*\w*\s*\n/g, '\n');
+  code = code.replace(/\r?\n\s*#version\s+\d+\s*\w*\s*\r?\n/g, '\n');
+  if (code.trim().startsWith('#version')) {
+    code = code.replace(/^\s*#version\s+\d+\s*\w*\s*\r?\n?/m, '');
+  }
+
+  // Konvertuj mainImage na main
+  // mainImage( out vec4 fragColor, in vec2 fragCoord ) -> main()
+  code = code.replace(/void\s+mainImage\s*\(\s*out\s+vec4\s+fragColor\s*,\s*in\s+vec2\s+fragCoord\s*\)/g, 'void main()');
+  code = code.replace(/void\s+mainImage\s*\(\s*out\s+vec4\s+fragColor\s*,\s*vec2\s+fragCoord\s*\)/g, 'void main()');
+  code = code.replace(/void\s+mainImage\s*\([^)]*\)/g, 'void main()');
+
+  // Konvertuj iTime na u_time
+  code = code.replace(/\biTime\b/g, 'u_time');
+
+  // Konvertuj iResolution na u_resolution
+  code = code.replace(/\biResolution\b/g, 'u_resolution');
+  // iResolution.xy -> u_resolution
+  code = code.replace(/\biResolution\.xy\b/g, 'u_resolution');
+  code = code.replace(/\biResolution\.x\b/g, 'u_resolution.x');
+  code = code.replace(/\biResolution\.y\b/g, 'u_resolution.y');
+
+  // Konvertuj iAudio na audio uniforms
+  // iAudio.x -> u_audioBass
+  // iAudio.y -> u_audioMid
+  // iAudio.z -> u_audioTreble
+  // iAudio.w -> u_audioAmplitude
+  code = code.replace(/\biAudio\.x\b/g, 'u_audioBass');
+  code = code.replace(/\biAudio\.y\b/g, 'u_audioMid');
+  code = code.replace(/\biAudio\.z\b/g, 'u_audioTreble');
+  code = code.replace(/\biAudio\.w\b/g, 'u_audioAmplitude');
+  code = code.replace(/\biAudio\b/g, 'vec4(u_audioBass, u_audioMid, u_audioTreble, u_audioAmplitude)');
+
+  // Konvertuj fragCoord na v_uv
+  // fragCoord je v pixelech, v_uv je v normalizovaných souřadnicích [0,1]
+  // fragCoord / iResolution.xy -> v_uv
+  // (2.0 * fragCoord - iResolution.xy) / iResolution.y -> přepočet na normalizované souřadnice
+  // Musíme nahradit všechny použití fragCoord
+  code = code.replace(/\bfragCoord\b/g, 'v_uv * u_resolution');
+
+  // Konvertuj fragColor podle WebGL verze
+  if (isWebGL2) {
+    // Pro WebGL 2.0: fragColor je out parametr, takže ho necháme
+    // Pokud není deklarováno, přidáme ho později
+    // Nahraď gl_FragColor za fragColor (pro zpětnou kompatibilitu)
+    code = code.replace(/\bgl_FragColor\b/g, 'fragColor');
+  } else {
+    // Pro WebGL 1.0: nahraď fragColor za gl_FragColor
+    // fragColor je out parametr v mainImage, ale v WebGL 1.0 používáme gl_FragColor
+    code = code.replace(/\bfragColor\s*=/g, 'gl_FragColor =');
+    code = code.replace(/\bfragColor\s*\./g, 'gl_FragColor.');
+    // Pokud je fragColor použito jako proměnná, nahraď ho za gl_FragColor
+    code = code.replace(/\bfragColor\b/g, 'gl_FragColor');
+  }
+
+  // Přidej hlavičku s uniformy a varying
+  const versionHeader = isWebGL2 ? '#version 300 es' : '';
+  const varyingOut = isWebGL2 ? 'in' : 'varying';
+  const fragColorDecl = isWebGL2 ? 'out vec4 fragColor;' : '';
+
+  // Odstraň existující precision řádky
+  code = code.replace(/^\s*precision\s+\w+\s+\w+\s*;?\s*$/gm, '');
+  code = code.replace(/\n\s*precision\s+\w+\s+\w+\s*;?\s*\n/g, '\n');
+
+  // Vyčisti prázdné řádky na začátku
+  code = code.replace(/^\s*\n+/, '');
+
+  // Pro WebGL 1.0: zajisti, že se odstraní všechny #version řádky
+  if (!isWebGL2) {
+    code = code.replace(/^\s*#version\s+.*$/gm, '');
+    code = code.replace(/\r?\n\s*#version\s+.*\r?\n?/g, '\n');
+    const trimmed = code.trim();
+    if (trimmed.startsWith('#version')) {
+      const firstNewline = trimmed.indexOf('\n');
+      if (firstNewline !== -1) {
+        code = trimmed.substring(firstNewline + 1);
+      } else {
+        code = '';
+      }
+    }
+  }
+
+  // Zkontroluj, zda už není precision v kódu
+  const hasPrecision = code.includes('precision mediump float') ||
+                       code.includes('precision highp float') ||
+                       code.includes('precision lowp float');
+
+  // Sestav finální shader
+  if (isWebGL2) {
+    // Pro WebGL 2.0: zkontroluj, zda už není fragColor deklarováno v kódu
+    let finalCode = code;
+    if (!code.includes('out vec4 fragColor') && !code.includes('fragColor')) {
+      // Přidej deklaraci fragColor před void main()
+      finalCode = code.replace(/void\s+main\s*\(/g, 'out vec4 fragColor;\nvoid main(');
+    }
+
+    return `${versionHeader}
+precision mediump float;
+uniform float u_time;
+uniform vec2 u_resolution;
+uniform float u_intensity;
+uniform float u_audioBass;
+uniform float u_audioMid;
+uniform float u_audioTreble;
+uniform float u_audioAmplitude;
+${varyingOut} vec2 v_uv;
+${finalCode}
+`;
+  } else {
+    // Pro WebGL 1.0: zkontroluj, zda není fragColor v kódu (mělo by být nahrazeno za gl_FragColor)
+    // Pokud je, přidej deklaraci gl_FragColor není potřeba (je vestavěné)
+    return `
+precision mediump float;
+uniform float u_time;
+uniform vec2 u_resolution;
+uniform float u_intensity;
+uniform float u_audioBass;
+uniform float u_audioMid;
+uniform float u_audioTreble;
+uniform float u_audioAmplitude;
+${varyingOut} vec2 v_uv;
+${code}
+`;
+  }
 };

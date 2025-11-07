@@ -16,6 +16,8 @@ const AudioPlayer = lazy(() => import('@features/audio/AudioPlayer'));
 const SimpleAdminScreen = lazy(() => import('@features/meditation/screens/SimpleAdminScreen'));
 const SoundThemeGalleryScreen = lazy(() => import('@features/meditation/screens/SoundThemeGalleryScreen'));
 const BreathProfilesScreen = lazy(() => import('@features/meditation/screens/BreathProfilesScreen'));
+const ShaderSelectionScreen = lazy(() => import('@features/meditation/screens/ShaderSelectionScreen'));
+const AudioPlayerHudbaScreen = lazy(() => import('@features/meditation/screens/AudioPlayerHudbaScreen'));
 
 
 // Registry stránek s jejich konfigurací
@@ -135,6 +137,25 @@ const SCREEN_REGISTRY = {
       type: 'slide',
       direction: 'left',
       duration: 0.6
+    }
+  },
+  'shader-selection': {
+    component: ShaderSelectionScreen,
+    requiresLayout: true,
+    props: ['onNavigateToScreen', 'onTouchStart', 'onTouchMove', 'onTouchEnd', 'section'],
+    transition: {
+      type: 'slide',
+      direction: 'left',
+      duration: 0.6
+    }
+  },
+  'audio-player-hudba': {
+    component: AudioPlayerHudbaScreen,
+    requiresLayout: true,
+    props: ['onNavigateToScreen', 'onTouchStart', 'onTouchMove', 'onTouchEnd', 'onPlayerStateChange'],
+    transition: {
+      type: 'fade',
+      duration: 0.4
     }
   },
   'breath-profiles': {
@@ -413,6 +434,23 @@ const PageManager = ({
         case 'onBreathSoundFadeChange':
           props.onBreathSoundFadeChange = onBreathSoundFadeChange;
           break;
+        case 'section':
+          // Mapování aktuální obrazovky na sekci pro shader
+          if (screenKey === 'shader-selection') {
+            // Urči sekci na základě předchozí obrazovky
+            // Pokud jsme přišli z hudba -> section = 'hudba'
+            // Pokud jsme přišli z meditation -> section = 'meditace'
+            // Pokud jsme přišli z breath -> section = 'dychani'
+            const sectionMap = {
+              'hudba': 'hudba',
+              'meditation': 'meditace',
+              'breath': 'dychani'
+            };
+            // Zkus získat z localStorage nebo použij currentScreen jako fallback
+            const previousScreen = localStorage.getItem('meditation-app-previous-screen') || currentScreen;
+            props.section = sectionMap[previousScreen] || 'hudba';
+          }
+          break;
         default:
           break;
       }
@@ -426,7 +464,8 @@ const PageManager = ({
     preparationTime, onPreparationTimeChange, onBreathSoundChange, onBreathSoundFadeChange,
     isPreparing, preparationCountdown,
     breathDuration, breathTime, setBreathTime, isBreathing, setIsBreathing, onBreathDurationChange,
-    activeAudio, onCloseAudio, selectedAlbum, onAlbumSelect, onAlbumClose
+    activeAudio, onCloseAudio, selectedAlbum, onAlbumSelect, onAlbumClose,
+    currentScreen
   ]);
 
   // Renderování stránky

@@ -4,8 +4,13 @@ import { motion } from 'framer-motion';
 const TrackSwitcher = ({
   tracks,
   currentTrackIndex,
-  onTrackChange
+  onTrackChange,
+  isDarkMode = false
 }) => {
+  const activeBg = isDarkMode ? 'bg-white text-black' : 'bg-black text-white';
+  const inactiveBg = isDarkMode ? 'bg-white/20 text-white hover:bg-white/30' : 'bg-white text-black hover:bg-gray-100';
+  const disabledBg = isDarkMode ? 'bg-gray-700 text-gray-500 opacity-20' : 'bg-gray-200 text-gray-400 opacity-20';
+  const textColor = isDarkMode ? 'text-white' : 'text-black';
   const [currentPage, setCurrentPage] = useState(0);
   const tracksPerPage = 10;
 
@@ -43,8 +48,8 @@ const TrackSwitcher = ({
               className={`
                 w-10 h-10 sm:w-12 sm:h-12 rounded-full flex items-center justify-center text-sm font-medium transition-all duration-200 flex-shrink-0
                 ${globalIndex === currentTrackIndex
-                  ? 'bg-black text-white cursor-default'
-                  : 'bg-white text-black hover:bg-gray-100 cursor-pointer'
+                  ? `${activeBg} cursor-default`
+                  : `${inactiveBg} cursor-pointer`
                 }
               `}
               whileHover={globalIndex !== currentTrackIndex ? { scale: 1.05 } : {}}
@@ -133,8 +138,8 @@ const TrackSwitcher = ({
             className={`
               w-10 h-10 rounded-full flex items-center justify-center text-base font-medium transition-all duration-200
               ${currentPage === 0
-                ? 'bg-gray-200 text-gray-400 cursor-not-allowed opacity-20'
-                : 'bg-white text-black hover:bg-gray-100 cursor-pointer'
+                ? `${disabledBg} cursor-not-allowed`
+                : `${inactiveBg} cursor-pointer`
               }
             `}
             whileHover={currentPage > 0 ? { scale: 1.05 } : {}}
@@ -149,7 +154,7 @@ const TrackSwitcher = ({
           </motion.button>
 
           {/* Informace o stránce */}
-          <span className="text-sm text-black font-medium">
+          <span className={`text-sm ${textColor} font-medium`}>
             {currentPage + 1} / {totalPages}
           </span>
 
@@ -160,8 +165,8 @@ const TrackSwitcher = ({
             className={`
               w-10 h-10 rounded-full flex items-center justify-center text-base font-medium transition-all duration-200
               ${currentPage === totalPages - 1
-                ? 'bg-gray-200 text-gray-400 cursor-not-allowed opacity-20'
-                : 'bg-white text-black hover:bg-gray-100 cursor-pointer'
+                ? `${disabledBg} cursor-not-allowed`
+                : `${inactiveBg} cursor-pointer`
               }
             `}
             whileHover={currentPage < totalPages - 1 ? { scale: 1.05 } : {}}

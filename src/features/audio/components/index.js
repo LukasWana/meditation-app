@@ -8,4 +8,5 @@ export { default as LoadingIndicator } from './LoadingIndicator';
 export { default as AudioControls } from './AudioControls';
 export { default as VoiceSwitcher } from './VoiceSwitcher';
 export { default as TrackSwitcher } from './TrackSwitcher';
+export { default as ShaderSelector } from './ShaderSelector';
 export { AudioPlayerAnimations } from './AudioPlayerAnimations';

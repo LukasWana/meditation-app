@@ -1,12 +1,11 @@
-import React, { useState } from 'react';
-import { AnimatePresence } from 'framer-motion';
+import React, { useMemo } from 'react';
 import { FramerSection, FramerPageTransition, BackButton, BackgroundShader } from '@components';
-import { AudioPlayer } from '@features/audio';
 import { AlbumGrid } from '../components';
 import { useHudbaScreenData } from '../hooks';
 import { useLanguage } from '@contexts/LanguageContext';
 import { useShaderSettings } from '@contexts/ShaderSettingsContext';
 import { useAudioAnalysis } from '@contexts/AudioAnalysisContext';
+import { usePlayback } from '@contexts/ShaderPlaybackContext';
 
 
 const HudbaScreen = ({
@@ -17,10 +16,38 @@ const HudbaScreen = ({
   gender = 'none',
   onPlayerStateChange
 }) => {
-  const [activeAudio, setActiveAudio] = useState(null);
   const { t } = useLanguage();
-  const { getShaderForSection } = useShaderSettings();
-  const { audioData } = useAudioAnalysis();
+  const { getShaderForSection, getColorForSection } = useShaderSettings();
+  const { transitionState } = usePlayback();
+
+  // Debug: Zkontroluj, jaký shader se používá
+  // Prioritizace: 1. transitionState, 2. barva z colorSettings, 3. shader z shaderSettings
+  const currentShader = useMemo(() => {
+    // Pokud je v transitionState něco kromě BLACK, použij to (může být barva __COLOR__ nebo shader)
+    if (transitionState?.toShaderKey && transitionState.toShaderKey !== '__BLACK__') {
+      return transitionState.toShaderKey;
+    }
+
+    // Pokud není v transitionState, zkontroluj barvu (má prioritu před shaderem)
+    const color = getColorForSection('hudba');
+    if (color) {
+      return `__COLOR__${color}`;
+    }
+
+    // Jinak použij shader z settings (může být null pokud byla nastavena barva)
+    const shader = getShaderForSection('hudba');
+    return shader;
+  }, [transitionState?.toShaderKey, getColorForSection, getShaderForSection]);
+
+  React.useEffect(() => {
+    console.log('🎨 HudbaScreen: Shader info', {
+      currentShader,
+      transitionState: transitionState?.toShaderKey,
+      shaderFromSettings: getShaderForSection('hudba'),
+      colorFromSettings: getColorForSection('hudba'),
+      isColorMode: currentShader && currentShader.startsWith('__COLOR__')
+    });
+  }, [currentShader, transitionState, getShaderForSection, getColorForSection]);
 
   // Hlavní logika pro data HudbaScreen
   const {
@@ -34,23 +61,25 @@ const HudbaScreen = ({
   } = useHudbaScreenData();
 
   const handleItemClick = (item) => {
+    // Ulož data o vybrané skladbě do localStorage pro přehrávač
+    let audioData = null;
+
     if (item.type === 'album') {
       // Spusť první skladbu z alba
       if (item.tracks && item.tracks.length > 0) {
         const firstTrack = item.tracks[0];
-        setActiveAudio({
+        audioData = {
           audioSrc: firstTrack.audioSrc,
           title: firstTrack.trackName,
           fileName: firstTrack.fileName,
           albumCover: item.coverImage,
           albumTracks: item.tracks,
           currentTrackIndex: 0
-        });
-        onPlayerStateChange?.(true);
+        };
       }
     } else if (item.type === 'song' || item.audioSrc) {
       // Pro samostatné skladby - vytvoř "album" s jednou skladbou pro autoplay
-      setActiveAudio({
+      audioData = {
         ...item,
         albumCover: item.coverImage,
         albumTracks: [{
@@ -59,14 +88,20 @@ const HudbaScreen = ({
           fileName: item.fileName
         }],
         currentTrackIndex: 0
-      });
-      onPlayerStateChange?.(true);
+      };
     }
-  };
 
-  const handleCloseAudio = () => {
-    setActiveAudio(null);
-    onPlayerStateChange?.(false);
+    // Ulož do localStorage a naviguj na stránku s přehrávačem
+    if (audioData) {
+      try {
+        localStorage.setItem('meditation-app-active-audio-hudba', JSON.stringify(audioData));
+        localStorage.setItem('meditation-app-previous-screen', 'hudba'); // Ulož, odkud jsme přišli
+        onPlayerStateChange?.(true);
+        onNavigateToScreen('audio-player-hudba'); // Naviguj na stránku s přehrávačem
+      } catch (e) {
+        console.error('Failed to save audio data:', e);
+      }
+    }
   };
 
   // Loading state - Hidden, show content immediately
@@ -106,38 +141,37 @@ const HudbaScreen = ({
           - BackgroundShader: zIndex 1 (nad pozadím, pod obsahem)
           - Obsah: zIndex 10 (nad shaderem)
       */}
-      {/* Pozadí stránky - pod shaderem - průhledné při přehrávání, aby shader prosvítal */}
+      {/* Pozadí stránky */}
       <div
         className="min-h-screen w-full max-w-full bg-[#f4ddc4] fixed inset-0"
         style={{
-          zIndex: 0,
-          opacity: activeAudio ? 0.3 : 1, // Průhledné při přehrávání, aby shader prosvítal
-          transition: 'opacity 3s ease-in-out' // Plynulé prolnutí (3 sekundy)
+          zIndex: 0
         }}
       />
 
-      {/* BackgroundShader - zobraz pouze při přehrávání s plynulým prolnutím */}
-      <BackgroundShader
-        variant={getShaderForSection('hudba')}
-        intensity={0.8}
-        enabled={true}
-        opacity={activeAudio ? 1.0 : 0.0}
-        audioData={activeAudio ? audioData : null}
-      />
+      {/* BackgroundShader - zobraz pouze barvu (shadery se zobrazují na stránce s přehrávačem) */}
+      {/* Použij shader z PlaybackContext, pokud je k dispozici, jinak z ShaderSettingsContext */}
+      {/* Zobraz pouze pokud je to barva (shadery se zobrazují až na stránce s přehrávačem) */}
+      {currentShader && currentShader.startsWith('__COLOR__') && (
+        <BackgroundShader
+          variant={currentShader}
+          intensity={0.8}
+          enabled={true}
+          opacity={1.0} // Barva zobraz vždy s plnou opacity
+          audioData={null} // Na této stránce nepoužíváme audio data
+        />
+      )}
 
-      {/* Hlavní obsah stránky - nad shaderem - průhledné pozadí, aby shader prosvítal */}
+      {/* Hlavní obsah stránky */}
       <div
-        className={`min-h-screen w-full max-w-full bg-[#f4ddc4] flex flex-col items-center justify-start p-2 sm:p-8 pb-20 overflow-x-hidden relative ${
-          activeAudio ? 'pointer-events-none' : ''
-        }`}
+        className="min-h-screen w-full max-w-full bg-[#f4ddc4] flex flex-col items-center justify-start p-2 sm:p-8 pb-20 overflow-x-hidden relative"
         style={{ position: 'relative', zIndex: 10 }}
-        onTouchStart={activeAudio ? undefined : onTouchStart}
-        onTouchMove={activeAudio ? undefined : onTouchMove}
-        onTouchEnd={activeAudio ? undefined : onTouchEnd}
+        onTouchStart={onTouchStart}
+        onTouchMove={onTouchMove}
+        onTouchEnd={onTouchEnd}
       >
         <BackButton
           onClick={() => onNavigateToScreen('home')}
-          className={activeAudio ? 'pointer-events-none opacity-50' : ''}
         />
 
         <div className="max-w-md w-full" style={{ marginTop: '4rem', paddingTop: 0, position: 'relative', display: 'flex', flexDirection: 'column', alignItems: 'stretch' }}>
@@ -183,41 +217,13 @@ const HudbaScreen = ({
 
           <AlbumGrid
             hudbaItems={hudbaItems}
-            activeAudio={activeAudio}
+            activeAudio={null} // Není žádný aktivní audio na této stránce
             onItemClick={handleItemClick}
             getDisplayDuration={getDisplayDuration}
             isLoadingCovers={isLoadingCovers}
           />
 
         </div>
-
-        {/* Audio Player Modal */}
-        <AnimatePresence>
-          {activeAudio && (
-            <AudioPlayer
-              key="audio-player"
-              audioSrc={activeAudio.audioSrc}
-              title={activeAudio.title}
-              onClose={handleCloseAudio}
-              albumCover={activeAudio.albumCover}
-              albumTracks={activeAudio.albumTracks}
-              currentTrackIndex={activeAudio.currentTrackIndex}
-              onTrackChange={(newIndex) => {
-                if (activeAudio.albumTracks && activeAudio.albumTracks[newIndex]) {
-                  const track = activeAudio.albumTracks[newIndex];
-                  setActiveAudio({
-                    ...activeAudio,
-                    audioSrc: track.audioSrc,
-                    title: track.trackName,
-                    fileName: track.fileName,
-                    currentTrackIndex: newIndex
-                  });
-                }
-              }}
-              autoplayEnabled={true}
-            />
-          )}
-        </AnimatePresence>
 
         {/* Duration Tests - pouze v development módu */}
       </div>

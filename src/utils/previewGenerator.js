@@ -33,9 +33,11 @@ void main() {
 };
 
 // Vestavěné fragment shadery pro náhledy
-const getBuiltInFragmentShader = (variant) => {
-  const fragmentShaders = {
-    default: `
+const getBuiltInFragmentShader = (variant, isWebGL2 = false) => {
+  // Získej základní shader bez verze
+  const getShaderBody = () => {
+    const fragmentShaders = {
+      default: `
       precision mediump float;
       uniform float u_time;
       uniform vec2 u_resolution;
@@ -205,9 +207,41 @@ const getBuiltInFragmentShader = (variant) => {
         gl_FragColor = vec4(finalColor, alpha);
       }
     `
+    };
+
+    return fragmentShaders[variant] || fragmentShaders.default;
   };
 
-  return fragmentShaders[variant] || fragmentShaders.default;
+  // Přidej verzi podle WebGL verze
+  const shaderBody = getShaderBody().trim();
+
+  if (isWebGL2) {
+    // Pro WebGL 2.0 použij #version 300 es a změň 'varying' na 'in'/'out'
+    let webgl2Shader = shaderBody;
+
+    // Změň 'varying vec2 v_uv;' na 'in vec2 v_uv;' (vertex shader má 'out vec2 v_uv')
+    webgl2Shader = webgl2Shader.replace(/\bvarying\s+vec2\s+v_uv;/g, 'in vec2 v_uv;');
+
+    // Změň gl_FragColor na fragColor
+    webgl2Shader = webgl2Shader.replace(/\bgl_FragColor\b/g, 'fragColor');
+
+    // Přidej 'out vec4 fragColor;' pokud ještě není (mělo by být po precision)
+    if (!webgl2Shader.includes('out vec4 fragColor')) {
+      // Najdi precision řádek a přidej out po něm
+      if (webgl2Shader.includes('precision')) {
+        webgl2Shader = webgl2Shader.replace(/(precision\s+mediump\s+float;)/, '$1\nout vec4 fragColor;');
+      } else {
+        // Pokud není precision, přidej ho na začátek s out
+        webgl2Shader = 'precision mediump float;\nout vec4 fragColor;\n' + webgl2Shader;
+      }
+    }
+
+    return `#version 300 es
+${webgl2Shader}`;
+  } else {
+    // Pro WebGL 1.0 bez verze (implicitně GLSL ES 1.0)
+    return shaderBody;
+  }
 };
 
 /**
@@ -398,21 +432,26 @@ export const generateShaderPreviews = async (
                 console.error(`Preview Gen: Error loading shader ${id} from ${path}:`, loadError);
                 return;
               }
-            } else if (variant) {
-              // Vestavěný shader
-              fragmentShaderSource = getBuiltInFragmentShader(variant);
-            } else {
-              console.warn(`Preview Gen: No shader source available for ${id} (no variant, path, or shaderCode)`);
-              return;
+            }
+
+            // Zjisti WebGL verzi PŘED získáním fragment shader source (pro vestavěné shadery)
+            const isWebGL2 = gl instanceof WebGL2RenderingContext;
+
+            // Získej fragment shader source - pro vestavěné shadery použij variant s isWebGL2
+            if (!fragmentShaderSource) {
+              if (variant) {
+                // Vestavěný shader - získej s správnou verzí podle WebGL
+                fragmentShaderSource = getBuiltInFragmentShader(variant, isWebGL2);
+              } else {
+                console.warn(`Preview Gen: No shader source available for ${id} (no variant, path, or shaderCode)`);
+                return;
+              }
             }
 
             if (!fragmentShaderSource || typeof fragmentShaderSource !== 'string') {
               console.warn(`Preview Gen: No shader source for ${id} (variant: ${variant}, path: ${path})`);
               return;
             }
-
-            // Zjisti WebGL verzi
-            const isWebGL2 = gl instanceof WebGL2RenderingContext;
 
             // Získej vertex shader source podle WebGL verze
             const vertexShaderSource = getVertexShaderSource(isWebGL2);
@@ -424,6 +463,7 @@ export const generateShaderPreviews = async (
             // Konvertuj shader na WebGL kompatibilní formát
             let convertedFragmentSource = fragmentShaderSource;
             if (path || shaderCode) {
+              // Pro shadery ze souborů nebo přímý kód - použij konverzi
               try {
                 console.log(`Preview Gen: Converting shader ${id} (path: ${path}, isWebGL2: ${isWebGL2})`);
                 convertedFragmentSource = convertShaderToWebGL(
@@ -446,8 +486,9 @@ export const generateShaderPreviews = async (
                 return;
               }
             } else {
-              // Pro vestavěné shadery není potřeba konverze
-              console.log(`Preview Gen: Using built-in shader for ${id} (variant: ${variant})`);
+              // Pro vestavěné shadery už máme správnou verzi z getBuiltInFragmentShader
+              console.log(`Preview Gen: Using built-in shader for ${id} (variant: ${variant}, isWebGL2: ${isWebGL2})`);
+              convertedFragmentSource = fragmentShaderSource; // Už má správnou verzi
             }
 
             // Zkontroluj, zda máme validní fragment shader source

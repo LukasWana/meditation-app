@@ -9,7 +9,6 @@ const ShaderCategorySelector = ({ selectedCategory, onSelect }) => {
   const { t } = useLanguage();
 
   const categories = [
-    { id: 'mini-shaders', name: 'Mini Shaders', count: 63 },
     { id: 'shaders', name: 'Shaders', count: 30 }
   ];
 

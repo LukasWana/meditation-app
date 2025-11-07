@@ -8,6 +8,13 @@ export const useNavigation = (initialScreen = 'intro') => {
   const navigateToScreen = useCallback((screenKey, options = {}) => {
     const { replace = false, addToHistory = true } = options;
 
+    // Ulož aktuální obrazovku do localStorage před změnou
+    try {
+      localStorage.setItem('meditation-app-current-screen', screenKey);
+    } catch (e) {
+      console.error('Failed to save current screen to localStorage:', e);
+    }
+
     if (replace) {
       setCurrentScreen(screenKey);
     } else {

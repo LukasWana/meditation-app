@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { motion } from 'framer-motion';
 import ShaderPreview from './ShaderPreview';
 import { useLanguage } from '@contexts/LanguageContext';
-import { getMiniShaderList, getShaderList } from '@utils/shaderLoader';
+import { getShaderList } from '@utils/shaderLoader';
 import { generateShaderPreviews } from '@utils/previewGenerator';
 
 // Cache klíč pro localStorage
@@ -155,9 +155,7 @@ const ShaderGallery = ({ selectedVariant, onSelect, section, category }) => {
     setIsLoading(true);
     let shaderList = [];
 
-    if (category === 'mini-shaders') {
-      shaderList = getMiniShaderList();
-    } else if (category === 'shaders') {
+    if (category === 'shaders') {
       shaderList = getShaderList();
     } else {
       // Výchozí vestavěné shadery

@@ -8,6 +8,7 @@ import { LanguageProvider } from '@contexts/LanguageContext';
 import { UIConfigProvider } from '@contexts/UIConfigContext';
 import { ShaderSettingsProvider } from '@contexts/ShaderSettingsContext';
 import { AudioAnalysisProvider } from '@contexts/AudioAnalysisContext';
+import { ShaderPlaybackProvider } from '@contexts/ShaderPlaybackContext';
 import MonitoringDashboard from '@components/MonitoringDashboard';
 import OfflineIndicator from '@components/OfflineIndicator';
 
@@ -260,8 +261,9 @@ function MeditationApp() {
       <LanguageProvider>
         <UIConfigProvider>
           <ShaderSettingsProvider>
-            <AudioAnalysisProvider>
-              <div className="min-h-screen w-full bg-[#f4ddc4] overflow-x-hidden relative">
+            <ShaderPlaybackProvider>
+              <AudioAnalysisProvider>
+                <div className="min-h-screen w-full bg-[#f4ddc4] overflow-x-hidden relative">
       {/* Intro animace s písmem "Meditácia" */}
       {showIntro && (
         <LazyIntroScreen onIntroComplete={handleIntroComplete} />
@@ -330,7 +332,8 @@ function MeditationApp() {
       {/* <OfflineIndicator isOffline={isOffline} showOfflineMessage={showOfflineMessage} /> */}
 
       </div>
-            </AudioAnalysisProvider>
+              </AudioAnalysisProvider>
+            </ShaderPlaybackProvider>
           </ShaderSettingsProvider>
         </UIConfigProvider>
       </LanguageProvider>
