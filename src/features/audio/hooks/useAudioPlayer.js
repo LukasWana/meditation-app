@@ -716,9 +716,9 @@ export const useAudioPlayer = (audioUrl, albumTracks = null, currentTrackIndex =
 
       log.error(`Failed to play audio in ${context}:`, error);
       if (!playbackError) {
-        log.audio(`⚠️ [${context}] Audio play failed, error details:`, {
-          name: error.name,
-          message: error.message,
+      log.audio(`⚠️ [${context}] Audio play failed, error details:`, {
+        name: error.name,
+        message: error.message,
           stack: error.stack,
           code: error.code,
           abort: abortController?.signal?.aborted

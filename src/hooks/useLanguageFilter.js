@@ -1,7 +1,9 @@
-import { useLanguage } from '@contexts/LanguageContext';
+import { useLanguage } from '@contexts/LanguageContext';
+
 export const useLanguageFilter = () => {
-  const { language } = useLanguage();
-  const filterAudioByLanguage = (audioFiles, section = 'slova') => {
+  const { language } = useLanguage();
+
+  const filterAudioByLanguage = (audioFiles, section = 'meditace') => {
     if (!audioFiles || audioFiles.length === 0) {
       return [];
     }
@@ -12,7 +14,7 @@ export const useLanguageFilter = () => {
     }
 
     // Pro sekci slova filtruj podle jazyka
-    if (section === 'slova') {
+    if (section === 'meditace' || section === 'slova') {
       return audioFiles.filter(file => {
         const fileName = file.fileName || file.audioSrc || '';
 
@@ -38,17 +40,19 @@ export const useLanguageFilter = () => {
     }
 
     return audioFiles;
-  };
+  };
+
   const getLanguagePath = (basePath) => {
     if (!basePath) return '';
 
     // Pro sekci slova přidej jazykovou podsložku
-    if (basePath.includes('slova')) {
+    if (basePath.includes('slova') || basePath.includes('meditace')) {
       return `${basePath}/${language}`;
     }
 
     return basePath;
-  };
+  };
+
   const isFileForCurrentLanguage = (fileName) => {
     if (!fileName) return false;
 

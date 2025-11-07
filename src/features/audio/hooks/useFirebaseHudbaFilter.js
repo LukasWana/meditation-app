@@ -139,11 +139,11 @@ export const useFirebaseHudbaFilter = () => {
       if (coverImages instanceof Map) {
         coverImageUrl = coverImages.get(albumName) || null;
         if (DEBUG_COVER_LOGS) {
-          if (!coverImageUrl) {
-            console.log(`⚠️ Cover image not found for album: ${albumName}`);
-            console.log(`📊 Available cover images:`, Array.from(coverImages.keys()));
-          } else {
-            console.log(`✅ Cover image found for album: ${albumName}`);
+        if (!coverImageUrl) {
+          console.log(`⚠️ Cover image not found for album: ${albumName}`);
+          console.log(`📊 Available cover images:`, Array.from(coverImages.keys()));
+        } else {
+          console.log(`✅ Cover image found for album: ${albumName}`);
           }
         }
       } else {

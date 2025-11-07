@@ -25,6 +25,7 @@ export const LanguageProvider = ({ children }) => {
       slova: 'meditácia',
       meditacia: 'dýchanie',
       meditace: 'meditácia',
+      dychani: 'dýchanie',
       nastavenie: 'nastavenie',
       pomoc: 'pomoc',
 
@@ -118,6 +119,7 @@ export const LanguageProvider = ({ children }) => {
       slova: 'meditace',
       meditacia: 'dýchání',
       meditace: 'meditace',
+      dychani: 'dýchání',
       nastavenie: 'nastavení',
       pomoc: 'pomoc',
 
@@ -210,6 +212,8 @@ export const LanguageProvider = ({ children }) => {
       hudba: 'music',
       slova: 'meditation',
       meditacia: 'breathing',
+      meditace: 'meditation',
+      dychani: 'breathing',
       nastavenie: 'settings',
       pomoc: 'help',
 

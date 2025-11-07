@@ -109,7 +109,7 @@ const SoundThemeGalleryScreen = ({
       'wind': 'Vítr',
       'forest': 'Les',
       'nature': 'Příroda',
-      'meditation': 'Meditace',
+    'meditace': 'Meditace',
       'mindful': 'Mindfulness',
       'calm': 'Klid',
       'peace': 'Mír',

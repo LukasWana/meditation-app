@@ -20,6 +20,7 @@ const ShaderSelectionScreen = ({
   const [showColorPicker, setShowColorPicker] = useState(false);
   const [selectedColor, setSelectedColor] = useState(getColorForSection(section) || '#000000');
   const selectedShader = getShaderForSection(section);
+  const sectionLabel = t(section) || section;
 
   // Získej cílovou obrazovku na základě sekce
   // Pokud přišel uživatel z audio-player-hudba, vrať se tam
@@ -35,8 +36,8 @@ const ShaderSelectionScreen = ({
     // Jinak použij mapování podle sekce
     const screenMap = {
       'hudba': 'hudba',
-      'meditace': 'meditation',
-      'dychani': 'breath'
+      'meditace': 'meditace',
+      'dychani': 'dychani'
     };
     return screenMap[section] || 'hudba';
   };
@@ -122,7 +123,7 @@ const ShaderSelectionScreen = ({
           {/* Nadpis */}
           <div className="text-center mb-8">
             <h1 className="text-4xl font-light mb-2">
-              {t('hudba')} - {t('shader') || 'Shader'}
+              {sectionLabel} - {t('shader') || 'Shader'}
             </h1>
             <p className="text-gray-600 text-sm">
               Vyberte shader pro pozadí

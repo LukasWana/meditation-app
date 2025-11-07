@@ -36,7 +36,7 @@ const BreathHeader = ({
       >
         {isBreathing
           ? (breathPhase === 'in' ? t('nadech') || 'nádech' : t('vydech') || 'výdech')
-          : t('dychanie') || 'dýchání'
+          : t('dychani') || t('dychanie') || 'dýchání'
         }
       </motion.h1>
       {/* Current Time Display - pod nadpisem */}

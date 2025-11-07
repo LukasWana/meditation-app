@@ -42,7 +42,7 @@ const Layout = ({
 
   const isHudbaSection = currentScreen === 'hudba' || currentScreen === 'audio-player-hudba';
   const showLanguageControls = !isPlayerActive && !isHudbaSection;
-  const showGenderControls = !isPlayerActive && currentScreen === 'slova';
+  const showGenderControls = !isPlayerActive && currentScreen === 'meditace';
   const shouldRenderTopControls = showLanguageControls || showGenderControls;
 
 

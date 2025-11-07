@@ -56,15 +56,15 @@ export const getShaderList = () => {
   return Object.keys(shadersModules)
     .filter(path => !path.endsWith('/index.ts'))
     .map(path => {
-      const fileName = path.split('/').pop();
-      const name = fileName.replace('.ts', '');
-      return {
-        id: `shader-${name}`,
-        name: name,
-        path: path,
-        category: 'shaders'
-      };
-    });
+    const fileName = path.split('/').pop();
+    const name = fileName.replace('.ts', '');
+    return {
+      id: `shader-${name}`,
+      name: name,
+      path: path,
+      category: 'shaders'
+    };
+  });
 };
 
 /**

@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { FramerPageTransition, BackgroundShader } from '@components';
 import { AudioPlayer } from '@features/audio';
 import { useLanguage } from '@contexts/LanguageContext';
@@ -33,6 +33,23 @@ const AudioPlayerHudbaScreen = ({
     }
     return null;
   });
+
+  useEffect(() => {
+    try {
+      localStorage.setItem('meditation-app-current-screen', 'audio-player-hudba');
+    } catch (error) {
+      console.warn('⚠️ AudioPlayerHudbaScreen: Failed to persist current screen', error);
+    }
+  }, []);
+
+  const getPreviousScreen = useCallback(() => {
+    try {
+      return localStorage.getItem('meditation-app-previous-screen') || 'hudba';
+    } catch (error) {
+      console.warn('⚠️ AudioPlayerHudbaScreen: Failed to read previous screen', error);
+      return 'hudba';
+    }
+  }, []);
 
   // Urči, jaký shader/barva se má zobrazit
   // Umožni kombinovat barvu + shader - shader se zobrazí jako pozadí, barva jako overlay v přehrávači
@@ -101,7 +118,7 @@ const AudioPlayerHudbaScreen = ({
     try {
       setActiveAudio(null);
       localStorage.removeItem('meditation-app-active-audio-hudba');
-      const previousScreen = localStorage.getItem('meditation-app-previous-screen') || 'hudba';
+      const previousScreen = getPreviousScreen();
       onPlayerStateChange?.(false);
       onNavigateToScreen(previousScreen); // Vrať se na předchozí stránku
     } catch (e) {
@@ -134,18 +151,29 @@ const AudioPlayerHudbaScreen = ({
   const backgroundColor = isColorMode ? currentShader.replace('__COLOR__', '') : null;
   const overlayColor = getColorForSection('hudba');
 
+  const blendedOverlayColor = useMemo(() => {
+    if (overlayColor) {
+      return overlayColor;
+    }
+    if (backgroundColor) {
+      return backgroundColor;
+    }
+    return 'rgba(244, 221, 196, 0.55)';
+  }, [overlayColor, backgroundColor]);
+
   const isDarkMode = useMemo(() => {
-    const colorForDarkMode = overlayColor || backgroundColor;
+    const colorForDarkMode = blendedOverlayColor || backgroundColor;
     return shouldUseDarkMode(currentShader, colorForDarkMode);
-  }, [currentShader, backgroundColor, overlayColor]);
+  }, [currentShader, blendedOverlayColor, backgroundColor]);
 
   // Pokud není načteno žádné audio, vrať se zpět
   useEffect(() => {
     if (!activeAudio) {
-      const previousScreen = localStorage.getItem('meditation-app-previous-screen') || 'hudba';
+      const previousScreen = getPreviousScreen();
+      onPlayerStateChange?.(false);
       onNavigateToScreen(previousScreen);
     }
-  }, [activeAudio, onNavigateToScreen]);
+  }, [activeAudio, onNavigateToScreen, getPreviousScreen, onPlayerStateChange]);
 
   // Debug: Zkontroluj, co se zobrazuje (hook musí být před podmíněným returnem)
   React.useEffect(() => {
@@ -211,7 +239,7 @@ const AudioPlayerHudbaScreen = ({
           autoplayEnabled={true}
           onNavigateToScreen={onNavigateToScreen}
           isDarkMode={isDarkMode}
-          backgroundColor={overlayColor} // Předaj barvu jako overlay (kombinovatelná se shaderem)
+          backgroundColor={blendedOverlayColor} // Jemná barevná vrstva sjednocující pozadí
         />
       )}
     </FramerPageTransition>

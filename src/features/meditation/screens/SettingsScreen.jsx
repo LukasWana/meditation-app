@@ -253,7 +253,7 @@ const SettingsScreen = ({
                         {/* Meditace */}
                         <div>
                           <h5 className="text-base font-light mb-2">
-                            {t('meditacia') || 'Meditace'}
+                            {t('meditace') || 'Meditace'}
                           </h5>
                           <p className="text-sm text-gray-600 mb-2">
                             Aktuální: {getShaderForSection('meditace')}
@@ -263,7 +263,7 @@ const SettingsScreen = ({
                         {/* Dýchání */}
                         <div>
                           <h5 className="text-base font-light mb-2">
-                            {t('dychanie') || 'Dýchání'}
+                            {t('dychani') || 'Dýchání'}
                           </h5>
                           <p className="text-sm text-gray-600 mb-2">
                             Aktuální: {getShaderForSection('dychani')}
@@ -280,15 +280,6 @@ const SettingsScreen = ({
                           </p>
                         </div>
 
-                        {/* Slova */}
-                        <div>
-                          <h5 className="text-base font-light mb-2">
-                            {t('slova') || 'Slova'}
-                          </h5>
-                          <p className="text-sm text-gray-600 mb-2">
-                            Aktuální: {getShaderForSection('slova')}
-                          </p>
-                        </div>
                       </div>
                     </div>
                   </div>
@@ -318,10 +309,9 @@ const SettingsScreen = ({
                         className="w-full p-2 bg-white/90 border border-black/20 rounded text-sm"
                       >
                         <option value="">Vyberte sekci...</option>
-                        <option value="meditace">{t('meditacia') || 'Meditace'}</option>
-                        <option value="dychani">{t('dychanie') || 'Dýchání'}</option>
+                        <option value="meditace">{t('meditace') || 'Meditace'}</option>
+                        <option value="dychani">{t('dychani') || 'Dýchání'}</option>
                         <option value="hudba">{t('hudba') || 'Hudba'}</option>
-                        <option value="slova">{t('slova') || 'Slova'}</option>
                       </select>
                     </div>
 

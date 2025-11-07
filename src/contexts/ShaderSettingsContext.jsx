@@ -18,13 +18,21 @@ export const ShaderSettingsProvider = ({ children }) => {
       if (saved) {
         const parsed = JSON.parse(saved);
         // Migrace starých klíčů na nové (backward compatibility)
-        if (parsed.meditation && !parsed.meditace) {
-          parsed.meditace = parsed.meditation;
+        if (parsed.slova && !parsed.meditace) {
+          parsed.meditace = parsed.slova;
+          delete parsed.slova;
+        }
+        if (parsed.meditation && !parsed.dychani) {
+          parsed.dychani = parsed.meditation;
           delete parsed.meditation;
         }
         if (parsed.breath && !parsed.dychani) {
           parsed.dychani = parsed.breath;
           delete parsed.breath;
+        }
+        if (parsed.meditacia && !parsed.dychani) {
+          parsed.dychani = parsed.meditacia;
+          delete parsed.meditacia;
         }
         return parsed;
       }
@@ -36,8 +44,7 @@ export const ShaderSettingsProvider = ({ children }) => {
       meditace: 'meditace',
       dychani: 'dychani',
       hudba: 'hudba',
-      settings: 'settings',
-      slova: 'default'
+      settings: 'settings'
     };
   });
 

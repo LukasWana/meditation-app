@@ -1,8 +1,8 @@
 import log from './logger.js';
 
-class SlovaDataService {
+class MeditaceDataService {
   constructor() {
-    this.slovaData = {
+    this.meditaceData = {
       sk: { male: [], female: [], all: [] },
       cz: { male: [], female: [], all: [] },
       en: { male: [], female: [], all: [] }
@@ -71,7 +71,7 @@ class SlovaDataService {
   // Inicializace slova dat z cache
   async initialize() {
     if (this.isInitialized) {
-      log.debug('SlovaDataService already initialized, skipping...');
+      log.debug('MeditaceDataService already initialized, skipping...');
       return;
     }
 
@@ -164,7 +164,7 @@ class SlovaDataService {
 
       languages.forEach(lang => {
         // Ulož všechny soubory pro daný jazyk
-        this.slovaData[lang].all = transformedItems.filter(item => {
+        this.meditaceData[lang].all = transformedItems.filter(item => {
           const fileName = item.fileName;
           if (lang === 'sk') {
             return fileName.includes('SK') || (!fileName.includes('CZ') && !fileName.includes('EN'));
@@ -177,19 +177,19 @@ class SlovaDataService {
         });
 
         // Pro kompatibilitu, ulož stejná data do male a female
-        this.slovaData[lang].male = [...this.slovaData[lang].all];
-        this.slovaData[lang].female = [...this.slovaData[lang].all];
+        this.meditaceData[lang].male = [...this.meditaceData[lang].all];
+        this.meditaceData[lang].female = [...this.meditaceData[lang].all];
       });
 
       this.isInitialized = true;
       log.success('Slova data service initialized successfully');
       log.debug('Slova data summary:', {
-        sk: { male: this.slovaData.sk.male.length, female: this.slovaData.sk.female.length, all: this.slovaData.sk.all.length },
-        cz: { male: this.slovaData.cz.male.length, female: this.slovaData.cz.female.length, all: this.slovaData.cz.all.length },
-        en: { male: this.slovaData.en.male.length, female: this.slovaData.en.female.length, all: this.slovaData.en.all.length }
+        sk: { male: this.meditaceData.sk.male.length, female: this.meditaceData.sk.female.length, all: this.meditaceData.sk.all.length },
+        cz: { male: this.meditaceData.cz.male.length, female: this.meditaceData.cz.female.length, all: this.meditaceData.cz.all.length },
+        en: { male: this.meditaceData.en.male.length, female: this.meditaceData.en.female.length, all: this.meditaceData.en.all.length }
       });
-      log.debug('SK male items sample:', this.slovaData.sk.male.slice(0, 3));
-      log.debug('SK female items sample:', this.slovaData.sk.female.slice(0, 3));
+      log.debug('SK male items sample:', this.meditaceData.sk.male.slice(0, 3));
+      log.debug('SK female items sample:', this.meditaceData.sk.female.slice(0, 3));
 
     } catch (error) {
       log.error('Failed to initialize slova data service:', error);
@@ -197,7 +197,7 @@ class SlovaDataService {
   }
 
   // Filtruj slova položky podle pohlaví a jazyka
-  filterSlovaItems(items, userGender, userLanguage) {
+  filterMeditaceItems(items, userGender, userLanguage) {
     const filteredItems = items.filter(item => {
       const fileName = item.fileName;
       const userLang = userLanguage.toLowerCase();
@@ -296,18 +296,18 @@ class SlovaDataService {
   }
 
   // Získej slova data pro konkrétní jazyk a pohlaví
-  getSlovaData(userGender = 'all', userLanguage = 'sk') {
+  getMeditaceData(userGender = 'all', userLanguage = 'sk') {
     // Pokud není inicializovaný, vrať prázdné pole
     if (!this.isInitialized) {
-      log.warn('SlovaDataService not initialized');
-      console.warn('⚠️ SlovaDataService not initialized');
+      log.warn('MeditaceDataService not initialized');
+      console.warn('⚠️ MeditaceDataService not initialized');
       return [];
     }
 
-    console.log(`🔍 getSlovaData called: userGender=${userGender}, userLanguage=${userLanguage}`);
+    console.log(`🔍 getMeditaceData called: userGender=${userGender}, userLanguage=${userLanguage}`);
 
     // Získej všechny slova soubory pro daný jazyk
-    const allSlovaFiles = this.getAllSlovaFilesForLanguage(userLanguage);
+    const allSlovaFiles = this.getAllMeditaceFilesForLanguage(userLanguage);
 
     console.log(`🔍 allSlovaFiles count: ${allSlovaFiles.length}`);
     if (allSlovaFiles.length > 0) {
@@ -315,25 +315,25 @@ class SlovaDataService {
     }
 
     // Filtruj podle pohlaví
-    const filtered = this.filterSlovaItems(allSlovaFiles, userGender, userLanguage);
+    const filtered = this.filterMeditaceItems(allSlovaFiles, userGender, userLanguage);
     console.log(`🔍 After filtering: ${filtered.length} items`);
 
     return filtered;
   }
 
   // Získej všechny slova soubory pro daný jazyk
-  getAllSlovaFilesForLanguage(userLanguage) {
+  getAllMeditaceFilesForLanguage(userLanguage) {
     const langKey = userLanguage.toLowerCase();
     const allFiles = [];
 
     // Debug: zobraz strukturu dat
-    console.log(`🔍 getAllSlovaFilesForLanguage: langKey=${langKey}`);
-    console.log(`🔍 this.slovaData[${langKey}]:`, this.slovaData[langKey]);
-    console.log(`🔍 Available languages:`, Object.keys(this.slovaData));
+    console.log(`🔍 getAllMeditaceFilesForLanguage: langKey=${langKey}`);
+    console.log(`🔍 this.meditaceData[${langKey}]:`, this.meditaceData[langKey]);
+    console.log(`🔍 Available languages:`, Object.keys(this.meditaceData));
 
     // Získej všechny soubory pro daný jazyk (male, female, all)
     ['male', 'female', 'all'].forEach(gender => {
-      const files = this.slovaData[langKey]?.[gender] || [];
+      const files = this.meditaceData[langKey]?.[gender] || [];
       console.log(`🔍 ${langKey}.${gender}: ${files.length} files`);
       allFiles.push(...files);
     });
@@ -344,7 +344,7 @@ class SlovaDataService {
 
   // Získej statistiky
   getStats(userGender = 'all', userLanguage = 'sk') {
-    const items = this.getSlovaData(userGender, userLanguage);
+    const items = this.getMeditaceData(userGender, userLanguage);
     return {
       totalFiles: items.length,
       byLanguage: {},
@@ -354,4 +354,4 @@ class SlovaDataService {
   }
 }
 
-export const slovaDataService = new SlovaDataService();
+export const meditaceDataService = new MeditaceDataService();

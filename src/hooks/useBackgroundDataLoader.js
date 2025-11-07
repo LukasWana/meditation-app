@@ -64,11 +64,11 @@ export const useBackgroundDataLoader = (showIntro) => {
           await globalMetadataPreloader.initialize();
           console.log('✅ Global MP3 metadata preloader initialized');
 
-          // Inicializuj slova data service (předpřipravené filtrované data)
-          console.log('🔄 Initializing slova data service in background...');
-          const { slovaDataService } = await import('@services/slovaDataService');
-          await slovaDataService.initialize();
-          console.log('✅ Slova data service initialized');
+          // Inicializuj data meditací (předpřipravené filtrované data)
+          console.log('🔄 Initializing meditace data service in background...');
+          const { meditaceDataService } = await import('@services/meditaceDataService');
+          await meditaceDataService.initialize();
+          console.log('✅ Meditace data service initialized');
 
           // Preload kritická metadata
           await cacheService.preloadCriticalData();
@@ -127,11 +127,11 @@ export const useBackgroundDataLoader = (showIntro) => {
                   isProcessingUpdate = false;
                 });
 
-                // Aktualizuj slova data service
-                slovaDataService.initialize().then(() => {
-                  console.log('✅ Slova data service updated from real-time data');
+                // Aktualizuj meditace data service
+                meditaceDataService.initialize().then(() => {
+                  console.log('✅ Meditace data service updated from real-time data');
                 }).catch(err => {
-                  console.warn('⚠️ Failed to update slova data service:', err);
+                  console.warn('⚠️ Failed to update meditace data service:', err);
                 });
               } else {
                 isProcessingUpdate = false;

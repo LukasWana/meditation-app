@@ -5,12 +5,12 @@ import Layout from './Layout';
 // Lazy loading pro lepší performance
 const IntroScreen = lazy(() => import('@features/meditation/screens/IntroScreen'));
 const HomeScreen = lazy(() => import('@features/meditation/screens/HomeScreen'));
-const MeditationScreen = lazy(() => import('@features/meditation/screens/MeditationScreen'));
+const DychaniScreen = lazy(() => import('@features/meditation/screens/MeditationScreen'));
 const BreathScreen = lazy(() => import('@features/meditation/screens/BreathScreen'));
 const SettingsScreen = lazy(() => import('@features/meditation/screens/SettingsScreen'));
 const HelpScreen = lazy(() => import('@features/meditation/screens/HelpScreen'));
 const HudbaScreen = lazy(() => import('@features/meditation/screens/HudbaScreen'));
-const SlovaScreen = lazy(() => import('@features/meditation/screens/SlovaScreen'));
+const MeditaceScreen = lazy(() => import('@features/meditation/screens/MeditaceScreen'));
 const AlbumDetailScreen = lazy(() => import('@features/meditation/screens/AlbumDetailScreen'));
 const AudioPlayer = lazy(() => import('@features/audio/AudioPlayer'));
 const SimpleAdminScreen = lazy(() => import('@features/meditation/screens/SimpleAdminScreen'));
@@ -18,6 +18,7 @@ const SoundThemeGalleryScreen = lazy(() => import('@features/meditation/screens/
 const BreathProfilesScreen = lazy(() => import('@features/meditation/screens/BreathProfilesScreen'));
 const ShaderSelectionScreen = lazy(() => import('@features/meditation/screens/ShaderSelectionScreen'));
 const AudioPlayerHudbaScreen = lazy(() => import('@features/meditation/screens/AudioPlayerHudbaScreen'));
+const AudioPlayerMeditaceScreen = lazy(() => import('@features/meditation/screens/AudioPlayerMeditaceScreen'));
 
 
 // Registry stránek s jejich konfigurací
@@ -41,8 +42,8 @@ const SCREEN_REGISTRY = {
       duration: 0.6
     }
   },
-  'meditation': {
-    component: MeditationScreen,
+  'dychani': {
+    component: DychaniScreen,
     requiresLayout: true,
     props: ['time', 'selectedDuration', 'isPlaying', 'onDurationChange', 'onPlayPause', 'onReset', 'onNavigateToScreen', 'onTouchStart', 'onTouchMove', 'onTouchEnd', 'breathPhase', 'breathInDuration', 'breathOutDuration', 'breathInSound', 'breathOutSound', 'breathClickSound', 'breathFinalSound', 'breathSoundFadeEnabled', 'onBreathSoundChange', 'isPreparing', 'preparationCountdown', 'preparationTime'],
     transition: {
@@ -90,8 +91,8 @@ const SCREEN_REGISTRY = {
       duration: 0.6
     }
   },
-  'slova': {
-    component: SlovaScreen,
+  'meditace': {
+    component: MeditaceScreen,
     requiresLayout: true,
     props: ['onNavigateToScreen', 'onTouchStart', 'onTouchMove', 'onTouchEnd', 'gender', 'onPlayerStateChange', 'onGenderChange'],
     transition: {
@@ -151,6 +152,15 @@ const SCREEN_REGISTRY = {
   },
   'audio-player-hudba': {
     component: AudioPlayerHudbaScreen,
+    requiresLayout: true,
+    props: ['onNavigateToScreen', 'onTouchStart', 'onTouchMove', 'onTouchEnd', 'onPlayerStateChange'],
+    transition: {
+      type: 'fade',
+      duration: 0.4
+    }
+  },
+  'audio-player-meditace': {
+    component: AudioPlayerMeditaceScreen,
     requiresLayout: true,
     props: ['onNavigateToScreen', 'onTouchStart', 'onTouchMove', 'onTouchEnd', 'onPlayerStateChange'],
     transition: {
@@ -439,12 +449,13 @@ const PageManager = ({
           if (screenKey === 'shader-selection') {
             // Urči sekci na základě předchozí obrazovky
             // Pokud jsme přišli z hudba -> section = 'hudba'
-            // Pokud jsme přišli z meditation -> section = 'meditace'
-            // Pokud jsme přišli z breath -> section = 'dychani'
+            // Pokud jsme přišli z meditace -> section = 'meditace'
+            // Pokud jsme přišli z breath/dychani -> section = 'dychani'
             const sectionMap = {
               'hudba': 'hudba',
-              'meditation': 'meditace',
-              'breath': 'dychani'
+              'meditace': 'meditace',
+              'breath': 'dychani',
+              'dychani': 'dychani'
             };
             // Zkus získat z localStorage nebo použij currentScreen jako fallback
             const previousScreen = localStorage.getItem('meditation-app-previous-screen') || currentScreen;

@@ -766,7 +766,7 @@ const SimpleAdminScreen = () => {
       const cacheService = (await import('@services/cacheServiceRefactored')).default;
       const { realtimeMetadataService } = await import('@services/realtimeMetadataService');
       const { fastMetadataService } = await import('@services/fastMetadataService');
-      const { slovaDataService } = await import('@services/slovaDataService');
+      const { meditaceDataService } = await import('@services/meditaceDataService');
 
       // Vymaž všechny cache
       console.log('🧹 Clearing all caches...');
@@ -812,7 +812,7 @@ const SimpleAdminScreen = () => {
         // Reinicializuj služby s novými daty
         setStatus('🔄 Reinicializuji služby...');
         await fastMetadataService.initialize(true);
-        await slovaDataService.initialize();
+        await meditaceDataService.initialize();
 
         const slovaFiles = Object.values(realtimeMetadata).filter(file =>
           file.folder === 'slova' || (file.fileName && file.fileName.includes('slova/'))

@@ -5,7 +5,7 @@ import { AudioPlayer } from '@features/audio';
 import { useFirebaseAudioFilter } from '@features/audio/hooks/useFirebaseAudioFilter';
 import { useLanguage } from '@contexts/LanguageContext';
 
-const SlovaScreen = ({
+const MeditaceTroubleScreen = ({
   onNavigateToScreen,
   onTouchStart,
   onTouchMove,
@@ -18,7 +18,7 @@ const SlovaScreen = ({
   const { t } = useLanguage();
 
   // Použij nový filtrovací systém
-  const { troubleItems: slovaItems, isLoading, error, userStats, audioFiles } = useFirebaseAudioFilter(gender);
+  const { troubleItems: meditaceItems, isLoading, error, userStats, audioFiles } = useFirebaseAudioFilter(gender);
 
   const handleItemClick = (item) => {
     // Použij audioSrc nebo fileName jako fallback
@@ -48,7 +48,7 @@ const SlovaScreen = ({
   // Loading state - show loading during data fetch
   if (isLoading) {
     return (
-      <FramerPageTransition screenKey="slova">
+      <FramerPageTransition screenKey="meditace">
         <div className="min-h-screen w-full max-w-full bg-[#f4ddc4] flex flex-col items-center justify-center p-2 sm:p-8 pb-20 overflow-x-hidden relative">
           <BackButton onClick={() => onNavigateToScreen('home')} />
           <div className="text-center">
@@ -63,7 +63,7 @@ const SlovaScreen = ({
   // Error state
   if (error) {
     return (
-      <FramerPageTransition screenKey="slova">
+      <FramerPageTransition screenKey="meditace">
         <div className="min-h-screen w-full max-w-full bg-[#f4ddc4] flex flex-col items-center justify-center p-2 sm:p-8 pb-20 overflow-x-hidden relative">
           <BackButton onClick={() => onNavigateToScreen('home')} />
           <div className="text-center">
@@ -76,7 +76,7 @@ const SlovaScreen = ({
   }
 
   return (
-    <FramerPageTransition screenKey="slova">
+    <FramerPageTransition screenKey="meditace">
       <div
         className={`min-h-screen w-full max-w-full bg-[#f4ddc4] flex flex-col items-center justify-center p-2 sm:p-8 pb-20 overflow-x-hidden relative ${
           activeAudio ? 'pointer-events-none' : ''
@@ -92,12 +92,12 @@ const SlovaScreen = ({
 
         <div className="max-w-md w-full mt-16">
           <FramerSection
-            className="text-center mb-8"
+          className="text-center mb-8"
             animationType="fadeIn"
             delay={0.1}
           >
             <h1 className="text-6xl font-light">
-              {t('slova')}
+              {t('meditace')}
             </h1>
             <p className="text-xl text-center text-gray-700 mb-8">
               {t('mluvene')}
@@ -124,13 +124,13 @@ const SlovaScreen = ({
           </FramerSection>
 
           <div className="space-y-4">
-            {slovaItems.length === 0 ? (
+            {meditaceItems.length === 0 ? (
               <div className="text-center py-8">
                 <p className="text-gray-600 text-lg">Žiadne meditácie nie sú dostupné</p>
                 <p className="text-gray-500 text-sm mt-2">Skúste zmeniť nastavenia v menu</p>
               </div>
             ) : (
-              slovaItems.map((item, idx) => (
+              meditaceItems.map((item, idx) => (
                 <FramerSection
                   key={item.key || idx}
                   animationType="slideInUp"
@@ -202,4 +202,4 @@ const SlovaScreen = ({
   );
 };
 
-export default SlovaScreen;
+export default MeditaceTroubleScreen;

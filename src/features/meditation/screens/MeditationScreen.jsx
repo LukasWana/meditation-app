@@ -12,7 +12,7 @@ import { useBreathSounds } from '@hooks';
 const WheelPickerModal = lazy(() => import('@components/TimePickerModal').then(m => ({ default: m.WheelPickerModal })));
 const SoundThemeGallery = lazy(() => import('@components/SoundThemeGallery'));
 
-const MeditationScreen = ({
+const DychaniScreen = ({
   time,
   selectedDuration,
   isPlaying,
@@ -39,16 +39,25 @@ const MeditationScreen = ({
   const { t } = useLanguage();
   const { getShaderForSection, shaderSettings } = useShaderSettings();
 
-  // Získej shader pro meditaci - použij shaderSettings přímo pro reaktivitu
-  const meditationShader = useMemo(() => {
-    const shader = shaderSettings?.meditace || 'meditace';
-    console.log('🎨 MeditationScreen: Shader variant:', shader, 'shaderSettings:', shaderSettings);
+  // Získej shader pro sekci dýchání - použij shaderSettings přímo pro reaktivitu
+  const breathShader = useMemo(() => {
+    const shader = shaderSettings?.dychani || 'dychani';
+    console.log('🎨 DychaniScreen: Shader variant:', shader, 'shaderSettings:', shaderSettings);
     return shader;
   }, [shaderSettings]);
 
   const [showGallery, setShowGallery] = useState(false);
   const [showDurationPicker, setShowDurationPicker] = useState(false);
   const [breathCycleTime, setBreathCycleTime] = useState(0); // Čas v aktuálním cyklu dýchání (0 až breathInDuration + breathOutDuration)
+
+  useEffect(() => {
+    try {
+      localStorage.setItem('meditation-app-current-screen', 'dychani');
+      localStorage.setItem('meditation-app-previous-screen', 'dychani');
+    } catch (e) {
+      console.warn('⚠️ DychaniScreen: Failed to persist current screen', e);
+    }
+  }, []);
 
   // Použij hook pro přehrávání zvuků dýchání
   useBreathSounds(
@@ -139,7 +148,7 @@ const MeditationScreen = ({
   // Pokud probíhá příprava, zobraz odpočítávání přípravy
   if (isPreparing) {
     return (
-      <FramerPageTransition screenKey="meditation">
+      <FramerPageTransition screenKey="dychani">
         <div
           className="min-h-screen w-full max-w-full bg-[#f4ddc4] flex flex-col items-center justify-start p-2 sm:p-8 pb-20 overflow-x-hidden relative"
           onTouchStart={onTouchStart}
@@ -221,7 +230,7 @@ const MeditationScreen = ({
     );
   }
   return (
-    <FramerPageTransition screenKey="meditation">
+    <FramerPageTransition screenKey="dychani">
       {/* Vrstvení:
           - Pozadí (bg-[#f4ddc4]): zIndex 0 (nejnižší)
           - BackgroundShader: zIndex 1 (nad pozadím, pod obsahem)
@@ -239,13 +248,25 @@ const MeditationScreen = ({
 
       {/* BackgroundShader - zobraz pouze při přehrávání s plynulým prolnutím */}
       <BackgroundShader
-        variant={meditationShader}
-        intensity={0.8}
+        variant={breathShader}
+        intensity={0.6}
         enabled={true}
-        opacity={isPlaying ? 1.0 : 0.0}
+        opacity={isPlaying ? 0.9 : 0.0}
         breathPhase={isPlaying ? breathPhase : null}
         breathInDuration={breathInDuration}
         breathOutDuration={breathOutDuration}
+      />
+
+      {/* Jemný barevný overlay pro sjednocení se zbytkem UI */}
+      <div
+        className="fixed inset-0 pointer-events-none"
+        style={{
+          zIndex: 5,
+          background: isPlaying
+            ? 'linear-gradient(180deg, rgba(244,221,196,0.55) 0%, rgba(244,221,196,0.35) 100%)'
+            : 'rgba(244,221,196,0.85)',
+          transition: 'background 0.6s ease, opacity 0.6s ease'
+        }}
       />
 
       {/* Hlavní obsah stránky - nad shaderem - průhledné pozadí, aby shader prosvítal */}
@@ -266,7 +287,7 @@ const MeditationScreen = ({
           >
             <div style={{ height: '3.5rem', display: 'flex', flexDirection: 'column', justifyContent: 'flex-start', alignItems: 'center', marginBottom: '0.5rem' }}>
               <h1 className="text-4xl font-light" style={{ minHeight: '2.5rem', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                {t('meditacia')}
+                {t('dychani')}
               </h1>
             </div>
             <div className="flex justify-center gap-2 mt-4 mb-4">
@@ -524,4 +545,4 @@ const MeditationScreen = ({
   );
 };
 
-export default MeditationScreen;
+export default DychaniScreen;
