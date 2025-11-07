@@ -22,7 +22,7 @@ float noise(vec3 x) {
     vec3 p = floor(x);
     vec3 f = fract(x);
     f = f * f * (3.0 - 2.0 * f);
-    
+
     float n = p.x + p.y * 57.0 + p.z * 113.0;
     return mix(
         mix(
@@ -71,10 +71,10 @@ float sdMushroom(vec3 p, float size) {
     // Cap
     float cap = sdSphere(vec3(p.x, p.y - size * 0.2, p.z), size * 0.5);
     cap = max(cap, p.y - size * 0.2);
-    
+
     // Stem
     float stem = sdCapsule(p, vec3(0.0, -size * 0.5, 0.0), vec3(0.0, size * 0.2, 0.0), size * 0.15);
-    
+
     // Combine
     return min(cap, stem);
 }
@@ -83,14 +83,14 @@ float sdMushroom(vec3 p, float size) {
 float sdSmallMushroom(vec3 p, float size) {
     // Move to origin
     vec3 q = p;
-    
+
     // Cap
     float cap = sdSphere(vec3(q.x, q.y - size * 0.05, q.z), size * 0.15);
     cap = max(cap, q.y - size * 0.05);
-    
+
     // Stem
     float stem = sdCapsule(q, vec3(0.0, -size * 0.15, 0.0), vec3(0.0, size * 0.05, 0.0), size * 0.05);
-    
+
     // Combine
     return min(cap, stem);
 }
@@ -102,7 +102,7 @@ float map(vec3 p) {
     vec3 tunnelP = p;
     tunnelP.xy *= rot(p.z * 0.1);
     float tunnel = -sdTorus(vec3(tunnelP.xy, mod(tunnelP.z, 4.0) - 2.0), vec2(tunnelRadius, 0.5));
-    
+
     // Main mushroom path
     float mushPath = 999.0;
     for(int i = 0; i < 5; i++) {
@@ -114,7 +114,7 @@ float map(vec3 p) {
             mushPath = min(mushPath, m);
         }
     }
-    
+
     // Small mushrooms along the way
     float smallMushrooms = 999.0;
     for(int i = 0; i < 8; i++) {
@@ -124,7 +124,7 @@ float map(vec3 p) {
         float m = sdSmallMushroom(mp, 0.3 + 0.1 * sin(angle + iTime + p.z * 0.1));
         smallMushrooms = min(smallMushrooms, m);
     }
-    
+
     return min(min(tunnel, mushPath), smallMushrooms);
 }
 
@@ -150,18 +150,18 @@ vec3 rainbow(float t) {
 vec3 fractalBackground(vec2 uv, float time) {
     vec2 p = uv * 2.0 - 1.0;
     p.x *= iResolution.x / iResolution.y;
-    
+
     vec2 z = p;
     vec2 c = p * 0.8 + vec2(sin(time * 0.3) * 0.2, cos(time * 0.2) * 0.3);
-    
+
     float iter = 0.0;
-    
+
     for(float i = 0.0; i < 12.0; i++) {
         z = vec2(z.x * z.x - z.y * z.y, 2.0 * z.x * z.y) + c;
         if(length(z) > 2.0) break;
         iter++;
     }
-    
+
     float t = iter / 12.0;
     vec3 color = rainbow(t + time * 0.1 + iAudio.y * 0.5);
     return color * (0.5 + 0.5 * sin(time * 0.2));
@@ -173,67 +173,67 @@ vec4 rayMarch(vec3 ro, vec3 rd) {
     float dS = 0.0;
     vec3 color = vec3(0.0);
     float glow = 0.0;
-    
-    int MAX_STEPS = int(mix(40.0, 100.0, u_quality));
+
+    float maxSteps = mix(40.0, 100.0, clamp(iAudio.w, 0.0, 1.0));
 
     for(int i = 0; i < 100; i++) {
-        if (i >= MAX_STEPS) break;
+        if (float(i) >= maxSteps) break;
         vec3 p = ro + rd * dO;
         dS = map(p);
-        
+
         glow += (0.1 + iAudio.z * 0.2) / (1.0 + dS * dS * 20.0);
-        
+
         dO += dS;
-        
+
         if(dS < SURF_DIST || dO > MAX_DIST) break;
     }
-    
+
     if(dS < SURF_DIST) {
         vec3 p = ro + rd * dO;
         vec3 n = getNormal(p);
-        
+
         vec3 lightDir = normalize(vec3(1.0, 1.0, -1.0));
         float diff = max(dot(n, lightDir), 0.0);
-        
+
         vec3 material = rainbow(p.z * 0.05 + iTime * 0.1);
-        
+
         material *= 0.8 + 0.2 * sin(p.z * 2.0 + iTime);
         material += 0.2 * fbm(p * 2.0 + iTime * 0.5);
-        
+
         color = material * (0.3 + 0.7 * diff);
-        
+
         color += glow * rainbow(p.z * 0.02 + iTime * 0.2) * 0.3;
-        
+
         return vec4(color, 1.0 - dO / MAX_DIST);
     }
-    
+
     vec2 uv = ro.xy + rd.xy * (MAX_DIST * 0.5);
     vec3 bgColor = fractalBackground(uv * 0.1 + 0.5, iTime);
     color = bgColor + glow * rainbow(rd.z * 0.1 + iTime * 0.2);
-    
+
     return vec4(color, 1.0 - dO / MAX_DIST);
 }
 
 void mainImage(out vec4 fragColor, in vec2 fragCoord) {
     vec2 uvCentered = (fragCoord.xy * 2.0 - iResolution.xy) / iResolution.y;
-    
+
     vec3 ro = vec3(0.0, 0.0, iTime * (2.0 + iAudio.w * 3.0));
-    
+
     vec3 rd = normalize(vec3(uvCentered, 1.0));
-    
+
     rd.xz *= rot(sin(iTime * 0.2) * 0.1);
     rd.yz *= rot(cos(iTime * 0.15) * 0.1);
-    
+
     vec4 traced = rayMarch(ro, rd);
     vec3 color = traced.rgb;
-    
+
     float vignette = 1.0 - dot(uvCentered*0.5, uvCentered*0.5);
     color *= vignette;
-    
+
     color = mix(vec3(0.0), color, traced.a);
-    
+
     color = pow(color, vec3(0.4545));
-    
+
     fragColor = vec4(color, 1.0);
 }
 `;

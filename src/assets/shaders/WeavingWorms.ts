@@ -17,7 +17,7 @@ const source = `
 #define seedX 14.
 #define seedY 255.
 
-// inigio quilez sdfs 
+// inigio quilez sdfs
 float sdSegment( in vec2 p, in vec2 a, in vec2 b )
 {
     vec2 pa = p-a, ba = b-a;
@@ -48,24 +48,24 @@ float average_col (vec3 col) {
 }
 
 
-vec3 worms_colour(vec2 p, vec2 id, bool isVt, vec4 iAudio) {
+vec3 worms_colour(vec2 p, vec2 id, bool isVt, vec4 audioData) {
 
     vec2 seed0 = N22(id)*2.-1.;
     vec2 seed1 = N22(seed0)*2.-1.;
     vec3 seed2 = N23(seed1);
-    
+
     // direction [seed0.x]
     float dir = (seed0.x >= 0.) ? 1. : -1. ;
-    
+
     // worm length [seed0.y]
     float len = ((maxlength-minlength) * seed0.y) + minlength;
 
     // speed units/sec [seed1.x]
     float speed = ((maxspeed-minspeed) * seed1.x) + minspeed;
-    
+
     // phase shift [seed1.y]
     float phase_offset = seed1.y;
-   
+
     // limit definition Hz or Vt
     float limit = isVt ? limitY : limitX;
 
@@ -73,17 +73,17 @@ vec3 worms_colour(vec2 p, vec2 id, bool isVt, vec4 iAudio) {
     // across its entire phase from 0 to 1
     float full_traverse_length = 2.*limit + len + buffer;
     float full_traverse_phase = 1.;
-    
+
     // phase rate wrt time - audio reactive
-    float phase_rate = full_traverse_phase / full_traverse_length * speed * viewscale * dir * (1.0 + iAudio.w * 1.5);
+    float phase_rate = full_traverse_phase / full_traverse_length * speed * viewscale * dir * (1.0 + audioData.w * 1.5);
 
     // phase-zero insert position
     float pos0 = -limit - len - (buffer/2.);
     float pos1 = pos0 + len;
-    
+
     // actual phase position
     float actual_phase_position = fract( (phase_rate * iTime) + phase_offset );
-    
+
     // worm position is phased fraction of full traverse
     pos0 += full_traverse_length * actual_phase_position;
     pos1 += full_traverse_length * actual_phase_position;
@@ -91,14 +91,14 @@ vec3 worms_colour(vec2 p, vec2 id, bool isVt, vec4 iAudio) {
     // map worm end positions
     vec2 a = isVt ? vec2(id.y, pos0) : vec2(pos0, id.y);
     vec2 b = isVt ? vec2(id.y, pos1) : vec2(pos1, id.y);
-    
+
     // calculate the segment - audio reactive thickness and edge softness
     float d = sdSegment(p,a,b);
-    d = abs(d - (wormwidth + iAudio.x * 0.1));
-    d = smoothstep(wormskin - iAudio.z * 0.3, 0.0, d);
+    d = abs(d - (wormwidth + audioData.x * 0.1));
+    d = smoothstep(wormskin - audioData.z * 0.3, 0.0, d);
 
     // audio reactive color
-    return (seed2 + vec3(0.0, iAudio.y * 0.5, iAudio.y * 0.3)) * d;
+    return (seed2 + vec3(0.0, audioData.y * 0.5, audioData.y * 0.3)) * d;
 }
 
 
@@ -108,9 +108,9 @@ void mainImage( out vec4 fragColor, in vec2 fragCoord )
     // Normalized pixel coordinates (from -1 to 1) with ar 1:1
     vec2 uv = fragCoord/iResolution.xy * 2. - 1.;
     uv.x *= iResolution.x / iResolution.y;
-    
+
     uv *= viewscale;
-    
+
     vec2 id = floor(uv);
     vec2 gv = fract(uv) - 0.5;
 
@@ -123,9 +123,9 @@ void mainImage( out vec4 fragColor, in vec2 fragCoord )
     for (int i = -8; i < 9; i++) {
         col += worms_colour(uv, vec2(seedY, float(i)), true, iAudio);
     }
-    
+
     col *= 0.99;
-    
+
     // Output to screen
     fragColor = vec4(col,1.0);
 }

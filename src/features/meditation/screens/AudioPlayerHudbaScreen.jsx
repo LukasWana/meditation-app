@@ -129,6 +129,16 @@ const AudioPlayerHudbaScreen = ({
     }
   };
 
+  // Zjisti režim shaderu/barvy a UI nastavení (musí být před podmíněným returnem kvůli hookům)
+  const isColorMode = currentShader && currentShader.startsWith('__COLOR__');
+  const backgroundColor = isColorMode ? currentShader.replace('__COLOR__', '') : null;
+  const overlayColor = getColorForSection('hudba');
+
+  const isDarkMode = useMemo(() => {
+    const colorForDarkMode = overlayColor || backgroundColor;
+    return shouldUseDarkMode(currentShader, colorForDarkMode);
+  }, [currentShader, backgroundColor, overlayColor]);
+
   // Pokud není načteno žádné audio, vrať se zpět
   useEffect(() => {
     if (!activeAudio) {
@@ -141,19 +151,6 @@ const AudioPlayerHudbaScreen = ({
   if (!activeAudio) {
     return null;
   }
-
-  const isColorMode = currentShader && currentShader.startsWith('__COLOR__');
-  const backgroundColor = isColorMode ? currentShader.replace('__COLOR__', '') : null;
-
-  // Získej barvu pro overlay v přehrávači (může být kombinována se shaderem)
-  const overlayColor = getColorForSection('hudba');
-
-  // Zjistí, zda by se mělo použít tmavé UI
-  // Použij barvu pro detekci dark mode, pokud je nastavena
-  const isDarkMode = useMemo(() => {
-    const colorForDarkMode = overlayColor || backgroundColor;
-    return shouldUseDarkMode(currentShader, colorForDarkMode);
-  }, [currentShader, backgroundColor, overlayColor]);
 
   // Debug: Zkontroluj, co se zobrazuje
   React.useEffect(() => {
@@ -201,7 +198,7 @@ const AudioPlayerHudbaScreen = ({
 
       {/* Audio Player - zobraz jako fullscreen overlay */}
       {activeAudio && (
-          <AudioPlayer
+        <AudioPlayer
           audioSrc={activeAudio.audioSrc}
           title={activeAudio.title}
           onClose={handleCloseAudio}

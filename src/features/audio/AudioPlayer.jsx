@@ -160,6 +160,7 @@ const AudioPlayer = ({
           ref={audioRef}
           src={cachedAudioUrl || audioUrl || undefined}
           preload="metadata"
+          crossOrigin="anonymous"
         />
 
         {/* Close Button - Top Right */}

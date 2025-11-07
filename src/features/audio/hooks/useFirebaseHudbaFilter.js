@@ -2,6 +2,8 @@ import { useMemo } from 'react';
 import { useFirebaseHudbaScanner } from '@hooks/useFirebaseHudbaScanner';
 import fastMetadataService from '@services/fastMetadataService';
 
+const DEBUG_COVER_LOGS = false;
+
 // Funkce pro výpočet celkového času alba
 const calculateTotalDuration = (tracks) => {
   let totalSeconds = 0;
@@ -136,16 +138,17 @@ export const useFirebaseHudbaFilter = () => {
       let coverImageUrl = null;
       if (coverImages instanceof Map) {
         coverImageUrl = coverImages.get(albumName) || null;
-        // Debug: zobraz dostupné cover images a albumName
-        if (!coverImageUrl) {
-          console.log(`⚠️ Cover image not found for album: ${albumName}`);
-          console.log(`📊 Available cover images:`, Array.from(coverImages.keys()));
-        } else {
-          console.log(`✅ Cover image found for album: ${albumName}`);
+        if (DEBUG_COVER_LOGS) {
+          if (!coverImageUrl) {
+            console.log(`⚠️ Cover image not found for album: ${albumName}`);
+            console.log(`📊 Available cover images:`, Array.from(coverImages.keys()));
+          } else {
+            console.log(`✅ Cover image found for album: ${albumName}`);
+          }
         }
       } else {
         coverImageUrl = coverImages[albumName] || null;
-        if (!coverImageUrl) {
+        if (DEBUG_COVER_LOGS && !coverImageUrl) {
           console.log(`⚠️ Cover image not found for album: ${albumName}`);
           console.log(`📊 Available cover images:`, Object.keys(coverImages));
         }

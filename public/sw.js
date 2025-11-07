@@ -73,7 +73,11 @@ self.addEventListener('fetch', (event) => {
 
   // Pro MP3 soubory a Firebase Storage: nejdříve zkontroluj cache, pak nech prohlížeč zpracovat
   // Důležité pro Android - cachované soubory musí fungovat, ale nové soubory musí být bez opaque responses
-  if (url.hostname.includes('firebasestorage.googleapis.com') || url.pathname.endsWith('.mp3') || url.pathname.includes('/media/') || request.headers.get('accept')?.includes('audio/')) {
+  if (url.hostname.includes('firebasestorage.googleapis.com')) {
+    return;
+  }
+
+  if (url.pathname.endsWith('.mp3') || url.pathname.includes('/media/') || request.headers.get('accept')?.includes('audio/')) {
     // Zkus cache nejdříve - pokud je soubor v cache, vrať ho
     event.respondWith(
       caches.open('meditation-audio-cache').then(async (cache) => {

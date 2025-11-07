@@ -52,16 +52,18 @@ export const getMiniShaderList = () => {
  * Získej seznam všech shaderů
  */
 export const getShaderList = () => {
-  return Object.keys(shadersModules).map(path => {
-    const fileName = path.split('/').pop();
-    const name = fileName.replace('.ts', '');
-    return {
-      id: `shader-${name}`,
-      name: name,
-      path: path,
-      category: 'shaders'
-    };
-  });
+  return Object.keys(shadersModules)
+    .filter(path => !path.endsWith('/index.ts'))
+    .map(path => {
+      const fileName = path.split('/').pop();
+      const name = fileName.replace('.ts', '');
+      return {
+        id: `shader-${name}`,
+        name: name,
+        path: path,
+        category: 'shaders'
+      };
+    });
 };
 
 /**
@@ -1734,6 +1736,20 @@ ${finalHelpers}${finalConstants}${processedCode}
 const convertMainImageShader = (shaderCode, isWebGL2 = false) => {
   let code = shaderCode;
 
+  // Detekuj vlastní názvy parametrů v mainImage (např. out vec4 O, in vec2 uv)
+  const mainImageParamMatch = code.match(/void\s+mainImage\s*\(\s*out\s+vec4\s+(\w+)\s*,\s*(?:in\s+)?vec2\s+(\w+)/);
+  if (mainImageParamMatch) {
+    const [, outputVar, inputVar] = mainImageParamMatch;
+    if (outputVar && outputVar !== 'fragColor') {
+      const outputRegex = new RegExp(`\\b${outputVar}\\b`, 'g');
+      code = code.replace(outputRegex, 'fragColor');
+    }
+    if (inputVar && inputVar !== 'fragCoord') {
+      const inputRegex = new RegExp(`\\b${inputVar}\\b`, 'g');
+      code = code.replace(inputRegex, 'fragCoord');
+    }
+  }
+
   // Odstraň #version řádky (budou přidány později)
   code = code.replace(/^\s*#version\s+\d+\s*\w*\s*$/gm, '');
   code = code.replace(/\n\s*#version\s+\d+\s*\w*\s*\n/g, '\n');
@@ -1770,13 +1786,13 @@ const convertMainImageShader = (shaderCode, isWebGL2 = false) => {
   code = code.replace(/\biAudio\b/g, 'vec4(u_audioBass, u_audioMid, u_audioTreble, u_audioAmplitude)');
 
   // Konvertuj iMouse na u_mouse (simulovaná pozice kurzoru ve středu obrazovky)
-  code = code.replace(/\biMouse\.xy\b/g, 'u_mouse');
-  code = code.replace(/\biMouse\.x\b/g, 'u_mouse.x');
-  code = code.replace(/\biMouse\.y\b/g, 'u_mouse.y');
-  code = code.replace(/\biMouse\.zw\b/g, 'vec2(0.0)');
-  code = code.replace(/\biMouse\.z\b/g, '0.0');
-  code = code.replace(/\biMouse\.w\b/g, '0.0');
   code = code.replace(/\biMouse\b/g, 'vec4(u_mouse, 0.0, 0.0)');
+  code = code.replace(/u_mouse\.x\b/g, 'u_mouse.x');
+  code = code.replace(/u_mouse\.y\b/g, 'u_mouse.y');
+  code = code.replace(/u_mouse\.z\b/g, '0.0');
+  code = code.replace(/u_mouse\.w\b/g, '0.0');
+  code = code.replace(/u_mouse\.xy\b/g, 'u_mouse');
+  code = code.replace(/u_mouse\.zw\b/g, 'vec2(0.0)');
 
   // Konvertuj fragCoord na v_uv
   // fragCoord je v pixelech, v_uv je v normalizovaných souřadnicích [0,1]

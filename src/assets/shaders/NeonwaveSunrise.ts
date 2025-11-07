@@ -55,18 +55,18 @@ float hash(vec2 p) {
 float vnoise(vec2 p) {
   vec2 i = floor(p);
   vec2 f = fract(p);
-    
+
   vec2 u = f*f*(3.0-2.0*f);
 
   float a = hash(i + vec2(0.0,0.0));
   float b = hash(i + vec2(1.0,0.0));
   float c = hash(i + vec2(0.0,1.0));
   float d = hash(i + vec2(1.0,1.0));
-  
+
   float m0 = mix(a, b, u.x);
   float m1 = mix(c, d, u.x);
   float m2 = mix(m0, m1, u.y);
-  
+
   return m2;
 }
 
@@ -108,13 +108,13 @@ float hifbm(vec2 p) {
 
   float sum = 0.0;
   float a   = 1.0;
-  
+
   for (int i = 0; i < 5; ++i) {
     sum += a*vnoise(p);
     a *= aa;
     p *= pp;
   }
-  
+
   return sum;
 }
 
@@ -124,13 +124,13 @@ float lofbm(vec2 p) {
 
   float sum = 0.0;
   float a   = 1.0;
-  
+
   for (int i = 0; i < 2; ++i) {
     sum += a*vnoise(p);
     a *= aa;
     p *= pp;
   }
-  
+
   return sum;
 }
 
@@ -149,7 +149,7 @@ vec4 plane(vec3 ro, vec3 rd, vec3 pp, vec3 npp, vec3 off, float n) {
   vec3 hn;
   vec2 p = (pp-off*2.0*vec3(1.0, 1.0, 0.0)).xy;
 
-  const vec2 stp = vec2(0.5, 0.33); 
+  const vec2 stp = vec2(0.5, 0.33);
   float he    = hiheight(vec2(p.x, pp.z)*stp);
   float lohe  = loheight(vec2(p.x, pp.z)*stp);
 
@@ -159,16 +159,16 @@ vec4 plane(vec3 ro, vec3 rd, vec3 pp, vec3 npp, vec3 off, float n) {
   float aa = distance(pp, npp)*sqrt(1.0/3.0);
   float t = smoothstep(aa, -aa, d);
 
-  float df = exp(-0.1*(distance(ro, pp)-2.));  
+  float df = exp(-0.1*(distance(ro, pp)-2.));
   // Audio: Mids affect grid hue
   vec3 acol = hsv2rgb(vec3(mix(0.9, 0.6, df) + iAudio.y * 0.1, 0.9, mix(1.0, 0.0, df)));
   vec3 gcol = hsv2rgb(vec3(0.6, 0.5, tanh_approx(exp(-mix(2.0, 8.0, df)*lod))));
-  
+
   vec3 col = vec3(0.0);
   // Audio: Mids pulse grid lines
   col += acol * (1.0 + iAudio.y * 0.5);
   col += 0.5*gcol;
-  
+
   return vec4(col, t);
 }
 
@@ -177,7 +177,7 @@ vec3 stars(vec2 sp, float hh) {
   vec3 scol0 = HSV2RGB(vec3(0.85, 0.8, 1.0));
   vec3 scol1 = HSV2RGB(vec3(0.65, 0.5, 1.0));
   vec3 col = vec3(0.0);
-  
+
   const float m = 6.0;
 
   for (int i_int = 0; i_int < 6; ++i_int) {
@@ -192,7 +192,7 @@ vec3 stars(vec2 sp, float hh) {
     pp += o*dim*0.5;
     pp.y *= y;
     float l = length(pp);
-  
+
     float h1 = fract(h.x*1667.0);
     float h2 = fract(h.x*1887.0);
     float h3 = fract(h.x*2997.0);
@@ -204,7 +204,7 @@ vec3 stars(vec2 sp, float hh) {
     ccol *= mix(0.125, 1.0, smoothstep(1.0, 0.99, sin(0.25*TIME*(1.0 + iAudio.z * 2.0)+TAU*h.y)));
     col = h3 < y ? ccol : col;
   }
-  
+
   return col;
 }
 
@@ -215,11 +215,9 @@ vec3 toSpherical(vec3 p) {
   return vec3(r, t, ph);
 }
 
-// FIX: Renamed global to avoid redefinition. Removed 'const' from ldir because of normalize() call.
-vec3 lpos_moon   = 1E6*vec3(0., -0.15, 1.0);
-vec3 ldir_moon   = normalize(lpos_moon);
-
 vec4 moon(vec3 ro, vec3 rd) {
+  vec3 lpos_moon   = 1E6*vec3(0., -0.15, 1.0);
+  vec3 ldir_moon   = normalize(lpos_moon);
   const vec4 mdim   = vec4(1E5*vec3(0., 0.4, 1.0), 20000.0);
   // FIX: Removed 'const' because it's initialized with a non-constant expression.
   vec3 mcol0  = HSV2RGB(vec3(0.75, 0.7, 1.0));
@@ -230,7 +228,7 @@ vec4 moon(vec3 ro, vec3 rd) {
   vec3 mnor   = normalize(mpos-mdim.xyz);
   float mdif  = max(dot(ldir_moon, mnor), 0.0);
   float mf    = smoothstep(0.0, 10000.0, md.y - md.x);
-  float mfre  = 1.0+dot(rd, mnor); 
+  float mfre  = 1.0+dot(rd, mnor);
   float imfre = 1.0-mfre;
 
   vec3 col = vec3(0.0);
@@ -241,7 +239,7 @@ vec4 moon(vec3 ro, vec3 rd) {
   vec2 omsp   = msp;
   float msf   = sin(msp.x);
   msp.x       -= PI*0.5;
-  const float mszy = (TAU/(4.0))*0.125; 
+  const float mszy = (TAU/(4.0))*0.125;
   float msny  = mod1(msp.y, mszy);
   msp.y *= msf;
 
@@ -250,7 +248,7 @@ vec4 moon(vec3 ro, vec3 rd) {
     float fi = float(i);
     vec2 pp     = msp+vec2(0.0, mszy*fi);
     float d0    = abs(pp.y);
-    
+
     // Audio: Replaced FFT texture with direct audio data
     float fft = 0.0;
     if (i == -1) fft = iAudio.x; // low
@@ -267,7 +265,7 @@ vec4 moon(vec3 ro, vec3 rd) {
   }
   float d0   = abs(msp.x);
   fcol += mcol3*0.5*tanh_approx(0.0025/max(d0, 0.0))*imfre;
-  
+
   const float start = 18.0;
   col += fcol*smoothstep(start, start+6.0+2.0*abs(omsp.y), TIME);
 
@@ -292,7 +290,7 @@ vec3 skyColor(vec3 ro, vec3 rd) {
   vec4 mcol   = moon(ro, rd);
 
   vec3 col = vec3(0.0);
-  col += stars(sp, 0.25)*smoothstep(0.5, 0.0, lightIntensity)*lz;  
+  col += stars(sp, 0.25)*smoothstep(0.5, 0.0, lightIntensity)*lz;
   col  = mix(col, mcol.xyz, mcol.w);
   col += smoothstep(-0.4, 0.0, (sp.x-PI*0.5))*acol;
   col += lcol * lightIntensity * 0.2;
@@ -322,14 +320,14 @@ vec3 color(vec3 ww, vec3 uu, vec3 vv, vec3 ro, vec2 p) {
   const float cutOff = 0.95;
   bool cutOut = false;
 
-  // Steps from nearest to furthest plane and accumulates the color 
+  // Steps from nearest to furthest plane and accumulates the color
   for (int i = 1; i <= furthest; ++i) {
     float pz = planeDist*nz + planeDist*float(i);
 
     float pd = (pz - ro.z)/rd.z;
 
     vec3 pp = ro + rd*pd;
-    
+
     if (pp.y < 0. && pd > 0.0 && acol.w < cutOff) {
       vec3 npp = ro + nrd*pd;
 
@@ -358,13 +356,13 @@ vec3 effect(vec2 p, vec2 q) {
   // Audio: Overall volume controls speed
   float tm= TIME * (0.25 + iAudio.w * 0.5);
   vec3 ro = vec3(0.0, 0.0, tm);
-  vec3 dro= normalize(vec3(0.0, 0.09, 1.0));  
+  vec3 dro= normalize(vec3(0.0, 0.09, 1.0));
   vec3 ww = normalize(dro);
   vec3 uu = normalize(cross(normalize(vec3(0.0,1.0,0.0)), ww));
   vec3 vv = normalize(cross(ww, uu));
 
   vec3 col = color(ww, uu, vv, ro, p);
-  
+
   return col;
 }
 

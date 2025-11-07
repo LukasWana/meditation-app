@@ -202,8 +202,8 @@ const ShaderGallery = ({ selectedVariant, onSelect, section, category }) => {
       <div
         style={{
           display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fill, minmax(120px, 1fr))',
-          gap: '16px',
+          gridTemplateColumns: 'repeat(5, minmax(0, 1fr))',
+          gap: '12px',
           padding: '8px 0'
         }}
       >
@@ -228,8 +228,8 @@ const ShaderGallery = ({ selectedVariant, onSelect, section, category }) => {
                 <div
                   onClick={() => onSelect && onSelect(shader.id)}
                   style={{
-                    width: 120,
-                    height: 120,
+                    width: '100%',
+                    paddingTop: '100%',
                     position: 'relative',
                     cursor: onSelect ? 'pointer' : 'default',
                     border: isSelected ? '3px solid #000' : '1px solid rgba(0, 0, 0, 0.2)',
@@ -245,6 +245,9 @@ const ShaderGallery = ({ selectedVariant, onSelect, section, category }) => {
                     src={previewSrc}
                     alt={`${shader.name} preview`}
                     style={{
+                      position: 'absolute',
+                      top: 0,
+                      left: 0,
                       width: '100%',
                       height: '100%',
                       objectFit: 'cover',
@@ -278,7 +281,7 @@ const ShaderGallery = ({ selectedVariant, onSelect, section, category }) => {
                   key={`fallback-${shader.id}`} // Přidáno key pro stabilitu
                   variant={shader.variant}
                   shaderPath={shader.path}
-                  size={120}
+                  size={100}
                   isSelected={isSelected}
                   onClick={() => onSelect && onSelect(shader.id)}
                   intensity={0.8}

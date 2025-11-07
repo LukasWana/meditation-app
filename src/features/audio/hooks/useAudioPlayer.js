@@ -58,6 +58,7 @@ export const useAudioPlayer = (audioUrl, albumTracks = null, currentTrackIndex =
     errorMessage: null,
     durationStable: false // Flag pro stabilní duration
   });
+  const [playbackError, setPlaybackError] = useState(null);
   const audioRef = useRef(null);
   const fadeTimeoutRef = useRef(null);
   const fadeOutIntervalRef = useRef(null);
@@ -714,25 +715,17 @@ export const useAudioPlayer = (audioUrl, albumTracks = null, currentTrackIndex =
       }
 
       log.error(`Failed to play audio in ${context}:`, error);
-      log.audio(`⚠️ [${context}] Audio play failed, error details:`, {
-        name: error.name,
-        message: error.message,
-        code: error.code
-      });
-
-      // Zkus znovu po krátké pauze
-      return new Promise((resolve) => {
-        setTimeout(() => {
-          log.audio(`🎵 [${context}] Retrying audio play after error`);
-          audio.play().then(() => {
-            log.audio(`✅ [${context}] Audio playing successfully on retry`);
-            resolve();
-          }).catch((retryError) => {
-            log.error(`Failed to play audio on retry in ${context}:`, retryError);
-            resolve();
-          });
-        }, 100);
-      });
+      if (!playbackError) {
+        log.audio(`⚠️ [${context}] Audio play failed, error details:`, {
+          name: error.name,
+          message: error.message,
+          stack: error.stack,
+          code: error.code,
+          abort: abortController?.signal?.aborted
+        });
+        setPlaybackError(error);
+      }
+      return Promise.reject(error);
     });
   };
 
@@ -831,18 +824,12 @@ export const useAudioPlayer = (audioUrl, albumTracks = null, currentTrackIndex =
       // Zjednodušený play - jen spusť audio
       audio.play().then(() => {
         setAudioState(prev => ({ ...prev, isPlaying: true, userPaused: false }));
-        setAudioState(prev => ({ ...prev, hasInteracted: true })); // Označ že uživatel už jednou klikl na play
-
-        // Pokud je to album a uživatel klikl na play, povol autoplay pro celé album
-        if (albumTracks && albumTracks.length > 1) {
-          setPlaybackState(prev => ({ ...prev, shouldAutoplay: true }));
-          console.log('🎵 Album autoplay enabled - will continue playing through album');
-        }
-
+        setPlaybackError(null);
         console.log('🎵 User interaction recorded - autoplay now enabled');
-      }).catch(() => {
-        console.log('🎵 Audio play failed');
+      }).catch((err) => {
+        setPlaybackError(err);
         setAudioState(prev => ({ ...prev, isPlaying: false }));
+        setPlaybackState(prev => ({ ...prev, shouldAutoplay: false }));
       });
     }
   };

@@ -10,9 +10,10 @@ float hash(vec2 p) {
     return fract((p3.x + p3.y) * p3.z);
 }
 
-mat2 rot(float a) {
-    float s = sin(a), c = cos(a);
-    return mat2(c, s, -s, c);
+vec2 rotateVec2(float x, float y, float angle) {
+    float s = sin(angle);
+    float c = cos(angle);
+    return vec2(c * x + s * y, -s * x + c * y);
 }
 
 vec3 path(float t_in) {
@@ -41,9 +42,17 @@ float box(vec3 p, vec3 l) {
 float de(vec3 p, vec3 adv, float t_in, out vec3 out_boxp, out float out_boxhit) {
     out_boxhit = 0.0;
     vec3 p2 = p - adv;
-    p2.xz *= rot(t_in * 0.2);
-    p2.xy *= rot(t_in * 0.1);
-    p2.yz *= rot(t_in * 0.15);
+    vec2 rotXZ = rotateVec2(p2.x, p2.z, t_in * 0.2);
+    p2.x = rotXZ.x;
+    p2.z = rotXZ.y;
+
+    vec2 rotXY = rotateVec2(p2.x, p2.y, t_in * 0.1);
+    p2.x = rotXY.x;
+    p2.y = rotXY.y;
+
+    vec2 rotYZ = rotateVec2(p2.y, p2.z, t_in * 0.15);
+    p2.y = rotYZ.x;
+    p2.z = rotYZ.y;
     float b = box(p2, vec3(1.0));
     p.xy -= path(p.z).xy;
     float s = sign(p.y);
@@ -51,8 +60,13 @@ float de(vec3 p, vec3 adv, float t_in, out vec3 out_boxp, out float out_boxhit) 
     p.z = mod(p.z, 20.0) - 10.0;
     for (int i = 0; i < 5; i++) {
         p = abs(p) - 1.0;
-        p.xz *= rot(radians(s * -45.0));
-        p.yz *= rot(radians(90.0));
+        vec2 rotInnerXZ = rotateVec2(p.x, p.z, radians(s * -45.0));
+        p.x = rotInnerXZ.x;
+        p.z = rotInnerXZ.y;
+
+        vec2 rotInnerYZ = rotateVec2(p.y, p.z, radians(90.0));
+        p.y = rotInnerYZ.x;
+        p.z = rotInnerYZ.y;
     }
     float f = -box(p, vec3(5.0, 5.0, 10.0));
     float d = min(f, b);
@@ -63,22 +77,22 @@ float de(vec3 p, vec3 adv, float t_in, out vec3 out_boxp, out float out_boxhit) 
     return d * 0.7;
 }
 
-vec3 march(vec3 from, vec3 dir, vec3 adv, float t_in, vec2 fragCoord) {
+vec3 march(vec3 from, vec3 dir, vec3 adv, float t_in, vec2 pixelCoord) {
     vec3 p, n;
     vec3 g = vec3(0.0);
     float d, td = 0.0;
     float boxhit = 0.0;
     vec3 boxp = vec3(0.0);
-    
+
     // Audio influence on detail level
     int steps = 80 + int(iAudio.y * 40.0);
-    
+
     for (int i = 0; i < 120; i++) {
         if (i >= steps) break;
-        
+
         p = from + td * dir;
         // pass boxp and boxhit as out params
-        d = de(p, adv, t_in, boxp, boxhit) * (1.0 - hash(fragCoord + t_in) * 0.3);
+        d = de(p, adv, t_in, boxp, boxhit) * (1.0 - hash(pixelCoord + vec2(t_in)) * 0.3);
         if (d < det && boxhit < 0.5) break;
         td += max(det, abs(d));
 
@@ -86,12 +100,12 @@ vec3 march(vec3 from, vec3 dir, vec3 adv, float t_in, vec2 fragCoord) {
 
         float f = fractal(p.xy, t_in) + fractal(p.xz, t_in) + fractal(p.yz, t_in);
         float b = fractal(boxp.xy, t_in) + fractal(boxp.xz, t_in) + fractal(boxp.yz, t_in);
-        
+
         // Yellow vortex instead of orange, audio reactive
         vec3 colf = vec3(f) * vec3(1.0, 1.0, 0.5 + 0.5 * sin(t_in*0.1));
         vec3 colb = vec3(b + 0.3, b + 0.3, 0.0); // More yellow, pulses with bass
         colb.r += iAudio.x * 0.5;
-        
+
         // Increased clarity
         g += colf / (2.5 + d * d * 1.5) * exp(-0.0012 * td * td) * step(5.0, td) / 2.0 * (1.0 - boxhit);
         g += colb / (8.0 + d * d * 15.0) * boxhit * 0.6;
@@ -108,25 +122,25 @@ mat3 lookat(vec3 dir, vec3 up) {
 void mainImage(out vec4 fragColor, in vec2 fragCoord) {
     vec2 uv = fragCoord / iResolution.xy * 2.0 - 1.0;
     uv.x *= iResolution.x / iResolution.y;
-    
+
     // Use app's time and audio uniforms
     float t = iTime * (7.0 + iAudio.w * 5.0);
-    
+
     // Audio influence on camera
     vec2 audioOffset = vec2(iAudio.y - iAudio.x, iAudio.z - iAudio.y) * 0.5;
-    
+
     vec3 from = path(t);
     vec3 adv = path(t + 6.0 + sin(t * 0.1) * 3.0 + audioOffset.x * 2.0);
-    
+
     vec3 dir = normalize(vec3(uv, 0.7 + audioOffset.y * 0.3));
     dir = lookat(adv - from, vec3(0.0, 1.0, 0.0)) * dir;
-    
+
     vec3 col = march(from, dir, adv, t, fragCoord);
-    
+
     // Enhance yellow and add some subtle glow, reactive to treble
     col = mix(col, vec3(1.0, 1.0, 0.3), length(col) * 0.15);
     col *= 1.0 + 0.2 * sin(t * 0.1) + iAudio.z * 0.3;
-    
+
     fragColor = vec4(col, 1.0);
 }
 `;
