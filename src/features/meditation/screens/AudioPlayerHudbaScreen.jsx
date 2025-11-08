@@ -200,7 +200,7 @@ const AudioPlayerHudbaScreen = ({
   }
 
   return (
-    <FramerPageTransition screenKey="audio-player-hudba">
+    <FramerPageTransition screenKey="audio-player-hudba" animation="fade">
       {/* Vrstvení:
           - Pozadí (bg-[#f4ddc4]): zIndex 0 (nejnižší)
           - BackgroundShader: zIndex 5 (nad pozadím, pod přehrávačem)

@@ -20,35 +20,41 @@ const BreathHeader = ({
   formatTime,
   t
 }) => {
+  const phaseLabel = isBreathing
+    ? (breathPhase === 'in' ? t('nadech') || 'nádech' : t('vydech') || 'výdech')
+    : null;
+
   return (
-    <div
-      className="text-center flex flex-col justify-start"
-      style={{ height: 'calc(3.5rem + clamp(32px, 3.5vw, 40px) + 1rem + 0.5rem)', paddingTop: 0, paddingBottom: 0, marginTop: 0, marginBottom: '1.5rem', position: 'relative', top: 0 }}
-    >
+    <div className="flex flex-col items-center text-center gap-3 mb-10">
       <motion.h1
-        key={isBreathing ? breathPhase : 'default'}
-        className="text-4xl font-serif text-gray-800 leading-normal overflow-visible"
-        style={{ height: '3.5rem', minHeight: '3.5rem', maxHeight: '3.5rem', display: 'flex', alignItems: 'center', justifyContent: 'center', lineHeight: '1.2', marginTop: 0, paddingTop: 0, paddingBottom: 0, marginBottom: 0 }}
-        initial={{ opacity: 0, y: -10 }}
+        key={phaseLabel || 'breath-title'}
+        className="text-[38px] leading-none font-serif text-gray-900 tracking-tight"
+        initial={{ opacity: 0, y: -8 }}
         animate={{ opacity: 1, y: 0 }}
-        exit={{ opacity: 0, y: 10 }}
-        transition={{ duration: 0.3 }}
+        exit={{ opacity: 0, y: 8 }}
+        transition={{ duration: 0.25 }}
       >
-        {isBreathing
-          ? (breathPhase === 'in' ? t('nadech') || 'nádech' : t('vydech') || 'výdech')
-          : t('dychani') || t('dychanie') || 'dýchání'
-        }
+        {t('dychani') || 'dýchání'}
       </motion.h1>
-      {/* Current Time Display - pod nadpisem */}
-      <div className="flex items-center justify-center mt-4 mb-2 pointer-events-auto w-full gap-4" style={{ height: 'clamp(32px, 3.5vw, 40px)', minHeight: 'clamp(32px, 3.5vw, 40px)', maxHeight: 'clamp(32px, 3.5vw, 40px)' }}>
-        <div className="pointer-events-none z-10 text-center" style={{ display: 'flex', alignItems: 'center', height: '100%' }}>
-          <CurrentTimeDisplay
-            currentTime={currentTime}
-            formatTime={formatTime}
-            className="text-black font-medium text-center text-clamp-time"
-            style={{ height: '100%', display: 'flex', alignItems: 'center' }}
-          />
-        </div>
+
+      <div className="flex flex-col items-center gap-2">
+        <CurrentTimeDisplay
+          currentTime={currentTime}
+          formatTime={formatTime}
+          className="text-2xl font-medium text-gray-900"
+        />
+        {phaseLabel && (
+          <motion.span
+            key={`${phaseLabel}-label`}
+            className="text-sm uppercase tracking-[0.3em] text-gray-500"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.2 }}
+          >
+            {phaseLabel}
+          </motion.span>
+        )}
       </div>
     </div>
   );

@@ -34,7 +34,7 @@ const BreathProgressCircle = ({
       <CircularProgress
         progress={progress}
         onSeek={null}
-        className="w-[50vw] h-[50vw] max-w-[400px] max-h-[400px] min-w-[250px] min-h-[250px]"
+        className="w-[60vw] h-[60vw] max-w-[280px] max-h-[280px] min-w-[220px] min-h-[220px]"
         style={{ position: 'relative', zIndex: 2 }}
       />
 
@@ -44,7 +44,7 @@ const BreathProgressCircle = ({
           <PlayPauseButton
             isPlaying={isBreathing}
             onToggle={onPlayPause}
-            className="w-[18vw] h-[18vw] max-w-[120px] max-h-[120px] min-w-[80px] min-h-[80px] sm:w-[16vw] sm:h-[16vw] sm:max-w-[140px] sm:max-h-[140px] sm:min-w-[100px] sm:min-h-[100px]"
+            className="w-[20vw] h-[20vw] max-w-[96px] max-h-[96px] min-w-[72px] min-h-[72px]"
           />
         </div>
       </div>

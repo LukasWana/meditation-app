@@ -18,35 +18,32 @@ const BreathActionButtons = ({
 }) => {
   return (
     <FramerSection
-      className="flex justify-center gap-4"
+      className="flex justify-center gap-5 md:gap-8"
       animationType="fadeIn"
-      delay={0.4}
+      delay={0.35}
     >
-      {/* Reset tlačítko - bílé kulaté tlačítko s dark grey refresh ikonou */}
       <button
         onClick={onReset}
-        className="w-20 h-20 rounded-full bg-white flex items-center justify-center shadow-sm hover:shadow-md transition-shadow cursor-pointer"
+        className="w-16 h-16 md:w-20 md:h-20 rounded-full bg-white border border-black/10 flex items-center justify-center shadow-sm hover:shadow-md transition-all cursor-pointer"
         title={t('reset') || 'Reset'}
       >
-        <RotateCcw size={28} className="text-gray-800" />
+        <RotateCcw size={24} className="text-gray-800" />
       </button>
 
-      {/* Tlačítko pro zvukovou galerii - bílé kulaté tlačítko s dark grey notičkou */}
       <button
         onClick={onGalleryClick}
-        className="w-20 h-20 rounded-full bg-white flex items-center justify-center shadow-sm hover:shadow-md transition-shadow cursor-pointer"
+        className="w-16 h-16 md:w-20 md:h-20 rounded-full bg-white border border-black/10 flex items-center justify-center shadow-sm hover:shadow-md transition-all cursor-pointer"
         title={t('zvukovaGalerie') || 'Zvuková galerie'}
       >
-        <Music2 size={28} className="text-gray-800" />
+        <Music2 size={24} className="text-gray-800" />
       </button>
 
-      {/* Tlačítko pro profily dýchání - bílé kulaté tlačítko s dark grey bookmark ikonou */}
       <button
         onClick={onProfilesClick}
-        className="w-20 h-20 rounded-full bg-white flex items-center justify-center shadow-sm hover:shadow-md transition-shadow cursor-pointer"
+        className="w-16 h-16 md:w-20 md:h-20 rounded-full bg-white border border-black/10 flex items-center justify-center shadow-sm hover:shadow-md transition-all cursor-pointer"
         title={t('profilyDychani') || 'Profily dýchání'}
       >
-        <Bookmark size={28} className="text-gray-800" />
+        <Bookmark size={24} className="text-gray-800" />
       </button>
     </FramerSection>
   );

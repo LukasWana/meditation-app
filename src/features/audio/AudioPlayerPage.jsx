@@ -33,7 +33,7 @@ const AudioPlayerPage = ({
   } = useAudioPlayer(audioUrl);
 
   return (
-    <FramerPageTransition screenKey="audio-player-page">
+    <FramerPageTransition screenKey="audio-player-page" animation="fade">
       <div className={`min-h-screen w-full max-w-full bg-[#f4ddc4] flex flex-col items-center justify-center p-2 sm:p-8 pb-20 overflow-x-hidden relative ${className}`}>
         {/* Back Button - Top Right */}
         <div className="absolute top-4 right-4 z-10">

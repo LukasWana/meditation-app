@@ -31,46 +31,43 @@ const BreathParameters = ({
 
   return (
     <FramerSection
-      className="mb-6"
+      className="mb-10"
       animationType="fadeIn"
       delay={0.3}
     >
-      <div className="flex justify-center items-start gap-8 md:gap-12 mb-4">
-        {/* Příprava */}
-        <div className="flex flex-col items-center">
+      <div className="flex justify-center gap-10 md:gap-16 text-gray-900">
+        <div className="flex flex-col items-center gap-1">
           <button
             onClick={onPreparationClick}
-            className="text-4xl md:text-5xl font-sans font-medium text-gray-800 hover:text-black transition-colors cursor-pointer mb-1"
+            className="text-[28px] md:text-[32px] font-semibold font-sans tracking-tight hover:text-black transition-colors"
           >
             {formatPreparationTime(preparationTime)}
           </button>
-          <span className="text-base md:text-lg font-serif text-gray-800 font-light">
+          <span className="text-sm uppercase tracking-[0.2em] text-gray-600">
             {t('priprava') || 'příprava'}
           </span>
         </div>
 
-        {/* Délka */}
-        <div className="flex flex-col items-center">
+        <div className="flex flex-col items-center gap-1">
           <button
             onClick={onDurationClick}
-            className="text-4xl md:text-5xl font-sans font-medium text-gray-800 hover:text-black transition-colors cursor-pointer mb-1"
+            className="text-[28px] md:text-[32px] font-semibold font-sans tracking-tight hover:text-black transition-colors"
           >
             {formatTime(totalTime)}
           </button>
-          <span className="text-base md:text-lg font-serif text-gray-800 font-light">
-            {t('dlzka') || 'délka'}
+          <span className="text-sm uppercase tracking-[0.2em] text-gray-600">
+            {t('dlzkaMeditacie') || t('dlzka') || 'délka'}
           </span>
         </div>
 
-        {/* Rytmus */}
-        <div className="flex flex-col items-center">
+        <div className="flex flex-col items-center gap-1">
           <button
             onClick={onRhythmClick}
-            className="text-4xl md:text-5xl font-sans font-medium text-gray-800 hover:text-black transition-colors cursor-pointer mb-1"
+            className="text-[28px] md:text-[32px] font-semibold font-sans tracking-tight hover:text-black transition-colors"
           >
             {breathInDuration} : {breathOutDuration}
           </button>
-          <span className="text-base md:text-lg font-serif text-gray-800 font-light">
+          <span className="text-sm uppercase tracking-[0.2em] text-gray-600">
             {t('rytmus') || 'rytmus'}
           </span>
         </div>

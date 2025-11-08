@@ -134,7 +134,7 @@ const AudioPlayerMeditaceScreen = ({
   }
 
   return (
-    <FramerPageTransition screenKey='audio-player-meditace'>
+    <FramerPageTransition screenKey='audio-player-meditace' animation="fade">
       <div
         className='min-h-screen w-full max-w-full bg-[#f4ddc4] fixed inset-0'
         style={{

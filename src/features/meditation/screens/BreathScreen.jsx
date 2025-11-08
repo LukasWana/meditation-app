@@ -178,41 +178,33 @@ const BreathScreen = ({
       <div
         className="min-h-screen w-full max-w-full bg-[#f4ddc4] fixed inset-0"
         style={{
-          zIndex: 0,
-          opacity: isBreathing ? 0.55 : 1, // Lehké prosvítání, ale UI zůstává čitelné
-          transition: 'opacity 2s ease-in-out' // Plynulé prolnutí
+          zIndex: 0
         }}
       />
 
       {/* BackgroundShader - zobraz pouze při dýchání s plynulým prolnutím */}
       <BackgroundShader
         variant={getShaderForSection('dychani')}
-        intensity={0.6}
+        intensity={0.4}
         enabled={true}
-        opacity={isBreathing ? 0.75 : 0.0}
+        opacity={isBreathing ? 0.6 : 0.0}
         breathPhase={isBreathing ? breathPhase : null}
         breathInDuration={breathInDuration}
         breathOutDuration={breathOutDuration}
         zIndex={2}
       />
 
-      {/* Hlavní obsah stránky - nad shaderem - průhledné pozadí, aby shader prosvítal */}
+      {/* Hlavní obsah */}
       <div
-        className="min-h-screen w-full max-w-full flex flex-col items-center justify-start p-2 sm:p-8 pb-20 overflow-x-hidden overflow-y-auto relative"
-        style={{
-          position: 'relative',
-          zIndex: 10,
-          backgroundColor: isBreathing ? 'rgba(244, 221, 196, 0.92)' : '#f4ddc4',
-          backdropFilter: isBreathing ? 'blur(4px)' : 'none',
-          transition: 'background-color 0.8s ease, backdrop-filter 0.8s ease'
-        }}
+        className="min-h-screen w-full max-w-full flex flex-col items-center justify-start px-4 sm:px-6 pb-16 pt-12 overflow-x-hidden overflow-y-auto"
+        style={{ position: 'relative', zIndex: 10, backgroundColor: '#f4ddc4' }}
         onTouchStart={onTouchStart}
         onTouchMove={onTouchMove}
         onTouchEnd={onTouchEnd}
       >
         <BackButton onClick={() => onNavigateToScreen('home')} />
 
-        <div className="max-w-md w-full" style={{ marginTop: '4rem', paddingTop: 0, paddingBottom: '2rem', position: 'relative', display: 'flex', flexDirection: 'column', alignItems: 'stretch', minHeight: 'calc(100vh - 4rem - 5rem)' }}>
+        <div className="w-full max-w-md mt-12 md:mt-16 pb-10 relative flex flex-col items-stretch">
           <AnimatePresence>
             {/* Sekce přípravy */}
             {currentIsPreparing && (
