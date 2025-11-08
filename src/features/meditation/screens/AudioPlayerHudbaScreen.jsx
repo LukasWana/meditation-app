@@ -44,7 +44,11 @@ const AudioPlayerHudbaScreen = ({
 
   const getPreviousScreen = useCallback(() => {
     try {
-      return localStorage.getItem('meditation-app-previous-screen') || 'hudba';
+      const previous = localStorage.getItem('meditation-app-previous-screen') || 'hudba';
+      if (previous === 'audio-player-hudba') {
+        return localStorage.getItem('meditation-app-before-player-screen') || 'hudba';
+      }
+      return previous;
     } catch (error) {
       console.warn('⚠️ AudioPlayerHudbaScreen: Failed to read previous screen', error);
       return 'hudba';
@@ -116,11 +120,24 @@ const AudioPlayerHudbaScreen = ({
   // Handler pro zavření přehrávače
   const handleCloseAudio = () => {
     try {
-      setActiveAudio(null);
-      localStorage.removeItem('meditation-app-active-audio-hudba');
       const previousScreen = getPreviousScreen();
       onPlayerStateChange?.(false);
+      localStorage.setItem('meditation-app-previous-screen', previousScreen);
       onNavigateToScreen(previousScreen); // Vrať se na předchozí stránku
+
+      // Odstraň data až po odeslání navigace, aby obrazovka nezůstala prázdná
+      const defer = (cb) => {
+        if (typeof window !== 'undefined' && window.requestAnimationFrame) {
+          window.requestAnimationFrame(cb);
+        } else {
+          setTimeout(cb, 0);
+        }
+      };
+
+      defer(() => {
+        setActiveAudio(null);
+        localStorage.removeItem('meditation-app-active-audio-hudba');
+      });
     } catch (e) {
       console.error('Failed to remove audio data:', e);
     }
@@ -171,6 +188,7 @@ const AudioPlayerHudbaScreen = ({
     if (!activeAudio) {
       const previousScreen = getPreviousScreen();
       onPlayerStateChange?.(false);
+      localStorage.setItem('meditation-app-previous-screen', previousScreen);
       onNavigateToScreen(previousScreen);
     }
   }, [activeAudio, onNavigateToScreen, getPreviousScreen, onPlayerStateChange]);

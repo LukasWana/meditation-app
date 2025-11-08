@@ -81,25 +81,26 @@ class MeditaceDataService {
       // Import realtime metadata service
       const { realtimeMetadataService } = await import('./realtimeMetadataService');
       const allMetadata = await realtimeMetadataService.getAllMetadata();
+      const metadataObject = (allMetadata && typeof allMetadata === 'object') ? allMetadata : {};
 
       log.debug('Cache service loaded, checking metadata...');
-      log.debug('All metadata keys count:', Object.keys(allMetadata).length);
+      log.debug('All metadata keys count:', Object.keys(metadataObject).length);
 
-      if (!allMetadata || Object.keys(allMetadata).length === 0) {
+      if (Object.keys(metadataObject).length === 0) {
         log.warn('No metadata in cache for meditace processing');
         return;
       }
 
-      log.debug(`Processing ${Object.keys(allMetadata).length} metadata entries for meditace...`);
-      log.debug('Sample metadata keys:', Object.keys(allMetadata).slice(0, 5));
-      log.debug('Sample metadata values:', Object.values(allMetadata).slice(0, 3).map(meta => ({
+      log.debug(`Processing ${Object.keys(metadataObject).length} metadata entries for meditace...`);
+      log.debug('Sample metadata keys:', Object.keys(metadataObject).slice(0, 5));
+      log.debug('Sample metadata values:', Object.values(metadataObject).slice(0, 3).map(meta => ({
         fileName: meta.fileName,
         folder: meta.folder,
         fullPath: meta.fullPath
       })));
 
       // Filtruj pouze meditace soubory
-      let meditaceMetadata = Object.values(allMetadata).filter(meta => {
+      let meditaceMetadata = Object.values(metadataObject).filter(meta => {
         const isMeditace = meta.folder === 'meditace' ||
                         meta.folder === 'meditacie' ||
                         meta.fileName?.includes('meditace/') ||
@@ -112,11 +113,12 @@ class MeditaceDataService {
       // Pokud se nenašly žádné meditace soubory, zkus najít všechny soubory s klíčovými slovy
       if (meditaceMetadata.length === 0) {
         log.warn('No meditace files found with folder filter, trying broader search...');
-        meditaceMetadata = Object.values(allMetadata).filter(meta => {
-          const fileName = meta.fileName || meta.fullPath || '';
-          return fileName.toLowerCase().includes('meditace') ||
-                 fileName.toLowerCase().includes('muzsky') ||
-                 fileName.toLowerCase().includes('zensky');
+        meditaceMetadata = Object.values(metadataObject).filter(meta => {
+          const fileName = (meta.fileName || meta.fullPath || '').toLowerCase();
+          if (!fileName) return false;
+          return fileName.includes('meditace') ||
+                 fileName.includes('muzsky') ||
+                 fileName.includes('zensky');
         });
       }
 
@@ -127,12 +129,13 @@ class MeditaceDataService {
         const fileName = meta.fileName || meta.fullPath || '';
 
         // Extrahuj pohlaví z názvu souboru
-        const isMale = fileName.includes('muzsky') || fileName.includes('male');
-        const isFemale = fileName.includes('zensky') || fileName.includes('female');
+        const fileNameLower = fileName.toLowerCase();
+        const isMale = fileNameLower.includes('muzsky') || fileNameLower.includes('male');
+        const isFemale = fileNameLower.includes('zensky') || fileNameLower.includes('female');
         const gender = isMale ? 'male' : isFemale ? 'female' : 'none';
         const topic = this.extractTopicFromFileName(fileName);
-        const is4F = fileName.includes('4F');
-        const is4M = fileName.includes('4M');
+        const is4F = fileNameLower.includes('4f');
+        const is4M = fileNameLower.includes('4m');
         const mediaType = is4F ? '4F' : is4M ? '4M' : 'unknown';
         const displayName = meta.displayName || meta.title || this.extractTitleFromFileName(fileName);
         const duration = meta.durationFormatted || meta.duration || 'N/A';
@@ -202,7 +205,8 @@ class MeditaceDataService {
   // Filtruj meditace položky podle pohlaví a jazyka
   filterMeditaceItems(items, userGender, userLanguage) {
     const filteredItems = items.filter(item => {
-      const fileName = item.fileName;
+      const fileName = typeof item.fileName === 'string' ? item.fileName : '';
+      const fileNameLower = fileName.toLowerCase();
       const userLang = userLanguage.toLowerCase();
       const languageMap = { 'sk': 'sk', 'SK': 'sk', 'cz': 'cz', 'CZ': 'cz', 'en': 'en', 'EN': 'en' };
       const normalizedUserLang = languageMap[userLang] || 'sk';
@@ -211,12 +215,12 @@ class MeditaceDataService {
       let languageMatch = false;
       if (normalizedUserLang === 'sk') {
         // Pro SK zobraz soubory s SK v názvu nebo bez jazykového označení
-        languageMatch = fileName.includes('SK') ||
-                       (!fileName.includes('CZ') && !fileName.includes('EN'));
+        languageMatch = fileNameLower.includes('sk') ||
+                       (!fileNameLower.includes('cz') && !fileNameLower.includes('en'));
       } else if (normalizedUserLang === 'cz') {
-        languageMatch = fileName.includes('CZ');
+        languageMatch = fileNameLower.includes('cz');
       } else if (normalizedUserLang === 'en') {
-        languageMatch = fileName.includes('EN');
+        languageMatch = fileNameLower.includes('en');
       }
 
       // Pohlaví filtrování
@@ -225,10 +229,10 @@ class MeditaceDataService {
         genderMatch = true;
       } else if (userGender === 'male') {
         // Pro muže: preferuj 4M mediaType, pak male gender
-        genderMatch = item.mediaType === '4M' || (item.gender === 'male' && item.mediaType !== '4F');
+        genderMatch = item.mediaType?.toUpperCase() === '4M' || (item.gender === 'male' && item.mediaType?.toUpperCase() !== '4F');
       } else if (userGender === 'female') {
         // Pro ženy: preferuj 4F mediaType, pak female gender
-        genderMatch = item.mediaType === '4F' || (item.gender === 'female' && item.mediaType !== '4M');
+        genderMatch = item.mediaType?.toUpperCase() === '4F' || (item.gender === 'female' && item.mediaType?.toUpperCase() !== '4M');
       } else {
         genderMatch = true;
       }
@@ -333,6 +337,11 @@ class MeditaceDataService {
     console.log(`🔍 getAllMeditaceFilesForLanguage: langKey=${langKey}`);
     console.log(`🔍 this.meditaceData[${langKey}]:`, this.meditaceData[langKey]);
     console.log(`🔍 Available languages:`, Object.keys(this.meditaceData));
+
+    if (!this.meditaceData[langKey]) {
+      log.warn(`Meditace data for language "${langKey}" not available`);
+      return [];
+    }
 
     // Získej všechny soubory pro daný jazyk (male, female, all)
     ['male', 'female', 'all'].forEach(gender => {

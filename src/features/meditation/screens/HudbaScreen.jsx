@@ -22,6 +22,8 @@ const HudbaScreen = ({
 
   // Debug: Zkontroluj, jaký shader se používá
   // Prioritizace: 1. transitionState, 2. barva z colorSettings, 3. shader z shaderSettings
+  const colorOverride = getColorForSection('hudba');
+
   const currentShader = useMemo(() => {
     // Pokud je v transitionState něco kromě BLACK, použij to (může být barva __COLOR__ nebo shader)
     if (transitionState?.toShaderKey && transitionState.toShaderKey !== '__BLACK__') {
@@ -29,15 +31,14 @@ const HudbaScreen = ({
     }
 
     // Pokud není v transitionState, zkontroluj barvu (má prioritu před shaderem)
-    const color = getColorForSection('hudba');
-    if (color) {
-      return `__COLOR__${color}`;
+    if (colorOverride) {
+      return `__COLOR__${colorOverride}`;
     }
 
     // Jinak použij shader z settings (může být null pokud byla nastavena barva)
     const shader = getShaderForSection('hudba');
     return shader;
-  }, [transitionState?.toShaderKey, getColorForSection, getShaderForSection]);
+  }, [transitionState?.toShaderKey, colorOverride, getShaderForSection]);
 
   React.useEffect(() => {
     console.log('🎨 HudbaScreen: Shader info', {
@@ -96,6 +97,7 @@ const HudbaScreen = ({
       try {
         localStorage.setItem('meditation-app-active-audio-hudba', JSON.stringify(audioData));
         localStorage.setItem('meditation-app-previous-screen', 'hudba'); // Ulož, odkud jsme přišli
+        localStorage.setItem('meditation-app-before-player-screen', 'hudba');
         onPlayerStateChange?.(true);
         onNavigateToScreen('audio-player-hudba'); // Naviguj na stránku s přehrávačem
       } catch (e) {
@@ -143,9 +145,10 @@ const HudbaScreen = ({
       */}
       {/* Pozadí stránky */}
       <div
-        className="min-h-screen w-full max-w-full bg-[#f4ddc4] fixed inset-0"
+        className="min-h-screen w-full max-w-full fixed inset-0"
         style={{
-          zIndex: 0
+          zIndex: 0,
+          backgroundColor: colorOverride || '#f4ddc4'
         }}
       />
 
@@ -155,7 +158,7 @@ const HudbaScreen = ({
       {currentShader && currentShader.startsWith('__COLOR__') && (
         <BackgroundShader
           variant={currentShader}
-          intensity={0.8}
+          intensity={1.0}
           enabled={true}
           opacity={1.0} // Barva zobraz vždy s plnou opacity
           zIndex={5} // Udrž barvu pod UI vrstvy

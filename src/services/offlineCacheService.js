@@ -579,7 +579,6 @@ class OfflineCacheService {
         const name = f.fileName || f.name || '';
         return name.includes('meditace/') || name.includes('meditacie/');
       });
-      );
       log.debug('🧘 Meditace files to cache:', meditaceFiles.length);
       log.debug('🧘 Sample meditace files:', meditaceFiles.slice(0, 3).map(f => ({
         fileName: f.fileName || f.name,
