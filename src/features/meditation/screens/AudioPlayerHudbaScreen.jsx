@@ -247,6 +247,7 @@ const AudioPlayerHudbaScreen = ({
       {/* Audio Player - zobraz jako fullscreen overlay */}
       {activeAudio && (
         <AudioPlayer
+          sectionKey="hudba"
           audioSrc={activeAudio.audioSrc}
           title={activeAudio.title}
           onClose={handleCloseAudio}

@@ -206,9 +206,39 @@ const DychaniScreen = ({
   // Vypočítat progress pro rytmus dýchání (vnitřní kruhový ukazatel)
   const cycleDuration = breathInDuration + breathOutDuration;
   const breathRhythmProgress = isPlaying && cycleDuration > 0 ? (breathCycleTime / cycleDuration) * 100 : 0;
+  const breathPhaseProgress = useMemo(() => {
+    if (!isPlaying || cycleDuration <= 0) {
+      return 0;
+    }
+    if (breathPhase === 'in') {
+      const inhaleDuration = Math.max(breathInDuration, 0.001);
+      return Math.min(breathCycleTime / inhaleDuration, 1);
+    }
+    const exhaleElapsed = Math.max(breathCycleTime - breathInDuration, 0);
+    const exhaleDuration = Math.max(breathOutDuration, 0.001);
+    return Math.min(exhaleElapsed / exhaleDuration, 1);
+  }, [isPlaying, cycleDuration, breathPhase, breathCycleTime, breathInDuration, breathOutDuration]);
 
   // Pro výpočet, kde jsme v cyklu (nádech nebo výdech část)
   const inPhaseProgress = cycleDuration > 0 ? (breathInDuration / cycleDuration) * 100 : 50; // Procenta pro nádech část
+  const minScale = 0.55;
+  const maxScale = 1.45;
+  const targetScale = useMemo(() => {
+    if (!isPlaying) {
+      return 1;
+    }
+    if (breathPhase === 'in') {
+      return minScale + (maxScale - minScale) * breathPhaseProgress;
+    }
+    return maxScale - (maxScale - minScale) * breathPhaseProgress;
+  }, [isPlaying, breathPhase, breathPhaseProgress]);
+  const targetOpacity = useMemo(() => {
+    if (!isPlaying) {
+      return 0.8;
+    }
+    const progressFactor = breathPhase === 'in' ? breathPhaseProgress : 1 - breathPhaseProgress;
+    return 0.65 + 0.35 * progressFactor;
+  }, [isPlaying, breathPhase, breathPhaseProgress]);
 
   const colorOverride = getColorForSection('dychani');
   const overlayConfig = getOverlaySettings('dychani') || {};
@@ -297,7 +327,37 @@ const DychaniScreen = ({
     return (
       <FramerPageTransition screenKey="dychani">
         <div
-          className="min-h-screen w-full max-w-full bg-[#f4ddc4] flex flex-col items-center justify-start p-2 sm:p-8 pb-20 overflow-x-hidden relative"
+          className="fixed inset-0 min-h-screen max-w-full"
+          style={{
+            zIndex: 0,
+            backgroundColor: baseBackgroundColor
+          }}
+        />
+
+        <BackgroundShader
+          variant={breathShader}
+          intensity={shaderIntensity}
+          enabled={true}
+          opacity={shaderOpacity}
+          breathPhase={null}
+          breathInDuration={breathInDuration}
+          breathOutDuration={breathOutDuration}
+          zIndex={2}
+        />
+
+        <div
+          className="fixed inset-0 pointer-events-none"
+          style={{
+            zIndex: 3,
+            background: overlayBackground,
+            mixBlendMode: overlayBlendMode,
+            transition: 'background 0.6s ease, mix-blend-mode 0.6s ease'
+          }}
+        />
+
+        <div
+          className="min-h-screen w-full max-w-full flex flex-col items-center justify-start p-2 sm:p-8 pb-20 overflow-x-hidden relative"
+          style={{ position: 'relative', zIndex: 10, backgroundColor: 'transparent' }}
           onTouchStart={onTouchStart}
           onTouchMove={onTouchMove}
           onTouchEnd={onTouchEnd}
@@ -502,29 +562,17 @@ const DychaniScreen = ({
                       willChange: 'transform, opacity' // Optimize animation performance
                     }}
                     initial={{
-                      opacity: 0.9,
-                      scale: breathPhase === 'in' ? 0.5 : 1.5
+                      opacity: targetOpacity,
+                      scale: targetScale
                     }}
-                    animate={isPlaying ? {
-                      scale: breathPhase === 'in'
-                        ? [0.5, 1.5]  // Nádech - zvětšování až na 120%
-                        : breathPhase === 'out'
-                        ? [1.5, 0.5]  // Výdech - zmenšování až na 20%
-                        : 1.5,
-                      opacity: [0.9, 1, 0.9]
-                    } : {
-                      scale: 1.0,
-                      opacity: 0.8
+                    animate={{
+                      scale: targetScale,
+                      opacity: targetOpacity
                     }}
                     exit={{ opacity: 0 }}
-                    transition={isPlaying ? {
-                      duration: breathPhase === 'in' ? breathInDuration : breathOutDuration,
-                      delay: breathPhase === 'out' ? 3 : 0,  // Pozdržení výdechu, aby počkal na zvuk
-                      ease: "easeInOut",
-                      repeat: Infinity,
-                      repeatType: "reverse"
-                    } : {
-                      duration: 0.5
+                    transition={{
+                      duration: 0.18,
+                      ease: 'easeOut'
                     }}
                   />
                 </div>

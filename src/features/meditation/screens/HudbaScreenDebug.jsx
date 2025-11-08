@@ -250,6 +250,7 @@ const HudbaScreenDebug = ({
           {activeAudio && (
             <AudioPlayer
               key="audio-player"
+              sectionKey="hudba"
               audioSrc={activeAudio.audioSrc}
               title={activeAudio.title}
               onClose={handleCloseAudio}

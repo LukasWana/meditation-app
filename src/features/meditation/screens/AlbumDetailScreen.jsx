@@ -191,6 +191,7 @@ const AlbumDetailScreen = ({
       {/* Audio Player */}
       {activeAudio && (
         <AudioPlayer
+          sectionKey="hudba"
           audioSrc={activeAudio.audioSrc}
           title={activeAudio.title}
           onClose={handleCloseAudio}

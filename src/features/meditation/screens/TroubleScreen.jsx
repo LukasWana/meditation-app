@@ -175,6 +175,7 @@ const MeditaceTroubleScreen = ({
           {activeAudio && (
             <AudioPlayer
               key="audio-player"
+              sectionKey="meditace"
               audioSrc={activeAudio.audioSrc}
               title={activeAudio.title}
               onClose={handleCloseAudio}

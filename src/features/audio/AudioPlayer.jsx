@@ -12,6 +12,7 @@ import { usePlayback } from '@contexts/ShaderPlaybackContext';
 
 
 const AudioPlayer = ({
+  sectionKey = 'hudba',
   audioSrc,
   title,
   onClose,
@@ -70,8 +71,8 @@ const AudioPlayer = ({
 
   // Shader settings pro výběr shaderu na pozadí
   const { getShaderForSection, setShaderForSection, getColorForSection } = useShaderSettings();
-  const selectedShader = getShaderForSection('hudba');
-  const selectedColor = getColorForSection('hudba');
+  const selectedShader = getShaderForSection(sectionKey);
+  const selectedColor = getColorForSection(sectionKey);
 
   // Shader playback context pro přehrávání shaderů
   const { transitionState, startTransition } = usePlayback();
@@ -83,7 +84,7 @@ const AudioPlayer = ({
   // Handler pro změnu shaderu
   const handleShaderChange = (shaderId) => {
     // Ulož do ShaderSettingsContext
-    setShaderForSection('hudba', shaderId);
+    setShaderForSection(sectionKey, shaderId);
 
     // Nastav shader v PlaybackContext pomocí startTransition
     const from = { shaderKey: transitionState?.toShaderKey || '__BLACK__' };
@@ -137,8 +138,7 @@ const AudioPlayer = ({
         });
       }
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selectedShader, selectedColor]); // Sleduj změny shaderu i barvy
+  }, [selectedShader, selectedColor, sectionKey, startTransition, transitionState]);
 
   // Aktualizuj audio data v contextu
   React.useEffect(() => {
