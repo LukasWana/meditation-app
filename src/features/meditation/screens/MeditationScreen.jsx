@@ -1,17 +1,88 @@
 import React, { useState, useEffect, useRef, Suspense, lazy, useMemo } from 'react';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import { RotateCcw, Image as ImageIcon } from 'lucide-react';
-import { FramerButton, FramerSection, FramerPageTransition, BackButton, BackgroundShader } from '@components';
+import { FramerButton, FramerSection, FramerPageTransition, BackButton, BackgroundShader, ShaderGallery } from '@components';
 import CircularProgress from '@features/audio/components/CircularProgress';
 import PlayPauseButton from '@features/audio/components/PlayPauseButton';
 import { useLanguage } from '@contexts/LanguageContext';
 import { useShaderSettings } from '@contexts/ShaderSettingsContext';
 import { useBreathSounds } from '@hooks';
+import { usePlayback } from '@contexts/ShaderPlaybackContext';
 
 // Lazy loading modálů pro lepší performance
 const WheelPickerModal = lazy(() => import('@components/TimePickerModal').then(m => ({ default: m.WheelPickerModal })));
 const DualWheelPickerModal = lazy(() => import('@components/TimePickerModal').then(m => ({ default: m.DualWheelPickerModal })));
 const SoundThemeGallery = lazy(() => import('@components/SoundThemeGallery'));
+
+const BLEND_MODE_OPTIONS = [
+  { value: 'normal', label: 'Normal' },
+  { value: 'overlay', label: 'Overlay' },
+  { value: 'multiply', label: 'Multiply' },
+  { value: 'shines', label: 'Shines' },
+  { value: 'light', label: 'Light' },
+  { value: 'dark', label: 'Dark' }
+];
+
+const BLEND_MODE_TO_CSS = {
+  normal: 'normal',
+  overlay: 'overlay',
+  multiply: 'multiply',
+  shines: 'screen',
+  light: 'lighten',
+  dark: 'darken'
+};
+
+const hexToRgba = (hex, alpha = 1) => {
+  if (!hex) {
+    return `rgba(244, 221, 196, ${alpha})`;
+  }
+
+  let normalized = hex.trim();
+  if (normalized.startsWith('#')) {
+    normalized = normalized.slice(1);
+  }
+  if (normalized.length === 3) {
+    normalized = normalized.split('').map(char => `${char}${char}`).join('');
+  }
+
+  const bigint = Number.parseInt(normalized, 16);
+  const r = (bigint >> 16) & 255;
+  const g = (bigint >> 8) & 255;
+  const b = bigint & 255;
+  return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+};
+
+function formatTime(seconds) {
+  const mins = Math.floor(seconds / 60);
+  const secs = Math.floor(seconds % 60);
+  return `${mins}:${secs.toString().padStart(2, '0')}`;
+}
+
+function formatPreparationTime(seconds) {
+  const mins = Math.floor(seconds / 60);
+  const secs = seconds % 60;
+  return `${mins}:${secs.toString().padStart(2, '0')}`;
+}
+
+const MetricButton = ({ label, value, onClick, disabled = false }) => (
+  <button
+    type="button"
+    onClick={onClick}
+    disabled={disabled}
+    className={`group rounded-2xl border border-black/10 bg-white/60 px-4 py-3 text-left shadow-sm transition-all duration-200 ${
+      disabled
+        ? 'cursor-not-allowed opacity-50'
+        : 'hover:-translate-y-1 hover:bg-white'
+    }`}
+  >
+    <span className="block text-[0.68rem] uppercase tracking-[0.2em] text-gray-500">
+      {label}
+    </span>
+    <span className="mt-1 block text-2xl font-light text-gray-800">
+      {value}
+    </span>
+  </button>
+);
 
 const DychaniScreen = ({
   time,
@@ -40,20 +111,31 @@ const DychaniScreen = ({
   preparationTime
 }) => {
   const { t } = useLanguage();
-  const { getShaderForSection, shaderSettings } = useShaderSettings();
+  const {
+    shaderSettings,
+    getShaderForSection,
+    getColorForSection,
+    setColorForSection,
+    clearColorForSection,
+    getOverlaySettings,
+    setOverlaySettingsForSection,
+    setShaderForSection
+  } = useShaderSettings();
+  const { transitionState, startTransition } = usePlayback();
 
-  // Získej shader pro sekci dýchání - použij shaderSettings přímo pro reaktivitu
+  // Získej shader pro sekci dýchání - reaguje na změny v nastavení
   const breathShader = useMemo(() => {
-    const shader = shaderSettings?.dychani || 'dychani';
-    console.log('🎨 DychaniScreen: Shader variant:', shader, 'shaderSettings:', shaderSettings);
-    return shader;
-  }, [shaderSettings]);
+    return getShaderForSection('dychani') || shaderSettings?.dychani || 'dychani';
+  }, [shaderSettings, getShaderForSection]);
 
   const [showGallery, setShowGallery] = useState(false);
   const [showDurationPicker, setShowDurationPicker] = useState(false);
   const [showPreparationPicker, setShowPreparationPicker] = useState(false);
   const [showRhythmPicker, setShowRhythmPicker] = useState(false);
   const [breathCycleTime, setBreathCycleTime] = useState(0); // Čas v aktuálním cyklu dýchání (0 až breathInDuration + breathOutDuration)
+  const [showBackgroundSettings, setShowBackgroundSettings] = useState(false);
+  const [showShaderPicker, setShowShaderPicker] = useState(false);
+  const [shaderCategory, setShaderCategory] = useState('built-in');
 
   useEffect(() => {
     try {
@@ -128,6 +210,73 @@ const DychaniScreen = ({
   // Pro výpočet, kde jsme v cyklu (nádech nebo výdech část)
   const inPhaseProgress = cycleDuration > 0 ? (breathInDuration / cycleDuration) * 100 : 50; // Procenta pro nádech část
 
+  const colorOverride = getColorForSection('dychani');
+  const overlayConfig = getOverlaySettings('dychani') || {};
+  const shaderOpacity = Math.min(Math.max(overlayConfig.opacity ?? 0.75, 0), 1);
+  const shaderIntensity = Math.min(Math.max(overlayConfig.intensity ?? 0.8, 0), 1);
+  const blendMode = overlayConfig.blendMode || 'normal';
+  const overlayBlendMode = BLEND_MODE_TO_CSS[blendMode] || 'normal';
+  const baseBackgroundColor = colorOverride || '#f4ddc4';
+  const overlayAlpha =
+    blendMode === 'normal'
+      ? (isPlaying ? 0.45 : 0.55)
+      : 0.6;
+  const overlayBackground = hexToRgba(baseBackgroundColor, overlayAlpha);
+  const formattedTotalTime = totalTime > 0 ? formatTime(totalTime) : '00:00';
+  const shaderOpacityPercent = Math.round(shaderOpacity * 100);
+  const shaderIntensityPercent = Math.round(shaderIntensity * 100);
+  const metricsDisabled = isPlaying;
+
+  const handleShaderOpacityChange = (event) => {
+    const numeric = Number(event.target.value) / 100;
+    setOverlaySettingsForSection('dychani', { opacity: Number(numeric.toFixed(2)) });
+  };
+
+  const handleShaderIntensityChange = (event) => {
+    const numeric = Number(event.target.value) / 100;
+    setOverlaySettingsForSection('dychani', { intensity: Number(numeric.toFixed(2)) });
+  };
+
+  const handleBlendModeChange = (event) => {
+    setOverlaySettingsForSection('dychani', { blendMode: event.target.value });
+  };
+
+  const handleBackgroundToggle = () => {
+    setShowBackgroundSettings(prev => !prev);
+  };
+
+  const handleOpenShaderSelection = () => {
+    setShowShaderPicker(true);
+  };
+
+  const updateSectionColor = (value) => {
+    if (!value) {
+      clearColorForSection('dychani');
+      return;
+    }
+    setColorForSection('dychani', value);
+  };
+
+  const handleColorChange = (event) => {
+    updateSectionColor(event.target.value);
+  };
+
+  const handleColorInput = (event) => {
+    updateSectionColor(event.target.value);
+  };
+
+  const handleColorClear = () => {
+    clearColorForSection('dychani');
+  };
+
+  const handleShaderSelect = (shaderId) => {
+    setShaderForSection('dychani', shaderId);
+    const from = { shaderKey: transitionState?.toShaderKey || breathShader || '__BLACK__' };
+    const to = { shaderKey: shaderId || '__BLACK__' };
+    startTransition(from, to);
+    setShowShaderPicker(false);
+  };
+
   // Debug logování
   useEffect(() => {
     if (isPlaying) {
@@ -142,19 +291,6 @@ const DychaniScreen = ({
       });
     }
   }, [isPlaying, breathPhase, breathCycleTime, cycleDuration, breathRhythmProgress, inPhaseProgress, breathInDuration, breathOutDuration]);
-
-  // Formátování času
-  const formatTime = (seconds) => {
-    const mins = Math.floor(seconds / 60);
-    const secs = Math.floor(seconds % 60);
-    return `${mins}:${secs.toString().padStart(2, '0')}`;
-  };
-
-  const formatPreparationTime = (seconds) => {
-    const mins = Math.floor(seconds / 60);
-    const secs = seconds % 60;
-    return `${mins}:${secs.toString().padStart(2, '0')}`;
-  };
 
   // Pokud probíhá příprava, zobraz odpočítávání přípravy
   if (isPreparing) {
@@ -249,20 +385,19 @@ const DychaniScreen = ({
       */}
       {/* Pozadí stránky - pod shaderem - průhledné při přehrávání, aby shader prosvítal */}
       <div
-        className="min-h-screen w-full max-w-full bg-[#f4ddc4] fixed inset-0"
+        className="fixed inset-0 min-h-screen max-w-full"
         style={{
           zIndex: 0,
-          opacity: isPlaying ? 0.45 : 1,
-          transition: 'opacity 2s ease-in-out'
+          backgroundColor: baseBackgroundColor
         }}
       />
 
       {/* BackgroundShader - zobraz pouze při přehrávání s plynulým prolnutím */}
       <BackgroundShader
-        variant={getShaderForSection('meditace') || 'meditace'}
-        intensity={0.5}
+        variant={breathShader}
+        intensity={shaderIntensity}
         enabled={true}
-        opacity={isPlaying ? 0.65 : 0.0}
+        opacity={shaderOpacity}
         breathPhase={isPlaying ? breathPhase : null}
         breathInDuration={breathInDuration}
         breathOutDuration={breathOutDuration}
@@ -274,18 +409,16 @@ const DychaniScreen = ({
         className="fixed inset-0 pointer-events-none"
         style={{
           zIndex: 3,
-          background: isPlaying
-            ? 'rgba(244,221,196,0.9)'
-            : 'rgba(244,221,196,0.95)',
-          backdropFilter: isPlaying ? 'blur(2px)' : 'none',
-          transition: 'background 0.6s ease, backdrop-filter 0.6s ease, opacity 0.6s ease'
+          background: overlayBackground,
+          mixBlendMode: overlayBlendMode,
+          transition: 'background 0.6s ease, mix-blend-mode 0.6s ease'
         }}
       />
 
       {/* Hlavní obsah stránky - nad shaderem - průhledné pozadí, aby shader prosvítal */}
       <div
-        className="min-h-screen w-full max-w-full bg-[#f4ddc4] flex flex-col items-center justify-start p-2 sm:p-8 pb-20 overflow-x-hidden relative"
-        style={{ position: 'relative', zIndex: 10 }}
+        className="min-h-screen w-full max-w-full flex flex-col items-center justify-start p-2 sm:p-8 pb-20 overflow-x-hidden relative"
+        style={{ position: 'relative', zIndex: 10, backgroundColor: 'transparent' }}
         onTouchStart={onTouchStart}
         onTouchMove={onTouchMove}
         onTouchEnd={onTouchEnd}
@@ -298,21 +431,15 @@ const DychaniScreen = ({
             animationType="fadeIn"
             delay={0.1}
           >
-            <div style={{ height: '3.5rem', display: 'flex', flexDirection: 'column', justifyContent: 'flex-start', alignItems: 'center', marginBottom: '0.5rem' }}>
-              <h1 className="text-4xl font-light" style={{ minHeight: '2.5rem', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                {t('dychani')}
-              </h1>
-            </div>
-            <div className="flex justify-center gap-2 mt-4 mb-4">
-              <div className="w-2 h-2 bg-black rounded-full"></div>
-              <div className="w-2 h-2 bg-black rounded-full"></div>
-              <div className="w-2 h-2 bg-black rounded-full"></div>
-            </div>
-            {/* Zobrazení aktuálního rytmu dýchání z nastavení */}
-            <div className="mt-4 text-sm text-gray-600">
-              <span className="font-medium">{t('rytmusDychania')}:</span>{' '}
-              <span className="font-light">
-                {breathInDuration}:{breathOutDuration} ({t('nadech')}:{t('vydech')})
+            <h1 className="text-5xl font-light tracking-wide text-gray-900 sm:text-6xl">
+              {t('dychani')}
+            </h1>
+            <div className="mt-5 flex flex-col items-center space-y-1">
+              <span className="text-xs uppercase tracking-[0.3em] text-gray-500">
+                {t('dlzkaDychania')}
+              </span>
+              <span className="text-4xl font-light text-gray-800 sm:text-5xl">
+                {formattedTotalTime}
               </span>
             </div>
           </FramerSection>
@@ -598,6 +725,150 @@ const DychaniScreen = ({
             </FramerButton>
           </FramerSection>
 
+          <FramerSection
+            className="w-full flex justify-center mb-8"
+            animationType="fadeIn"
+            delay={0.45}
+          >
+            <FramerButton
+              onClick={handleBackgroundToggle}
+              variant="ghost"
+              className="rounded-full border border-black/15 bg-white/70 px-6 py-3 text-xs uppercase tracking-[0.25em]"
+            >
+              {showBackgroundSettings ? 'Zavřít nastavení pozadí' : 'Změnit pozadí'}
+            </FramerButton>
+          </FramerSection>
+
+          <AnimatePresence>
+            {showBackgroundSettings && (
+              <motion.div
+                initial={{ opacity: 0, height: 0 }}
+                animate={{ opacity: 1, height: 'auto' }}
+                exit={{ opacity: 0, height: 0 }}
+                transition={{ duration: 0.3 }}
+                className="w-full"
+              >
+                <div className="mx-auto max-w-xl space-y-5 rounded-3xl border border-black/10 bg-white/80 p-6 shadow-lg backdrop-blur">
+                  <div className="flex flex-wrap items-center gap-3">
+                    <span className="text-sm font-medium text-gray-700">Barva</span>
+                    <input
+                      type="color"
+                      value={colorOverride || '#f4ddc4'}
+                      onChange={handleColorChange}
+                      onInput={handleColorInput}
+                      className="h-10 w-16 cursor-pointer rounded-lg border border-black/10 bg-white shadow-sm focus:outline-none"
+                    />
+                    <FramerButton
+                      onClick={handleColorClear}
+                      variant="ghost"
+                      className="rounded-full border border-black/10 bg-white px-3 py-1.5 text-xs uppercase tracking-[0.2em]"
+                    >
+                      Reset
+                    </FramerButton>
+                  </div>
+
+                  <div className="flex flex-wrap items-center gap-3">
+                    <span className="text-sm font-medium text-gray-700">Shader</span>
+                    <FramerButton
+                      onClick={handleOpenShaderSelection}
+                      variant="ghost"
+                      className="rounded-full border border-black/10 bg-white px-4 py-2 text-xs uppercase tracking-[0.2em]"
+                    >
+                      {showShaderPicker ? 'Skrýt shadery' : 'Vybrat shader'}
+                    </FramerButton>
+                    <span className="text-xs uppercase tracking-[0.3em] text-gray-500">
+                      {breathShader}
+                    </span>
+                  </div>
+
+                  <div>
+                    <label className="flex items-center justify-between text-xs uppercase tracking-[0.3em] text-gray-500">
+                      <span>Průhlednost shaderu</span>
+                      <span>{shaderOpacityPercent}%</span>
+                    </label>
+                    <input
+                      type="range"
+                      min={0}
+                      max={100}
+                      step={5}
+                      value={shaderOpacityPercent}
+                      onChange={handleShaderOpacityChange}
+                      className="mt-2 w-full accent-black"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="flex items-center justify-between text-xs uppercase tracking-[0.3em] text-gray-500">
+                      <span>Intenzita shaderu</span>
+                      <span>{shaderIntensityPercent}%</span>
+                    </label>
+                    <input
+                      type="range"
+                      min={0}
+                      max={100}
+                      step={5}
+                      value={shaderIntensityPercent}
+                      onChange={handleShaderIntensityChange}
+                      className="mt-2 w-full accent-black"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="mb-2 block text-xs uppercase tracking-[0.3em] text-gray-500">
+                      Efekt
+                    </label>
+                    <select
+                      value={blendMode}
+                      onChange={handleBlendModeChange}
+                      className="w-full rounded-2xl border border-black/10 bg-white/80 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-black/10"
+                    >
+                      {BLEND_MODE_OPTIONS.map(option => (
+                        <option key={option.value} value={option.value}>
+                          {option.label}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <AnimatePresence>
+                    {showShaderPicker && (
+                      <motion.div
+                        initial={{ opacity: 0, height: 0 }}
+                        animate={{ opacity: 1, height: 'auto' }}
+                        exit={{ opacity: 0, height: 0 }}
+                        transition={{ duration: 0.25 }}
+                        className="overflow-hidden rounded-2xl border border-black/10 bg-white/70 p-4"
+                      >
+                        <div className="mb-3 flex gap-2">
+                          <FramerButton
+                            onClick={() => setShaderCategory('built-in')}
+                            variant={shaderCategory === 'built-in' ? 'primary' : 'ghost'}
+                            className="rounded-full px-4 py-2 text-xs uppercase tracking-[0.2em]"
+                          >
+                            Vestavěné
+                          </FramerButton>
+                          <FramerButton
+                            onClick={() => setShaderCategory('shaders')}
+                            variant={shaderCategory === 'shaders' ? 'primary' : 'ghost'}
+                            className="rounded-full px-4 py-2 text-xs uppercase tracking-[0.2em]"
+                          >
+                            Shadery
+                          </FramerButton>
+                        </div>
+                        <ShaderGallery
+                          selectedVariant={breathShader}
+                          onSelect={handleShaderSelect}
+                          section="dychani"
+                          category={shaderCategory}
+                        />
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
+
         </div>
 
         {/* Galerie zvukových témat */}
@@ -617,6 +888,61 @@ const DychaniScreen = ({
           </Suspense>
         )}
       </div>
+
+      <AnimatePresence>
+        {showShaderPicker && (
+          <motion.div
+            className="fixed inset-0 z-[60] flex items-center justify-center bg-black/40 px-4 py-8"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+          >
+            <motion.div
+              className="relative w-full max-w-4xl rounded-3xl border border-black/15 bg-white/90 p-6 shadow-2xl backdrop-blur"
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.95, opacity: 0 }}
+            >
+              <div className="flex items-center justify-between">
+                <h3 className="text-lg font-medium text-gray-700">Vyberte shader</h3>
+                <FramerButton
+                  onClick={() => setShowShaderPicker(false)}
+                  variant="ghost"
+                  className="rounded-full border border-black/10 bg-white px-3 py-1 text-xs uppercase tracking-[0.2em]"
+                >
+                  Zavřít
+                </FramerButton>
+              </div>
+
+              <div className="mt-4 flex gap-2">
+                <FramerButton
+                  onClick={() => setShaderCategory('built-in')}
+                  variant={shaderCategory === 'built-in' ? 'primary' : 'ghost'}
+                  className="rounded-full px-4 py-2 text-xs uppercase tracking-[0.2em]"
+                >
+                  Vestavěné
+                </FramerButton>
+                <FramerButton
+                  onClick={() => setShaderCategory('shaders')}
+                  variant={shaderCategory === 'shaders' ? 'primary' : 'ghost'}
+                  className="rounded-full px-4 py-2 text-xs uppercase tracking-[0.2em]"
+                >
+                  Shadery
+                </FramerButton>
+              </div>
+
+              <div className="mt-6 max-h-[60vh] overflow-y-auto rounded-2xl border border-black/10 bg-white/70 p-4">
+                <ShaderGallery
+                  selectedVariant={breathShader}
+                  onSelect={handleShaderSelect}
+                  section="dychani"
+                  category={shaderCategory}
+                />
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </FramerPageTransition>
   );
 };

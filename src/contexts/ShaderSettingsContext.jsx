@@ -69,6 +69,24 @@ export const ShaderSettingsProvider = ({ children }) => {
     return {};
   });
 
+  const [overlaySettings, setOverlaySettings] = useState(() => {
+    try {
+      const saved = localStorage.getItem('meditation-app-shader-overlay-settings');
+      if (saved) {
+        return JSON.parse(saved);
+      }
+    } catch (e) {
+      console.error('Failed to load shader overlay settings:', e);
+    }
+    return {};
+  });
+
+  const defaultOverlay = {
+    opacity: 0.75,
+    intensity: 0.8,
+    blendMode: 'normal'
+  };
+
   // Ulož do localStorage při změně
   useEffect(() => {
     try {
@@ -86,6 +104,14 @@ export const ShaderSettingsProvider = ({ children }) => {
       console.error('Failed to save color settings:', e);
     }
   }, [colorSettings]);
+
+  useEffect(() => {
+    try {
+      localStorage.setItem('meditation-app-shader-overlay-settings', JSON.stringify(overlaySettings));
+    } catch (e) {
+      console.error('Failed to save shader overlay settings:', e);
+    }
+  }, [overlaySettings]);
 
   const setShaderForSection = (section, variant) => {
     setShaderSettings(prev => ({
@@ -127,16 +153,50 @@ export const ShaderSettingsProvider = ({ children }) => {
     return colorSettings[section] || null;
   };
 
+  const getOverlaySettings = (section) => {
+    return {
+      ...defaultOverlay,
+      ...(overlaySettings[section] || {})
+    };
+  };
+
+  const setOverlaySettingsForSection = (section, settings) => {
+    setOverlaySettings(prev => {
+      const current = prev[section] || {};
+      const merged = {
+        ...defaultOverlay,
+        ...current,
+        ...settings
+      };
+      return {
+        ...prev,
+        [section]: merged
+      };
+    });
+  };
+
+  const clearOverlaySettings = (section) => {
+    setOverlaySettings(prev => {
+      const next = { ...prev };
+      delete next[section];
+      return next;
+    });
+  };
+
   return (
     <ShaderSettingsContext.Provider
       value={{
         shaderSettings,
         colorSettings,
+        overlaySettings,
         setShaderForSection,
         getShaderForSection,
         setColorForSection,
         getColorForSection,
-        clearColorForSection
+        clearColorForSection,
+        getOverlaySettings,
+        setOverlaySettingsForSection,
+        clearOverlaySettings
       }}
     >
       {children}
