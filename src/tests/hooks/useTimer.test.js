@@ -1,8 +1,18 @@
 
 
+import { useState } from 'react';
 import { renderHook, act } from '@testing-library/react';
 import { useTimer } from '@hooks/useTimer';
 import { vi } from 'vitest';
+
+const useTestTimer = (initialTime, initialPlaying = true) => {
+  const [time, setTime] = useState(initialTime);
+  const [isPlaying, setIsPlaying] = useState(initialPlaying);
+
+  useTimer(isPlaying, time, setTime, setIsPlaying);
+
+  return { time, setTime, isPlaying, setIsPlaying };
+};
 
 describe('useTimer', () => {
   beforeEach(() => {
@@ -13,58 +23,41 @@ describe('useTimer', () => {
     vi.useRealTimers();
   });
 
-  it('should start timer when isPlaying is true and time > 0', () => {
-    const setTime = vi.fn();
-    const setIsPlaying = vi.fn();
-
-    renderHook(() => useTimer(true, 10, setTime, setIsPlaying));
+  it('spustí odpočet, pokud je přehrávání aktivní', () => {
+    const { result } = renderHook(() => useTestTimer(10, true));
 
     act(() => {
       vi.advanceTimersByTime(1000);
     });
 
-    expect(setTime).toHaveBeenCalledWith(expect.any(Function));
+    expect(result.current.time).toBe(9);
   });
 
-  it('should not start timer when isPlaying is false', () => {
-    const setTime = vi.fn();
-    const setIsPlaying = vi.fn();
-
-    renderHook(() => useTimer(false, 10, setTime, setIsPlaying));
+  it('neodpočitává čas, když není přehrávání aktivní', () => {
+    const { result } = renderHook(() => useTestTimer(10, false));
 
     act(() => {
       vi.advanceTimersByTime(1000);
     });
 
-    expect(setTime).not.toHaveBeenCalled();
+    expect(result.current.time).toBe(10);
   });
 
-  it('should stop timer when time reaches 0', () => {
-    const setTime = vi.fn();
-    const setIsPlaying = vi.fn();
-
-    renderHook(() => useTimer(true, 1, setTime, setIsPlaying));
+  it('zastaví přehrávání, když čas dosáhne nuly', () => {
+    const { result } = renderHook(() => useTestTimer(1, true));
 
     act(() => {
       vi.advanceTimersByTime(1000);
+      vi.runOnlyPendingTimers();
     });
 
-    // Počkej na asynchronní setTimeout (delay 0)
-    act(() => {
-      vi.advanceTimersByTime(0);
-    });
-
-    expect(setIsPlaying).toHaveBeenCalledWith(false);
+    expect(result.current.isPlaying).toBe(false);
   });
 
-  it('should prevent race conditions with isUpdatingRef', () => {
-    const setTime = vi.fn();
-    const setIsPlaying = vi.fn();
+  it('resetuje interval při změně stavu bez závodů', () => {
+    const { result, rerender } = renderHook(() => useTestTimer(5, true));
 
-    const { rerender } = renderHook(() => useTimer(true, 10, setTime, setIsPlaying));
-
-    // Simuluj rychlé změny
-    rerender();
+    // Rychlé re-renderování simuluje změny stavu
     rerender();
     rerender();
 
@@ -72,23 +65,14 @@ describe('useTimer', () => {
       vi.advanceTimersByTime(1000);
     });
 
-    // setTime by mělo být voláno pouze jednou navzdory rychlým změnám
-    expect(setTime).toHaveBeenCalledTimes(1);
+    expect(result.current.time).toBe(4);
   });
 
-  it('should cleanup timer on unmount', () => {
-    const setTime = vi.fn();
-    const setIsPlaying = vi.fn();
-
-    const { unmount } = renderHook(() => useTimer(true, 10, setTime, setIsPlaying));
+  it('uklidí interval při odmountování', () => {
+    const { unmount } = renderHook(() => useTestTimer(5, true));
 
     unmount();
 
-    act(() => {
-      vi.advanceTimersByTime(1000);
-    });
-
-    expect(setTime).not.toHaveBeenCalled();
+    expect(vi.getTimerCount()).toBe(0);
   });
 });
-

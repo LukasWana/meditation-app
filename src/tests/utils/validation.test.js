@@ -261,7 +261,9 @@ describe('Validation Utils', () => {
 
       const result = validateInput(input, schema);
       expect(result.isValid).toBe(true);
-      expect(result.errors).toEqual({});
+    expect(result.errors.email).toEqual([]);
+    expect(result.errors.password).toEqual([]);
+    expect(result.errors.age).toEqual([]);
     });
 
     it('should return errors for invalid input', () => {

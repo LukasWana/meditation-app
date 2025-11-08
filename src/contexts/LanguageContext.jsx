@@ -11,7 +11,7 @@ export const useLanguage = () => {
   return context;
 };
 
-const normalizeTranslationKeys = (source = {}) => {
+export const normalizeTranslationKeys = (source = {}) => {
   const normalized = { ...source };
 
   // Legacy rename: slova -> meditace

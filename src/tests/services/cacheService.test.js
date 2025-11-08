@@ -4,6 +4,10 @@ import { AudioCache, MetadataCache, FirebaseCache, ImageCache } from '@services/
 import { vi } from 'vitest';
 
 describe('BaseCache classes', () => {
+  beforeEach(() => {
+    localStorage.clear();
+  });
+
   describe('AudioCache', () => {
     let audioCache;
 

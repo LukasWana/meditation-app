@@ -18,20 +18,28 @@ export const ShaderSettingsProvider = ({ children }) => {
       if (saved) {
         const parsed = JSON.parse(saved);
         // Migrace starých klíčů na nové (backward compatibility)
-        if (parsed.slova && !parsed.meditace) {
-          parsed.meditace = parsed.slova;
+        if (parsed.slova) {
+          if (!parsed.meditace) {
+            parsed.meditace = parsed.slova;
+          }
           delete parsed.slova;
         }
-        if (parsed.meditation && !parsed.dychani) {
-          parsed.dychani = parsed.meditation;
+        if (parsed.meditation) {
+          if (!parsed.dychani) {
+            parsed.dychani = parsed.meditation;
+          }
           delete parsed.meditation;
         }
-        if (parsed.breath && !parsed.dychani) {
-          parsed.dychani = parsed.breath;
+        if (parsed.breath) {
+          if (!parsed.dychani) {
+            parsed.dychani = parsed.breath;
+          }
           delete parsed.breath;
         }
-        if (parsed.meditacia && !parsed.dychani) {
-          parsed.dychani = parsed.meditacia;
+        if (parsed.meditacia) {
+          if (!parsed.dychani) {
+            parsed.dychani = parsed.meditacia;
+          }
           delete parsed.meditacia;
         }
         return parsed;
