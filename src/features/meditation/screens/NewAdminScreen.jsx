@@ -16,9 +16,9 @@ const NewAdminScreen = () => {
     totalFiles: 0,
     totalSize: 0,
     hudbaFiles: 0,
-    slovaFiles: 0,
+    meditaceFiles: 0,
     hudbaSize: 0,
-    slovaSize: 0
+    meditaceSize: 0
   });
   const [fileData, setFileData] = useState([]);
   const [preparedData, setPreparedData] = useState(null);
@@ -136,39 +136,39 @@ const NewAdminScreen = () => {
     setLoading(true);
     try {
       const hudbaRef = ref(storage, 'hudba');
-      const slovaRef = ref(storage, 'slova');
+      const meditaceRef = ref(storage, 'meditace');
 
-      const [hudbaFiles, slovaFiles] = await Promise.all([
+      const [hudbaFiles, meditaceFiles] = await Promise.all([
         getAllFilesRecursively(hudbaRef, 'hudba'),
-        getAllFilesRecursively(slovaRef, 'slova')
+        getAllFilesRecursively(meditaceRef, 'meditace')
       ]);
 
       const hudbaMetadata = hudbaFiles;
-      const slovaMetadata = slovaFiles;
+      const meditaceMetadata = meditaceFiles;
 
-      const allFiles = [...hudbaMetadata, ...slovaMetadata];
+      const allFiles = [...hudbaMetadata, ...meditaceMetadata];
 
       const hudbaSize = hudbaMetadata.reduce((sum, file) => sum + file.size, 0);
-      const slovaSize = slovaMetadata.reduce((sum, file) => sum + file.size, 0);
-      const totalSize = hudbaSize + slovaSize;
+      const meditaceSize = meditaceMetadata.reduce((sum, file) => sum + file.size, 0);
+      const totalSize = hudbaSize + meditaceSize;
 
       setAudioStats({
         totalFiles: allFiles.length,
         totalSize: totalSize,
         hudbaFiles: hudbaMetadata.length,
-        slovaFiles: slovaMetadata.length,
+        meditaceFiles: meditaceMetadata.length,
         hudbaSize: hudbaSize,
-        slovaSize: slovaSize
+        meditaceSize: meditaceSize
       });
 
       setFileData(allFiles);
 
       console.log('📊 Načtené soubory:', {
         hudba: hudbaMetadata.length,
-        slova: slovaMetadata.length,
+        meditace: meditaceMetadata.length,
         celkem: allFiles.length,
         hudbaSoubory: hudbaMetadata.map(f => f.name),
-        slovaSoubory: slovaMetadata.map(f => f.name)
+        meditaceSoubory: meditaceMetadata.map(f => f.name)
       });
     } catch (error) {
       console.error('Chyba při načítání statistik:', error);
@@ -187,14 +187,14 @@ const NewAdminScreen = () => {
 
       // Načti aktuální data z Firebase Storage
       const hudbaRef = ref(storage, 'hudba');
-      const slovaRef = ref(storage, 'slova');
+      const meditaceRef = ref(storage, 'meditace');
 
-      const [hudbaFiles, slovaFiles] = await Promise.all([
+      const [hudbaFiles, meditaceFiles] = await Promise.all([
         getAllFilesRecursively(hudbaRef, 'hudba'),
-        getAllFilesRecursively(slovaRef, 'slova')
+        getAllFilesRecursively(meditaceRef, 'meditace')
       ]);
 
-      const currentFiles = [...hudbaFiles, ...slovaFiles];
+      const currentFiles = [...hudbaFiles, ...meditaceFiles];
 
       // Načti data z Realtime Database pro porovnání
       let dbData = null;
@@ -224,16 +224,16 @@ const NewAdminScreen = () => {
 
       // Aktualizuj statistiky
       const hudbaSize = hudbaFiles.reduce((sum, file) => sum + file.size, 0);
-      const slovaSize = slovaFiles.reduce((sum, file) => sum + file.size, 0);
-      const totalSize = hudbaSize + slovaSize;
+      const meditaceSize = meditaceFiles.reduce((sum, file) => sum + file.size, 0);
+      const totalSize = hudbaSize + meditaceSize;
 
       setAudioStats({
         totalFiles: currentFiles.length,
         totalSize: totalSize,
         hudbaFiles: hudbaFiles.length,
-        slovaFiles: slovaFiles.length,
+        meditaceFiles: meditaceFiles.length,
         hudbaSize: hudbaSize,
-        slovaSize: slovaSize
+        meditaceSize: meditaceSize
       });
 
       setFileData(currentFiles);
@@ -334,9 +334,9 @@ const NewAdminScreen = () => {
         totalFiles: audioStats.totalFiles,
         totalSize: audioStats.totalSize,
         hudbaFiles: audioStats.hudbaFiles,
-        slovaFiles: audioStats.slovaFiles,
+        meditaceFiles: audioStats.meditaceFiles,
         hudbaSize: audioStats.hudbaSize,
-        slovaSize: audioStats.slovaSize
+        meditaceSize: audioStats.meditaceSize
       },
       files: fileData.map(file => {
         const baseFile = {
@@ -347,11 +347,11 @@ const NewAdminScreen = () => {
           durationFormatted: formatDuration(estimateDuration(file.size)),
           folder: file.folder,
           downloadURL: file.downloadURL,
-          category: file.folder === 'hudba' ? 'music' : 'speech'
+          category: file.folder === 'hudba' ? 'music' : 'meditation'
         };
 
-        // Pro slova soubory přidej pokročilé metadata
-        if (file.folder === 'slova') {
+        // Pro meditace soubory přidej pokročilé metadata
+        if (file.folder === 'meditace') {
           const fileName = file.name;
           const isMale = fileName.includes('muzsky') || fileName.includes('male');
           const isFemale = fileName.includes('zensky') || fileName.includes('female');
@@ -498,15 +498,15 @@ const NewAdminScreen = () => {
         metadataArray.push(data);
       });
 
-      // Zobraz slova soubory
-      const slovaFiles = metadataArray.filter(file =>
-        file.fileName && file.fileName.includes('slova/')
+      // Zobraz meditace soubory
+      const meditaceFiles = metadataArray.filter(file =>
+        file.fileName && file.fileName.includes('meditace/')
       );
-      console.log(`🎤 Found ${slovaFiles.length} slova files in Firestore`);
+      console.log(`🧘 Found ${meditaceFiles.length} meditace files in Firestore`);
 
-      if (slovaFiles.length > 0) {
-        console.log('🎤 Sample slova files:');
-        slovaFiles.slice(0, 3).forEach(file => {
+      if (meditaceFiles.length > 0) {
+        console.log('🧘 Sample meditace files:');
+        meditaceFiles.slice(0, 3).forEach(file => {
           console.log(`   - ${file.fileName}`);
           console.log(`     Title: ${file.title || 'N/A'}`);
           console.log(`     Duration: ${file.duration || 'N/A'}`);
@@ -520,14 +520,14 @@ const NewAdminScreen = () => {
         files: metadataArray,
         lastSync: new Date().toISOString(),
         totalFiles: metadataArray.length,
-        slovaFiles: slovaFiles.length
+        meditaceFiles: meditaceFiles.length
       });
 
       console.log('✅ Successfully synced Firestore to Realtime Database');
       console.log(`📊 Synced ${metadataArray.length} total files`);
-      console.log(`🎤 Synced ${slovaFiles.length} slova files`);
+      console.log(`🧘 Synced ${meditaceFiles.length} meditace files`);
 
-      alert(`✅ Synchronizace dokončena!\n📊 Synchronizováno ${metadataArray.length} souborů\n🎤 Synchronizováno ${slovaFiles.length} slova souborů`);
+      alert(`✅ Synchronizace dokončena!\n📊 Synchronizováno ${metadataArray.length} souborů\n🧘 Synchronizováno ${meditaceFiles.length} meditace souborů`);
 
       // Aktualizuj statistiky
       await checkForUpdates();
@@ -555,7 +555,7 @@ const NewAdminScreen = () => {
   const hudbaPercentage = audioStats.totalSize > 0
     ? Math.round((audioStats.hudbaSize / audioStats.totalSize) * 100)
     : 0;
-  const slovaPercentage = 100 - hudbaPercentage;
+  const meditacePercentage = 100 - hudbaPercentage;
 
   return (
     <div className={`min-h-screen transition-colors duration-300 ${themeClasses}`} style={{ fontFamily: 'IBM Plex Sans, sans-serif' }}>
@@ -633,8 +633,8 @@ const NewAdminScreen = () => {
             <div className="flex items-center">
               <FileText className="text-orange-500 mr-3" size={24} />
               <div>
-                <p className="text-sm text-gray-500">Slova soubory</p>
-                <p className="text-2xl font-bold">{audioStats.slovaFiles}</p>
+                <p className="text-sm text-gray-500">Meditace soubory</p>
+                <p className="text-2xl font-bold">{audioStats.meditaceFiles}</p>
               </div>
             </div>
           </motion.div>
@@ -670,17 +670,17 @@ const NewAdminScreen = () => {
 
             <div>
               <div className="flex justify-between mb-2">
-                <span className="text-sm font-medium">Slova</span>
-                <span className="text-sm text-gray-500">{slovaPercentage}%</span>
+                <span className="text-sm font-medium">Meditace</span>
+                <span className="text-sm text-gray-500">{meditacePercentage}%</span>
               </div>
               <div className="w-full bg-gray-200 rounded-full h-3">
                 <div
                   className="bg-orange-500 h-3 rounded-full transition-all duration-500"
-                  style={{ width: `${slovaPercentage}%` }}
+                  style={{ width: `${meditacePercentage}%` }}
                 ></div>
               </div>
               <p className="text-xs text-gray-500 mt-1">
-                {formatFileSize(audioStats.slovaSize)} ({audioStats.slovaFiles} souborů)
+                {formatFileSize(audioStats.meditaceSize)} ({audioStats.meditaceFiles} souborů)
               </p>
             </div>
           </div>

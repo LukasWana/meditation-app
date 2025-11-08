@@ -90,12 +90,12 @@ class RealtimeMetadataService {
             displayName: metadataObject[key].displayName
           })));
 
-          // Debug: zobraz slova soubory
-          const slovaFiles = Object.values(metadataObject).filter(file =>
-            file.fileName && file.fileName.includes('slova/')
+          // Debug: zobraz meditace soubory
+          const meditaceFiles = Object.values(metadataObject).filter(file =>
+            file.fileName && (file.fileName.includes('meditace/') || file.fileName.includes('meditacie/'))
           );
-          log.debug(`🎤 Slova files in Realtime Database: ${slovaFiles.length}`);
-          log.debug('🎤 Sample slova files from DB:', slovaFiles.slice(0, 3).map(f => ({
+          log.debug(`🧘 Meditace files v Realtime Database: ${meditaceFiles.length}`);
+          log.debug('🧘 Sample meditace files from DB:', meditaceFiles.slice(0, 3).map(f => ({
             fileName: f.fileName,
             folder: f.folder,
             hasDownloadURL: !!(f.downloadURL || f.audioSrc)
@@ -126,35 +126,35 @@ class RealtimeMetadataService {
 
           log.debug(`✅ Converted sanitized keys to fileName keys: ${Object.keys(metadataObject).length} files`);
 
-          // Debug: zobraz slova soubory i pro druhou strukturu
-          const slovaFiles = Object.values(metadataObject).filter(file =>
-            file.fileName && file.fileName.includes('slova/')
+          // Debug: zobraz meditace soubory i pro druhou strukturu
+          const meditaceFiles = Object.values(metadataObject).filter(file =>
+            file.fileName && (file.fileName.includes('meditace/') || file.fileName.includes('meditacie/'))
           );
-          log.debug(`🎤 Slova files in Realtime Database: ${slovaFiles.length}`);
-          log.debug('🎤 Sample slova files from DB:', slovaFiles.slice(0, 3).map(f => ({
+          log.debug(`🧘 Meditace files v Realtime Database: ${meditaceFiles.length}`);
+          log.debug('🧘 Sample meditace files from DB:', meditaceFiles.slice(0, 3).map(f => ({
             fileName: f.fileName,
             folder: f.folder,
             hasDownloadURL: !!(f.downloadURL || f.audioSrc),
             hasWaveformData: !!(f.waveformData)
           })));
 
-          // Debug: zobraz dychanie soubory s waveformy
-          const dychanieFiles = Object.values(metadataObject).filter(file =>
-            file.fileName && file.fileName.includes('dychanie/')
+          // Debug: zobraz dychani soubory s waveformy
+          const dychaniFiles = Object.values(metadataObject).filter(file =>
+            file.fileName && (file.fileName.includes('dychani/') || file.fileName.includes('dychanie/'))
           );
-          log.debug(`🫁 Dychanie files in Realtime Database: ${dychanieFiles.length}`);
-          const filesWithWaveform = dychanieFiles.filter(f => f.waveformData);
-          log.debug(`🌊 Dychanie files with waveform: ${filesWithWaveform.length}/${dychanieFiles.length}`);
+          log.debug(`🫁 Dychani files v Realtime Database: ${dychaniFiles.length}`);
+          const filesWithWaveform = dychaniFiles.filter(f => f.waveformData);
+          log.debug(`🌊 Dychani files with waveform: ${filesWithWaveform.length}/${dychaniFiles.length}`);
           if (filesWithWaveform.length > 0) {
-            log.debug('🌊 Sample dychanie files with waveform:', filesWithWaveform.slice(0, 3).map(f => ({
+            log.debug('🌊 Sample dychani files with waveform:', filesWithWaveform.slice(0, 3).map(f => ({
               fileName: f.fileName,
               hasWaveformData: !!f.waveformData,
               waveformSamples: f.waveformData?.length || 0
             })));
           }
-          if (dychanieFiles.length > filesWithWaveform.length) {
-            const filesWithoutWaveform = dychanieFiles.filter(f => !f.waveformData);
-            log.debug('⚠️ Dychanie files without waveform:', filesWithoutWaveform.slice(0, 3).map(f => ({
+          if (dychaniFiles.length > filesWithWaveform.length) {
+            const filesWithoutWaveform = dychaniFiles.filter(f => !f.waveformData);
+            log.debug('⚠️ Dychani files without waveform:', filesWithoutWaveform.slice(0, 3).map(f => ({
               fileName: f.fileName,
               hasWaveformData: !!f.waveformData
             })));

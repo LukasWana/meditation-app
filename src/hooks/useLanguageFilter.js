@@ -13,8 +13,8 @@ export const useLanguageFilter = () => {
       return audioFiles;
     }
 
-    // Pro sekci slova filtruj podle jazyka
-    if (section === 'meditace' || section === 'slova') {
+    // Pro sekci meditace filtruj podle jazyka
+    if (section === 'meditace') {
       return audioFiles.filter(file => {
         const fileName = file.fileName || file.audioSrc || '';
 
@@ -45,8 +45,8 @@ export const useLanguageFilter = () => {
   const getLanguagePath = (basePath) => {
     if (!basePath) return '';
 
-    // Pro sekci slova přidej jazykovou podsložku
-    if (basePath.includes('slova') || basePath.includes('meditace')) {
+    // Pro sekci meditace přidej jazykovou podsložku
+    if (basePath.includes('meditace')) {
       return `${basePath}/${language}`;
     }
 

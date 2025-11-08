@@ -68,7 +68,7 @@ class MeditaceDataService {
     return `${minutes}:${secs.toString().padStart(2, '0')}`;
   }
 
-  // Inicializace slova dat z cache
+  // Inicializace meditace dat z cache
   async initialize() {
     if (this.isInitialized) {
       log.debug('MeditaceDataService already initialized, skipping...');
@@ -76,7 +76,7 @@ class MeditaceDataService {
     }
 
     try {
-      log.info('Initializing slova data service...');
+      log.info('Initializing meditace data service...');
 
       // Import realtime metadata service
       const { realtimeMetadataService } = await import('./realtimeMetadataService');
@@ -86,11 +86,11 @@ class MeditaceDataService {
       log.debug('All metadata keys count:', Object.keys(allMetadata).length);
 
       if (!allMetadata || Object.keys(allMetadata).length === 0) {
-        log.warn('No metadata in cache for slova processing');
+        log.warn('No metadata in cache for meditace processing');
         return;
       }
 
-      log.debug(`Processing ${Object.keys(allMetadata).length} metadata entries for slova...`);
+      log.debug(`Processing ${Object.keys(allMetadata).length} metadata entries for meditace...`);
       log.debug('Sample metadata keys:', Object.keys(allMetadata).slice(0, 5));
       log.debug('Sample metadata values:', Object.values(allMetadata).slice(0, 3).map(meta => ({
         fileName: meta.fileName,
@@ -98,29 +98,32 @@ class MeditaceDataService {
         fullPath: meta.fullPath
       })));
 
-      // Filtruj pouze slova soubory
-      let slovaMetadata = Object.values(allMetadata).filter(meta => {
-        const isSlova = meta.folder === 'slova' ||
-                        meta.fileName?.includes('slova/') ||
-                        meta.fullPath?.includes('slova/');
-        return isSlova;
+      // Filtruj pouze meditace soubory
+      let meditaceMetadata = Object.values(allMetadata).filter(meta => {
+        const isMeditace = meta.folder === 'meditace' ||
+                        meta.folder === 'meditacie' ||
+                        meta.fileName?.includes('meditace/') ||
+                        meta.fileName?.includes('meditacie/') ||
+                        meta.fullPath?.includes('meditace/') ||
+                        meta.fullPath?.includes('meditacie/');
+        return isMeditace;
       });
 
-      // Pokud se nenašly žádné slova soubory, zkus najít všechny soubory s 'slova' v názvu
-      if (slovaMetadata.length === 0) {
-        log.warn('No slova files found with folder filter, trying broader search...');
-        slovaMetadata = Object.values(allMetadata).filter(meta => {
+      // Pokud se nenašly žádné meditace soubory, zkus najít všechny soubory s klíčovými slovy
+      if (meditaceMetadata.length === 0) {
+        log.warn('No meditace files found with folder filter, trying broader search...');
+        meditaceMetadata = Object.values(allMetadata).filter(meta => {
           const fileName = meta.fileName || meta.fullPath || '';
-          return fileName.toLowerCase().includes('slova') ||
+          return fileName.toLowerCase().includes('meditace') ||
                  fileName.toLowerCase().includes('muzsky') ||
                  fileName.toLowerCase().includes('zensky');
         });
       }
 
-      log.info(`Found ${slovaMetadata.length} slova files`);
+      log.info(`Found ${meditaceMetadata.length} meditace files`);
 
       // Transformuj metadata na formát pro UI
-      const transformedItems = slovaMetadata.map(meta => {
+      const transformedItems = meditaceMetadata.map(meta => {
         const fileName = meta.fileName || meta.fullPath || '';
 
         // Extrahuj pohlaví z názvu souboru
@@ -146,7 +149,7 @@ class MeditaceDataService {
           mediaType: mediaType,
           size: meta.size || 0,
           sizeFormatted: this.formatFileSize(meta.size || 0),
-          folder: 'slova',
+          folder: 'meditace',
           downloadURL: meta.downloadURL,
           parsed: {
             gender: gender,
@@ -182,8 +185,8 @@ class MeditaceDataService {
       });
 
       this.isInitialized = true;
-      log.success('Slova data service initialized successfully');
-      log.debug('Slova data summary:', {
+      log.success('Meditace data service initialized successfully');
+      log.debug('Meditace data summary:', {
         sk: { male: this.meditaceData.sk.male.length, female: this.meditaceData.sk.female.length, all: this.meditaceData.sk.all.length },
         cz: { male: this.meditaceData.cz.male.length, female: this.meditaceData.cz.female.length, all: this.meditaceData.cz.all.length },
         en: { male: this.meditaceData.en.male.length, female: this.meditaceData.en.female.length, all: this.meditaceData.en.all.length }
@@ -192,11 +195,11 @@ class MeditaceDataService {
       log.debug('SK female items sample:', this.meditaceData.sk.female.slice(0, 3));
 
     } catch (error) {
-      log.error('Failed to initialize slova data service:', error);
+      log.error('Failed to initialize meditace data service:', error);
     }
   }
 
-  // Filtruj slova položky podle pohlaví a jazyka
+  // Filtruj meditace položky podle pohlaví a jazyka
   filterMeditaceItems(items, userGender, userLanguage) {
     const filteredItems = items.filter(item => {
       const fileName = item.fileName;
@@ -295,7 +298,7 @@ class MeditaceDataService {
     return finalItems;
   }
 
-  // Získej slova data pro konkrétní jazyk a pohlaví
+  // Získej meditace data pro konkrétní jazyk a pohlaví
   getMeditaceData(userGender = 'all', userLanguage = 'sk') {
     // Pokud není inicializovaný, vrať prázdné pole
     if (!this.isInitialized) {
@@ -306,22 +309,22 @@ class MeditaceDataService {
 
     console.log(`🔍 getMeditaceData called: userGender=${userGender}, userLanguage=${userLanguage}`);
 
-    // Získej všechny slova soubory pro daný jazyk
-    const allSlovaFiles = this.getAllMeditaceFilesForLanguage(userLanguage);
+    // Získej všechny meditace soubory pro daný jazyk
+    const allMeditaceFiles = this.getAllMeditaceFilesForLanguage(userLanguage);
 
-    console.log(`🔍 allSlovaFiles count: ${allSlovaFiles.length}`);
-    if (allSlovaFiles.length > 0) {
-      console.log(`🔍 Sample file names:`, allSlovaFiles.slice(0, 3).map(f => f.fileName));
+    console.log(`🔍 allMeditaceFiles count: ${allMeditaceFiles.length}`);
+    if (allMeditaceFiles.length > 0) {
+      console.log(`🔍 Sample file names:`, allMeditaceFiles.slice(0, 3).map(f => f.fileName));
     }
 
     // Filtruj podle pohlaví
-    const filtered = this.filterMeditaceItems(allSlovaFiles, userGender, userLanguage);
+    const filtered = this.filterMeditaceItems(allMeditaceFiles, userGender, userLanguage);
     console.log(`🔍 After filtering: ${filtered.length} items`);
 
     return filtered;
   }
 
-  // Získej všechny slova soubory pro daný jazyk
+  // Získej všechny meditace soubory pro daný jazyk
   getAllMeditaceFilesForLanguage(userLanguage) {
     const langKey = userLanguage.toLowerCase();
     const allFiles = [];

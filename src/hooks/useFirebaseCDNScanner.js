@@ -17,7 +17,7 @@ export const useFirebaseCDNScanner = () => {
     setLastUpdated(cachedResult.lastUpdated);
     setIsLoading(false);
 
-    log.success('✅ Using cached slova data - no Firebase loading needed');
+    log.success('✅ Používám cached meditace data - žádné Firebase načítání');
 
     // Metadata jsou už načtené z preloadingu, jen optimalizuj cache
     cacheService.optimizeCache();
@@ -29,11 +29,11 @@ export const useFirebaseCDNScanner = () => {
       setError(null);
 
       // Zkontroluj cache pro Firebase query
-      const cacheKey = 'slova_scanner_all_files';
+      const cacheKey = 'meditace_scanner_all_files';
       const cachedResult = cacheService.getFirebaseQuery(cacheKey);
 
       if (cachedResult) {
-        console.log('Using cached Firebase scan result for slova');
+        console.log('Using cached Firebase scan result for meditace');
         await processCachedResult(cachedResult);
         return;
       }
@@ -51,7 +51,7 @@ export const useFirebaseCDNScanner = () => {
       for (const folderRef of result.prefixes) {
         try {
           const folderResult = await listAll(folderRef);
-          
+
           // Přidej soubory z podsložky s prefixem složky
           folderResult.items.forEach(item => {
             allFiles.push({
@@ -60,8 +60,8 @@ export const useFirebaseCDNScanner = () => {
             });
           });
 
-          // Pokud je to slova/ složka, prohledej i jazykové podsložky
-          if (folderRef.name === 'slova') {
+          // Pokud je to meditace/ složka, prohledej i jazykové podsložky
+          if (folderRef.name === 'meditace') {
             for (const langFolderRef of folderResult.prefixes) {
               try {
                 const langFolderResult = await listAll(langFolderRef);
@@ -81,20 +81,20 @@ export const useFirebaseCDNScanner = () => {
         }
       }
 
-      // Filtruj pouze MP3 soubory pro mluvené slovo ze slova/ složky a jazykových podsložek
+      // Filtruj pouze MP3 soubory pro meditace složku
       const mp3Files = allFiles
         .filter(item => {
           const name = item.name;
           const isMp3 = name.toLowerCase().endsWith('.mp3');
-          // Soubory ze slova/ složky, jazykových podsložek (CZ/, SK/, EN/) nebo začínající "muzsky" nebo "zensky"
-          const isSlova = name.startsWith('slova/') || 
-                         name.startsWith('slova/CZ/') || 
-                         name.startsWith('slova/SK/') || 
-                         name.startsWith('slova/EN/') ||
+          // Soubory z meditace/ složky, jazykových podsložek (CZ/, SK/, EN/) nebo začínající "muzsky" nebo "zensky"
+          const isMeditace = name.startsWith('meditace/') ||
+                         name.startsWith('meditace/CZ/') ||
+                         name.startsWith('meditace/SK/') ||
+                         name.startsWith('meditace/EN/') ||
                          /^(muzsky|zensky)/.test(name);
           const isNotMusic = !name.startsWith('00--00--00--');
-          console.log(`Filtering ${name}: isMp3=${isMp3}, isSlova=${isSlova}, isNotMusic=${isNotMusic}`);
-          return isMp3 && isSlova && isNotMusic;
+          console.log(`Filtering ${name}: isMp3=${isMp3}, isMeditace=${isMeditace}, isNotMusic=${isNotMusic}`);
+          return isMp3 && isMeditace && isNotMusic;
         })
         .map(item => item.name);
 
@@ -103,7 +103,7 @@ export const useFirebaseCDNScanner = () => {
 
       for (const fileName of mp3Files) {
         try {
-          // Zkontroluj, jestli je soubor v hudbaData cache (slova soubory)
+          // Zkontroluj, jestli je soubor v hudbaData cache (meditace soubory)
           const hudbaData = cacheService.getFirebaseQuery('hudba_scanner_all_files');
           const cachedFile = hudbaData?.audioFiles?.find(file => file.fileName === fileName);
 
@@ -162,7 +162,7 @@ export const useFirebaseCDNScanner = () => {
       };
       cacheService.setFirebaseQuery(cacheKey, resultToCache);
 
-      log.success(`✅ Loaded ${verifiedFiles.filter(f => f.isAvailable).length} slova files from cache (no Firebase loading needed)`);
+      log.success(`✅ Loaded ${verifiedFiles.filter(f => f.isAvailable).length} meditace files from cache (no Firebase loading needed)`);
 
       // Debug: vypiš všechny načtené soubory
       verifiedFiles.filter(f => f.isAvailable).forEach(file => {

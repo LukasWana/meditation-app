@@ -1,4 +1,4 @@
-import { ref, set, get, push, update, remove } from 'firebase/database';
+import { ref, set, get, update, remove } from 'firebase/database';
 import { realtimeDatabase } from '../config/secure-firebase';
 import log from './logger';
 
@@ -24,8 +24,8 @@ class AudioMetadataStorageService {
    * @param {string} fileData.durationFormatted - Formátovaná délka
    * @param {string} fileData.durationDetailed - Detailní délka
    * @param {string} fileData.folder - Složka
-   * @param {string} fileData.category - Kategorie (slova/hudba)
-   * @param {string} fileData.language - Jazyk (pro slova)
+   * @param {string} fileData.category - Kategorie (meditace/hudba/dychani)
+   * @param {string} fileData.language - Jazyk (pro meditace)
    * @param {string} fileData.downloadURL - Download URL
    */
   async saveFileMetadata(fileData) {
@@ -74,8 +74,9 @@ class AudioMetadataStorageService {
       const results = [];
       const batch = {};
       const stats = {
-        slova: { files: 0, totalDuration: 0, totalSize: 0 },
+        meditace: { files: 0, totalDuration: 0, totalSize: 0 },
         hudba: { files: 0, totalDuration: 0, totalSize: 0 },
+        dychani: { files: 0, totalDuration: 0, totalSize: 0 },
         total: { files: 0, totalDuration: 0, totalSize: 0 }
       };
 
@@ -105,11 +106,18 @@ class AudioMetadataStorageService {
           batch[fileKey] = metadata;
 
           // Aktualizuj statistiky
-          const category = fileData.category || 'unknown';
+          let category = fileData.category || 'unknown';
+          if (category === 'slova' || category === 'meditacie') {
+            category = 'meditace';
+          } else if (category === 'dychanie') {
+            category = 'dychani';
+          }
           if (stats[category]) {
             stats[category].files++;
             stats[category].totalDuration += fileData.duration || 0;
             stats[category].totalSize += fileData.size || 0;
+          } else if (!stats[category] && category) {
+            stats[category] = { files: 1, totalDuration: fileData.duration || 0, totalSize: fileData.size || 0 };
           }
 
           stats.total.files++;

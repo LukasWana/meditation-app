@@ -13,10 +13,10 @@ const UnifiedFilesOverview = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [files, setFiles] = useState({
-    slova: [],
-    slovaCZ: [],
-    slovaSK: [],
-    slovaEN: [],
+    meditace: [],
+    meditaceCZ: [],
+    meditaceSK: [],
+    meditaceEN: [],
     hudba: [],
     totalFiles: 0,
     totalSize: 0,
@@ -37,17 +37,17 @@ const UnifiedFilesOverview = () => {
       const rootRef = ref(storage, '');
       const rootResult = await listAll(rootRef);
 
-      // Načti soubory ze slova složky
-      const slovaRef = ref(storage, 'slova');
-      const slovaResult = await listAll(slovaRef);
+      // Načti soubory z meditace složky
+      const meditaceRef = ref(storage, 'meditace');
+      const meditaceResult = await listAll(meditaceRef);
 
-      const slovaFiles = [];
-      for (const itemRef of slovaResult.items) {
+      const meditaceFiles = [];
+      for (const itemRef of meditaceResult.items) {
         try {
           const metadata = await getMetadata(itemRef);
           const downloadURL = await getDownloadURL(itemRef);
 
-          slovaFiles.push({
+          meditaceFiles.push({
             name: itemRef.name,
             fullPath: itemRef.fullPath,
             size: metadata.size,
@@ -55,8 +55,8 @@ const UnifiedFilesOverview = () => {
             timeCreated: metadata.timeCreated,
             updated: metadata.updated,
             downloadURL: downloadURL,
-            folder: 'slova',
-            category: 'slova',
+            folder: 'meditace',
+            category: 'meditace',
             duration: 0,
             durationFormatted: 'N/A',
             durationDetailed: 'N/A'
@@ -66,13 +66,13 @@ const UnifiedFilesOverview = () => {
         }
       }
 
-      // Načti soubory z jazykových podsložek slova
+      // Načti soubory z jazykových podsložek meditace
       const languageFolders = ['CZ', 'SK', 'EN'];
       const languageFiles = { CZ: [], SK: [], EN: [] };
 
       for (const lang of languageFolders) {
         try {
-          const langRef = ref(storage, `slova/${lang}`);
+          const langRef = ref(storage, `meditace/${lang}`);
           const langResult = await listAll(langRef);
 
           for (const itemRef of langResult.items) {
@@ -88,8 +88,8 @@ const UnifiedFilesOverview = () => {
                 timeCreated: metadata.timeCreated,
                 updated: metadata.updated,
                 downloadURL: downloadURL,
-                folder: `slova/${lang}`,
-                category: 'slova',
+                folder: `meditace/${lang}`,
+                category: 'meditace',
                 language: lang,
                 duration: 0,
                 durationFormatted: 'N/A',
@@ -100,7 +100,7 @@ const UnifiedFilesOverview = () => {
             }
           }
         } catch (langError) {
-          log.warn(`Failed to scan slova/${lang}:`, langError.message);
+          log.warn(`Failed to scan meditace/${lang}:`, langError.message);
         }
       }
 
@@ -209,14 +209,14 @@ const UnifiedFilesOverview = () => {
       }
 
       // Vypočti celkové statistiky
-      const allFiles = [...slovaFiles, ...languageFiles.CZ, ...languageFiles.SK, ...languageFiles.EN, ...hudbaFiles];
+      const allFiles = [...meditaceFiles, ...languageFiles.CZ, ...languageFiles.SK, ...languageFiles.EN, ...hudbaFiles];
       const totalSize = allFiles.reduce((sum, file) => sum + (file.size || 0), 0);
 
       setFiles({
-        slova: slovaFiles,
-        slovaCZ: languageFiles.CZ,
-        slovaSK: languageFiles.SK,
-        slovaEN: languageFiles.EN,
+        meditace: meditaceFiles,
+        meditaceCZ: languageFiles.CZ,
+        meditaceSK: languageFiles.SK,
+        meditaceEN: languageFiles.EN,
         hudba: hudbaFiles,
         totalFiles: allFiles.length,
         totalSize: totalSize,
@@ -256,7 +256,7 @@ const UnifiedFilesOverview = () => {
       setLoadingDurations(true);
       log.info('🔄 Loading audio durations for all files...');
 
-      const allFiles = [...files.slova, ...files.slovaCZ, ...files.slovaSK, ...files.slovaEN, ...files.hudba];
+      const allFiles = [...files.meditace, ...files.meditaceCZ, ...files.meditaceSK, ...files.meditaceEN, ...files.hudba];
       let totalDuration = 0;
 
       // Načti délky pro všechny soubory
@@ -293,7 +293,7 @@ const UnifiedFilesOverview = () => {
       setSavingToDB(true);
       log.info('🔄 Saving audio metadata to Realtime Database...');
 
-      const allFiles = [...files.slova, ...files.slovaCZ, ...files.slovaSK, ...files.slovaEN, ...files.hudba];
+      const allFiles = [...files.meditace, ...files.meditaceCZ, ...files.meditaceSK, ...files.meditaceEN, ...files.hudba];
 
       // Připrav data pro uložení
       const filesData = allFiles.map(file => ({
@@ -327,7 +327,7 @@ const UnifiedFilesOverview = () => {
   };
 
   const groupFilesByVariants = () => {
-    const allFiles = [...files.slova, ...files.slovaCZ, ...files.slovaSK, ...files.slovaEN, ...files.hudba];
+    const allFiles = [...files.meditace, ...files.meditaceCZ, ...files.meditaceSK, ...files.meditaceEN, ...files.hudba];
     const variants = {};
 
     allFiles.forEach(file => {
@@ -345,16 +345,16 @@ const UnifiedFilesOverview = () => {
 
   const renderSummaryView = () => (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-      {/* Slova Summary */}
+      {/* Meditace Summary */}
       <div className="bg-blue-50 p-4 rounded-lg">
-        <h3 className="text-lg font-semibold text-blue-900 mb-3">🗣️ Slova</h3>
+        <h3 className="text-lg font-semibold text-blue-900 mb-3">🧘 Meditace</h3>
         <div className="space-y-2 text-sm">
-          <div><strong>Celkem souborů:</strong> {files.slova.length + files.slovaCZ.length + files.slovaSK.length + files.slovaEN.length}</div>
-          <div><strong>Hlavní složka:</strong> {files.slova.length}</div>
-          <div><strong>CZ varianty:</strong> {files.slovaCZ.length}</div>
-          <div><strong>SK varianty:</strong> {files.slovaSK.length}</div>
-          <div><strong>EN varianty:</strong> {files.slovaEN.length}</div>
-          <div><strong>Celková velikost:</strong> {formatBytes([...files.slova, ...files.slovaCZ, ...files.slovaSK, ...files.slovaEN].reduce((sum, file) => sum + (file.size || 0), 0))}</div>
+          <div><strong>Celkem souborů:</strong> {files.meditace.length + files.meditaceCZ.length + files.meditaceSK.length + files.meditaceEN.length}</div>
+          <div><strong>Hlavní složka:</strong> {files.meditace.length}</div>
+          <div><strong>CZ varianty:</strong> {files.meditaceCZ.length}</div>
+          <div><strong>SK varianty:</strong> {files.meditaceSK.length}</div>
+          <div><strong>EN varianty:</strong> {files.meditaceEN.length}</div>
+          <div><strong>Celková velikost:</strong> {formatBytes([...files.meditace, ...files.meditaceCZ, ...files.meditaceSK, ...files.meditaceEN].reduce((sum, file) => sum + (file.size || 0), 0))}</div>
         </div>
       </div>
 
@@ -380,7 +380,7 @@ const UnifiedFilesOverview = () => {
   );
 
   const renderDetailedView = () => {
-    const allFiles = [...files.slova, ...files.slovaCZ, ...files.slovaSK, ...files.slovaEN, ...files.hudba];
+    const allFiles = [...files.meditace, ...files.meditaceCZ, ...files.meditaceSK, ...files.meditaceEN, ...files.hudba];
 
     return (
       <div className="space-y-4">
@@ -452,7 +452,7 @@ const UnifiedFilesOverview = () => {
           📁 Unified Files Overview
         </h2>
         <p className="text-gray-700">
-          Kompletní přehled všech souborů v aplikaci - slova a hudba
+          Kompletní přehled všech souborů v aplikaci - meditace a hudba
         </p>
       </div>
 

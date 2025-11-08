@@ -26,6 +26,12 @@ const normalizeTranslationKeys = (source = {}) => {
   }
   delete normalized.meditacia;
 
+  // Legacy rename: dychanie -> dychani
+  if (normalized.dychanie && !normalized.dychani) {
+    normalized.dychani = normalized.dychanie;
+  }
+  delete normalized.dychanie;
+
   // Legacy rename: dlzkaMeditacie -> dlzkaDychania
   if (normalized.dlzkaMeditacie && !normalized.dlzkaDychania) {
     normalized.dlzkaDychania = normalized.dlzkaMeditacie;
@@ -71,7 +77,6 @@ export const LanguageProvider = ({ children }) => {
       informacieText: 'Keď liečime vlastnú vnútornú krajinu, vlny uzdravenia sa šíria ďalej – do tela, ktoré ožíva, do vzťahov, ktoré prehĺbavajú, do priestoru, ktorý naplňujeme. Meditácia je návratom domov. Domov k sebe, kde čaká pokoj, z ktorého môže vyrásť skutočná radosť a autentické stretnutie s druhými. Nestávame sa niekým iným. Len odhaľujeme to, čo bolo vždy prítomné – čistú esenciu bytia. A v tejto esencii rezonujeme s univerzálnou frekvenciou lásky, ktorá lieči a spája všetko živé.',
 
       // Dýchanie a rytmus
-      dychanie: 'dýchanie',
       nadechVydech: 'nádech výdech',
       rytmusDychania: 'rytmus dýchania',
       nadech: 'nádech',
@@ -84,7 +89,7 @@ export const LanguageProvider = ({ children }) => {
       casKPriprave: 'čas k príprave',
       priprava: 'príprava',
       dlzka: 'dĺžka',
-      dlzkaDychania: 'Dĺžka dýchania (minúty)',
+      dlzkaDychania: 'Dĺžka dýchania',
       rytmus: 'rytmus',
       nastaveniaZvuku: 'nastavenia zvuku',
       zvolteZvuk: 'zvoľte zvuk',
@@ -163,7 +168,6 @@ export const LanguageProvider = ({ children }) => {
       informacieText: 'Když léčíme vlastní vnitřní krajinu, vlny uzdravení se šíří dál – do těla, které ožívá, do vztahů, které prohlubují, do prostoru, který naplňujeme. Meditace je návratem domů. Domů k sobě, kde čeká klid, ze kterého může vyrůst pravá radost a autentické setkání s druhými. Nestáváme se někým jiným. Pouze odhalujeme to, co bylo vždy přítomné – čistou esenci bytí. A v této esenci rezonujeme s univerzální frekvencí lásky, která léčí a spojuje vše živé.',
 
       // Dýchání a rytmus
-      dychanie: 'dýchání',
       nadechVydech: 'nádech výdech',
       rytmusDychania: 'rytmus dýchání',
       nadech: 'nádech',
@@ -176,7 +180,7 @@ export const LanguageProvider = ({ children }) => {
       casKPriprave: 'čas k přípravě',
       priprava: 'příprava',
       dlzka: 'délka',
-      dlzkaDychania: 'Délka dýchání (minuty)',
+      dlzkaDychania: 'Délka dýchání',
       rytmus: 'rytmus',
       nastaveniaZvuku: 'nastavení zvuku',
       zvolteZvuk: 'vyberte zvuk',
@@ -255,7 +259,6 @@ export const LanguageProvider = ({ children }) => {
       informacieText: 'When we heal our own inner landscape, waves of healing spread further – into the body that comes alive, into relationships that deepen, into the space we fill. Meditation is a return home. Home to ourselves, where peace awaits, from which true joy and authentic encounters with others can grow. We do not become someone else. We only reveal what has always been present – the pure essence of being. And in this essence, we resonate with the universal frequency of love that heals and connects all that is alive.',
 
       // Breathing and rhythm
-      dychanie: 'breathing',
       nadechVydech: 'inhale exhale',
       rytmusDychania: 'breathing rhythm',
       nadech: 'inhale',
@@ -268,7 +271,7 @@ export const LanguageProvider = ({ children }) => {
       casKPriprave: 'preparation time',
       priprava: 'preparation',
       dlzka: 'duration',
-      dlzkaDychania: 'Breathing duration (minutes)',
+      dlzkaDychania: 'Breathing duration',
       rytmus: 'rhythm',
       nastaveniaZvuku: 'sound settings',
       zvolteZvuk: 'select sound',

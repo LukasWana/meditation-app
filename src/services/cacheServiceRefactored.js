@@ -283,12 +283,12 @@ class CacheServiceRefactored {
       const { ref, listAll, getDownloadURL } = await import('firebase/storage');
       const { storage } = await import('./firebase.js');
 
-      // Místo root složky, načti přímo slova/ a hudba/ složky
+      // Místo root složky, načti přímo meditace/ a hudba/ složky
       log.firebase('📂 Listing Firebase Storage folders...');
 
       // ZAKÁZÁNO - způsobuje 403 Forbidden chybu
-      // const slovaRef = ref(storage, 'slova');
-      // const slovaResult = await listAll(slovaRef);
+      // const meditaceRef = ref(storage, 'meditace');
+      // const meditaceResult = await listAll(meditaceRef);
       // const hudbaRef = ref(storage, 'hudba');
       // const hudbaResult = await listAll(hudbaRef);
 
@@ -307,20 +307,26 @@ class CacheServiceRefactored {
         })
         .map(item => item.name);
 
-      const slovaFiles = allFiles
+      const meditaceFiles = allFiles
         .filter(item => {
           const name = item.name.toLowerCase();
           const isMp3 = name.endsWith('.mp3');
-          const isSlova = item.folder === 'slova' ||
-                         item.folder === 'slova/CZ' ||
-                         item.folder === 'slova/SK' ||
-                         item.folder === 'slova/EN';
-          return isMp3 && isSlova; // Načti MP3 soubory ze slova/ a jazykových podsložek
+          const folder = (item.folder || '').toLowerCase();
+          const isMeditace =
+            folder === 'meditace' ||
+            folder === 'meditace/cz' ||
+            folder === 'meditace/sk' ||
+            folder === 'meditace/en' ||
+            folder === 'meditacie' ||
+            folder === 'meditacie/cz' ||
+            folder === 'meditacie/sk' ||
+            folder === 'meditacie/en';
+          return isMp3 && isMeditace; // Načti MP3 soubory z meditace/ a jazykových podsložek (legacy included)
         })
         .map(item => item.name);
 
       log.info('🎵 Hudba files:', hudbaFiles);
-      log.info('🗣️ Slova files:', slovaFiles);
+      log.info('🧘 Meditace files:', meditaceFiles);
 
       // Načti skutečné Firebase URL pro hudbu
       const hudbaData = {
@@ -339,7 +345,7 @@ class CacheServiceRefactored {
           const fileNameOnly = fileName.split('/').pop();
 
           // Urči typ podle složky
-          const fileType = fileName.startsWith('hudba/') ? 'hudba' : 'slova';
+          const fileType = fileName.startsWith('hudba/') ? 'hudba' : 'meditace';
 
           // Vytvoř základní parsed objekt pro jednoduché soubory
           const parsed = {
@@ -368,8 +374,8 @@ class CacheServiceRefactored {
         }
       }
 
-      // Načti skutečné URL pro slova soubory
-      for (const fileName of slovaFiles) {
+      // Načti skutečné URL pro meditace soubory
+      for (const fileName of meditaceFiles) {
         try {
           const fileRef = ref(storage, fileName);
           const downloadURL = await getDownloadURL(fileRef);
@@ -377,7 +383,7 @@ class CacheServiceRefactored {
           // Extrahuj pouze název souboru z cesty
           const fileNameOnly = fileName.split('/').pop();
 
-          // Parsuj název souboru pro slova soubory
+          // Parsuj název souboru pro meditace soubory
           let parsed = parseAudioFileName(fileNameOnly);
 
           // Pokud se nepodařilo parsovat, vytvoř základní objekt
@@ -390,14 +396,16 @@ class CacheServiceRefactored {
               isAlbum: false,
               trackName: fileNameOnly.replace(/\.mp3$/i, ''),
               albumName: fileNameOnly.replace(/\.mp3$/i, ''),
-              folder: 'slova'
+              folder: 'meditace'
             };
             parsed = basicParsed;
           } else {
-            // Aktualizuj parsed data pro slova soubory
+            // Aktualizuj parsed data pro meditace soubory
             parsed.isHudba = false;
             parsed.isAlbum = false;
-            parsed.folder = 'slova';
+            parsed.folder = 'meditace';
+            parsed.isMeditace = true;
+            parsed.isSlova = true; // legacy alias
           }
 
           hudbaData.audioFiles.push({
@@ -405,10 +413,10 @@ class CacheServiceRefactored {
             audioSrc: downloadURL,
             trackName: fileName.replace('.mp3', ''),
             duration: 'N/A',
-            type: 'slova',
+            type: 'meditace',
             isAvailable: true,
             parsed: parsed, // Přidej parsed data
-            folder: 'slova' // Přidej informaci o složce
+            folder: 'meditace' // Přidej informaci o složce
           });
         } catch (err) {
           log.error(`Failed to get URL for ${fileName}:`, err);

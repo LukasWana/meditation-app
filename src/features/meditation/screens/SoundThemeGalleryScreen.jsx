@@ -96,7 +96,8 @@ const SoundThemeGalleryScreen = ({
       'prana': 'Pranayama dechové cvičení',
       'pranayama': 'Pranayama dechové cvičení',
       'breath': 'Dechové cvičení',
-      'dychanie': 'Dechové cvičení',
+      dychani: 'Dechové cvičení',
+      dychanie: 'Dechové cvičení', // legacy
       'dych': 'Dech',
       'inhale': 'Nádech',
       'exhale': 'Výdech',
@@ -237,20 +238,20 @@ const SoundThemeGalleryScreen = ({
 
       console.log('🔍 SoundThemeGalleryScreen: Načteno metadata:', Object.keys(allMetadata).length);
 
-      // Filtruj pouze soubory z kategorie "dychanie" (OGG formát)
-      const dychanieFiles = Object.values(allMetadata).filter(file => {
-        const fileName = file.fileName || '';
-        const isInDychanieFolder = fileName.startsWith('dychanie/');
+      // Filtruj pouze soubory z kategorie "dychani" (OGG formát)
+      const dychaniFiles = Object.values(allMetadata).filter(file => {
+        const fileName = (file.fileName || '').toLowerCase();
+        const isInDychaniFolder = fileName.startsWith('dychani/') || fileName.startsWith('dychanie/');
         const isOggFile = fileName.endsWith('.ogg') || fileName.endsWith('.oga');
         const isMp3File = fileName.endsWith('.mp3'); // Fallback pro MP3
 
-        return isInDychanieFolder && (isOggFile || isMp3File);
+        return isInDychaniFolder && (isOggFile || isMp3File);
       });
 
-      console.log('🫁 SoundThemeGalleryScreen: Filtrováno dychanie souborů:', dychanieFiles.length);
+      console.log('🫁 SoundThemeGalleryScreen: Filtrováno dychani souborů:', dychaniFiles.length);
 
       // KROK 1: Mapuj na formát pro galerii a získej absolutní hodnoty
-      const mappedFiles = dychanieFiles.map(file => {
+      const mappedFiles = dychaniFiles.map(file => {
         const fileNameOnly = file.fileNameOnly || file.fileName.split('/').pop();
         const name = file.displayName || file.fileNameOnly || fileNameOnly.replace(/\.(ogg|oga|mp3)$/i, '');
 
@@ -282,17 +283,14 @@ const SoundThemeGalleryScreen = ({
 
       // KROK 2: Vypočítej globální maximum ze všech souborů pro globální normalizaci
       let globalMax = 0;
-      let hasAbsoluteValues = false;
 
       mappedFiles.forEach(file => {
         if (file.waveformData && Array.isArray(file.waveformData) && file.waveformData.length > 0) {
           const maxValue = Math.max(...file.waveformData);
 
           if (maxValue > 1) {
-            hasAbsoluteValues = true;
             globalMax = Math.max(globalMax, maxValue);
           } else if (file.waveformMax && file.waveformMax > 1) {
-            hasAbsoluteValues = true;
             globalMax = Math.max(globalMax, file.waveformMax);
           } else {
             globalMax = Math.max(globalMax, maxValue);
@@ -309,7 +307,7 @@ const SoundThemeGalleryScreen = ({
       setAudioFiles(mappedFiles);
       setLoading(false);
     } catch (error) {
-      console.error('❌ Failed to load dychanie files:', error);
+      console.error('❌ Failed to load dychani files:', error);
       setLoading(false);
     }
   };

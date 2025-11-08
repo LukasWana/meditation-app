@@ -2,26 +2,27 @@ import { useState, useEffect, useMemo } from 'react';
 import { useFirebaseCDNScanner } from '@hooks/useFirebaseCDNScanner';
 import unifiedMetadataService from '@services/unifiedMetadataService';
 
-// Fallback duration pro slova soubory
+// Fallback duration pro meditace soubory
 const getFallbackDuration = (fileName) => {
   const fallbackDurations = {
-    'slova/muzsky4FSK-uzkost-osamelost.mp3': '5:30',
-    'slova/zensky4FSK-uzkost-osamelost.mp3': '5:30',
-    'slova/muzsky4FSK-strach-osamelost.mp3': '4:45',
-    'slova/zensky4FSK-strach-osamelost.mp3': '4:45',
-    'slova/muzsky4FSK-stres-praca.mp3': '6:15',
-    'slova/zensky4FSK-stres-praca.mp3': '6:15',
-    'slova/muzsky4FSK-spank.mp3': '8:00',
-    'slova/zensky4FSK-spank.mp3': '8:00',
-    'slova/muzsky4FSK-uzkost.mp3': '7:20',
-    'slova/zensky4FSK-uzkost.mp3': '7:20',
-    'slova/muzsky4FSK-stres.mp3': '5:45',
-    'slova/zensky4FSK-stres.mp3': '5:45',
-    'slova/muzsky4FSK-osamelost.mp3': '6:30',
-    'slova/zensky4FSK-osamelost.mp3': '6:30'
+    'meditace/muzsky4FSK-uzkost-osamelost.mp3': '5:30',
+    'meditace/zensky4FSK-uzkost-osamelost.mp3': '5:30',
+    'meditace/muzsky4FSK-strach-osamelost.mp3': '4:45',
+    'meditace/zensky4FSK-strach-osamelost.mp3': '4:45',
+    'meditace/muzsky4FSK-stres-praca.mp3': '6:15',
+    'meditace/zensky4FSK-stres-praca.mp3': '6:15',
+    'meditace/muzsky4FSK-spank.mp3': '8:00',
+    'meditace/zensky4FSK-spank.mp3': '8:00',
+    'meditace/muzsky4FSK-uzkost.mp3': '7:20',
+    'meditace/zensky4FSK-uzkost.mp3': '7:20',
+    'meditace/muzsky4FSK-stres.mp3': '5:45',
+    'meditace/zensky4FSK-stres.mp3': '5:45',
+    'meditace/muzsky4FSK-osamelost.mp3': '6:30',
+    'meditace/zensky4FSK-osamelost.mp3': '6:30'
   };
 
-  return fallbackDurations[fileName] || null;
+  const normalizedName = fileName.replace('meditacie/', 'meditace/');
+  return fallbackDurations[normalizedName] || fallbackDurations[fileName] || null;
 };
 
 export const useFirebaseAudioFilter = (userGender, userLanguage = 'sk') => {
@@ -73,18 +74,23 @@ export const useFirebaseAudioFilter = (userGender, userLanguage = 'sk') => {
       // Filtruj podle složky - každý jazyk má svou vlastní složku
       const fileName = file.fileName;
 
+      const legacyPrefixes = (prefix) => [
+        prefix,
+        prefix.replace('meditace', 'meditacie')
+      ];
+
       if (normalizedUserLang === 'sk') {
-        // Pro SK zobraz soubory ze složky "slova/", "slova/SK/" a "SK/"
-        return fileName.startsWith('slova/') ||
-               fileName.startsWith('slova/SK/') ||
+        // Pro SK zobraz soubory ze složky "meditace/", "meditace/SK/" a "SK/" (včetně legacy názvů)
+        return legacyPrefixes('meditace/').some(p => fileName.startsWith(p)) ||
+               legacyPrefixes('meditace/SK/').some(p => fileName.startsWith(p)) ||
                fileName.startsWith('SK/');
       } else if (normalizedUserLang === 'cz') {
-        // Pro CZ zobraz soubory ze složky "slova/CZ/" a "CZ/"
-        return fileName.startsWith('slova/CZ/') ||
+        // Pro CZ zobraz soubory ze složky "meditace/CZ/" a "CZ/" (včetně legacy názvů)
+        return legacyPrefixes('meditace/CZ/').some(p => fileName.startsWith(p)) ||
                fileName.startsWith('CZ/');
       } else if (normalizedUserLang === 'en') {
-        // Pro EN zobraz soubory ze složky "slova/EN/" a "EN/"
-        return fileName.startsWith('slova/EN/') ||
+        // Pro EN zobraz soubory ze složky "meditace/EN/" a "EN/" (včetně legacy názvů)
+        return legacyPrefixes('meditace/EN/').some(p => fileName.startsWith(p)) ||
                fileName.startsWith('EN/');
       }
 

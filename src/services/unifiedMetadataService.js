@@ -1,5 +1,5 @@
 import { collection, doc, getDoc, getDocs, setDoc, query, orderBy } from 'firebase/firestore';
-import { ref, listAll, getDownloadURL } from 'firebase/storage';
+import { ref, getDownloadURL } from 'firebase/storage';
 import { db, storage } from './firebase';
 import log from './logger';
 
@@ -190,7 +190,7 @@ class UnifiedMetadataService {
   extractTitleFromFileName(fileName) {
     const nameWithoutExt = fileName.replace(/\.mp3$/i, '');
 
-    // Pro slova: odstran prefixy
+    // Pro meditace: odstran prefixy
     if (nameWithoutExt.includes('4FSK-')) {
       return nameWithoutExt.replace(/^(zensky|muzsky)4FSK-/, '');
     }
@@ -200,7 +200,10 @@ class UnifiedMetadataService {
 
   extractFolder(fileName) {
     const pathParts = fileName.split('/');
-    return pathParts[0] || 'unknown';
+    const root = pathParts[0] || 'unknown';
+    if (root === 'meditacie') return 'meditace';
+    if (root === 'dychanie') return 'dychani';
+    return root;
   }
 
   extractSubFolder(fileName) {
@@ -210,7 +213,10 @@ class UnifiedMetadataService {
 
   extractType(fileName) {
     if (fileName.startsWith('hudba/')) return 'hudba';
-    if (fileName.startsWith('slova/')) return 'slova';
+    if (fileName.startsWith('meditace/')) return 'meditace';
+    if (fileName.startsWith('meditacie/')) return 'meditace';
+    if (fileName.startsWith('dychani/')) return 'dychani';
+    if (fileName.startsWith('dychanie/')) return 'dychani';
     return 'unknown';
   }
 

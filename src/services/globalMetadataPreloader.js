@@ -77,19 +77,19 @@ class GlobalMetadataPreloader {
     const audioFiles = [];
 
     try {
-      // Načti soubory ze slova složky (včetně jazykových podsložek)
-      const slovaFiles = await this._scanFolder('slova');
-      audioFiles.push(...slovaFiles);
+      // Načti soubory z meditace složky (včetně jazykových podsložek)
+      const meditaceFiles = await this._scanFolder('meditace');
+      audioFiles.push(...meditaceFiles);
 
-      // Načti soubory z jazykových podsložek slova/
+      // Načti soubory z jazykových podsložek meditace/
       const languageFolders = ['CZ', 'SK', 'EN'];
       for (const lang of languageFolders) {
         try {
-          const langFiles = await this._scanFolder(`slova/${lang}`);
+          const langFiles = await this._scanFolder(`meditace/${lang}`);
           audioFiles.push(...langFiles);
-          log.debug(`📁 Scanned slova/${lang}: ${langFiles.length} files`);
+          log.debug(`📁 Scanned meditace/${lang}: ${langFiles.length} files`);
         } catch (langError) {
-          log.warn(`⚠️ Could not scan slova/${lang}:`, langError.message);
+          log.warn(`⚠️ Could not scan meditace/${lang}:`, langError.message);
         }
       }
 
@@ -97,7 +97,7 @@ class GlobalMetadataPreloader {
       const hudbaFiles = await this._scanFolder('hudba');
       audioFiles.push(...hudbaFiles);
 
-      log.debug(`📁 Scanned folders: slova (${slovaFiles.length}), jazykové podsložky, hudba (${hudbaFiles.length})`);
+      log.debug(`📁 Scanned folders: meditace (${meditaceFiles.length}), jazykové podsložky, hudba (${hudbaFiles.length})`);
 
     } catch (error) {
       log.error('❌ Failed to scan audio files:', error);
@@ -206,14 +206,14 @@ class GlobalMetadataPreloader {
   }
 
   getStats() {
-    const slovaFiles = this.getMetadataByFolder('slova');
+    const meditaceFiles = this.getMetadataByFolder('meditace');
     const hudbaFiles = this.getMetadataByFolder('hudba');
     const loadedFiles = Array.from(this.metadata.values()).filter(m => m.loaded).length;
 
     return {
       totalFiles: this.metadata.size,
       loadedFiles,
-      slovaFiles: slovaFiles.length,
+      meditaceFiles: meditaceFiles.length,
       hudbaFiles: hudbaFiles.length,
       isInitialized: this.isInitialized,
       isLoading: this.isLoading

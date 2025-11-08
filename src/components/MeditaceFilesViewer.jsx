@@ -6,17 +6,17 @@ import audioMetadataStorageService from '../services/audioMetadataStorageService
 import log from '@services/logger';
 
 /**
- * Slova Files Viewer Component
- * Zobrazuje detailní informace o souborech v sekci slova
+ * Meditace Files Viewer Component
+ * Zobrazuje detailní informace o souborech v sekci meditace
  */
-const SlovaFilesViewer = () => {
+const MeditaceFilesViewer = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [files, setFiles] = useState({
-    slova: [],
-    slovaCZ: [],
-    slovaSK: [],
-    slovaEN: [],
+    meditace: [],
+    meditaceCZ: [],
+    meditaceSK: [],
+    meditaceEN: [],
     totalFiles: 0,
     totalSize: 0,
     totalDuration: 0
@@ -24,24 +24,24 @@ const SlovaFilesViewer = () => {
   const [loadingDurations, setLoadingDurations] = useState(false);
   const [savingToDB, setSavingToDB] = useState(false);
 
-  const loadSlovaFiles = async () => {
+  const loadMeditaceFiles = async () => {
     try {
       setLoading(true);
       setError(null);
 
-      log.info('🔄 Loading slova files from Firebase Storage...');
+      log.info('🔄 Loading meditace files from Firebase Storage...');
 
-      // Načti soubory z kořenové slova složky
-      const slovaRef = ref(storage, 'slova');
-      const slovaResult = await listAll(slovaRef);
+      // Načti soubory z kořenové meditace složky
+      const meditaceRef = ref(storage, 'meditace');
+      const meditaceResult = await listAll(meditaceRef);
 
-      const slovaFiles = [];
-      for (const itemRef of slovaResult.items) {
+      const meditaceFiles = [];
+      for (const itemRef of meditaceResult.items) {
         try {
           const metadata = await getMetadata(itemRef);
           const downloadURL = await getDownloadURL(itemRef);
 
-          slovaFiles.push({
+          meditaceFiles.push({
             name: itemRef.name,
             fullPath: itemRef.fullPath,
             size: metadata.size,
@@ -49,7 +49,7 @@ const SlovaFilesViewer = () => {
             timeCreated: metadata.timeCreated,
             updated: metadata.updated,
             downloadURL: downloadURL,
-            folder: 'slova',
+            folder: 'meditace',
             duration: 0,
             durationFormatted: 'N/A',
             durationDetailed: 'N/A'
@@ -65,7 +65,7 @@ const SlovaFilesViewer = () => {
 
       for (const lang of languageFolders) {
         try {
-          const langRef = ref(storage, `slova/${lang}`);
+          const langRef = ref(storage, `meditace/${lang}`);
           const langResult = await listAll(langRef);
 
           for (const itemRef of langResult.items) {
@@ -81,7 +81,7 @@ const SlovaFilesViewer = () => {
                 timeCreated: metadata.timeCreated,
                 updated: metadata.updated,
                 downloadURL: downloadURL,
-                folder: `slova/${lang}`,
+                folder: `meditace/${lang}`,
                 duration: 0,
                 durationFormatted: 'N/A',
                 durationDetailed: 'N/A'
@@ -91,28 +91,28 @@ const SlovaFilesViewer = () => {
             }
           }
         } catch (langError) {
-          log.warn(`Failed to scan slova/${lang}:`, langError.message);
+          log.warn(`Failed to scan meditace/${lang}:`, langError.message);
         }
       }
 
       // Vypočti celkové statistiky
-      const allFiles = [...slovaFiles, ...languageFiles.CZ, ...languageFiles.SK, ...languageFiles.EN];
+      const allFiles = [...meditaceFiles, ...languageFiles.CZ, ...languageFiles.SK, ...languageFiles.EN];
       const totalSize = allFiles.reduce((sum, file) => sum + (file.size || 0), 0);
 
       setFiles({
-        slova: slovaFiles,
-        slovaCZ: languageFiles.CZ,
-        slovaSK: languageFiles.SK,
-        slovaEN: languageFiles.EN,
+        meditace: meditaceFiles,
+        meditaceCZ: languageFiles.CZ,
+        meditaceSK: languageFiles.SK,
+        meditaceEN: languageFiles.EN,
         totalFiles: allFiles.length,
         totalSize: totalSize,
         totalDuration: 0
       });
 
-      log.success(`✅ Loaded ${allFiles.length} slova files from Firebase Storage`);
+      log.success(`✅ Loaded ${allFiles.length} meditace files from Firebase Storage`);
 
     } catch (error) {
-      log.error('Failed to load slova files:', error);
+      log.error('Failed to load meditace files:', error);
       setError(`Error loading files: ${error.message}`);
     } finally {
       setLoading(false);
@@ -142,7 +142,7 @@ const SlovaFilesViewer = () => {
       setLoadingDurations(true);
       log.info('🔄 Loading audio durations...');
 
-      const allFiles = [...files.slova, ...files.slovaCZ, ...files.slovaSK, ...files.slovaEN];
+      const allFiles = [...files.meditace, ...files.meditaceCZ, ...files.meditaceSK, ...files.meditaceEN];
       let totalDuration = 0;
 
       // Načti délky pro všechny soubory
@@ -177,9 +177,9 @@ const SlovaFilesViewer = () => {
 
     try {
       setSavingToDB(true);
-      log.info('🔄 Saving slova metadata to Realtime Database...');
+      log.info('🔄 Saving meditace metadata to Realtime Database...');
 
-      const allFiles = [...files.slova, ...files.slovaCZ, ...files.slovaSK, ...files.slovaEN];
+      const allFiles = [...files.meditace, ...files.meditaceCZ, ...files.meditaceSK, ...files.meditaceEN];
 
       // Připrav data pro uložení
       const filesData = allFiles.map(file => ({
@@ -191,7 +191,7 @@ const SlovaFilesViewer = () => {
         durationFormatted: file.durationFormatted,
         durationDetailed: file.durationDetailed,
         folder: file.folder,
-        category: 'slova',
+        category: 'meditace',
         language: file.folder.includes('CZ') ? 'CZ' : file.folder.includes('SK') ? 'SK' : file.folder.includes('EN') ? 'EN' : null,
         downloadURL: file.downloadURL
       }));
@@ -199,13 +199,13 @@ const SlovaFilesViewer = () => {
       const result = await audioMetadataStorageService.saveBatchMetadata(filesData);
 
       if (result.success) {
-        log.success(`✅ Successfully saved ${result.savedCount}/${result.totalCount} slova files to Realtime Database`);
-        alert(`✅ Úspěšně uloženo ${result.savedCount}/${result.totalCount} slova souborů do Realtime Database!`);
+        log.success(`✅ Successfully saved ${result.savedCount}/${result.totalCount} meditace files to Realtime Database`);
+        alert(`✅ Úspěšně uloženo ${result.savedCount}/${result.totalCount} meditace souborů do Realtime Database!`);
       } else {
         throw new Error('Failed to save to database');
       }
     } catch (error) {
-      log.error('Failed to save slova metadata to Realtime Database:', error);
+      log.error('Failed to save meditace metadata to Realtime Database:', error);
       alert(`❌ Chyba při ukládání do databáze: ${error.message}`);
     } finally {
       setSavingToDB(false);
@@ -280,7 +280,7 @@ const SlovaFilesViewer = () => {
   );
 
   useEffect(() => {
-    loadSlovaFiles();
+    loadMeditaceFiles();
   }, []);
 
   return (
@@ -291,7 +291,7 @@ const SlovaFilesViewer = () => {
           🗣️ Slova Files Viewer
         </h2>
         <p className="text-blue-700">
-          Detailní přehled všech souborů v sekci slova včetně jazykových variant
+          Detailní přehled všech souborů v sekci meditace včetně jazykových variant
         </p>
       </div>
 
@@ -314,7 +314,7 @@ const SlovaFilesViewer = () => {
       {/* Controls */}
       <div className="flex gap-4 flex-wrap">
         <button
-          onClick={loadSlovaFiles}
+          onClick={loadMeditaceFiles}
           disabled={loading}
           className="bg-blue-500 hover:bg-blue-600 disabled:bg-gray-400 text-white px-4 py-2 rounded-lg transition-colors flex items-center"
         >
@@ -353,7 +353,7 @@ const SlovaFilesViewer = () => {
         <div className="flex items-center justify-center py-8">
           <div className="text-center">
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500 mx-auto"></div>
-            <p className="mt-2 text-gray-600">Loading slova files...</p>
+            <p className="mt-2 text-gray-600">Loading meditace files...</p>
           </div>
         </div>
       )}
@@ -361,14 +361,14 @@ const SlovaFilesViewer = () => {
       {/* File Lists */}
       {!loading && (
         <div className="space-y-4">
-          {renderFileList(files.slova, 'Slova (hlavní složka)', 'slova')}
-          {renderFileList(files.slovaCZ, 'Slova CZ (české soubory)', 'slova/CZ')}
-          {renderFileList(files.slovaSK, 'Slova SK (slovenské soubory)', 'slova/SK')}
-          {renderFileList(files.slovaEN, 'Slova EN (anglické soubory)', 'slova/EN')}
+          {renderFileList(files.meditace, 'Meditace (hlavní složka)', 'meditace')}
+          {renderFileList(files.meditaceCZ, 'Meditace CZ (české soubory)', 'meditace/CZ')}
+          {renderFileList(files.meditaceSK, 'Meditace SK (slovenské soubory)', 'meditace/SK')}
+          {renderFileList(files.meditaceEN, 'Meditace EN (anglické soubory)', 'meditace/EN')}
         </div>
       )}
     </div>
   );
 };
 
-export default SlovaFilesViewer;
+export default MeditaceFilesViewer;

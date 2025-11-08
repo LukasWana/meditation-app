@@ -13,6 +13,20 @@ import { syncAllFilesViaFunction } from '@utils/syncAllFilesViaFunction';
 import Waveform from '@components/Waveform';
 import { realtimeMetadataService } from '@services/realtimeMetadataService';
 
+const DYCHANI_FOLDER = 'dychani';
+const DYCHANI_LEGACY_FOLDER = 'dychanie';
+
+const isDychaniFilePath = (fileName = '') =>
+  typeof fileName === 'string' &&
+  (fileName.includes(`${DYCHANI_FOLDER}/`) || fileName.includes(`${DYCHANI_LEGACY_FOLDER}/`));
+
+const normalizeDychaniFolder = (folder = '') => {
+  if (folder === DYCHANI_LEGACY_FOLDER) {
+    return DYCHANI_FOLDER;
+  }
+  return folder;
+};
+
 const SimpleAdminScreen = () => {
   const [isDarkMode, setIsDarkMode] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -37,21 +51,21 @@ const SimpleAdminScreen = () => {
       const q = query(metadataCollection, orderBy('fileName'));
       const querySnapshot = await getDocs(q);
 
-      const slovaFiles = [];
+      const meditaceFiles = [];
       const hudbaFiles = [];
-      const dychanieFiles = [];
+      const dychaniFiles = [];
       const sampleFiles = [];
 
       querySnapshot.forEach((doc) => {
         const data = doc.data();
-        if (data.fileName && data.fileName.includes('slova/')) {
-          slovaFiles.push(data);
+        if (data.fileName && data.fileName.includes('meditace/')) {
+          meditaceFiles.push(data);
         }
         if (data.fileName && data.fileName.includes('hudba/')) {
           hudbaFiles.push(data);
         }
-        if (data.fileName && data.fileName.includes('dychanie/')) {
-          dychanieFiles.push(data);
+        if (data.fileName && isDychaniFilePath(data.fileName)) {
+          dychaniFiles.push(data);
         }
         if (sampleFiles.length < 3) {
           sampleFiles.push({
@@ -69,9 +83,11 @@ const SimpleAdminScreen = () => {
         console.log(`     Has DownloadURL: ${file.hasDownloadURL}`);
       });
 
-      const mp3Count = querySnapshot.size - dychanieFiles.length; // přibližně
-      const oggCount = dychanieFiles.length; // přibližně
-      setStatus(`📊 Firestore: ${querySnapshot.size} souborů, 🎤 SLOVA: ${slovaFiles.length}, 🎵 HUDEBA: ${hudbaFiles.length}, 🫁 DÝCHANIE: ${dychanieFiles.length}`);
+      const mp3Count = querySnapshot.size - dychaniFiles.length; // přibližně
+      const oggCount = dychaniFiles.length; // přibližně
+      setStatus(
+        `📊 Firestore: ${querySnapshot.size} souborů, 🧘 MEDITACE: ${meditaceFiles.length}, 🎵 HUDBA: ${hudbaFiles.length}, 🫁 DYCHANI: ${dychaniFiles.length} (≈${mp3Count} MP3 / ≈${oggCount} OGG)`
+      );
     } catch (error) {
       setStatus(`❌ Chyba při načítání: ${error.message}`);
     }
@@ -105,7 +121,7 @@ const SimpleAdminScreen = () => {
           // Zajisti, že má downloadURL nebo audioSrc
           downloadURL: data.downloadURL || data.audioSrc,
           // Zajisti, že má folder
-          folder: data.folder || (data.fileName?.includes('slova/') ? 'slova' : 'hudba'),
+          folder: data.folder || (data.fileName?.includes('meditace/') ? 'meditace' : 'hudba'),
           // Zajisti, že má displayName
           displayName: data.displayName || data.title || data.fileName?.replace(/\.[^/.]+$/, ""),
           // Zajisti, že má fullPath
@@ -114,14 +130,14 @@ const SimpleAdminScreen = () => {
         metadataArray.push(processedData);
       });
 
-      const slovaFiles = metadataArray.filter(file =>
-        file.fileName && file.fileName.includes('slova/')
+      const meditaceFiles = metadataArray.filter(file =>
+        file.fileName && file.fileName.includes('meditace/')
       );
       const hudbaFiles = metadataArray.filter(file =>
         file.fileName && file.fileName.includes('hudba/')
       );
-      const dychanieFiles = metadataArray.filter(file =>
-        file.fileName && file.fileName.includes('dychanie/')
+      const dychaniFiles = metadataArray.filter(file =>
+        file.fileName && isDychaniFilePath(file.fileName)
       );
 
       const mp3Count = metadataArray.filter(f => f.fileName?.toLowerCase().endsWith('.mp3')).length;
@@ -174,14 +190,14 @@ const SimpleAdminScreen = () => {
         lastSync: new Date().toISOString(),
         totalFiles: metadataArray.length,
         savedFiles: savedCount,
-        slovaFiles: slovaFiles.length,
+        meditaceFiles: meditaceFiles.length,
         hudbaFiles: hudbaFiles.length,
-        dychanieFiles: dychanieFiles.length,
+        dychaniFiles: dychaniFiles.length,
         mp3Files: mp3Count,
         oggFiles: oggCount
       });
 
-      setStatus(`✅ Synchronizace dokončena! 📊 ${metadataArray.length} souborů (${mp3Count} MP3, ${oggCount} OGG), 🎤 ${slovaFiles.length} SLOVA, 🎵 ${hudbaFiles.length} HUDEBA, 🫁 ${dychanieFiles.length} DÝCHANIE`);
+      setStatus(`✅ Synchronizace dokončena! 📊 ${metadataArray.length} souborů (${mp3Count} MP3, ${oggCount} OGG), 🧘 ${meditaceFiles.length} MEDITACE, 🎵 ${hudbaFiles.length} HUDBA, 🫁 ${dychaniFiles.length} DYCHANI`);
       console.log('✅ Successfully synced Firestore to Realtime Database');
 
     } catch (error) {
@@ -215,7 +231,7 @@ const SimpleAdminScreen = () => {
       setStatus('📊 Připravuji metadata s reálnou délkou...');
 
       // Helper funkce pro zpracování jednoho souboru
-      const processFile = async (file, index) => {
+      const processFile = async (file) => {
         try {
           // Získej metadata ze Storage (velikost souboru)
           let fileSize = file.size;
@@ -306,13 +322,13 @@ const SimpleAdminScreen = () => {
           }
 
           // Vygeneruj waveformu pomocí Firebase Function (server-side, bez CORS problémů)
-          // POUZE pro sekci "dychanie" (pro náhledy ve zvukové galerii)
+          // POUZE pro sekci "dychani" (pro náhledy ve zvukové galerii)
           let waveformData = null;
-          const isDychanieFile = file.folder === 'dychanie' || file.fullPath.startsWith('dychanie/');
+          const isDychaniFile = normalizeDychaniFolder(file.folder) === DYCHANI_FOLDER || file.fullPath.startsWith(`${DYCHANI_FOLDER}/`) || file.fullPath.startsWith(`${DYCHANI_LEGACY_FOLDER}/`);
 
-          if (isDychanieFile && (fileExt.endsWith('.mp3') || fileExt.endsWith('.ogg') || fileExt.endsWith('.oga'))) {
+          if (isDychaniFile && (fileExt.endsWith('.mp3') || fileExt.endsWith('.ogg') || fileExt.endsWith('.oga'))) {
             try {
-              console.log(`🌊 Generating waveform via Function for ${file.name} (dychanie file)...`);
+              console.log(`🌊 Generating waveform via Function for ${file.name} (dychani file)...`);
               // ✅ OPRAVA: Zvýšeno z 150 na 800 pro lepší detail
               const result = await generateWaveformViaFunction(file.fullPath, 800);
               if (result.success && result.waveformData && Array.isArray(result.waveformData) && result.waveformData.length > 0) {
@@ -340,19 +356,19 @@ const SimpleAdminScreen = () => {
               // Pokračuj i bez waveformy - není to kritická chyba
               waveformData = null;
             }
-          } else if (!isDychanieFile) {
-            // Nezobrazuj log pro soubory mimo dychanie
-            console.log(`⏭️ Skipping waveform generation for ${file.name} (not dychanie file)`);
+          } else if (!isDychaniFile) {
+            // Nezobrazuj log pro soubory mimo dychani
+            console.log(`⏭️ Skipping waveform generation for ${file.name} (not dychani file)`);
           } else {
             console.log(`⏭️ Skipping waveform generation for ${file.name} (not audio file)`);
           }
 
           // Vytvoř kompletní metadata objekt
-          // fileName musí být celá cesta včetně složky (např. "dychanie/prana-breath/file.ogg")
+          // fileName musí být celá cesta včetně složky (např. "dychani/prana-breath/file.ogg")
           const metadata = {
-            fileName: file.fullPath, // Celá cesta: "dychanie/prana-breath/file.ogg"
+            fileName: file.fullPath, // Celá cesta: "dychani/prana-breath/file.ogg"
             displayName: extractDisplayName(file.name),
-            folder: file.folder,
+            folder: normalizeDychaniFolder(file.folder),
             subFolder: extractSubFolder(file.fullPath),
             downloadURL: downloadURL,
             fullPath: file.fullPath,
@@ -368,17 +384,17 @@ const SimpleAdminScreen = () => {
             waveformData: waveformData,
             waveformGenerated: waveformData ? new Date().toISOString() : null,
             waveformSamples: waveformData ? 800 : null,
-            // Dodatečné informace pro slova soubory
-            ...(file.folder === 'slova' ? {
+            // Dodatečné informace pro meditace soubory
+            ...(file.folder === 'meditace' ? {
               gender: extractGender(file.name),
               topic: extractTopic(file.name),
               type: extractType(file.name)
             } : {})
           };
 
-          // Debug pro dychanie soubory
-          if (file.folder === 'dychanie') {
-            console.log(`🫁 Dychanie metadata: fileName=${metadata.fileName}, fullPath=${metadata.fullPath}, downloadURL=${metadata.downloadURL ? 'yes' : 'no'}`);
+          // Debug pro dychani soubory
+          if (normalizeDychaniFolder(file.folder) === DYCHANI_FOLDER) {
+            console.log(`🫁 Dychani metadata: fileName=${metadata.fileName}, fullPath=${metadata.fullPath}, downloadURL=${metadata.downloadURL ? 'yes' : 'no'}`);
           }
 
           return metadata;
@@ -422,12 +438,10 @@ const SimpleAdminScreen = () => {
         const batch = allFiles.slice(i, i + MAX_CONCURRENT);
         setStatus(`📊 Zpracovávám batch ${Math.floor(i / MAX_CONCURRENT) + 1}/${Math.ceil(allFiles.length / MAX_CONCURRENT)} (${i + 1}-${Math.min(i + MAX_CONCURRENT, allFiles.length)}/${allFiles.length})`);
 
-        const batchResults = await Promise.allSettled(
-          batch.map((file, batchIndex) => processFile(file, i + batchIndex))
-        );
+        const batchResults = await Promise.allSettled(batch.map((file) => processFile(file)));
 
         // Přidej úspěšné výsledky
-        batchResults.forEach((result, batchIndex) => {
+        batchResults.forEach((result) => {
           if (result.status === 'fulfilled' && result.value) {
             metadataArray.push(result.value);
           } else if (result.status === 'rejected') {
@@ -437,9 +451,12 @@ const SimpleAdminScreen = () => {
       }
 
       // 4. Filtruj soubory podle složek
-      const slovaFiles = metadataArray.filter(file => file.folder === 'slova');
-      const hudbaFiles = metadataArray.filter(file => file.folder === 'hudba');
-      const dychanieFiles = metadataArray.filter(file => file.folder === 'dychanie');
+      const meditaceFiles = metadataArray.filter(file => normalizeDychaniFolder(file.folder) === 'meditace');
+      const hudbaFiles = metadataArray.filter(file => normalizeDychaniFolder(file.folder) === 'hudba');
+      const dychaniFiles = metadataArray.filter(file =>
+        normalizeDychaniFolder(file.folder) === DYCHANI_FOLDER ||
+        (file.fileName && isDychaniFilePath(file.fileName))
+      );
 
       const mp3Count = metadataArray.filter(f => f.fileName?.toLowerCase().endsWith('.mp3')).length;
       const oggCount = metadataArray.filter(f => {
@@ -448,9 +465,9 @@ const SimpleAdminScreen = () => {
       }).length;
 
       console.log(`📊 Zpracováno: ${metadataArray.length} souborů (${mp3Count} MP3, ${oggCount} OGG)`);
-      console.log(`🎤 SLOVA: ${slovaFiles.length} souborů`);
-      console.log(`🎵 HUDEBA: ${hudbaFiles.length} souborů`);
-      console.log(`🫁 DÝCHANIE: ${dychanieFiles.length} souborů`);
+      console.log(`🧘 MEDITACE: ${meditaceFiles.length} souborů`);
+      console.log(`🎵 HUDBA: ${hudbaFiles.length} souborů`);
+      console.log(`🫁 DYCHANI: ${dychaniFiles.length} souborů`);
 
       // 5. Uložit do Realtime Database
       setStatus('💾 Ukládám do Realtime Database...');
@@ -459,16 +476,16 @@ const SimpleAdminScreen = () => {
         files: metadataArray,
         lastSync: new Date().toISOString(),
         totalFiles: metadataArray.length,
-        slovaFiles: slovaFiles.length,
+        meditaceFiles: meditaceFiles.length,
         hudbaFiles: hudbaFiles.length,
-        dychanieFiles: dychanieFiles.length,
+        dychaniFiles: dychaniFiles.length,
         mp3Files: mp3Count,
         oggFiles: oggCount,
         validFiles: metadataArray.filter(f => f.isValid).length,
         invalidFiles: metadataArray.filter(f => !f.isValid).length
       });
 
-      setStatus(`✅ Kompletní synchronizace dokončena! 📊 ${metadataArray.length} souborů (${mp3Count} MP3, ${oggCount} OGG), 🎤 ${slovaFiles.length} SLOVA, 🎵 ${hudbaFiles.length} HUDEBA, 🫁 ${dychanieFiles.length} DÝCHANIE`);
+      setStatus(`✅ Kompletní synchronizace dokončena! 📊 ${metadataArray.length} souborů (${mp3Count} MP3, ${oggCount} OGG), 🧘 ${meditaceFiles.length} MEDITACE, 🎵 ${hudbaFiles.length} HUDBA, 🫁 ${dychaniFiles.length} DYCHANI`);
       console.log('✅ Full metadata sync completed successfully');
 
     } catch (error) {
@@ -607,7 +624,7 @@ const SimpleAdminScreen = () => {
               let relativePath;
 
               if (fullPath && fullPath.startsWith(folderName)) {
-                // fileRef.fullPath už obsahuje celou cestu (např. "dychanie/prana-breath/file.ogg")
+                // fileRef.fullPath už obsahuje celou cestu (např. "dychani/prana-breath/file.ogg")
                 relativePath = fullPath.replace(`${folderName}/`, '');
               } else if (fullPath) {
                 // fullPath je relativní, přidej folderName
@@ -629,7 +646,7 @@ const SimpleAdminScreen = () => {
               // Použij pouze informace z listAll - bez getMetadata/getDownloadURL
               allFiles.push({
                 name: relativePath, // Relativní cesta včetně podsložky (např. "prana-breath/file.ogg")
-                fullPath: fullPath, // Celá cesta včetně složky (např. "dychanie/prana-breath/file.ogg")
+                fullPath: fullPath, // Celá cesta včetně složky (např. "dychani/prana-breath/file.ogg")
                 size: 0, // Bude odhadnuto z názvu souboru
                 folder: folderName,
                 downloadURL: null // Bude vygenerováno později pomocí getDownloadURL
@@ -654,69 +671,78 @@ const SimpleAdminScreen = () => {
       return allFiles;
     };
 
-    // Skenuj hudba, slova a dychanie složky
+    // Skenuj hudba, meditace a dychani složky
     const hudbaRef = ref(storage, 'hudba');
-    const slovaRef = ref(storage, 'slova');
-    const dychanieRef = ref(storage, 'dychanie');
+    const meditaceRef = ref(storage, 'meditace');
 
     console.log('🚀 Začínám skenování Firebase Storage...');
 
-    // Zkontroluj, jestli složka dychanie existuje
-    let dychanieFiles = [];
-    try {
-      const dychanieTest = await listAll(dychanieRef);
-      console.log(`🫁 Dychanie složka: Items=${dychanieTest.items.length}, Prefixes=${dychanieTest.prefixes.length}`);
-      console.log(`🫁 Dychanie podsložky:`, dychanieTest.prefixes.map(p => p.name || p.fullPath));
+    // Zkontroluj, jestli složka dychani existuje (s fallbackem na legacy název)
+    let dychaniFiles = [];
+    let storageFolderUsed = null;
 
-      // Pokud máme přístup, načteme soubory přímo ze Storage
-      dychanieFiles = await getAllFilesRecursively(dychanieRef, 'dychanie');
-    } catch (dychanieTestError) {
-      console.warn(`⚠️ Nemám přístup k dychanie složce v Storage (403 Forbidden), načítám z Realtime Database...`);
-      console.error(`❌ Chyba při kontrole dychanie složky:`, dychanieTestError);
+    const dychaniFoldersToTry = [
+      { path: DYCHANI_FOLDER, label: 'dychani' },
+      { path: DYCHANI_LEGACY_FOLDER, label: 'dychanie (legacy)' }
+    ];
 
-      // Pokud nemáme přístup k Storage, načteme metadata z Realtime Database
+    for (const { path, label } of dychaniFoldersToTry) {
+      try {
+        const folderRef = ref(storage, path);
+        const folderListing = await listAll(folderRef);
+        console.log(`🫁 ${label} složka: Items=${folderListing.items.length}, Prefixes=${folderListing.prefixes.length}`);
+        console.log(`🫁 ${label} podsložky:`, folderListing.prefixes.map(p => p.name || p.fullPath));
+
+        dychaniFiles = await getAllFilesRecursively(folderRef, path);
+        storageFolderUsed = path;
+        break;
+      } catch (error) {
+        console.warn(`⚠️ Nemám přístup k ${label} složce v Storage (${path})`, error.message);
+      }
+    }
+
+    if (storageFolderUsed === null) {
+      console.warn(`⚠️ Nemám přístup k žádné dychani složce v Storage, načítám z Realtime Database...`);
+
       try {
         const { realtimeMetadataService } = await import('@services/realtimeMetadataService');
         const realtimeMetadata = await realtimeMetadataService.getAllMetadata();
 
-        // Filtruj pouze dychanie soubory (OGG formát)
-        const dychanieMetadata = Object.values(realtimeMetadata).filter(file => {
+        const dychaniMetadata = Object.values(realtimeMetadata).filter(file => {
           const fileName = (file.fileName || '').toLowerCase();
-          const isInDychanieFolder = fileName.startsWith('dychanie/');
+          const isInDychaniFolder = fileName.startsWith(`${DYCHANI_FOLDER}/`) || fileName.startsWith(`${DYCHANI_LEGACY_FOLDER}/`);
           const isOggFile = fileName.endsWith('.ogg') || fileName.endsWith('.oga');
           const isMp3File = fileName.endsWith('.mp3');
-          return isInDychanieFolder && (isOggFile || isMp3File);
+          return isInDychaniFolder && (isOggFile || isMp3File);
         });
 
-        console.log(`🫁 Načteno ${dychanieMetadata.length} dychanie souborů z Realtime Database`);
+        console.log(`🫁 Načteno ${dychaniMetadata.length} dychani souborů z Realtime Database`);
 
-        // Převeď metadata na formát pro admin panel
-        dychanieFiles = dychanieMetadata.map(file => {
-          // Extrahuj relativní cestu (bez "dychanie/" prefixu)
-          const relativePath = file.fileName.replace('dychanie/', '');
+        dychaniFiles = dychaniMetadata.map(file => {
+          const relativePath = file.fileName.replace(`${DYCHANI_FOLDER}/`, '').replace(`${DYCHANI_LEGACY_FOLDER}/`, '');
           return {
             name: relativePath,
             fullPath: file.fileName,
             size: file.size || 0,
-            folder: 'dychanie',
+            folder: DYCHANI_FOLDER,
             downloadURL: file.downloadURL || file.audioSrc || null
           };
         });
 
-        console.log(`✅ Přepracováno ${dychanieFiles.length} souborů z Realtime Database`);
+        console.log(`✅ Přepracováno ${dychaniFiles.length} souborů z Realtime Database`);
       } catch (realtimeError) {
         console.error(`❌ Chyba při načítání z Realtime Database:`, realtimeError);
       }
     }
 
-    const [hudbaFiles, slovaFiles] = await Promise.all([
+    const [hudbaFiles, meditaceFiles] = await Promise.all([
       getAllFilesRecursively(hudbaRef, 'hudba'),
-      getAllFilesRecursively(slovaRef, 'slova')
+      getAllFilesRecursively(meditaceRef, 'meditace')
     ]);
 
-    console.log(`🫁 Dychanie files výsledek: ${dychanieFiles.length} souborů`);
-    if (dychanieFiles.length > 0) {
-      console.log('🫁 Sample dychanie files:', dychanieFiles.slice(0, 3).map(f => ({
+    console.log(`🫁 Dychani files výsledek: ${dychaniFiles.length} souborů`);
+    if (dychaniFiles.length > 0) {
+      console.log('🫁 Sample dychani files:', dychaniFiles.slice(0, 3).map(f => ({
         name: f.name,
         fullPath: f.fullPath,
         folder: f.folder
@@ -724,7 +750,7 @@ const SimpleAdminScreen = () => {
     }
 
     // Spoj všechny soubory
-    allFiles.push(...hudbaFiles, ...slovaFiles, ...dychanieFiles);
+    allFiles.push(...hudbaFiles, ...meditaceFiles, ...dychaniFiles);
 
     const mp3Count = allFiles.filter(f => {
       const name = (f.name || f.fullPath || '').toLowerCase();
@@ -735,23 +761,23 @@ const SimpleAdminScreen = () => {
       return name.endsWith('.ogg') || name.endsWith('.oga');
     }).length;
 
-    // Debug: zobraz dychanie soubory
-    const dychanieDebug = allFiles.filter(f => f.folder === 'dychanie');
-    console.log(`🫁 DEBUG Dychanie soubory: ${dychanieDebug.length}`);
-    console.log('🫁 Sample dychanie files:', dychanieDebug.slice(0, 5).map(f => ({
+    // Debug: zobraz dychani soubory
+    const dychaniDebug = allFiles.filter(f => normalizeDychaniFolder(f.folder) === DYCHANI_FOLDER);
+    console.log(`🫁 DEBUG Dychani soubory: ${dychaniDebug.length}`);
+    console.log('🫁 Sample dychani files:', dychaniDebug.slice(0, 5).map(f => ({
       name: f.name,
       fullPath: f.fullPath,
       folder: f.folder
     })));
 
     console.log(`✅ Skenování dokončeno! Nalezeno ${allFiles.length} audio souborů (${mp3Count} MP3, ${oggCount} OGG)`);
-    console.log(`🎵 HUDEBA: ${hudbaFiles.length} souborů`);
-    console.log(`🎤 SLOVA: ${slovaFiles.length} souborů`);
-    console.log(`🫁 DÝCHANIE: ${dychanieFiles.length} souborů`);
-    console.log(`🫁 OGG soubory: ${oggCount} (z toho ${dychanieFiles.filter(f => {
+    console.log(`🎵 HUDBA: ${hudbaFiles.length} souborů`);
+    console.log(`🧘 MEDITACE: ${meditaceFiles.length} souborů`);
+    console.log(`🫁 DYCHANI: ${dychaniFiles.length} souborů`);
+    console.log(`🫁 OGG soubory: ${oggCount} (z toho ${dychaniFiles.filter(f => {
       const name = (f.name || f.fullPath || '').toLowerCase();
       return name.endsWith('.ogg') || name.endsWith('.oga');
-    }).length} v dychanie)`);
+    }).length} v dychani)`);
 
     return allFiles;
   };
@@ -814,15 +840,15 @@ const SimpleAdminScreen = () => {
         await fastMetadataService.initialize(true);
         await meditaceDataService.initialize();
 
-        const slovaFiles = Object.values(realtimeMetadata).filter(file =>
-          file.folder === 'slova' || (file.fileName && file.fileName.includes('slova/'))
+      const meditaceFiles = Object.values(realtimeMetadata).filter(file =>
+        file.folder === 'meditace' || (file.fileName && file.fileName.includes('meditace/'))
         );
 
         const hudbaFiles = Object.values(realtimeMetadata).filter(file =>
           file.folder === 'hudba' || (file.fileName && file.fileName.includes('hudba/'))
         );
 
-        setStatus(`✅ Cache vymazána! Načteno ${Object.keys(realtimeMetadata).length} souborů, ${slovaFiles.length} SLOVA, ${hudbaFiles.length} HUDEBA`);
+      setStatus(`✅ Cache vymazána! Načteno ${Object.keys(realtimeMetadata).length} souborů, ${meditaceFiles.length} MEDITACE, ${hudbaFiles.length} HUDBA`);
         console.log('✅ Cache cleared and data reloaded from Firebase');
       } else {
         setStatus('❌ Žádná data v Realtime Database');
@@ -905,16 +931,17 @@ const SimpleAdminScreen = () => {
     try {
       const allMetadata = await realtimeMetadataService.getAllMetadata();
 
-      // Filtruj pouze soubory z dychanie složky
-      const dychanieFiles = Object.values(allMetadata).filter(file => {
+      // Filtruj pouze soubory z dychani složky
+      const dychaniFiles = Object.values(allMetadata).filter(file => {
         const fileName = file.fileName || '';
-        const isInDychanieFolder = fileName.startsWith('dychanie/');
-        const isOggFile = fileName.endsWith('.ogg') || fileName.endsWith('.oga');
-        const isMp3File = fileName.endsWith('.mp3');
-        return isInDychanieFolder && (isOggFile || isMp3File);
+        const isInDychaniFolder = isDychaniFilePath(fileName);
+        const lowerName = fileName.toLowerCase();
+        const isOggFile = lowerName.endsWith('.ogg') || lowerName.endsWith('.oga');
+        const isMp3File = lowerName.endsWith('.mp3');
+        return isInDychaniFolder && (isOggFile || isMp3File);
       });
 
-      const mappedFiles = dychanieFiles.map(file => {
+      const mappedFiles = dychaniFiles.map(file => {
         const fileNameOnly = file.fileNameOnly || file.fileName.split('/').pop();
         const name = file.displayName || file.fileNameOnly || fileNameOnly.replace(/\.(ogg|oga|mp3)$/i, '');
 
@@ -1275,7 +1302,7 @@ const SimpleAdminScreen = () => {
 
           {soundFiles.length === 0 ? (
             <p className="text-gray-500 text-center py-8">
-              Klikněte na "Načíst zvuky" pro zobrazení seznamu zvuků k editaci popisků.
+              Klikněte na &quot;Načíst zvuky&quot; pro zobrazení seznamu zvuků k editaci popisků.
             </p>
           ) : (
             <div className="space-y-4 max-h-[600px] overflow-y-auto">

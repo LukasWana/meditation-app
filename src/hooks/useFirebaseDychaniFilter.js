@@ -1,8 +1,7 @@
 import { useMemo } from 'react';
-import { useFirebaseDychanieScanner } from '@hooks/useFirebaseDychanieScanner';
-import fastMetadataService from '@services/fastMetadataService';
+import { useFirebaseDychaniScanner } from '@hooks/useFirebaseDychaniScanner';
 
-export const useFirebaseDychanieFilter = () => {
+export const useFirebaseDychaniFilter = () => {
   const {
     availableFiles,
     stats,
@@ -10,22 +9,25 @@ export const useFirebaseDychanieFilter = () => {
     error,
     refreshCDN,
     getFileByName
-  } = useFirebaseDychanieScanner();
+  } = useFirebaseDychaniScanner();
 
   // Filtruj soubory a vytvoř položky pro zobrazení
-  const dychanieItems = useMemo(() => {
+  const dychaniItems = useMemo(() => {
     const items = [];
 
-    // Filtruj pouze dychanie soubory
-    const dychanieFiles = availableFiles.filter(file => file.type === 'dychanie' && file.isAvailable);
+    // Filtruj pouze dychani soubory (včetně legacy typu)
+    const dychaniFiles = availableFiles.filter(file => {
+      const type = (file.type || '').toLowerCase();
+      return (type === 'dychani' || type === 'dychanie') && file.isAvailable;
+    });
 
     // Zpracuj soubory jako jednotlivé položky
-    dychanieFiles.forEach(file => {
+    dychaniFiles.forEach(file => {
       const fileNameOnly = file.fileNameOnly || file.fileName.split('/').pop();
       const name = fileNameOnly.replace(/\.(ogg|oga|mp3)$/i, '');
 
       items.push({
-        key: `dychanie-${file.fileName}`,
+        key: `dychani-${file.fileName}`,
         title: name,
         type: 'sound',
         audioSrc: file.downloadURL,
@@ -40,7 +42,7 @@ export const useFirebaseDychanieFilter = () => {
 
   return {
     // Data
-    dychanieItems,
+    dychaniItems,
     stats,
 
     // State

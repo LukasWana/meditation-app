@@ -1,49 +1,18 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { ref, listAll, getDownloadURL, getMetadata } from 'firebase/storage';
-import { storage } from '@services/firebase';
 import cacheService from '@services/cacheServiceRefactored';
 import log from '@services/logger';
-import { performanceMonitor } from '@services/performanceMonitor';
-import { getComponentConfig } from '@config/performance';
 import { fastMetadataService } from '@services/fastMetadataService';
 import { realtimeMetadataService } from '@services/realtimeMetadataService';
 
-// Pomocná funkce pro načtení délky audio souboru (podporuje OGG i MP3)
-const getAudioDuration = (audioSrc) => {
-  return new Promise((resolve) => {
-    const audio = new Audio();
-    audio.addEventListener('loadedmetadata', () => {
-      const duration = audio.duration;
-      if (isFinite(duration) && duration > 0) {
-        const minutes = Math.floor(duration / 60);
-        const seconds = Math.floor(duration % 60);
-        const durationString = `${minutes}:${seconds.toString().padStart(2, '0')}`;
+const DYCHANI_FOLDER = 'dychani';
+const DYCHANI_LEGACY_FOLDER = 'dychanie';
+const CACHE_KEY = 'dychani_scanner_all_files';
 
-        // Ulož duration do cache
-        cacheService.setDuration(audioSrc, duration);
-
-        resolve(durationString);
-      } else {
-        resolve(null);
-      }
-    });
-    audio.addEventListener('error', () => {
-      resolve(null);
-    });
-    audio.src = audioSrc;
-    // Timeout po 5 sekundách
-    setTimeout(() => resolve(null), 5000);
-  });
-};
-
-export const useFirebaseDychanieScanner = () => {
+export const useFirebaseDychaniScanner = () => {
   const [audioFiles, setAudioFiles] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
   const [lastUpdated, setLastUpdated] = useState(null);
-
-  // Získej konfiguraci pro tento hook
-  const config = getComponentConfig('useFirebaseDychanieScanner');
 
   // Použij ref pro sledování, zda už probíhá načítání
   const isLoadingRef = useRef(false);
@@ -51,17 +20,19 @@ export const useFirebaseDychanieScanner = () => {
 
   // Funkce pro zpracování fast metadat - nejrychlejší načítání
   const processFastMetadata = async (fastMetadata) => {
-    log.cache('⚡ Processing fast metadata for dychanie:', {
+    log.cache('⚡ Processing fast metadata for dychani:', {
       metadataCount: Object.keys(fastMetadata).length,
       files: Object.keys(fastMetadata).slice(0, 5)
     });
 
-    // Filtruj pouze dychanie soubory (OGG formát)
-    const dychanieFiles = Object.values(fastMetadata).filter(metadata => {
+    // Filtruj pouze dychani soubory (OGG formát)
+    const dychaniFiles = Object.values(fastMetadata).filter(metadata => {
       const fileName = (metadata.fileName || '').toLowerCase();
-      const isInDychanieFolder = fileName.startsWith('dychanie/');
+      const isInDychaniFolder =
+        fileName.startsWith(`${DYCHANI_FOLDER}/`) ||
+        fileName.startsWith(`${DYCHANI_LEGACY_FOLDER}/`);
 
-      if (!isInDychanieFolder) {
+      if (!isInDychaniFolder) {
         return false;
       }
 
@@ -69,13 +40,13 @@ export const useFirebaseDychanieScanner = () => {
       const isOggFile = fileName.endsWith('.ogg') || fileName.endsWith('.oga');
       const isMp3File = fileName.endsWith('.mp3');
 
-      return isInDychanieFolder && (isOggFile || isMp3File);
+      return isInDychaniFolder && (isOggFile || isMp3File);
     });
 
-    log.firebase(`📊 Found ${dychanieFiles.length} dychanie files in fast metadata`);
+    log.firebase(`📊 Found ${dychaniFiles.length} dychani files in fast metadata`);
 
     // Zpracuj soubory
-    const processedFiles = dychanieFiles.map(metadata => {
+    const processedFiles = dychaniFiles.map(metadata => {
       let duration = metadata.durationFormatted || metadata.duration || 'N/A';
 
       // Pokud je délka 'N/A', zkus načíst z cacheService
@@ -93,10 +64,10 @@ export const useFirebaseDychanieScanner = () => {
         duration: duration,
         parsed: metadata.parsed,
         isAvailable: !!metadata.downloadURL,
-        type: 'dychanie'
+        type: DYCHANI_FOLDER
       };
 
-      log.debug(`📄 Processed dychanie file:`, {
+      log.debug(`📄 Processed dychani file:`, {
         fileName: processedFile.fileName,
         isAvailable: processedFile.isAvailable,
         downloadURL: processedFile.downloadURL ? 'OK' : 'FAILED',
@@ -111,7 +82,7 @@ export const useFirebaseDychanieScanner = () => {
     setIsLoading(false);
     hasLoadedDataRef.current = true;
 
-    log.success(`⚡ Fast loading completed for dychanie: ${processedFiles.length} files`);
+    log.success(`⚡ Fast loading completed for dychani: ${processedFiles.length} files`);
 
     // Optimalizuj cache
     cacheService.optimizeCache();
@@ -119,7 +90,7 @@ export const useFirebaseDychanieScanner = () => {
 
   // Funkce pro zpracování cached výsledků
   const processCachedResult = async (cachedResult) => {
-    log.cache('🔄 Processing cached result for dychanie:', {
+    log.cache('🔄 Processing cached result for dychani:', {
       audioFilesCount: cachedResult.audioFiles?.length || 0
     });
 
@@ -133,7 +104,7 @@ export const useFirebaseDychanieScanner = () => {
     setIsLoading(false);
     hasLoadedDataRef.current = true;
 
-    log.success('✅ Using cached dychanie data - no Firebase loading needed');
+    log.success('✅ Using cached dychani data - no Firebase loading needed');
     cacheService.optimizeCache();
   };
 
@@ -153,7 +124,7 @@ export const useFirebaseDychanieScanner = () => {
     try {
       const fastMetadata = fastMetadataService.getAllMetadata();
       if (fastMetadata && Object.keys(fastMetadata).length > 0) {
-        log.debug('✅ Using fast metadata from Realtime DB for dychanie');
+        log.debug('✅ Using fast metadata from Realtime DB for dychani');
         isLoadingRef.current = true;
         setIsLoading(true);
         await processFastMetadata(fastMetadata);
@@ -164,17 +135,18 @@ export const useFirebaseDychanieScanner = () => {
     }
 
     // Zkontroluj cache (backup)
-    const cacheKey = 'dychanie_scanner_all_files';
-    const cachedResult = cacheService.getFirebaseQuery(cacheKey);
+    const cachedResult =
+      cacheService.getFirebaseQuery(CACHE_KEY) ||
+      cacheService.getFirebaseQuery('dychanie_scanner_all_files');
     if (cachedResult && cachedResult.audioFiles && cachedResult.audioFiles.length > 0) {
-      log.debug('✅ Using cached data for dychanie');
+      log.debug('✅ Using cached data for dychani');
       isLoadingRef.current = true;
       setIsLoading(true);
       await processCachedResult(cachedResult);
       return;
     }
 
-    log.warn('⚠️ No cache found for dychanie - this should not happen if data was loaded at startup');
+    log.warn('⚠️ No cache found for dychani - this should not happen if data was loaded at startup');
     setIsLoading(false);
     isLoadingRef.current = false;
     setError('Data nebyla načtena při startu aplikace. Prosím obnovte stránku.');
@@ -186,7 +158,7 @@ export const useFirebaseDychanieScanner = () => {
         hasLoadedDataRef.current = true;
         isLoadingRef.current = false;
         setIsLoading(false);
-        log.debug('✅ Data already in state for dychanie');
+        log.debug('✅ Data already in state for dychani');
         return;
       }
 
@@ -194,7 +166,7 @@ export const useFirebaseDychanieScanner = () => {
       try {
         const fastMetadata = fastMetadataService.getAllMetadata();
         if (fastMetadata && Object.keys(fastMetadata).length > 0) {
-          log.debug('✅ Loading from fast metadata (Realtime DB) for dychanie...');
+          log.debug('✅ Loading from fast metadata (Realtime DB) for dychani...');
           hasLoadedDataRef.current = true;
           isLoadingRef.current = false;
           await processFastMetadata(fastMetadata);
@@ -205,10 +177,11 @@ export const useFirebaseDychanieScanner = () => {
       }
 
       // Zkontroluj cache (backup)
-      const cacheKey = 'dychanie_scanner_all_files';
-      const cachedResult = cacheService.getFirebaseQuery(cacheKey);
+      const cachedResult =
+        cacheService.getFirebaseQuery(CACHE_KEY) ||
+        cacheService.getFirebaseQuery('dychanie_scanner_all_files');
       if (cachedResult && cachedResult.audioFiles && cachedResult.audioFiles.length > 0) {
-        log.debug('✅ Loading from cache for dychanie...');
+        log.debug('✅ Loading from cache for dychani...');
         hasLoadedDataRef.current = true;
         isLoadingRef.current = false;
         await processCachedResult(cachedResult);
@@ -216,7 +189,7 @@ export const useFirebaseDychanieScanner = () => {
       }
 
       if (!hasLoadedDataRef.current && !isLoadingRef.current) {
-        log.warn('⚠️ No cache found for dychanie, loading from Firebase Storage (should not happen)');
+        log.warn('⚠️ No cache found for dychani, loading from Firebase Storage (should not happen)');
         scanCDN();
       }
     };
@@ -230,25 +203,25 @@ export const useFirebaseDychanieScanner = () => {
 
     const startWatching = () => {
       try {
-        log.info('📡 Setting up real-time listener for dychanie metadata changes...');
+        log.info('📡 Setting up real-time listener for dychani metadata changes...');
 
-        unsubscribe = realtimeMetadataService.watchMetadata((data) => {
-          log.info('📡 Real-time metadata update detected for dychanie - updating fast metadata...');
+        unsubscribe = realtimeMetadataService.watchMetadata(() => {
+          log.info('📡 Real-time metadata update detected for dychani - updating fast metadata...');
 
           fastMetadataService.initialize(false).then(() => {
             const fastMetadata = fastMetadataService.getAllMetadata();
             if (fastMetadata && Object.keys(fastMetadata).length > 0) {
               processFastMetadata(fastMetadata);
-              log.success('✅ Dychanie data updated from real-time');
+              log.success('✅ Dychani data updated from real-time');
             }
           }).catch(err => {
-            log.warn('⚠️ Failed to update fast metadata for dychanie:', err);
+            log.warn('⚠️ Failed to update fast metadata for dychani:', err);
           });
         });
 
-        log.success('📡 Real-time listener activated for dychanie');
+        log.success('📡 Real-time listener activated for dychani');
       } catch (error) {
-        log.warn('⚠️ Failed to set up real-time listener for dychanie:', error);
+        log.warn('⚠️ Failed to set up real-time listener for dychani:', error);
       }
     };
 
@@ -257,7 +230,7 @@ export const useFirebaseDychanieScanner = () => {
     return () => {
       if (unsubscribe) {
         unsubscribe();
-        log.info('📡 Real-time listener stopped for dychanie');
+        log.info('📡 Real-time listener stopped for dychani');
       }
     };
   }, []);

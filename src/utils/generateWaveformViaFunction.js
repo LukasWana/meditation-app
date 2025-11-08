@@ -50,7 +50,7 @@ export const generateWaveformViaFunction = async (fileName, samples = 150) => {
 
 /**
  * Vygeneruje waveformy pro všechny soubory v dané složce pomocí Firebase Function
- * @param {string} folder - Složka (např. 'dychanie', 'hudba', 'slova')
+ * @param {string} folder - Složka (např. 'dychani', 'hudba', 'meditace')
  * @param {number} samples - Počet vzorků pro waveformu (default: 150)
  * @param {Function} onProgress - Callback pro progress (current, total)
  * @returns {Promise<{success: boolean, processed: number, failed: number, errors: Array}>}

@@ -44,7 +44,7 @@ function extractMP3Metadata(fileName, fileMetadata) {
     // Dodatečné informace
     bitrate: 'Unknown',
     format: 'MP3',
-    genre: folder === 'hudba' ? 'Meditation Music' : folder === 'slova' ? 'Guided Meditation' : 'Audio'
+    genre: folder === 'hudba' ? 'Meditation Music' : folder === 'meditace' ? 'Guided Meditation' : 'Audio'
   };
 }
 

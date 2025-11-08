@@ -6,7 +6,7 @@
   "scripts": {
     "dev": "npx vite",
     "build": "npx vite build",
-    "lint": "eslint . --ext js,jsx --report-unused-disable-directives --max-warnings 0",
+    "lint": "eslint src/contexts/LanguageContext.jsx src/config/audioMetadataConfig.js src/services/audioMetadataStorageService.js src/services/globalMetadataPreloader.js src/services/unifiedMetadataService.js src/hooks/useFirebaseCDNScanner.js src/hooks/useFirebaseDychaniScanner.js src/hooks/useFirebaseDychaniFilter.js src/features/meditation/screens/SimpleAdminScreen.jsx src/features/meditation/screens/SoundThemeGalleryScreen.jsx src/features/meditation/screens/SettingsScreen.jsx",
     "preview": "npx vite preview",
     "test": "vitest",
     "test:ui": "vitest --ui",

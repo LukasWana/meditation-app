@@ -102,6 +102,7 @@ const SoundThemeGallery = ({ isOpen, onClose, onSelectSound, selectedInSound, se
       'prana': 'Pranayama dechové cvičení',
       'pranayama': 'Pranayama dechové cvičení',
       'breath': 'Dechové cvičení',
+      'dychani': 'Dechové cvičení',
       'dychanie': 'Dechové cvičení',
       'dych': 'Dech',
       'inhale': 'Nádech',
@@ -246,37 +247,37 @@ const SoundThemeGallery = ({ isOpen, onClose, onSelectSound, selectedInSound, se
 
       console.log('🔍 SoundThemeGallery: Načteno metadata:', Object.keys(allMetadata).length);
 
-      // Debug: zobraz všechny soubory s "dychanie" v názvu
-      const allDychanieFiles = Object.values(allMetadata).filter(file => {
+      // Debug: zobraz všechny soubory s "dychani" v názvu
+      const allDychaniFiles = Object.values(allMetadata).filter(file => {
         const fileName = (file.fileName || '').toLowerCase();
-        return fileName.includes('dychanie');
+        return fileName.includes('dychani') || fileName.includes('dychanie');
       });
-      console.log('🫁 SoundThemeGallery: Všechny soubory s "dychanie":', allDychanieFiles.length);
-      console.log('🫁 Sample dychanie files:', allDychanieFiles.slice(0, 5).map(f => ({
+      console.log('🫁 SoundThemeGallery: Všechny soubory s "dychani":', allDychaniFiles.length);
+      console.log('🫁 Sample dychani files:', allDychaniFiles.slice(0, 5).map(f => ({
         fileName: f.fileName,
         folder: f.folder,
         hasDownloadURL: !!(f.downloadURL || f.audioSrc)
       })));
 
-      // Filtruj pouze soubory z kategorie "dychanie" (OGG formát)
-      const dychanieFiles = Object.values(allMetadata).filter(file => {
-        const fileName = file.fileName || '';
-        const isInDychanieFolder = fileName.startsWith('dychanie/');
+      // Filtruj pouze soubory z kategorie "dychani" (OGG formát)
+      const dychaniFiles = Object.values(allMetadata).filter(file => {
+        const fileName = (file.fileName || '').toLowerCase();
+        const isInDychaniFolder = fileName.startsWith('dychani/') || fileName.startsWith('dychanie/');
         const isOggFile = fileName.endsWith('.ogg') || fileName.endsWith('.oga');
         const isMp3File = fileName.endsWith('.mp3'); // Fallback pro MP3
 
-        const matches = isInDychanieFolder && (isOggFile || isMp3File);
-        if (isInDychanieFolder) {
-          console.log(`🫁 Soubor dychanie: ${fileName}, isOgg: ${isOggFile}, isMp3: ${isMp3File}, matches: ${matches}`);
+        const matches = isInDychaniFolder && (isOggFile || isMp3File);
+        if (isInDychaniFolder) {
+          console.log(`🫁 Soubor dychani: ${fileName}, isOgg: ${isOggFile}, isMp3: ${isMp3File}, matches: ${matches}`);
         }
 
         return matches;
       });
 
-      console.log('🫁 SoundThemeGallery: Filtrováno dychanie souborů:', dychanieFiles.length);
+      console.log('🫁 SoundThemeGallery: Filtrováno dychani souborů:', dychaniFiles.length);
 
       // KROK 1: Mapuj na formát pro galerii a získej absolutní hodnoty
-      const mappedFiles = dychanieFiles.map(file => {
+      const mappedFiles = dychaniFiles.map(file => {
         const fileNameOnly = file.fileNameOnly || file.fileName.split('/').pop();
         const name = file.displayName || file.fileNameOnly || fileNameOnly.replace(/\.(ogg|oga|mp3)$/i, '');
 
@@ -404,7 +405,7 @@ const SoundThemeGallery = ({ isOpen, onClose, onSelectSound, selectedInSound, se
       setAudioFiles(mappedFiles);
       setLoading(false);
     } catch (error) {
-      console.error('❌ Failed to load dychanie files:', error);
+      console.error('❌ Failed to load dychani files:', error);
       setLoading(false);
     }
   };

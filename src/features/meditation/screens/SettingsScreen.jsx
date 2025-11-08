@@ -1,134 +1,20 @@
-import React, { useState, useEffect } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { FramerButton, FramerSection, FramerPageTransition, BackButton, BackgroundShader, ShaderGallery } from '@components';
+import React, { useState } from 'react';
+import { motion } from 'framer-motion';
+import { FramerSection, FramerPageTransition, BackButton, BackgroundShader, ShaderGallery } from '@components';
 import ShaderCategorySelector from '@components/ShaderCategorySelector';
 import LanguageSwitcher from '@components/LanguageSwitcher';
 import { useLanguage } from '@contexts/LanguageContext';
 import { useShaderSettings } from '@contexts/ShaderSettingsContext';
-import { Download, Wifi, WifiOff, HardDrive, RefreshCw, Trash2 } from 'lucide-react';
-import useOfflineCache from '@hooks/useOfflineCache';
-import { useFirebaseHudbaScanner } from '@hooks/useFirebaseHudbaScanner';
-import { realtimeMetadataService } from '@services/realtimeMetadataService';
 
 const SettingsScreen = ({
   onNavigateToScreen,
-  onTouchStart,
-  onTouchMove,
-  onTouchEnd,
-  onPlayerStateChange,
   gender = 'none',
   onGenderChange
 }) => {
   const { t } = useLanguage();
-  const { shaderSettings, setShaderForSection, getShaderForSection } = useShaderSettings();
+  const { setShaderForSection, getShaderForSection } = useShaderSettings();
   const [selectedCategory, setSelectedCategory] = useState(null);
   const [selectedSection, setSelectedSection] = useState('');
-
-  // Offline cache hook
-  const {
-    isInitialized,
-    cacheStats,
-    isOfflineReady,
-    isCaching,
-    cacheProgress,
-    loadCacheStats,
-    cacheAllFiles,
-    clearCache
-  } = useOfflineCache();
-
-  // Získej audio soubory pro cache
-  const { audioFiles } = useFirebaseHudbaScanner();
-  const [allAudioFiles, setAllAudioFiles] = useState([]);
-
-  // Debug: Sleduj změny cache stats
-  useEffect(() => {
-    console.log('📊 SettingsScreen: Cache stats changed:', cacheStats);
-  }, [cacheStats]);
-
-  // Načti všechny audio soubory z metadata
-  useEffect(() => {
-    const loadAllAudioFiles = async () => {
-      try {
-        const metadata = await realtimeMetadataService.getAllMetadata();
-        console.log('📊 All metadata from realtimeMetadataService:', Object.keys(metadata).length);
-
-        // Debug: zobraz slova soubory
-        const slovaFiles = Object.values(metadata).filter(file =>
-          file.fileName && file.fileName.includes('slova/')
-        );
-        console.log('🎤 Slova files found:', slovaFiles.length);
-        console.log('🎤 Sample slova files:', slovaFiles.slice(0, 3).map(f => ({
-          fileName: f.fileName,
-          downloadURL: f.downloadURL || f.audioSrc,
-          folder: f.folder
-        })));
-
-        // Debug: zobraz všechny soubory s 'slova' v názvu
-        const allSlovaFiles = Object.values(metadata).filter(file =>
-          file.fileName && file.fileName.toLowerCase().includes('slova')
-        );
-        console.log('🎤 All files with "slova" in name:', allSlovaFiles.length);
-        console.log('🎤 Sample files with "slova":', allSlovaFiles.slice(0, 5).map(f => ({
-          fileName: f.fileName,
-          hasDownloadURL: !!(f.downloadURL || f.audioSrc)
-        })));
-
-        const files = Object.values(metadata).map(file => ({
-          fileName: file.fileName,
-          downloadURL: file.downloadURL || file.audioSrc,
-          size: file.size || 0
-        })).filter(file => file.downloadURL);
-
-        setAllAudioFiles(files);
-        console.log('📊 Loaded audio files for cache:', files.length);
-      } catch (error) {
-        console.error('❌ Failed to load audio files:', error);
-        // Fallback na data z useFirebaseHudbaScanner
-        if (audioFiles && audioFiles.length > 0) {
-          setAllAudioFiles(audioFiles);
-        }
-      }
-    };
-
-    loadAllAudioFiles();
-  }, [audioFiles]);
-
-  // Spusť stahování všech souborů
-  const handleCacheAllFiles = async () => {
-    console.log('🔄 handleCacheAllFiles called:', {
-      isInitialized,
-      isCaching,
-      allAudioFilesLength: allAudioFiles.length,
-      audioFilesLength: audioFiles?.length || 0
-    });
-
-    const filesToCache = allAudioFiles.length > 0 ? allAudioFiles : audioFiles;
-    if (filesToCache && filesToCache.length > 0) {
-      console.log('🚀 Starting cache with files:', filesToCache.length);
-
-      // Debug: zobraz slova soubory v filesToCache
-      const slovaFilesToCache = filesToCache.filter(file =>
-        file.fileName && file.fileName.includes('slova/')
-      );
-      console.log('🎤 Slova files to cache:', slovaFilesToCache.length);
-      console.log('🎤 Sample slova files to cache:', slovaFilesToCache.slice(0, 3).map(f => ({
-        fileName: f.fileName,
-        hasDownloadURL: !!(f.downloadURL || f.audioSrc)
-      })));
-
-      const result = await cacheAllFiles(filesToCache);
-      console.log('📊 Cache result:', result);
-    } else {
-      console.warn('⚠️ No audio files available for caching');
-    }
-  };
-
-  // Vymaž cache
-  const handleClearCache = async () => {
-    if (window.confirm(t('potvrditVymazaniCache'))) {
-      await clearCache();
-    }
-  };
 
   return (
     <FramerPageTransition screenKey="settings">

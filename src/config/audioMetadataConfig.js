@@ -27,22 +27,43 @@ export const AUDIO_METADATA_CONFIG = {
       metadataExtraction: true,
       enabled: true
     },
-    slova: {
+    meditace: {
+      path: 'meditace',
+      formats: ['mp3'],
+      recursive: true,
+      metadataExtraction: true,
+      enabled: true,
+      // Speciální metadata pro meditace soubory
+      extractSpecialMetadata: true,
+      specialFields: ['gender', 'topic', 'type']
+    },
+    dychani: {
+      path: 'dychani',
+      formats: ['ogg', 'mp3'], // Primárně OGG, ale podporuje i MP3 jako fallback
+      recursive: true,
+      metadataExtraction: true,
+      enabled: true
+    },
+    // Legacy složky pro zpětnou kompatibilitu
+    slova_legacy: {
       path: 'slova',
       formats: ['mp3'],
       recursive: true,
       metadataExtraction: true,
       enabled: true,
-      // Speciální metadata pro slova soubory
       extractSpecialMetadata: true,
-      specialFields: ['gender', 'topic', 'type']
+      specialFields: ['gender', 'topic', 'type'],
+      legacy: true,
+      mappedTo: 'meditace'
     },
-    dychanie: {
+    dychanie_legacy: {
       path: 'dychanie',
-      formats: ['ogg', 'mp3'], // Primárně OGG, ale podporuje i MP3 jako fallback
+      formats: ['ogg', 'mp3'],
       recursive: true,
       metadataExtraction: true,
-      enabled: true
+      enabled: true,
+      legacy: true,
+      mappedTo: 'dychani'
     }
   },
 
@@ -100,7 +121,7 @@ export function isSupportedFile(fileName) {
  * Získá konfiguraci pro složku
  */
 export function getFolderConfig(fileName) {
-  for (const [key, config] of Object.entries(AUDIO_METADATA_CONFIG.folders)) {
+  for (const config of Object.values(AUDIO_METADATA_CONFIG.folders)) {
     if (fileName.startsWith(`${config.path}/`)) {
       return config;
     }
@@ -114,7 +135,7 @@ export function getFolderConfig(fileName) {
 export function getFormatConfig(fileName) {
   const fileNameLower = fileName.toLowerCase();
 
-  for (const [key, config] of Object.entries(AUDIO_METADATA_CONFIG.supportedFormats)) {
+  for (const config of Object.values(AUDIO_METADATA_CONFIG.supportedFormats)) {
     if (config.extensions.some(ext => fileNameLower.endsWith(ext))) {
       return config;
     }
