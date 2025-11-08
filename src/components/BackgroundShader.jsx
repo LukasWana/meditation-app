@@ -20,7 +20,8 @@ const BackgroundShader = ({
   breathOutDuration = 4, // Délka výdechu v sekundách
   // Audio data pro synchronizaci s hudbou
   audioData = null, // { frequencies: Array<number>, amplitude: number, bass: number, mid: number, treble: number }
-  forceSquare = null // Pokud je true, shader drží poměr stran 1:1 (výchozí auto podle varianty)
+  forceSquare = null, // Pokud je true, shader drží poměr stran 1:1 (výchozí auto podle varianty)
+  zIndex = 5 // Umožňuje upravit vrstvu shaderu (výchozí hodnota drží shader pod UI)
 }) => {
   const canvasRef = useRef(null);
   const animationFrameRef = useRef(null);
@@ -943,7 +944,7 @@ void main() {
     canvasRefExists: !!canvasRef.current,
     canvasWidth: canvasRef.current?.width,
     canvasHeight: canvasRef.current?.height,
-    canvasStyleZIndex: 5,
+    canvasStyleZIndex: zIndex,
     renderLoopActive: !!animationFrameRef.current,
     transitionStateKey: playbackContext?.transitionState?.toShaderKey,
     transitionStateTransitioning: playbackContext?.transitionState?.isTransitioning
@@ -991,7 +992,7 @@ void main() {
             left: 0,
             width: '100vw',
             height: '100vh',
-            zIndex: 4000,
+            zIndex,
             pointerEvents: 'none',
             opacity: opacity,
             backgroundColor: colorValue,
@@ -1010,7 +1011,7 @@ void main() {
             left: 0,
             width: '100vw',
             height: '100vh',
-            zIndex: 4500, // Nad pozadím/overlay, ale pod hlavním UI (přehrávač má 9999)
+            zIndex, // Nad pozadím/overlay, ale pod hlavním UI (přehrávač má 9999)
             pointerEvents: 'none',
             opacity: opacity,
             backgroundColor: 'transparent',

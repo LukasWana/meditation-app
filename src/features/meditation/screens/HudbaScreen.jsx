@@ -158,6 +158,7 @@ const HudbaScreen = ({
           intensity={0.8}
           enabled={true}
           opacity={1.0} // Barva zobraz vždy s plnou opacity
+          zIndex={5} // Udrž barvu pod UI vrstvy
           audioData={null} // Na této stránce nepoužíváme audio data
         />
       )}

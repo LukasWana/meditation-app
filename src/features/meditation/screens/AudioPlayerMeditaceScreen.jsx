@@ -59,18 +59,18 @@ const AudioPlayerMeditaceScreen = ({
       return transitionState.toShaderKey;
     }
 
-    const shader = getShaderForSection('meditace');
-    if (shader) {
-      return shader;
-    }
-
     const color = getColorForSection('meditace');
     if (color) {
       return `__COLOR__${color}`;
     }
 
+    const shader = getShaderForSection('meditace');
+    if (shader) {
+      return shader;
+    }
+
     return 'default';
-  }, [transitionState?.toShaderKey, getShaderForSection, getColorForSection]);
+  }, [transitionState?.toShaderKey, getColorForSection, getShaderForSection]);
 
   const handleCloseAudio = () => {
     try {

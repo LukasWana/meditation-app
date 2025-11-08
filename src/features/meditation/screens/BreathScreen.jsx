@@ -179,20 +179,21 @@ const BreathScreen = ({
         className="min-h-screen w-full max-w-full bg-[#f4ddc4] fixed inset-0"
         style={{
           zIndex: 0,
-          opacity: isBreathing ? 0.3 : 1, // Průhledné při dýchání, aby shader prosvítal
-          transition: 'opacity 3s ease-in-out' // Plynulé prolnutí (3 sekundy)
+          opacity: isBreathing ? 0.55 : 1, // Lehké prosvítání, ale UI zůstává čitelné
+          transition: 'opacity 2s ease-in-out' // Plynulé prolnutí
         }}
       />
 
       {/* BackgroundShader - zobraz pouze při dýchání s plynulým prolnutím */}
       <BackgroundShader
         variant={getShaderForSection('dychani')}
-        intensity={0.8}
+        intensity={0.6}
         enabled={true}
-        opacity={isBreathing ? 1.0 : 0.0}
+        opacity={isBreathing ? 0.75 : 0.0}
         breathPhase={isBreathing ? breathPhase : null}
         breathInDuration={breathInDuration}
         breathOutDuration={breathOutDuration}
+        zIndex={2}
       />
 
       {/* Hlavní obsah stránky - nad shaderem - průhledné pozadí, aby shader prosvítal */}
@@ -201,7 +202,9 @@ const BreathScreen = ({
         style={{
           position: 'relative',
           zIndex: 10,
-          backgroundColor: 'transparent' // Průhledné pozadí, aby shader prosvítal
+          backgroundColor: isBreathing ? 'rgba(244, 221, 196, 0.92)' : '#f4ddc4',
+          backdropFilter: isBreathing ? 'blur(4px)' : 'none',
+          transition: 'background-color 0.8s ease, backdrop-filter 0.8s ease'
         }}
         onTouchStart={onTouchStart}
         onTouchMove={onTouchMove}

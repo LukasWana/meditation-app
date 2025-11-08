@@ -10,6 +10,7 @@ import { useBreathSounds } from '@hooks';
 
 // Lazy loading modálů pro lepší performance
 const WheelPickerModal = lazy(() => import('@components/TimePickerModal').then(m => ({ default: m.WheelPickerModal })));
+const DualWheelPickerModal = lazy(() => import('@components/TimePickerModal').then(m => ({ default: m.DualWheelPickerModal })));
 const SoundThemeGallery = lazy(() => import('@components/SoundThemeGallery'));
 
 const DychaniScreen = ({
@@ -32,6 +33,8 @@ const DychaniScreen = ({
   onTouchMove,
   onTouchEnd,
   onBreathSoundChange,
+  onBreathRhythmChange,
+  onPreparationTimeChange,
   isPreparing,
   preparationCountdown,
   preparationTime
@@ -48,6 +51,8 @@ const DychaniScreen = ({
 
   const [showGallery, setShowGallery] = useState(false);
   const [showDurationPicker, setShowDurationPicker] = useState(false);
+  const [showPreparationPicker, setShowPreparationPicker] = useState(false);
+  const [showRhythmPicker, setShowRhythmPicker] = useState(false);
   const [breathCycleTime, setBreathCycleTime] = useState(0); // Čas v aktuálním cyklu dýchání (0 až breathInDuration + breathOutDuration)
 
   useEffect(() => {
@@ -142,6 +147,12 @@ const DychaniScreen = ({
   const formatTime = (seconds) => {
     const mins = Math.floor(seconds / 60);
     const secs = Math.floor(seconds % 60);
+    return `${mins}:${secs.toString().padStart(2, '0')}`;
+  };
+
+  const formatPreparationTime = (seconds) => {
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
     return `${mins}:${secs.toString().padStart(2, '0')}`;
   };
 
@@ -241,31 +252,33 @@ const DychaniScreen = ({
         className="min-h-screen w-full max-w-full bg-[#f4ddc4] fixed inset-0"
         style={{
           zIndex: 0,
-          opacity: isPlaying ? 0.3 : 1, // Průhledné při přehrávání, aby shader prosvítal
-          transition: 'opacity 3s ease-in-out' // Plynulé prolnutí (3 sekundy)
+          opacity: isPlaying ? 0.45 : 1,
+          transition: 'opacity 2s ease-in-out'
         }}
       />
 
       {/* BackgroundShader - zobraz pouze při přehrávání s plynulým prolnutím */}
       <BackgroundShader
-        variant={breathShader}
-        intensity={0.6}
+        variant={getShaderForSection('meditace') || 'meditace'}
+        intensity={0.5}
         enabled={true}
-        opacity={isPlaying ? 0.75 : 0.0}
+        opacity={isPlaying ? 0.65 : 0.0}
         breathPhase={isPlaying ? breathPhase : null}
         breathInDuration={breathInDuration}
         breathOutDuration={breathOutDuration}
+        zIndex={2}
       />
 
       {/* Jemný barevný overlay pro sjednocení se zbytkem UI */}
       <div
         className="fixed inset-0 pointer-events-none"
         style={{
-          zIndex: 4000,
+          zIndex: 3,
           background: isPlaying
-            ? 'linear-gradient(180deg, rgba(244,221,196,0.6) 0%, rgba(244,221,196,0.4) 100%)'
-            : 'rgba(244,221,196,0.9)',
-          transition: 'background 0.6s ease, opacity 0.6s ease'
+            ? 'rgba(244,221,196,0.9)'
+            : 'rgba(244,221,196,0.95)',
+          backdropFilter: isPlaying ? 'blur(2px)' : 'none',
+          transition: 'background 0.6s ease, backdrop-filter 0.6s ease, opacity 0.6s ease'
         }}
       />
 
@@ -469,20 +482,62 @@ const DychaniScreen = ({
               animationType="fadeIn"
               delay={0.3}
             >
-              <div className="flex justify-center">
-                <button
-                  onClick={() => setShowDurationPicker(true)}
-                  className="text-4xl font-light text-gray-800 hover:text-black transition-colors cursor-pointer px-6 py-4"
-                >
-                  {selectedDuration}
-                </button>
-                <span className="text-3xl font-light text-gray-600 pt-4 px-2">
-                  {t('minut')}
-                </span>
+              <div className="flex justify-center items-start gap-8 md:gap-12 mb-4">
+                <div className="flex flex-col items-center">
+                  <button
+                    onClick={() => setShowPreparationPicker(true)}
+                    className="text-4xl md:text-5xl font-sans font-medium text-gray-800 hover:text-black transition-colors cursor-pointer mb-1"
+                  >
+                    {formatPreparationTime(preparationTime)}
+                  </button>
+                  <span className="text-base md:text-lg font-serif text-gray-800 font-light">
+                    {t('priprava') || 'příprava'}
+                  </span>
+                </div>
+
+                <div className="flex flex-col items-center">
+                  <button
+                    onClick={() => setShowDurationPicker(true)}
+                    className="text-4xl md:text-5xl font-sans font-medium text-gray-800 hover:text-black transition-colors cursor-pointer mb-1"
+                  >
+                    {selectedDuration}
+                  </button>
+                  <span className="text-base md:text-lg font-serif text-gray-800 font-light">
+                    {t('dlzkaMeditacie') || 'délka'}
+                  </span>
+                </div>
+
+                <div className="flex flex-col items-center">
+                  <button
+                    onClick={() => setShowRhythmPicker(true)}
+                    className="text-4xl md:text-5xl font-sans font-medium text-gray-800 hover:text-black transition-colors cursor-pointer mb-1"
+                  >
+                    {breathInDuration} : {breathOutDuration}
+                  </button>
+                  <span className="text-base md:text-lg font-serif text-gray-800 font-light">
+                    {t('rytmus') || 'rytmus'}
+                  </span>
+                </div>
               </div>
 
-              {(showDurationPicker || showGallery) && (
+              {(showDurationPicker || showGallery || showPreparationPicker || showRhythmPicker) && (
                 <Suspense fallback={null}>
+                  {showPreparationPicker && (
+                    <WheelPickerModal
+                      isOpen={showPreparationPicker}
+                      onClose={() => setShowPreparationPicker(false)}
+                      value={preparationTime}
+                      onChange={(value) => {
+                        onPreparationTimeChange?.(value);
+                      }}
+                      min={0}
+                      max={60}
+                      step={1}
+                      label={t('sekund')}
+                      title={t('priprava') || 'příprava'}
+                    />
+                  )}
+
                   {showDurationPicker && (
                     <WheelPickerModal
                       isOpen={showDurationPicker}
@@ -494,6 +549,27 @@ const DychaniScreen = ({
                       step={1}
                       label={t('dlzkaMeditacie')}
                       title={t('dlzkaMeditacie')}
+                    />
+                  )}
+
+                  {showRhythmPicker && (
+                    <DualWheelPickerModal
+                      isOpen={showRhythmPicker}
+                      onClose={() => setShowRhythmPicker(false)}
+                      leftValue={breathInDuration}
+                      rightValue={breathOutDuration}
+                      onChange={(inValue, outValue) => {
+                        onBreathRhythmChange?.(inValue, outValue);
+                      }}
+                      leftLabel={t('nadech') || 'nádech'}
+                      rightLabel={t('vydech') || 'výdech'}
+                      leftMin={1}
+                      leftMax={20}
+                      leftStep={1}
+                      rightMin={1}
+                      rightMax={20}
+                      rightStep={1}
+                      title={t('rytmusDychania') || 'rytmus dýchání'}
                     />
                   )}
                 </Suspense>
