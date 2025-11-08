@@ -217,7 +217,7 @@ const DychaniScreen = ({
               {/* Text pod odpočítáváním */}
               <div className="mt-6 text-center">
                 <div className="text-black font-medium text-xl">
-                  {t('pripravaNaMeditaci')}
+                  {t('pripravaNaDychanie')}
                 </div>
               </div>
             </FramerSection>
@@ -503,7 +503,7 @@ const DychaniScreen = ({
                     {selectedDuration}
                   </button>
                   <span className="text-base md:text-lg font-serif text-gray-800 font-light">
-                    {t('dlzkaMeditacie') || 'délka'}
+                    {t('dlzkaDychania') || 'délka'}
                   </span>
                 </div>
 
@@ -547,8 +547,8 @@ const DychaniScreen = ({
                       min={1}
                       max={60}
                       step={1}
-                      label={t('dlzkaMeditacie')}
-                      title={t('dlzkaMeditacie')}
+                      label={t('dlzkaDychania')}
+                      title={t('dlzkaDychania')}
                     />
                   )}
 

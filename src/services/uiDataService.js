@@ -74,8 +74,8 @@ class UIDataService {
       translations: {
         SK: {
           hudba: 'hudba',
-          slova: 'meditácia',
-          meditacia: 'dýchanie',
+          meditace: 'meditácia',
+          dychani: 'dýchanie',
           nastavenie: 'nastavenie',
           pomoc: 'pomoc',
           loading: 'načítam...',
@@ -84,12 +84,14 @@ class UIDataService {
           zvolteZvukNadech: 'nádech',
           zvolteZvukVydech: 'výdech',
           ziadnyZvuk: 'žiadny zvuk',
-          zobrazitGaleriu: 'zobraziť galériu'
+          zobrazitGaleriu: 'zobraziť galériu',
+          dlzkaDychania: 'Dĺžka dýchania (minúty)',
+          pripravaNaDychanie: 'Príprava na dýchanie...'
         },
         CZ: {
           hudba: 'hudba',
-          slova: 'meditace',
-          meditacia: 'dýchání',
+          meditace: 'meditace',
+          dychani: 'dýchání',
           nastavenie: 'nastavení',
           pomoc: 'pomoc',
           loading: 'načítám...',
@@ -98,12 +100,14 @@ class UIDataService {
           zvolteZvukNadech: 'nádech',
           zvolteZvukVydech: 'výdech',
           ziadnyZvuk: 'žádný zvuk',
-          zobrazitGaleriu: 'zobrazit galerii'
+          zobrazitGaleriu: 'zobrazit galerii',
+          dlzkaDychania: 'Délka dýchání (minuty)',
+          pripravaNaDychanie: 'Příprava na dýchání...'
         },
         EN: {
           hudba: 'music',
-          slova: 'meditation',
-          meditacia: 'breathing',
+          meditace: 'meditation',
+          dychani: 'breathing',
           nastavenie: 'settings',
           pomoc: 'help',
           loading: 'loading...',
@@ -112,7 +116,9 @@ class UIDataService {
           zvolteZvukNadech: 'sound for inhale',
           zvolteZvukVydech: 'sound for exhale',
           ziadnyZvuk: 'no sound',
-          zobrazitGaleriu: 'show gallery'
+          zobrazitGaleriu: 'show gallery',
+          dlzkaDychania: 'Breathing duration (minutes)',
+          pripravaNaDychanie: 'Preparing for breathing...'
         }
       },
       config: {

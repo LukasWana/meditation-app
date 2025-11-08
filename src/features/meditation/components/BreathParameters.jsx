@@ -56,7 +56,7 @@ const BreathParameters = ({
             {formatTime(totalTime)}
           </button>
           <span className="text-sm uppercase tracking-[0.2em] text-gray-600">
-            {t('dlzkaMeditacie') || t('dlzka') || 'délka'}
+            {t('dlzkaDychania') || t('dlzka') || 'délka'}
           </span>
         </div>
 

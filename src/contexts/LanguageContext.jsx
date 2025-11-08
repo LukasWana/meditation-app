@@ -11,6 +11,36 @@ export const useLanguage = () => {
   return context;
 };
 
+const normalizeTranslationKeys = (source = {}) => {
+  const normalized = { ...source };
+
+  // Legacy rename: slova -> meditace
+  if (normalized.slova && !normalized.meditace) {
+    normalized.meditace = normalized.slova;
+  }
+  delete normalized.slova;
+
+  // Legacy rename: meditacia -> dychani
+  if (normalized.meditacia && !normalized.dychani) {
+    normalized.dychani = normalized.meditacia;
+  }
+  delete normalized.meditacia;
+
+  // Legacy rename: dlzkaMeditacie -> dlzkaDychania
+  if (normalized.dlzkaMeditacie && !normalized.dlzkaDychania) {
+    normalized.dlzkaDychania = normalized.dlzkaMeditacie;
+  }
+  delete normalized.dlzkaMeditacie;
+
+  // Legacy rename: pripravaNaMeditaci -> pripravaNaDychanie
+  if (normalized.pripravaNaMeditaci && !normalized.pripravaNaDychanie) {
+    normalized.pripravaNaDychanie = normalized.pripravaNaMeditaci;
+  }
+  delete normalized.pripravaNaMeditaci;
+
+  return normalized;
+};
+
 export const LanguageProvider = ({ children }) => {
   const [language, setLanguage] = useState(() => {
     // Načti jazyk z localStorage nebo použij default (slovenština)
@@ -22,8 +52,6 @@ export const LanguageProvider = ({ children }) => {
     SK: {
       // Hlavná navigácia
       hudba: 'hudba',
-      slova: 'meditácia',
-      meditacia: 'dýchanie',
       meditace: 'meditácia',
       dychani: 'dýchanie',
       nastavenie: 'nastavenie',
@@ -56,6 +84,7 @@ export const LanguageProvider = ({ children }) => {
       casKPriprave: 'čas k príprave',
       priprava: 'príprava',
       dlzka: 'dĺžka',
+      dlzkaDychania: 'Dĺžka dýchania (minúty)',
       rytmus: 'rytmus',
       nastaveniaZvuku: 'nastavenia zvuku',
       zvolteZvuk: 'zvoľte zvuk',
@@ -73,11 +102,10 @@ export const LanguageProvider = ({ children }) => {
       zakazane: 'zakázané',
       hotovo: 'hotovo',
       vybrany: 'vybraný',
-      nastavteCasNaPripravu: 'Nastavte čas na prípravu pred začiatkom meditácie',
+      nastavteCasNaPripravu: 'Nastavte čas na prípravu pred začiatkom dýchania',
       potvrditVymazaniCache: 'Naozaj chcete vymazať všetky stiahnuté súbory?',
       minut: 'min',
-      dlzkaMeditacie: 'Dĺžka meditácie (minúty)',
-      pripravaNaMeditaci: 'Príprava na meditáciu...',
+      pripravaNaDychanie: 'Príprava na dýchanie...',
       selected: '✓ Vybraté',
       emptyState: 'Žiadne súbory nenájdené',
 
@@ -116,8 +144,6 @@ export const LanguageProvider = ({ children }) => {
     CZ: {
       // Hlavní navigace
       hudba: 'hudba',
-      slova: 'meditace',
-      meditacia: 'dýchání',
       meditace: 'meditace',
       dychani: 'dýchání',
       nastavenie: 'nastavení',
@@ -150,6 +176,7 @@ export const LanguageProvider = ({ children }) => {
       casKPriprave: 'čas k přípravě',
       priprava: 'příprava',
       dlzka: 'délka',
+      dlzkaDychania: 'Délka dýchání (minuty)',
       rytmus: 'rytmus',
       nastaveniaZvuku: 'nastavení zvuku',
       zvolteZvuk: 'vyberte zvuk',
@@ -167,11 +194,10 @@ export const LanguageProvider = ({ children }) => {
       zakazane: 'zakázáno',
       hotovo: 'hotovo',
       vybrany: 'vybraný',
-      nastavteCasNaPripravu: 'Nastavte čas na přípravu před začátkem meditace',
+      nastavteCasNaPripravu: 'Nastavte čas na přípravu před začátkem dýchání',
       potvrditVymazaniCache: 'Opravdu chcete vymazat všechny stažené soubory?',
       minut: 'min',
-      dlzkaMeditacie: 'Délka meditace (minuty)',
-      pripravaNaMeditaci: 'Příprava na meditaci...',
+      pripravaNaDychanie: 'Příprava na dýchání...',
       selected: '✓ Vybráno',
       emptyState: 'Žádné soubory nenalezeny',
 
@@ -210,8 +236,6 @@ export const LanguageProvider = ({ children }) => {
     EN: {
       // Main navigation
       hudba: 'music',
-      slova: 'meditation',
-      meditacia: 'breathing',
       meditace: 'meditation',
       dychani: 'breathing',
       nastavenie: 'settings',
@@ -244,6 +268,7 @@ export const LanguageProvider = ({ children }) => {
       casKPriprave: 'preparation time',
       priprava: 'preparation',
       dlzka: 'duration',
+      dlzkaDychania: 'Breathing duration (minutes)',
       rytmus: 'rhythm',
       nastaveniaZvuku: 'sound settings',
       zvolteZvuk: 'select sound',
@@ -261,11 +286,10 @@ export const LanguageProvider = ({ children }) => {
       zakazane: 'disabled',
       hotovo: 'done',
       vybrany: 'selected',
-      nastavteCasNaPripravu: 'Set preparation time before meditation starts',
+      nastavteCasNaPripravu: 'Set preparation time before breathing starts',
       potvrditVymazaniCache: 'Do you really want to delete all downloaded files?',
       minut: 'min',
-      dlzkaMeditacie: 'Meditation duration (minutes)',
-      pripravaNaMeditaci: 'Preparing for meditation...',
+      pripravaNaDychanie: 'Preparing for breathing...',
       selected: '✓ Selected',
       emptyState: 'No files found',
 
@@ -315,36 +339,25 @@ export const LanguageProvider = ({ children }) => {
           // Tím zajistíme, že pokud v DB chybí nějaký klíč, použije se defaultní hodnota
           setTranslations(prev => {
             const merged = { ...prev };
-            // Klíče, které se NIKDY nepřepisují z DB (vždy použijeme defaultní hodnoty)
-            const protectedKeys = ['slova', 'meditacia'];
 
             ['SK', 'CZ', 'EN'].forEach(lang => {
               if (uiData.translations[lang]) {
-                // Vytvoř kopii DB překladů bez chráněných klíčů
-                const dbTranslationsWithoutProtected = { ...uiData.translations[lang] };
-                protectedKeys.forEach(key => {
-                  delete dbTranslationsWithoutProtected[key];
-                });
-
                 merged[lang] = {
                   ...prev[lang], // Defaultní překlady (s novými hodnotami)
-                  ...dbTranslationsWithoutProtected, // Překlady z DB (bez chráněných klíčů)
-                  // Chráněné klíče se vždy používají z defaultních hodnot
-                  ...Object.fromEntries(
-                    protectedKeys.map(key => [key, prev[lang]?.[key]])
-                  )
+                  ...normalizeTranslationKeys(uiData.translations[lang])
                 };
               }
             });
             // Pro debug: zkontroluj, zda DB obsahuje staré překlady
             if (import.meta.env.MODE === 'development') {
               console.log('🔍 Checking translations:', {
-                defaultSlova: prev.SK?.slova,
-                defaultMeditacia: prev.SK?.meditacia,
-                dbSlova: uiData.translations.SK?.slova,
-                dbMeditacia: uiData.translations.SK?.meditacia,
-                finalSlova: merged.SK?.slova,
-                finalMeditacia: merged.SK?.meditacia
+                defaultMeditace: prev.SK?.meditace,
+                defaultDychani: prev.SK?.dychani,
+                dbMeditace: uiData.translations.SK?.meditace,
+                dbLegacySlova: uiData.translations.SK?.slova,
+                dbLegacyMeditacia: uiData.translations.SK?.meditacia,
+                finalMeditace: merged.SK?.meditace,
+                finalDychani: merged.SK?.dychani
               });
             }
             return merged;
@@ -365,24 +378,12 @@ export const LanguageProvider = ({ children }) => {
             // Slouč překlady z DB s aktuálními (merge místo replace)
             setTranslations(prev => {
               const merged = { ...prev };
-              // Klíče, které se NIKDY nepřepisují z DB (vždy použijeme defaultní hodnoty)
-              const protectedKeys = ['slova', 'meditacia'];
 
               ['SK', 'CZ', 'EN'].forEach(lang => {
                 if (data.translations[lang]) {
-                  // Vytvoř kopii DB překladů bez chráněných klíčů
-                  const dbTranslationsWithoutProtected = { ...data.translations[lang] };
-                  protectedKeys.forEach(key => {
-                    delete dbTranslationsWithoutProtected[key];
-                  });
-
                   merged[lang] = {
                     ...prev[lang], // Aktuální překlady
-                    ...dbTranslationsWithoutProtected, // Nové překlady z DB (bez chráněných klíčů)
-                    // Chráněné klíče se vždy používají z aktuálních hodnot
-                    ...Object.fromEntries(
-                      protectedKeys.map(key => [key, prev[lang]?.[key]])
-                    )
+                    ...normalizeTranslationKeys(data.translations[lang])
                   };
                 }
               });
