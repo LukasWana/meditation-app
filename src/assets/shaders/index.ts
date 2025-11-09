@@ -29,7 +29,6 @@ import FibonacciSpheres from './FibonacciSpheres';
 import FlyingStars from './FlyingStars';
 import FluidStars from './FluidStars';
 import FractalCavern from './FractalCavern';
-import FractalJourney from './FractalJourney';
 import FractalVortex from './FractalVortex';
 import FreistilInColors from './FreistilInColors';
 import GalacticVortex from './GalacticVortex';
@@ -146,7 +145,6 @@ const sources = {
   'FluidStars': FluidStars,
   'FlyingStars': FlyingStars,
   'FractalCavern': FractalCavern,
-  'FractalJourney': FractalJourney,
   'FractalVortex': FractalVortex,
   'FreistilInColors': FreistilInColors,
   'GalacticVortex': GalacticVortex,

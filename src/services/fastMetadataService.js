@@ -11,8 +11,51 @@ class FastMetadataService {
     this.metadata = new Map();
     this.isLoading = false;
     this.lastUpdate = null;
-    this.cacheKey = 'fast-metadata-cache';
+    this.cacheKey = 'fast-metadata-cache-v2';
     this.cacheExpiry = 7 * 24 * 60 * 60 * 1000; // 7 dní - delší cache pro lepší performance
+
+    try {
+      if (typeof window !== 'undefined' && window.localStorage) {
+        window.localStorage.removeItem('fast-metadata-cache');
+      }
+    } catch (error) {
+      log.debug('Legacy cache removal failed (safe to ignore):', error?.message);
+    }
+  }
+
+  normalizeStoragePath(value = '') {
+    if (!value || typeof value !== 'string') {
+      return value;
+    }
+    return value
+      .replace(/meditace%2F/gi, 'meditacie%2F')
+      .replace(/meditace\//gi, 'meditacie/');
+  }
+
+  normalizeMetadataEntry(entry) {
+    if (!entry || typeof entry !== 'object') {
+      return entry;
+    }
+
+    const normalized = { ...entry };
+
+    if (normalized.fileName) {
+      normalized.fileName = this.normalizeStoragePath(normalized.fileName);
+    }
+
+    if (normalized.fullPath) {
+      normalized.fullPath = this.normalizeStoragePath(normalized.fullPath);
+    }
+
+    if (normalized.downloadURL) {
+      normalized.downloadURL = this.normalizeStoragePath(normalized.downloadURL);
+    }
+
+    if (normalized.audioSrc) {
+      normalized.audioSrc = this.normalizeStoragePath(normalized.audioSrc);
+    }
+
+    return normalized;
   }
 
   loadFromCache() {
@@ -24,7 +67,13 @@ class FastMetadataService {
 
         if (now - timestamp < this.cacheExpiry) {
           log.info(`⚡ Fast load: ${Object.keys(data).length} metadata records from cache`);
-          this.metadata = new Map(Object.entries(data));
+          const normalizedEntries = Object.entries(data).map(([key, value]) => {
+            const normalizedValue = this.normalizeMetadataEntry(value);
+            const normalizedKey = this.normalizeStoragePath(key);
+            return [normalizedKey || key, normalizedValue];
+          });
+
+          this.metadata = new Map(normalizedEntries);
           this.lastUpdate = new Date(timestamp);
           return true;
         } else {
@@ -39,7 +88,13 @@ class FastMetadataService {
 
   saveToCache() {
     try {
-      const data = Object.fromEntries(this.metadata);
+      const data = Object.fromEntries(
+        Array.from(this.metadata.entries()).map(([key, value]) => {
+          const normalizedKey = this.normalizeStoragePath(key);
+          const normalizedValue = this.normalizeMetadataEntry(value);
+          return [normalizedKey || key, normalizedValue];
+        })
+      );
       const cacheData = {
         data,
         timestamp: Date.now()
@@ -652,7 +707,8 @@ class FastMetadataService {
     if (!data) return null;
 
     // Získej fileName - může být v různých polích
-    const fileName = data.fileName || data.fullPath || data.name || '';
+    const rawFileName = data.fileName || data.fullPath || data.name || '';
+    const fileName = this.normalizeStoragePath(rawFileName);
 
     if (!fileName) {
       return null;
@@ -669,9 +725,9 @@ class FastMetadataService {
       if (!folder) {
         if (fileName.includes('hudba/')) {
           folder = 'hudba';
-        } else if (fileName.includes('meditace/')) {
-          folder = 'meditace';
         } else if (fileName.includes('meditacie/')) {
+          folder = 'meditace';
+        } else if (fileName.includes('meditace/')) {
           folder = 'meditace'; // legacy
         } else if (fileName.includes('dychani/')) {
           folder = 'dychani';
@@ -718,15 +774,15 @@ class FastMetadataService {
       });
 
       return {
-        fileName: fileName,
-        fileNameOnly: fileNameOnly,
+        fileName,
+        fileNameOnly,
         folder: folder,
         subFolder: albumName,
         type: 'image',
         contentType: data.contentType || this.getImageContentType(fileNameOnly),
         timeCreated: data.timeCreated || data.lastUpdated || new Date().toISOString(),
         updated: data.updated || data.lastUpdated || new Date().toISOString(),
-        downloadURL: data.downloadURL || data.audioSrc,
+        downloadURL: this.normalizeStoragePath(data.downloadURL || data.audioSrc),
         size: data.size || null,
         isCover: isCover,
         albumName: albumName
@@ -739,9 +795,9 @@ class FastMetadataService {
     if (!folder) {
       if (fileName.includes('hudba/')) {
         folder = 'hudba';
-      } else if (fileName.includes('meditace/')) {
-        folder = 'meditace';
       } else if (fileName.includes('meditacie/')) {
+        folder = 'meditace';
+      } else if (fileName.includes('meditace/')) {
         folder = 'meditace'; // legacy
       } else if (fileName.includes('dychani/')) {
         folder = 'dychani';
@@ -778,16 +834,19 @@ class FastMetadataService {
     const parsed = parseAudioFileName(fileNameOnly);
 
     // Vytvoř normalizovaná metadata
+    const normalizedDownloadURL = this.normalizeStoragePath(data.downloadURL || data.audioSrc);
+
     const normalized = {
-      fileName: fileName,
-      fileNameOnly: fileNameOnly,
+      fileName,
+      fileNameOnly,
       folder: folder,
       subFolder: folder === 'hudba' && fileName.split('/').length > 2 ? fileName.split('/')[1] : null,
       type: type,
       contentType: data.contentType || 'audio/mpeg',
       timeCreated: data.timeCreated || data.lastUpdated || new Date().toISOString(),
       updated: data.updated || data.lastUpdated || new Date().toISOString(),
-      downloadURL: data.downloadURL || data.audioSrc,
+      downloadURL: normalizedDownloadURL,
+      audioSrc: normalizedDownloadURL,
       duration: data.duration || null,
       durationFormatted: data.durationFormatted || data.durationDetailed || 'N/A',
       size: data.size || null,

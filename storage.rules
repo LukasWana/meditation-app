@@ -51,11 +51,15 @@ service firebase.storage {
                         request.resource.contentType.matches('audio/mpeg'));
     }
 
-    // Pravidla pro jazykové složky
-    match /{language}/{allPaths=**} {
-      allow read: if language in ['SK', 'CZ', 'EN'];
+    // Pravidla pro meditacie složku (včetně jazykových podsložek)
+    match /meditacie/{allPaths=**} {
+      // Veřejné čtení včetně anonymních uživatelů (potřebujeme list/read pro admin nástroje)
+      allow read: if true;
+
+      // Zápis pouze pro autentifikované admin uživatele
       allow write: if request.auth != null &&
                       request.auth.token.admin == true;
+
       allow create: if request.auth != null &&
                        request.auth.token.admin == true &&
                        request.resource.size < 50 * 1024 * 1024 &&

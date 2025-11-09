@@ -122,11 +122,21 @@ class MeditaceDataService {
         });
       }
 
+      const normalizeMeditacePath = (value = '') => {
+        if (!value || typeof value !== 'string') {
+          return value;
+        }
+        return value
+          .replace(/meditace%2F/gi, 'meditacie%2F')
+          .replace(/meditace\//gi, 'meditacie/');
+      };
+
       log.info(`Found ${meditaceMetadata.length} meditace files`);
 
       // Transformuj metadata na formát pro UI
       const transformedItems = meditaceMetadata.map(meta => {
-        const fileName = meta.fileName || meta.fullPath || '';
+        const fileNameRaw = meta.fileName || meta.fullPath || '';
+        const fileName = normalizeMeditacePath(fileNameRaw);
 
         // Extrahuj pohlaví z názvu souboru
         const fileNameLower = fileName.toLowerCase();
@@ -141,9 +151,12 @@ class MeditaceDataService {
         const duration = meta.durationFormatted || meta.duration || 'N/A';
         const durationSeconds = meta.duration || 0;
 
+        const rawAudioSrc = meta.downloadURL || meta.audioSrc;
+        const audioSrc = normalizeMeditacePath(rawAudioSrc);
+
         return {
-          fileName: fileName,
-          audioSrc: meta.downloadURL || meta.audioSrc,
+          fileName,
+          audioSrc,
           title: displayName,
           duration: duration,
           durationSeconds: durationSeconds,
@@ -153,7 +166,7 @@ class MeditaceDataService {
           size: meta.size || 0,
           sizeFormatted: this.formatFileSize(meta.size || 0),
           folder: 'meditace',
-          downloadURL: meta.downloadURL,
+          downloadURL: audioSrc,
           parsed: {
             gender: gender,
             topic: topic,

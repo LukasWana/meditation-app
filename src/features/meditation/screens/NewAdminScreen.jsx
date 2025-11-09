@@ -8,6 +8,9 @@ import { ref as dbRef, set, get } from 'firebase/database';
 import { signInAnonymously } from 'firebase/auth';
 import offlineCacheService from '@services/offlineCacheService';
 import DataStorageCharts from '@components/admin/DataStorageCharts';
+import { extractAudioMetadata } from '@utils/audioMetadataExtractor';
+import { generateWaveformViaFunction } from '@utils/generateWaveformViaFunction';
+import { MEDITACE_ROOTS, isMeditaceFilePath, normalizeMeditaceFolder, extractMeditaceLanguage } from '@utils/meditaceStorage';
 
 const NewAdminScreen = () => {
   const [isDarkMode, setIsDarkMode] = useState(false);
@@ -99,36 +102,61 @@ const NewAdminScreen = () => {
 
   // Rekurzivní načtení všech souborů ze složky
   const getAllFilesRecursively = async (folderRef, folderName) => {
-    const allFiles = [];
+    const files = [];
 
-    const processFolder = async (ref) => {
-      const result = await listAll(ref);
+    const processFolder = async (currentFolderRef) => {
+      try {
+        const result = await listAll(currentFolderRef);
 
-      // Přidej všechny soubory z aktuální složky
-      for (const fileRef of result.items) {
-        try {
-          const metadata = await getMetadata(fileRef);
-          const downloadURL = await getDownloadURL(fileRef);
-          allFiles.push({
-            name: fileRef.name,
-            fullPath: fileRef.fullPath,
-            size: metadata.size,
-            folder: folderName,
-            downloadURL: downloadURL
-          });
-        } catch (error) {
-          console.warn(`Chyba při načítání souboru ${fileRef.name}:`, error);
+        // Přidej všechny soubory z aktuální složky
+        for (const fileRef of result.items) {
+          try {
+            const metadata = await getMetadata(fileRef);
+            const downloadURL = await getDownloadURL(fileRef);
+            files.push({
+              name: fileRef.name,
+              fullPath: fileRef.fullPath,
+              size: metadata.size,
+              folder: folderName,
+              downloadURL: downloadURL
+            });
+          } catch (error) {
+            console.warn(`Chyba při načítání souboru ${fileRef.name}:`, error);
+          }
         }
-      }
 
-      // Rekurzivně zpracuj všechny podsložky
-      for (const folderRef of result.prefixes) {
-        await processFolder(folderRef);
+        // Rekurzivně zpracuj všechny podsložky
+        for (const folderRef of result.prefixes) {
+          await processFolder(folderRef);
+        }
+      } catch (error) {
+        console.warn(`Chyba při načítání složky ${folderName}:`, error);
       }
     };
 
     await processFolder(folderRef);
-    return allFiles;
+    return files;
+  };
+
+  const collectMeditaceStorageFiles = async () => {
+    const filesMap = new Map();
+
+    for (const rootPath of MEDITACE_ROOTS) {
+      try {
+        const rootRef = ref(storage, rootPath);
+        const files = await getAllFilesRecursively(rootRef, rootPath);
+        files.forEach(file => {
+          const key = file.fullPath || `${rootPath}/${file.name}`;
+          if (!filesMap.has(key)) {
+            filesMap.set(key, file);
+          }
+        });
+      } catch (error) {
+        console.warn(`⚠️ Nemám přístup k ${rootPath} složce v Storage`, error.message);
+      }
+    }
+
+    return Array.from(filesMap.values());
   };
 
   // Načtení statistik z Firebase Storage
@@ -136,12 +164,13 @@ const NewAdminScreen = () => {
     setLoading(true);
     try {
       const hudbaRef = ref(storage, 'hudba');
-      const meditaceRef = ref(storage, 'meditace');
-
-      const [hudbaFiles, meditaceFiles] = await Promise.all([
-        getAllFilesRecursively(hudbaRef, 'hudba'),
-        getAllFilesRecursively(meditaceRef, 'meditace')
-      ]);
+      const hudbaFiles = await getAllFilesRecursively(hudbaRef, 'hudba');
+      const meditaceFilesRaw = await collectMeditaceStorageFiles();
+      const meditaceFiles = meditaceFilesRaw.map(file => ({
+        ...file,
+        folder: normalizeMeditaceFolder(file.folder),
+        language: extractMeditaceLanguage(file.fullPath || file.name || '')
+      }));
 
       const hudbaMetadata = hudbaFiles;
       const meditaceMetadata = meditaceFiles;
@@ -152,13 +181,20 @@ const NewAdminScreen = () => {
       const meditaceSize = meditaceMetadata.reduce((sum, file) => sum + file.size, 0);
       const totalSize = hudbaSize + meditaceSize;
 
+      const meditaceLanguageStats = meditaceMetadata.reduce((acc, file) => {
+        const lang = file.language || 'CZ';
+        acc[lang] = (acc[lang] || 0) + 1;
+        return acc;
+      }, {});
+
       setAudioStats({
         totalFiles: allFiles.length,
         totalSize: totalSize,
         hudbaFiles: hudbaMetadata.length,
         meditaceFiles: meditaceMetadata.length,
         hudbaSize: hudbaSize,
-        meditaceSize: meditaceSize
+        meditaceSize: meditaceSize,
+        meditaceByLanguage: meditaceLanguageStats
       });
 
       setFileData(allFiles);
@@ -168,7 +204,8 @@ const NewAdminScreen = () => {
         meditace: meditaceMetadata.length,
         celkem: allFiles.length,
         hudbaSoubory: hudbaMetadata.map(f => f.name),
-        meditaceSoubory: meditaceMetadata.map(f => f.name)
+        meditaceSoubory: meditaceMetadata.map(f => f.name),
+        meditaceLanguages: meditaceLanguageStats
       });
     } catch (error) {
       console.error('Chyba při načítání statistik:', error);
@@ -187,12 +224,13 @@ const NewAdminScreen = () => {
 
       // Načti aktuální data z Firebase Storage
       const hudbaRef = ref(storage, 'hudba');
-      const meditaceRef = ref(storage, 'meditace');
-
-      const [hudbaFiles, meditaceFiles] = await Promise.all([
-        getAllFilesRecursively(hudbaRef, 'hudba'),
-        getAllFilesRecursively(meditaceRef, 'meditace')
-      ]);
+      const hudbaFiles = await getAllFilesRecursively(hudbaRef, 'hudba');
+      const meditaceFilesRaw = await collectMeditaceStorageFiles();
+      const meditaceFiles = meditaceFilesRaw.map(file => ({
+        ...file,
+        folder: normalizeMeditaceFolder(file.folder),
+        language: extractMeditaceLanguage(file.fullPath || file.name || '')
+      }));
 
       const currentFiles = [...hudbaFiles, ...meditaceFiles];
 
@@ -339,19 +377,25 @@ const NewAdminScreen = () => {
         meditaceSize: audioStats.meditaceSize
       },
       files: fileData.map(file => {
+        const normalizedFolder = normalizeMeditaceFolder(file.folder);
+        const language = normalizedFolder === 'meditace'
+          ? (file.language || extractMeditaceLanguage(file.fullPath || file.name || ''))
+          : null;
+
         const baseFile = {
           fileName: file.name,
           size: file.size,
           sizeFormatted: formatFileSize(file.size),
           duration: estimateDuration(file.size),
           durationFormatted: formatDuration(estimateDuration(file.size)),
-          folder: file.folder,
+          folder: normalizedFolder,
+          language,
           downloadURL: file.downloadURL,
-          category: file.folder === 'hudba' ? 'music' : 'meditation'
+          category: normalizedFolder === 'hudba' ? 'music' : 'meditation'
         };
 
         // Pro meditace soubory přidej pokročilé metadata
-        if (file.folder === 'meditace') {
+        if (normalizedFolder === 'meditace') {
           const fileName = file.name;
           const isMale = fileName.includes('muzsky') || fileName.includes('male');
           const isFemale = fileName.includes('zensky') || fileName.includes('female');
@@ -376,7 +420,8 @@ const NewAdminScreen = () => {
               title: displayName,
               mediaType: mediaType,
               is4F: is4F,
-              is4M: is4M
+              is4M: is4M,
+              language
             }
           };
         }
@@ -500,7 +545,7 @@ const NewAdminScreen = () => {
 
       // Zobraz meditace soubory
       const meditaceFiles = metadataArray.filter(file =>
-        file.fileName && file.fileName.includes('meditace/')
+        file.fileName && isMeditaceFilePath(file.fileName)
       );
       console.log(`🧘 Found ${meditaceFiles.length} meditace files in Firestore`);
 

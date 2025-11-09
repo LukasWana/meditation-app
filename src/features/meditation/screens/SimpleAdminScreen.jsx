@@ -12,6 +12,7 @@ import { generateWaveformViaFunction } from '@utils/generateWaveformViaFunction'
 import { syncAllFilesViaFunction } from '@utils/syncAllFilesViaFunction';
 import Waveform from '@components/Waveform';
 import { realtimeMetadataService } from '@services/realtimeMetadataService';
+import { MEDITACE_ROOTS, isMeditaceFilePath, normalizeMeditaceFolder, extractMeditaceLanguage } from '@utils/meditaceStorage';
 
 const DYCHANI_FOLDER = 'dychani';
 const DYCHANI_LEGACY_FOLDER = 'dychanie';
@@ -25,6 +26,85 @@ const normalizeDychaniFolder = (folder = '') => {
     return DYCHANI_FOLDER;
   }
   return folder;
+};
+
+const listAudioFilesRecursively = async (rootRef, rootFolderName) => {
+  const collected = [];
+
+  const processFolder = async (currentFolderRef) => {
+    try {
+      const result = await listAll(currentFolderRef);
+      const folderPath = currentFolderRef.fullPath || currentFolderRef.name || '';
+
+      // Přidej audio soubory z aktuální složky (MP3, OGG, OGA)
+      for (const fileRef of result.items) {
+        const fileNameLower = fileRef.name.toLowerCase();
+        const isAudio = fileNameLower.endsWith('.mp3') || fileNameLower.endsWith('.ogg') || fileNameLower.endsWith('.oga');
+
+        if (!isAudio) {
+          continue;
+        }
+
+        let fullPath = fileRef.fullPath || '';
+        let relativePath;
+
+        if (fullPath && fullPath.startsWith(rootFolderName)) {
+          relativePath = fullPath.replace(`${rootFolderName}/`, '');
+        } else if (fullPath) {
+          fullPath = `${rootFolderName}/${fullPath}`;
+          relativePath = fullPath.replace(`${rootFolderName}/`, '');
+        } else {
+          if (folderPath === rootFolderName || folderPath === `${rootFolderName}/`) {
+            relativePath = fileRef.name;
+          } else {
+            const relativeFolderPath = folderPath.replace(`${rootFolderName}/`, '');
+            relativePath = `${relativeFolderPath}/${fileRef.name}`;
+          }
+          fullPath = `${rootFolderName}/${relativePath}`;
+        }
+
+        collected.push({
+          name: relativePath,
+          fullPath,
+          size: 0,
+          folder: rootFolderName,
+          downloadURL: null
+        });
+      }
+
+      // Rekurzivně zpracuj podsložky
+      for (const subFolderRef of result.prefixes) {
+        await processFolder(subFolderRef);
+      }
+    } catch (error) {
+      console.error(`❌ Chyba při skenování složky ${currentFolderRef.fullPath || currentFolderRef.name}:`, error);
+    }
+  };
+
+  await processFolder(rootRef);
+  return collected;
+};
+
+const collectMeditaceStorageFiles = async () => {
+  const filesMap = new Map();
+
+  for (const rootPath of MEDITACE_ROOTS) {
+    try {
+      const rootRef = ref(storage, rootPath);
+      const files = await listAudioFilesRecursively(rootRef, rootPath);
+
+      files.forEach(file => {
+        const key = file.fullPath || `${rootPath}/${file.name}`;
+        if (!filesMap.has(key)) {
+          filesMap.set(key, file);
+        }
+      });
+    } catch (error) {
+      console.warn(`⚠️ Nemám přístup k ${rootPath} složce v Storage`, error.message);
+    }
+  }
+
+  return Array.from(filesMap.values());
 };
 
 const SimpleAdminScreen = () => {
@@ -58,7 +138,7 @@ const SimpleAdminScreen = () => {
 
       querySnapshot.forEach((doc) => {
         const data = doc.data();
-        if (data.fileName && data.fileName.includes('meditace/')) {
+        if (data.fileName && isMeditaceFilePath(data.fileName)) {
           meditaceFiles.push(data);
         }
         if (data.fileName && data.fileName.includes('hudba/')) {
@@ -121,7 +201,7 @@ const SimpleAdminScreen = () => {
           // Zajisti, že má downloadURL nebo audioSrc
           downloadURL: data.downloadURL || data.audioSrc,
           // Zajisti, že má folder
-          folder: data.folder || (data.fileName?.includes('meditace/') ? 'meditace' : 'hudba'),
+          folder: data.folder || (isMeditaceFilePath(data.fileName) ? 'meditace' : 'hudba'),
           // Zajisti, že má displayName
           displayName: data.displayName || data.title || data.fileName?.replace(/\.[^/.]+$/, ""),
           // Zajisti, že má fullPath
@@ -131,7 +211,7 @@ const SimpleAdminScreen = () => {
       });
 
       const meditaceFiles = metadataArray.filter(file =>
-        file.fileName && file.fileName.includes('meditace/')
+        file.fileName && isMeditaceFilePath(file.fileName)
       );
       const hudbaFiles = metadataArray.filter(file =>
         file.fileName && file.fileName.includes('hudba/')
@@ -365,11 +445,17 @@ const SimpleAdminScreen = () => {
 
           // Vytvoř kompletní metadata objekt
           // fileName musí být celá cesta včetně složky (např. "dychani/prana-breath/file.ogg")
+          const normalizedFolder = normalizeMeditaceFolder(normalizeDychaniFolder(file.folder));
+          const language = normalizedFolder === 'meditace'
+            ? (file.language || extractMeditaceLanguage(file.fullPath))
+            : null;
+
           const metadata = {
             fileName: file.fullPath, // Celá cesta: "dychani/prana-breath/file.ogg"
             displayName: extractDisplayName(file.name),
-            folder: normalizeDychaniFolder(file.folder),
+            folder: normalizedFolder,
             subFolder: extractSubFolder(file.fullPath),
+            language,
             downloadURL: downloadURL,
             fullPath: file.fullPath,
             duration: audioMetadata.duration,
@@ -385,7 +471,7 @@ const SimpleAdminScreen = () => {
             waveformGenerated: waveformData ? new Date().toISOString() : null,
             waveformSamples: waveformData ? 800 : null,
             // Dodatečné informace pro meditace soubory
-            ...(file.folder === 'meditace' ? {
+            ...(normalizedFolder === 'meditace' ? {
               gender: extractGender(file.name),
               topic: extractTopic(file.name),
               type: extractType(file.name)
@@ -451,7 +537,7 @@ const SimpleAdminScreen = () => {
       }
 
       // 4. Filtruj soubory podle složek
-      const meditaceFiles = metadataArray.filter(file => normalizeDychaniFolder(file.folder) === 'meditace');
+      const meditaceFiles = metadataArray.filter(file => normalizeMeditaceFolder(file.folder) === 'meditace');
       const hudbaFiles = metadataArray.filter(file => normalizeDychaniFolder(file.folder) === 'hudba');
       const dychaniFiles = metadataArray.filter(file =>
         normalizeDychaniFolder(file.folder) === DYCHANI_FOLDER ||
@@ -594,86 +680,8 @@ const SimpleAdminScreen = () => {
       console.warn('⚠️ Nelze vymazat cache:', error);
     }
 
-    // Rekurzivní načtení všech souborů ze složky
-    // Použijeme jednodušší přístup - podobný jako v fastMetadataService
-    const getAllFilesRecursively = async (folderRef, folderName) => {
-      const allFiles = [];
-
-      const processFolder = async (currentFolderRef) => {
-        try {
-          const result = await listAll(currentFolderRef);
-          const folderPath = currentFolderRef.fullPath || currentFolderRef.name || '';
-          const folderNameOnly = currentFolderRef.name || folderPath.split('/').pop() || '';
-
-          console.log(`📂 Skenuji složku: ${folderPath} (${folderNameOnly})`);
-          console.log(`   - Items: ${result.items.length}, Prefixes: ${result.prefixes.length}`);
-
-          // Přidej audio soubory z aktuální složky (MP3, OGG, OGA)
-          for (const fileRef of result.items) {
-            const fileName = fileRef.name.toLowerCase();
-            const isAudioFile = fileName.endsWith('.mp3') ||
-                               fileName.endsWith('.ogg') ||
-                               fileName.endsWith('.oga');
-
-            console.log(`   📄 Soubor: ${fileRef.name} (fullPath: ${fileRef.fullPath}), isAudio: ${isAudioFile}`);
-
-            if (isAudioFile) {
-              // Použij fileRef.fullPath, který už obsahuje celou cestu od rootu
-              // Pokud není k dispozici, sestav cestu z folderPath
-              let fullPath = fileRef.fullPath;
-              let relativePath;
-
-              if (fullPath && fullPath.startsWith(folderName)) {
-                // fileRef.fullPath už obsahuje celou cestu (např. "dychani/prana-breath/file.ogg")
-                relativePath = fullPath.replace(`${folderName}/`, '');
-              } else if (fullPath) {
-                // fullPath je relativní, přidej folderName
-                fullPath = `${folderName}/${fullPath}`;
-                relativePath = fullPath.replace(`${folderName}/`, '');
-              } else {
-                // Sestav cestu z folderPath a fileRef.name
-                if (folderPath === folderName || folderPath === `${folderName}/`) {
-                  // Jsme v root složce
-                  relativePath = fileRef.name;
-                } else {
-                  // Jsme v podsložce - extrahuj relativní cestu z folderPath
-                  const relativeFolderPath = folderPath.replace(`${folderName}/`, '');
-                  relativePath = `${relativeFolderPath}/${fileRef.name}`;
-                }
-                fullPath = `${folderName}/${relativePath}`;
-              }
-
-              // Použij pouze informace z listAll - bez getMetadata/getDownloadURL
-              allFiles.push({
-                name: relativePath, // Relativní cesta včetně podsložky (např. "prana-breath/file.ogg")
-                fullPath: fullPath, // Celá cesta včetně složky (např. "dychani/prana-breath/file.ogg")
-                size: 0, // Bude odhadnuto z názvu souboru
-                folder: folderName,
-                downloadURL: null // Bude vygenerováno později pomocí getDownloadURL
-              });
-              console.log(`✅ Načteno: ${fullPath} (relativní: ${relativePath}) - POUZE LIST`);
-            }
-          }
-
-          // Rekurzivně zpracuj všechny podsložky
-          console.log(`   🔍 Nalezeno ${result.prefixes.length} podsložek`);
-          for (const subFolderRef of result.prefixes) {
-            const subFolderPath = subFolderRef.fullPath || subFolderRef.name;
-            console.log(`   📁 Zpracovávám podsložku: ${subFolderPath}`);
-            await processFolder(subFolderRef);
-          }
-        } catch (error) {
-          console.error(`❌ Chyba při skenování složky ${currentFolderRef.fullPath || currentFolderRef.name}:`, error);
-        }
-      };
-
-      await processFolder(folderRef);
-      return allFiles;
-    };
-
     // Skenuj hudba, meditace a dychani složky
     const hudbaRef = ref(storage, 'hudba');
-    const meditaceRef = ref(storage, 'meditace');
 
     console.log('🚀 Začínám skenování Firebase Storage...');
 
@@ -693,7 +701,7 @@ const SimpleAdminScreen = () => {
         console.log(`🫁 ${label} složka: Items=${folderListing.items.length}, Prefixes=${folderListing.prefixes.length}`);
         console.log(`🫁 ${label} podsložky:`, folderListing.prefixes.map(p => p.name || p.fullPath));
 
-        dychaniFiles = await getAllFilesRecursively(folderRef, path);
+        dychaniFiles = await listAudioFilesRecursively(folderRef, path);
         storageFolderUsed = path;
         break;
       } catch (error) {
@@ -735,10 +743,21 @@ const SimpleAdminScreen = () => {
       }
     }
 
-    const [hudbaFiles, meditaceFiles] = await Promise.all([
-      getAllFilesRecursively(hudbaRef, 'hudba'),
-      getAllFilesRecursively(meditaceRef, 'meditace')
-    ]);
+    const hudbaFiles = await listAudioFilesRecursively(hudbaRef, 'hudba');
+    const meditaceFilesRaw = await collectMeditaceStorageFiles();
+    const meditaceFiles = meditaceFilesRaw.map(file => ({
+      ...file,
+      folder: normalizeMeditaceFolder(file.folder),
+      language: extractMeditaceLanguage(file.fullPath || file.name || '')
+    }));
+
+    const meditaceLanguageStats = meditaceFiles.reduce((acc, file) => {
+      const lang = file.language || 'CZ';
+      acc[lang] = (acc[lang] || 0) + 1;
+      return acc;
+    }, {});
+
+    console.log('🧘 Meditace jazykové rozdělení:', meditaceLanguageStats);
 
     console.log(`🫁 Dychani files výsledek: ${dychaniFiles.length} souborů`);
     if (dychaniFiles.length > 0) {

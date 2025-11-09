@@ -19,10 +19,10 @@ const VARIANTS = {
       scale: 0.98
     },
     transition: {
-      type: "spring",
-      stiffness: 100,
-      damping: 20,
-      duration: 0.6
+    type: "spring",
+    stiffness: 100,
+    damping: 20,
+    duration: 0.6
     }
   },
   fade: {

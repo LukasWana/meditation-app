@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { ref, listAll, getDownloadURL, getMetadata } from 'firebase/storage';
 import { storage } from '../config/secure-firebase';
-import { extractAudioMetadata, formatDuration, formatDurationDetailed } from '../utils/audioMetadataExtractor';
+import { extractAudioMetadata, formatDuration } from '../utils/audioMetadataExtractor';
 import audioMetadataStorageService from '../services/audioMetadataStorageService';
 import log from '@services/logger';
+import { MEDITACE_ROOTS, extractMeditaceLanguage, normalizeMeditaceFolder } from '@utils/meditaceStorage';
 
 /**
  * Meditace Files Viewer Component
@@ -17,6 +18,7 @@ const MeditaceFilesViewer = () => {
     meditaceCZ: [],
     meditaceSK: [],
     meditaceEN: [],
+    meditaceUnknown: [],
     totalFiles: 0,
     totalSize: 0,
     totalDuration: 0
@@ -29,87 +31,102 @@ const MeditaceFilesViewer = () => {
       setLoading(true);
       setError(null);
 
-      log.info('🔄 Loading meditace files from Firebase Storage...');
+      log.info('🔄 Loading meditace files from Firebase Storage (all roots)...');
 
-      // Načti soubory z kořenové meditace složky
-      const meditaceRef = ref(storage, 'meditace');
-      const meditaceResult = await listAll(meditaceRef);
+      const collectedFiles = [];
 
-      const meditaceFiles = [];
-      for (const itemRef of meditaceResult.items) {
+      const scanFolder = async (folderRef, rootPath) => {
         try {
-          const metadata = await getMetadata(itemRef);
-          const downloadURL = await getDownloadURL(itemRef);
+          const result = await listAll(folderRef);
 
-          meditaceFiles.push({
-            name: itemRef.name,
-            fullPath: itemRef.fullPath,
-            size: metadata.size,
-            contentType: metadata.contentType,
-            timeCreated: metadata.timeCreated,
-            updated: metadata.updated,
-            downloadURL: downloadURL,
-            folder: 'meditace',
-            duration: 0,
-            durationFormatted: 'N/A',
-            durationDetailed: 'N/A'
-          });
-        } catch (metaError) {
-          log.warn(`Failed to get metadata for ${itemRef.name}:`, metaError.message);
-        }
-      }
-
-      // Načti soubory z jazykových podsložek
-      const languageFolders = ['CZ', 'SK', 'EN'];
-      const languageFiles = { CZ: [], SK: [], EN: [] };
-
-      for (const lang of languageFolders) {
-        try {
-          const langRef = ref(storage, `meditace/${lang}`);
-          const langResult = await listAll(langRef);
-
-          for (const itemRef of langResult.items) {
+          for (const itemRef of result.items) {
             try {
-              const metadata = await getMetadata(itemRef);
-              const downloadURL = await getDownloadURL(itemRef);
+              const [metadata, downloadURL] = await Promise.all([
+                getMetadata(itemRef),
+                getDownloadURL(itemRef)
+              ]);
 
-              languageFiles[lang].push({
+              const fullPath = itemRef.fullPath || `${rootPath}/${itemRef.name}`;
+              const language = extractMeditaceLanguage(fullPath);
+
+              collectedFiles.push({
                 name: itemRef.name,
-                fullPath: itemRef.fullPath,
+                fullPath,
                 size: metadata.size,
                 contentType: metadata.contentType,
                 timeCreated: metadata.timeCreated,
                 updated: metadata.updated,
-                downloadURL: downloadURL,
-                folder: `meditace/${lang}`,
+                downloadURL,
+                folder: normalizeMeditaceFolder(rootPath),
+                rootFolder: rootPath,
+                language,
                 duration: 0,
                 durationFormatted: 'N/A',
                 durationDetailed: 'N/A'
               });
             } catch (metaError) {
-              log.warn(`Failed to get metadata for ${itemRef.name}:`, metaError.message);
+              log.warn(`Failed to get metadata for ${itemRef.fullPath}:`, metaError.message);
             }
           }
-        } catch (langError) {
-          log.warn(`Failed to scan meditace/${lang}:`, langError.message);
+
+          for (const prefixRef of result.prefixes) {
+            await scanFolder(prefixRef, rootPath);
+          }
+        } catch (scanError) {
+          log.warn(`Failed to scan folder ${folderRef.fullPath || rootPath}:`, scanError.message);
+        }
+      };
+
+      for (const rootPath of MEDITACE_ROOTS) {
+        try {
+          const rootRef = ref(storage, rootPath);
+          log.info(`🔍 Scanning meditace root: ${rootPath}`);
+          await scanFolder(rootRef, rootPath);
+        } catch (rootError) {
+          log.warn(`⚠️ Cannot access meditace root ${rootPath}:`, rootError.message);
         }
       }
 
-      // Vypočti celkové statistiky
-      const allFiles = [...meditaceFiles, ...languageFiles.CZ, ...languageFiles.SK, ...languageFiles.EN];
-      const totalSize = allFiles.reduce((sum, file) => sum + (file.size || 0), 0);
+      if (collectedFiles.length === 0) {
+        log.warn('⚠️ No meditace files found in any root folder');
+      }
+
+      const groupedByLanguage = collectedFiles.reduce((acc, file) => {
+        const lang = file.language || 'UNKNOWN';
+        if (!acc[lang]) {
+          acc[lang] = [];
+        }
+        acc[lang].push(file);
+        return acc;
+      }, {});
+
+      const totalSize = collectedFiles.reduce((sum, file) => sum + (file.size || 0), 0);
+
+      const languageFiles = {
+        CZ: groupedByLanguage.CZ || [],
+        SK: groupedByLanguage.SK || [],
+        EN: groupedByLanguage.EN || [],
+        UNKNOWN: groupedByLanguage.UNKNOWN || []
+      };
+
+      log.info('🧘 Meditace files summary:', {
+        total: collectedFiles.length,
+        byLanguage: Object.fromEntries(Object.entries(languageFiles).map(([key, arr]) => [key, arr.length])),
+        roots: MEDITACE_ROOTS
+      });
 
       setFiles({
-        meditace: meditaceFiles,
+        meditace: collectedFiles,
         meditaceCZ: languageFiles.CZ,
         meditaceSK: languageFiles.SK,
         meditaceEN: languageFiles.EN,
-        totalFiles: allFiles.length,
-        totalSize: totalSize,
+        meditaceUnknown: languageFiles.UNKNOWN,
+        totalFiles: collectedFiles.length,
+        totalSize,
         totalDuration: 0
       });
 
-      log.success(`✅ Loaded ${allFiles.length} meditace files from Firebase Storage`);
+      log.success(`✅ Loaded ${collectedFiles.length} meditace files from Firebase Storage`);
 
     } catch (error) {
       log.error('Failed to load meditace files:', error);
@@ -142,7 +159,13 @@ const MeditaceFilesViewer = () => {
       setLoadingDurations(true);
       log.info('🔄 Loading audio durations...');
 
-      const allFiles = [...files.meditace, ...files.meditaceCZ, ...files.meditaceSK, ...files.meditaceEN];
+      const allFiles = [
+        ...files.meditace,
+        ...files.meditaceCZ,
+        ...files.meditaceSK,
+        ...files.meditaceEN,
+        ...(files.meditaceUnknown || [])
+      ];
       let totalDuration = 0;
 
       // Načti délky pro všechny soubory
@@ -212,7 +235,7 @@ const MeditaceFilesViewer = () => {
     }
   };
 
-  const renderFileList = (files, title, folder) => (
+  const renderFileList = (files, title) => (
     <div className="border rounded-lg p-4 mb-4">
       <h3 className="text-lg font-semibold mb-3 flex items-center">
         📁 {title}
@@ -361,10 +384,11 @@ const MeditaceFilesViewer = () => {
       {/* File Lists */}
       {!loading && (
         <div className="space-y-4">
-          {renderFileList(files.meditace, 'Meditace (hlavní složka)', 'meditace')}
-          {renderFileList(files.meditaceCZ, 'Meditace CZ (české soubory)', 'meditace/CZ')}
-          {renderFileList(files.meditaceSK, 'Meditace SK (slovenské soubory)', 'meditace/SK')}
-          {renderFileList(files.meditaceEN, 'Meditace EN (anglické soubory)', 'meditace/EN')}
+          {renderFileList(files.meditace, 'Meditace (všechny soubory)')}
+          {renderFileList(files.meditaceCZ, 'Meditace CZ (české soubory)')}
+          {renderFileList(files.meditaceSK, 'Meditace SK (slovenské soubory)')}
+          {renderFileList(files.meditaceEN, 'Meditace EN (anglické soubory)')}
+          {renderFileList(files.meditaceUnknown || [], 'Meditace neznámý jazyk')}
         </div>
       )}
     </div>
