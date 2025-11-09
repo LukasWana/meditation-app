@@ -9,3 +9,4 @@ export { default as BreathingSection } from './BreathingSection';
 export { default as BreathModals } from './BreathModals';
 export { AlbumGrid } from './AlbumGrid';
 export { AlbumCard } from './AlbumCard';
+export { default as BackgroundSettingsControls } from './BackgroundSettingsControls';
