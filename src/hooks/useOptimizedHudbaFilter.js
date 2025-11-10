@@ -50,8 +50,8 @@ export const useOptimizedHudbaFilter = () => {
 
             // Fallback na statická metadata
             try {
-              await staticMetadataService.loadMetadata();
-              allMetadata = staticMetadataService.getAllMetadata();
+            await staticMetadataService.loadMetadata();
+            allMetadata = staticMetadataService.getAllFromCache();
               log.success('✅ Static metadata loaded successfully');
             } catch (staticError) {
               log.error('❌ All metadata sources failed:', staticError.message);

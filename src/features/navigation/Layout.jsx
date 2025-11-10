@@ -4,6 +4,7 @@ import { useLanguage } from '@contexts/LanguageContext';
 import SlovakiaFlagUrl from '@assets/flags/003-slovakia.svg';
 import CzechFlagUrl from '@assets/flags/002-czech-republic.svg';
 import UKFlagUrl from '@assets/flags/001-united-kingdom.svg';
+import { BackgroundQuickAccess } from '@features/meditation/components';
 
 const Layout = ({
   children,
@@ -43,7 +44,15 @@ const Layout = ({
   const isHudbaSection = currentScreen === 'hudba' || currentScreen === 'audio-player-hudba';
   const showLanguageControls = !isPlayerActive && !isHudbaSection;
   const showGenderControls = !isPlayerActive && currentScreen === 'meditace';
-  const shouldRenderTopControls = showLanguageControls || showGenderControls;
+  const sectionForBackground = React.useMemo(() => {
+    if (['hudba', 'audio-player-hudba'].includes(currentScreen)) return 'hudba';
+    if (['meditace', 'audio-player-meditace'].includes(currentScreen)) return 'meditace';
+    if (currentScreen === 'dychani') return 'dychani';
+    return null;
+  }, [currentScreen]);
+
+  const showBackgroundQuickAccess = !isPlayerActive && !!sectionForBackground;
+  const shouldRenderTopControls = showLanguageControls || showGenderControls || showBackgroundQuickAccess;
 
 
 
@@ -105,6 +114,13 @@ const Layout = ({
           </motion.div>
           )}
 
+          {showBackgroundQuickAccess && (
+            <BackgroundQuickAccess
+              section={sectionForBackground}
+              className="hidden sm:flex"
+            />
+          )}
+
           {/* Language Switcher - mobile (one flag, cycles on tap) */}
           {showLanguageControls && (
             <motion.button
@@ -118,6 +134,13 @@ const Layout = ({
           >
             <img src={getFlagUrl(language)} alt={language} className="w-6 h-6" />
           </motion.button>
+          )}
+
+          {showBackgroundQuickAccess && (
+            <BackgroundQuickAccess
+              section={sectionForBackground}
+              className="sm:hidden flex"
+            />
           )}
 
           {/* Gender Switcher - desktop/tablet - zobraz pouze v sekci meditace */}

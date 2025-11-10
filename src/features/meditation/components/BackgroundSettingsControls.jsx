@@ -28,7 +28,8 @@ const BackgroundSettingsControls = ({
   wrapperClassName = 'w-full',
   buttonClassName = 'rounded-full border border-black/15 bg-white/70 px-6 py-3 text-xs uppercase tracking-[0.25em]',
   panelWrapperClassName = 'mx-auto max-w-xl space-y-5 rounded-3xl border border-black/10 bg-white/80 p-6 shadow-lg backdrop-blur',
-  categories = DEFAULT_CATEGORIES
+  categories = DEFAULT_CATEGORIES,
+  triggerRenderer = null
 }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [isGalleryVisible, setIsGalleryVisible] = useState(false);
@@ -98,13 +99,23 @@ const BackgroundSettingsControls = ({
 
   return (
     <div className={wrapperClassName}>
-      <FramerButton
-        onClick={toggleOpen}
-        variant="ghost"
-        className={buttonClassName}
-      >
-        {isOpen ? closeLabel : buttonLabel}
-      </FramerButton>
+      {typeof triggerRenderer === 'function' ? (
+        triggerRenderer({
+          toggleOpen,
+          isOpen,
+          colorValue,
+          selectedShader,
+          overlaySettings
+        })
+      ) : (
+        <FramerButton
+          onClick={toggleOpen}
+          variant="ghost"
+          className={buttonClassName}
+        >
+          {isOpen ? closeLabel : buttonLabel}
+        </FramerButton>
+      )}
 
       <AnimatePresence>
         {isOpen && (

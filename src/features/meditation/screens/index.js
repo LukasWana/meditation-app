@@ -9,4 +9,3 @@ export { default as MeditaceScreen } from './MeditaceScreen';
 export { default as AudioPlayerMeditaceScreen } from './AudioPlayerMeditaceScreen';
 export { default as IntroScreen } from './IntroScreen';
 export { default as AlbumDetailScreen } from './AlbumDetailScreen';
-export { default as NewAdminScreen } from './NewAdminScreen';

@@ -10,3 +10,4 @@ export { default as BreathModals } from './BreathModals';
 export { AlbumGrid } from './AlbumGrid';
 export { AlbumCard } from './AlbumCard';
 export { default as BackgroundSettingsControls } from './BackgroundSettingsControls';
+export { default as BackgroundQuickAccess } from './BackgroundQuickAccess';
