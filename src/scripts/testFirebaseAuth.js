@@ -2,7 +2,6 @@
 
 import { auth } from '../services/firebase';
 import { signInWithEmailAndPassword, createUserWithEmailAndPassword } from 'firebase/auth';
-import log from '../services/logger';
 
 export async function testFirebaseAuth() {
   console.log('🧪 Testing Firebase Authentication...');

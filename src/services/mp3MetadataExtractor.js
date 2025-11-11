@@ -33,7 +33,7 @@ class MP3MetadataExtractor {
   }
 
   async _loadMetadata(audioUrl, fileName) {
-    return new Promise((resolve, reject) => {
+    return new Promise((resolve) => {
       const audio = new Audio();
 
       // Nastav timeout

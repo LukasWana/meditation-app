@@ -1,11 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import {
-  Database,
-  HardDrive,
-  Cloud,
-  Wifi,
-  WifiOff,
   BarChart3,
   RefreshCw,
   CheckCircle,
@@ -159,7 +154,7 @@ const DataStorageCharts = () => {
     }));
 
     const pieData = Object.entries(storageData)
-      .filter(([_, value]) => value.count > 0)
+      .filter(([, value]) => value.count > 0)
       .map(([key, value]) => ({
         name: key,
         value: value.count,

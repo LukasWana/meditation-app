@@ -280,7 +280,7 @@ class CacheServiceRefactored {
       log.firebase('🎵 Preloading hudba data from Firebase Storage...');
 
       // Import Firebase Storage dynamicky
-      const { ref, listAll, getDownloadURL } = await import('firebase/storage');
+      const { ref, getDownloadURL } = await import('firebase/storage');
       const { storage } = await import('./firebase.js');
 
       // Místo root složky, načti přímo meditace/ a hudba/ složky

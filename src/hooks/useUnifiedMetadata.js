@@ -55,7 +55,7 @@ export const useBatchMetadata = (fileNames) => {
       const results = await Promise.allSettled(promises);
       const newMap = new Map();
 
-      results.forEach((result, index) => {
+      results.forEach((result) => {
         if (result.status === 'fulfilled' && result.value.metadata) {
           newMap.set(result.value.fileName, result.value.metadata);
         }

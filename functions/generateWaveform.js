@@ -9,6 +9,7 @@ const { Storage } = require('@google-cloud/storage');
 const path = require('path');
 const os = require('os');
 const fs = require('fs');
+const ffmpegInstaller = require('@ffmpeg-installer/ffmpeg');
 
 // Inicializace Firebase Admin pouze pokud ještě není inicializován
 if (!admin.apps.length) {
@@ -28,7 +29,7 @@ async function generateWaveformFromFile(tempFilePath, samples = 800) {
 
   try {
     // Konvertuj audio soubor na raw PCM data pomocí ffmpeg
-    const ffmpeg = spawn('ffmpeg', [
+    const ffmpeg = spawn(ffmpegInstaller.path, [
       '-i', tempFilePath,           // Vstupní soubor
       '-f', 's16le',                // Formát: signed 16-bit little-endian PCM
       '-ac', '1',                   // Mono (jeden kanál)

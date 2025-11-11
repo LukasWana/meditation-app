@@ -1,5 +1,4 @@
 import React, { useState, useRef, useEffect, useMemo, useCallback } from 'react';
-import { motion } from 'framer-motion';
 
 const WheelPicker = ({
   value,

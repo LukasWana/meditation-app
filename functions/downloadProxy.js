@@ -28,7 +28,7 @@ exports.downloadProxy = functions.https.onRequest(async (req, res) => {
       console.log(`Downloading file: ${filePath}`);
 
       // Získej storage bucket
-      const bucket = getStorage().bucket();
+      const bucket = admin.storage().bucket();
 
       // Získej soubor
       const file = bucket.file(filePath);

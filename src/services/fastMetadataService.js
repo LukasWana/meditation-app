@@ -1,10 +1,11 @@
 
 
-import { ref, listAll, getDownloadURL } from 'firebase/storage';
+import { ref, getDownloadURL } from 'firebase/storage';
 import { storage } from './firebase';
 import log from './logger';
 import { parseAudioFileName } from '@utils/hudbaParser';
 import { realtimeMetadataService } from './realtimeMetadataService';
+import { staticMetadataService } from './staticMetadataService';
 
 class FastMetadataService {
   constructor() {
@@ -136,186 +137,46 @@ class FastMetadataService {
       return this.metadata;
     }
 
-    // Nejdříve zkus načíst z cache
-    if (this.loadFromCache()) {
-      this.isLoading = false;
-      return this.metadata;
-    }
-
     this.isLoading = true;
 
     try {
-      log.info('🚀 Loading metadata from Firebase Storage structure...');
-
-      const allFiles = [];
-
-      // Načti hudba složku
-      try {
-        const hudbaRef = ref(storage, 'hudba');
-        log.debug(`🔍 Loading from Firebase Storage path: hudba`);
-        const hudbaResult = await listAll(hudbaRef);
-        log.debug(`📊 Firebase Storage result for hudba:`, {
-          itemsCount: hudbaResult.items.length,
-          prefixesCount: hudbaResult.prefixes.length
-        });
-
-        // Přidej soubory z hudba složky
-        hudbaResult.items.forEach(item => {
-          const fileData = {
-            ...item,
-            name: item.name,
-            folder: 'hudba'
-          };
-          log.debug(`📄 Adding root hudba file:`, fileData);
-          allFiles.push(fileData);
-        });
-
-        // Prohledej podsložky hudba složky
-        log.debug(`🔍 Found hudba subfolders:`, hudbaResult.prefixes.map(p => p.name));
-        for (const folderRef of hudbaResult.prefixes) {
-        try {
-          log.debug(`📁 Processing folder: ${folderRef.name}`);
-          const folderResult = await listAll(folderRef);
-          log.debug(`📄 Found ${folderResult.items.length} items and ${folderResult.prefixes.length} subfolders in ${folderRef.name}`);
-
-          // Přidej soubory z této složky
-          folderResult.items.forEach(item => {
-            allFiles.push({
-              ...item,
-              name: `${folderRef.name}/${item.name}`,
-              folder: 'hudba', // Oprava: folder musí být 'hudba', ne název podsložky
-              subFolder: folderRef.name
-            });
-          });
-
-          // Prohledej podsložky této složky
-          log.debug(`🔍 Checking subfolders for ${folderRef.name}:`, folderResult.prefixes.map(p => p.name));
-          for (const subFolderRef of folderResult.prefixes) {
-            try {
-              log.debug(`📁 Processing subfolder: ${subFolderRef.name}`);
-              const subFolderResult = await listAll(subFolderRef);
-              log.debug(`📄 Found ${subFolderResult.items.length} items in ${subFolderRef.name}`);
-              subFolderResult.items.forEach(item => {
-                const fileData = {
-                  ...item,
-                  name: `${subFolderRef.name}/${item.name}`,
-                  folder: 'hudba', // Oprava: folder musí být 'hudba'
-                  subFolder: subFolderRef.name
-                };
-                log.debug(`📄 Adding subfolder file:`, fileData);
-                allFiles.push(fileData);
-              });
-            } catch (subErr) {
-              log.warn(`Failed to check subfolder ${subFolderRef.name}:`, subErr);
-            }
-          }
-        } catch (err) {
-          log.warn(`Failed to check folder ${folderRef.name}:`, err);
-        }
-      }
-      } catch (hudbaError) {
-        log.warn(`Failed to load hudba folder:`, hudbaError);
+      // Pokud cache obsahuje platná data, použij ji hned (nejrychlejší varianta)
+      if (this.loadFromCache()) {
+        log.success(`✅ Metadata loaded from cache (${this.metadata.size} records)`);
+        return this.metadata;
       }
 
-      // Načti dychani složku
-      try {
-        const dychaniRef = ref(storage, 'dychani');
-        log.debug(`🔍 Loading from Firebase Storage path: dychani`);
-        const dychaniResult = await listAll(dychaniRef);
-        log.debug(`📊 Firebase Storage result for dychani:`, {
-          itemsCount: dychaniResult.items.length,
-          prefixesCount: dychaniResult.prefixes.length
-        });
+      log.info('🚀 Loading metadata snapshot from Realtime Database...');
 
-        // Přidej soubory z dychani složky (OGG formát)
-        dychaniResult.items.forEach(item => {
-          const fileName = item.name.toLowerCase();
-          const isOggFile = fileName.endsWith('.ogg') || fileName.endsWith('.oga');
-          const isMp3File = fileName.endsWith('.mp3'); // Fallback pro MP3
+      const realtimeMetadata = await realtimeMetadataService.getAllMetadata();
 
-          if (isOggFile || isMp3File) {
-            const fileData = {
-              ...item,
-              name: item.name,
-              folder: 'dychani'
-            };
-            log.debug(`📄 Adding dychani file:`, fileData);
-            allFiles.push(fileData);
+      this.metadata.clear();
+
+      if (realtimeMetadata && Object.keys(realtimeMetadata).length > 0) {
+        Object.entries(realtimeMetadata).forEach(([key, value]) => {
+          const normalized = this.normalizeRealtimeMetadata(value);
+          if (normalized) {
+            const metadataKey = normalized.fileName || key;
+            this.metadata.set(metadataKey, normalized);
           }
         });
-
-        // Prohledej podsložky dychani složky (pokud existují) - rekurzivně
-        if (dychaniResult.prefixes.length > 0) {
-          log.debug(`🔍 Found dychani subfolders:`, dychaniResult.prefixes.map(p => p.name));
-          for (const folderRef of dychaniResult.prefixes) {
-            try {
-              log.debug(`📁 Processing dychani folder: ${folderRef.name}`);
-              const folderResult = await listAll(folderRef);
-              log.debug(`📄 Found ${folderResult.items.length} items and ${folderResult.prefixes.length} subfolders in ${folderRef.name}`);
-
-              // Přidej soubory z této složky
-              folderResult.items.forEach(item => {
-                const fileName = item.name.toLowerCase();
-                const isOggFile = fileName.endsWith('.ogg') || fileName.endsWith('.oga');
-                const isMp3File = fileName.endsWith('.mp3');
-
-                if (isOggFile || isMp3File) {
-                  allFiles.push({
-                    ...item,
-                    name: `${folderRef.name}/${item.name}`,
-                    folder: 'dychani',
-                    subFolder: folderRef.name
-                  });
-                }
-              });
-
-              // Prohledej podsložky této složky (rekurzivně)
-              log.debug(`🔍 Checking subfolders for ${folderRef.name}:`, folderResult.prefixes.map(p => p.name));
-              for (const subFolderRef of folderResult.prefixes) {
-                try {
-                  log.debug(`📁 Processing dychani subfolder: ${subFolderRef.name}`);
-                  const subFolderResult = await listAll(subFolderRef);
-                  log.debug(`📄 Found ${subFolderResult.items.length} items in ${subFolderRef.name}`);
-                  subFolderResult.items.forEach(item => {
-                    const fileName = item.name.toLowerCase();
-                    const isOggFile = fileName.endsWith('.ogg') || fileName.endsWith('.oga');
-                    const isMp3File = fileName.endsWith('.mp3');
-
-                    if (isOggFile || isMp3File) {
-                      allFiles.push({
-                        ...item,
-                        name: `${subFolderRef.name}/${item.name}`,
-                        folder: 'dychani',
-                        subFolder: subFolderRef.name
-                      });
-                    }
-                  });
-                } catch (subErr) {
-                  log.warn(`Failed to check dychani subfolder ${subFolderRef.name}:`, subErr);
-                }
-              }
-            } catch (err) {
-              log.warn(`Failed to check dychani folder ${folderRef.name}:`, err);
-            }
+        log.success(`✅ Loaded ${this.metadata.size} files from Realtime Database snapshot`);
+      } else {
+        log.warn('⚠️ Realtime Database did not return metadata, falling back to static bundle');
+        await staticMetadataService.initialize();
+        const staticMetadata = staticMetadataService.getAllFromCache();
+        Object.entries(staticMetadata || {}).forEach(([key, value]) => {
+          if (value) {
+            this.metadata.set(this.normalizeStoragePath(key), value);
           }
-        }
-      } catch (dychaniError) {
-        log.warn(`Failed to load dychani folder:`, dychaniError);
+        });
+        log.success(`✅ Loaded ${this.metadata.size} files from static metadata bundle`);
       }
-
-    // Zpracuj soubory a vytvoř metadata
-    await this.processFiles(allFiles);
-
-    // Načti délky audio souborů
-    await this.loadAudioDurations();
 
       this.lastUpdate = new Date();
       this.saveToCache();
 
-      log.success(`✅ Fast metadata loading completed: ${this.metadata.size} files processed`);
-
       return this.metadata;
-
     } catch (error) {
       log.error('Failed to load metadata:', error);
       throw error;

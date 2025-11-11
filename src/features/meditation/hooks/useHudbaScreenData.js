@@ -1,63 +1,9 @@
-import { useState, useEffect, useRef } from 'react';
+import { useEffect } from 'react';
 import { useFirebaseHudbaFilter } from '@features/audio/hooks/useFirebaseHudbaFilter';
 import log from '@services/logger';
-import cacheService from '@services/cacheServiceRefactored';
 import { fastMetadataService } from '@services/fastMetadataService';
 
-// Vylepšená funkce pro načtení duration s retry logikou
-const getAudioDuration = (audioSrc, retries = 3) => {
-  return new Promise((resolve) => {
-    const audio = new Audio();
-    let timeoutId;
-
-    const cleanup = () => {
-      audio.removeEventListener('loadedmetadata', onLoadedMetadata);
-      audio.removeEventListener('error', onError);
-      if (timeoutId) clearTimeout(timeoutId);
-    };
-
-    const onLoadedMetadata = () => {
-      cleanup();
-      const duration = audio.duration;
-      if (isFinite(duration) && duration > 0) {
-        log.debug(`✅ Duration loaded successfully: ${duration}s`);
-        resolve(duration); // Vrať duration v sekundách, ne jako string
-      } else {
-        log.warn(`Invalid duration received: ${duration}`);
-        resolve(null);
-      }
-    };
-
-    const onError = () => {
-      cleanup();
-      log.warn(`Audio loading failed for ${audioSrc}, retries left: ${retries - 1}`);
-      if (retries > 1) {
-        // Retry s exponenciálním backoff
-        setTimeout(() => {
-          getAudioDuration(audioSrc, retries - 1).then(resolve);
-        }, 1000 * (4 - retries)); // 1s, 2s, 3s
-      } else {
-        resolve(null);
-      }
-    };
-
-    audio.addEventListener('loadedmetadata', onLoadedMetadata);
-    audio.addEventListener('error', onError);
-
-    // Timeout po 10 sekundách
-    timeoutId = setTimeout(() => {
-      cleanup();
-      log.warn(`Timeout loading duration for ${audioSrc}`);
-      resolve(null);
-    }, 10000);
-
-    audio.src = audioSrc;
-  });
-};
-
 export const useHudbaScreenData = () => {
-  const [durations, setDurations] = useState(new Map());
-
   // Použij hudební filtrovací systém z Firebase
   const { hudbaItems, isLoading, error, stats, isLoadingCovers, isLoadingDurations, refreshAudioFiles } = useFirebaseHudbaFilter();
 
@@ -87,170 +33,48 @@ export const useHudbaScreenData = () => {
   };
 
   // Funkce pro formátování délky v sekundách na MM:SS
-  const formatDuration = (seconds) => {
-    if (!seconds || seconds === 'N/A') return 'N/A';
-
-    // Pokud už je string ve formátu MM:SS, vrať ho
-    if (typeof seconds === 'string' && seconds.includes(':')) {
-      return seconds;
+  const formatDuration = (value) => {
+    if (!value || value === 'N/A') {
+      return 'N/A';
     }
 
-    // Pokud je to číslo (sekundy), převeď na MM:SS
-    if (typeof seconds === 'number' && seconds > 0) {
-      const mins = Math.floor(seconds / 60);
-      const secs = Math.floor(seconds % 60);
+    if (typeof value === 'string') {
+      return value.includes(':') ? value : 'N/A';
+    }
+
+    if (typeof value === 'number' && value > 0) {
+      const mins = Math.floor(value / 60);
+      const secs = Math.floor(value % 60);
       return `${mins}:${secs.toString().padStart(2, '0')}`;
     }
 
     return 'N/A';
   };
 
-  // Funkce pro získání zobrazené délky skladby s vylepšenými fallback mechanismy
   const getDisplayDuration = (item) => {
-    // console.log(`🎵 Getting duration for ${item.title}:`, {
-    //   audioSrc: item.audioSrc,
-    //   metadataDuration: item.duration,
-    //   hasStateDuration: item.audioSrc ? durations.has(item.audioSrc) : false,
-    //   stateDuration: item.audioSrc ? durations.get(item.audioSrc) : null
-    // });
+    if (!item) return 'N/A';
 
-    // 1. Nejdříve zkus načíst z durations state (nejrychlejší)
-    if (item.audioSrc && durations.has(item.audioSrc)) {
-      const duration = durations.get(item.audioSrc);
-      // console.log(`🎵 Using state duration for ${item.title}: ${duration}s`);
-      return formatDuration(duration);
-    }
-
-    // 2. Pak zkus načíst z persistentní cache (localStorage)
-    if (item.audioSrc) {
-      const cachedDuration = cacheService.getDuration(item.audioSrc);
-      // console.log(`🎵 Cached duration for ${item.title}:`, cachedDuration);
-      if (cachedDuration && cachedDuration !== 'N/A' && cachedDuration > 0) {
-        // console.log(`🎵 Using persistent cached duration for ${item.title}: ${cachedDuration}s`);
-        // NEPOUŽÍVEJ setState během renderování - způsobuje React warning
-        return formatDuration(cachedDuration);
-      }
-    }
-
-    // 3. Fallback na původní duration z metadata
     if (item.duration && item.duration !== 'N/A') {
-      // console.log(`🎵 Using metadata duration for ${item.title}: ${item.duration}`);
-      return item.duration;
+      return formatDuration(item.duration);
     }
 
-    // 4. Poslední fallback - zkus načíst z static metadata
-    if (item.fileName) {
-      const staticMetadata = cacheService.getMetadata(item.fileName);
-      // console.log(`🎵 Static metadata for ${item.title}:`, staticMetadata);
-      if (staticMetadata && staticMetadata.duration && staticMetadata.duration !== 'N/A') {
-        // console.log(`🎵 Using static metadata duration for ${item.title}: ${staticMetadata.duration}`);
-        return staticMetadata.duration;
-      }
+    const trackDuration = item.tracks?.[0]?.duration;
+    if (trackDuration && trackDuration !== 'N/A') {
+      return formatDuration(trackDuration);
     }
 
-    // 5. Konečný fallback
-    // console.log(`🎵 No duration found for ${item.title}, using N/A`);
     return 'N/A';
   };
 
-  // Debug logging s informacemi o cache
+  // Debug logging s informacemi o načtených datech
   useEffect(() => {
     log.debug('HudbaScreen state:', {
       isLoading,
       error,
       itemsCount: hudbaItems?.length || 0,
-      stats,
-      durationsStateSize: durations.size,
-      cacheStats: cacheService.getStats ? cacheService.getStats() : 'N/A'
+      stats
     });
-
-    // Debug: vypiš detaily každé položky s duration informacemi
-    if (hudbaItems && hudbaItems.length > 0) {
-      hudbaItems.forEach((item, index) => {
-        const cachedDuration = item.audioSrc ? cacheService.getDuration(item.audioSrc) : null;
-        const stateDuration = item.audioSrc ? durations.get(item.audioSrc) : null;
-
-        // log.debug(`🎵 Item ${index + 1}:`, {
-        //   title: item.title,
-        //   type: item.type,
-        //   metadataDuration: item.duration,
-        //   cachedDuration: cachedDuration,
-        //   stateDuration: stateDuration,
-        //   displayDuration: getDisplayDuration(item),
-        //   tracks: item.tracks?.length || 'N/A',
-        //   audioSrc: !!item.audioSrc
-        // });
-      });
-    }
-  }, [isLoading, error, hudbaItems, stats, durations]);
-
-  // Vytvoř stable reference pro hudbaItems aby se předešlo nekonečným smyčkám
-  const hudbaItemsRef = useRef(hudbaItems);
-  const prevHudbaItemsLength = useRef(0);
-
-  // Načti cached durations do state (bez setState během renderování)
-  useEffect(() => {
-    if (hudbaItems && hudbaItems.length > 0 && hudbaItems.length !== prevHudbaItemsLength.current) {
-      const newDurations = new Map();
-
-      hudbaItems.forEach((item) => {
-        if (item.type === 'song' && item.audioSrc) {
-          const cachedDuration = cacheService.getDuration(item.audioSrc);
-          if (cachedDuration && cachedDuration !== 'N/A' && cachedDuration > 0) {
-            newDurations.set(item.audioSrc, cachedDuration);
-          }
-        }
-      });
-
-      // Aktualizuj state pouze pokud jsou nové durations
-      if (newDurations.size > 0) {
-        setDurations(prev => {
-          const combined = new Map(prev);
-          newDurations.forEach((duration, audioSrc) => {
-            combined.set(audioSrc, duration);
-          });
-          return combined;
-        });
-      }
-
-      // Aktualizuj reference
-      hudbaItemsRef.current = hudbaItems;
-      prevHudbaItemsLength.current = hudbaItems.length;
-    }
-  }, [hudbaItems]);
-
-  // Načti délky skladeb po načtení UI s vylepšenou logikou
-  useEffect(() => {
-    if (hudbaItems && hudbaItems.length > 0 && !isLoading) {
-      log.debug('🔄 Loading durations for songs...');
-
-      hudbaItems.forEach(async (item) => {
-        if (item.type === 'song' && item.audioSrc) {
-          // Zkontroluj, jestli už máme duration v cache nebo state
-          const hasCachedDuration = cacheService.getDuration(item.audioSrc) || durations.has(item.audioSrc);
-          const hasMetadataDuration = item.duration && item.duration !== 'N/A';
-
-          // Načti duration pouze pokud ho nemáme
-          if (!hasCachedDuration && !hasMetadataDuration) {
-            try {
-              const duration = await getAudioDuration(item.audioSrc);
-              if (duration && duration > 0) {
-                log.debug(`⏱️ Duration loaded for ${item.title}: ${duration}s`);
-                // Ulož do persistentní cache
-                cacheService.setDuration(item.audioSrc, duration);
-                // Aktualizuj state pro okamžité zobrazení
-                setDurations(prev => new Map(prev).set(item.audioSrc, duration));
-              }
-            } catch (error) {
-              log.warn(`Failed to load duration for ${item.title}:`, error);
-            }
-          } else {
-            log.debug(`⏱️ Duration already available for ${item.title}`);
-          }
-        }
-      });
-    }
-  }, [hudbaItems, isLoading]);
+  }, [isLoading, error, hudbaItems, stats]);
 
   return {
     hudbaItems,

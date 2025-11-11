@@ -688,7 +688,6 @@ void main() {
     }
 
     let fragmentShader = fragmentResult.shader;
-    let usingFallback = false;
 
     if (fragmentResult.error) {
       // Fragment shader selhal - zkus použít fallback shader
@@ -720,7 +719,6 @@ void main() {
         return;
       }
       fragmentShader = fallbackResult.shader;
-      usingFallback = true;
       setIsUsingFallback(true);
       console.log('✅ Using fallback fragment shader (original shader compilation failed)');
       console.warn('⚠️ Shader preview is using fallback shader - original shader had compilation errors');

@@ -304,14 +304,14 @@ export const ShaderPlaybackProvider = ({ children }) => {
   // SEQUENCER LOGIC
   const handleStepClick = useCallback((index, type, event) => {
     if (event.shiftKey) {
-      setLoopStart(prev => {
+      setLoopStart(() => {
         if (index > loopEnd) setLoopEnd(index);
         return index;
       });
       return;
     }
     if (event.ctrlKey || event.metaKey) {
-      setLoopEnd(prev => {
+      setLoopEnd(() => {
         if (index < loopStart) setLoopStart(index);
         return index;
       });

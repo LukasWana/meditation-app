@@ -2,7 +2,6 @@
 
 import { database } from '../services/firebase';
 import { ref, set } from 'firebase/database';
-import log from '../services/logger';
 
 // Sanitizace cesty
 function sanitizePath(path) {
@@ -42,27 +41,27 @@ function extractMP3Metadata(fileName) {
 
 export async function simulateHudbaTrigger() {
   console.log('🧪 Simulating hudba/ folder trigger...');
-  
+
   try {
     const fileName = `hudba/simulated-test-${Date.now()}.mp3`;
     console.log(`📁 Simulating file upload: ${fileName}`);
-    
+
     // Simuluj extrakci metadat
     const metadata = extractMP3Metadata(fileName);
     console.log('📊 Extracted metadata:', metadata);
-    
+
     // Ulož do Realtime Database (simulace updateRealtimeDatabase)
     const safePath = sanitizePath(fileName);
     const metadataRef = ref(database, `audio-metadata/${safePath}`);
-    
+
     await set(metadataRef, {
       ...metadata,
       lastUpdated: new Date().toISOString(),
       source: 'simulated-trigger'
     });
-    
+
     console.log(`✅ Metadata saved to Realtime Database: ${safePath}`);
-    
+
     return {
       success: true,
       message: `Simulated hudba trigger successful! Created metadata for ${fileName}`,
@@ -70,7 +69,7 @@ export async function simulateHudbaTrigger() {
       safePath: safePath,
       metadata: metadata
     };
-    
+
   } catch (error) {
     console.error('❌ Simulated hudba trigger failed:', error);
     return { success: false, error: error.message };
@@ -79,27 +78,27 @@ export async function simulateHudbaTrigger() {
 
 export async function simulateSlovaTrigger() {
   console.log('🧪 Simulating slova/ folder trigger...');
-  
+
   try {
     const fileName = `slova/simulated-test-${Date.now()}.mp3`;
     console.log(`📁 Simulating file upload: ${fileName}`);
-    
+
     // Simuluj extrakci metadat
     const metadata = extractMP3Metadata(fileName);
     console.log('📊 Extracted metadata:', metadata);
-    
+
     // Ulož do Realtime Database (simulace updateRealtimeDatabase)
     const safePath = sanitizePath(fileName);
     const metadataRef = ref(database, `audio-metadata/${safePath}`);
-    
+
     await set(metadataRef, {
       ...metadata,
       lastUpdated: new Date().toISOString(),
       source: 'simulated-trigger'
     });
-    
+
     console.log(`✅ Metadata saved to Realtime Database: ${safePath}`);
-    
+
     return {
       success: true,
       message: `Simulated slova trigger successful! Created metadata for ${fileName}`,
@@ -107,7 +106,7 @@ export async function simulateSlovaTrigger() {
       safePath: safePath,
       metadata: metadata
     };
-    
+
   } catch (error) {
     console.error('❌ Simulated slova trigger failed:', error);
     return { success: false, error: error.message };
@@ -116,7 +115,7 @@ export async function simulateSlovaTrigger() {
 
 export async function simulateMultipleTriggers() {
   console.log('🧪 Simulating multiple triggers...');
-  
+
   try {
     const testFiles = [
       'hudba/meditation-1.mp3',
@@ -124,42 +123,42 @@ export async function simulateMultipleTriggers() {
       'slova/breathing-exercise.mp3',
       'slova/guided-meditation.mp3'
     ];
-    
+
     const results = [];
-    
+
     for (const fileName of testFiles) {
       console.log(`📁 Simulating upload: ${fileName}`);
-      
+
       // Simuluj extrakci metadat
       const metadata = extractMP3Metadata(fileName);
-      
+
       // Ulož do Realtime Database
       const safePath = sanitizePath(fileName);
       const metadataRef = ref(database, `audio-metadata/${safePath}`);
-      
+
       await set(metadataRef, {
         ...metadata,
         lastUpdated: new Date().toISOString(),
         source: 'simulated-batch-trigger'
       });
-      
+
       results.push({
         fileName: fileName,
         safePath: safePath,
         metadata: metadata
       });
-      
+
       console.log(`✅ Simulated trigger for: ${fileName}`);
     }
-    
+
     console.log(`📊 Simulated ${results.length} triggers successfully`);
-    
+
     return {
       success: true,
       message: `Simulated ${results.length} triggers successfully!`,
       results: results
     };
-    
+
   } catch (error) {
     console.error('❌ Simulated multiple triggers failed:', error);
     return { success: false, error: error.message };

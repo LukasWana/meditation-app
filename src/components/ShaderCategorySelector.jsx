@@ -1,12 +1,10 @@
 import React from 'react';
 import { motion } from 'framer-motion';
-import { useLanguage } from '@contexts/LanguageContext';
 
 /**
  * Komponenta pro výběr kategorie shaderů
  */
 const ShaderCategorySelector = ({ selectedCategory, onSelect }) => {
-  const { t } = useLanguage();
 
   const categories = [
     { id: 'shaders', name: 'Shaders', count: 30 }

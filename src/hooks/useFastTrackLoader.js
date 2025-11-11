@@ -1,5 +1,4 @@
 import { useState, useEffect, useRef } from 'react';
-import { useMetadataLoader, useBatchMetadataLoader } from './useMetadataLoader';
 import cacheService from '@services/cacheServiceRefactored';
 
 export const useFastTrackLoader = (items, options = {}) => {

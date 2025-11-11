@@ -7,6 +7,7 @@
     "dev": "npx vite",
     "build": "npx vite build",
     "lint": "eslint --no-error-on-unmatched-pattern src/contexts/LanguageContext.jsx src/config/audioMetadataConfig.js src/services/audioMetadataStorageService.js src/services/globalMetadataPreloader.js src/services/unifiedMetadataService.js src/hooks/useFirebaseCDNScanner.js src/hooks/useFirebaseDychaniScanner.js src/hooks/useFirebaseDychaniFilter.js src/features/meditation/screens/SimpleAdminScreen.jsx src/features/meditation/screens/SoundThemeGalleryScreen.jsx src/features/meditation/screens/SettingsScreen.jsx",
+    "lint:full": "eslint --ext .js,.jsx,.ts,.tsx src",
     "shader:generate": "node scripts/generateShaderPreviews.js --all",
     "shader:queue": "node scripts/processShaderPreviewQueue.js",
     "shader:queue:watch": "node scripts/processShaderPreviewQueue.js --watch",

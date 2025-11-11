@@ -79,17 +79,31 @@ if (import.meta.env.VITE_RECAPTCHA_SITE_KEY) {
   }
 }
 
-// Realtime Database - používáme produkční databázi
+// Realtime Database - respektuj konfigurované prostředí
 let database;
 try {
-  // Vždy používej produkční databázi (emulator způsobuje problémy)
-  database = getDatabase(app, 'https://meditations-audio-default-rtdb.europe-west1.firebasedatabase.app');
-  console.log('🗄️ Realtime Database: Using production database');
+  const databaseUrl = import.meta.env.VITE_FIREBASE_DATABASE_URL;
+  const fallbackDatabaseUrl = 'https://meditations-audio-default-rtdb.europe-west1.firebasedatabase.app';
+
+  const resolvedUrl = databaseUrl && databaseUrl.trim().length > 0
+    ? databaseUrl
+    : fallbackDatabaseUrl;
+
+  database = getDatabase(app, resolvedUrl);
+
+  if (import.meta.env.MODE === 'development') {
+    console.log('🗄️ Realtime Database: Using URL', resolvedUrl);
+    if (!databaseUrl) {
+      console.log('ℹ️ No VITE_FIREBASE_DATABASE_URL provided, using regional fallback');
+    }
+  }
 } catch (error) {
   console.error('❌ Chyba při inicializaci Realtime Database:', error);
   // Fallback na default databázi
   database = getDatabase(app);
-  console.log('🗄️ Realtime Database: Using default database');
+  if (import.meta.env.MODE === 'development') {
+    console.log('🗄️ Realtime Database: Using default database after fallback');
+  }
 }
 export { database };
 

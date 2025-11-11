@@ -1,7 +1,6 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { motion } from 'framer-motion';
 import ShaderPreview from './ShaderPreview';
-import { useLanguage } from '@contexts/LanguageContext';
 import { getShaderList } from '@utils/shaderLoader';
 import { generateShaderPreviews } from '@utils/previewGenerator';
 
@@ -23,8 +22,7 @@ const simpleHash = (str) => {
  * Galerie shaderů - zobrazuje shadery z vybrané kategorie
  * Používá statické náhledy místo živých canvasů pro lepší výkon
  */
-const ShaderGallery = ({ selectedVariant, onSelect, section, category }) => {
-  const { t } = useLanguage();
+const ShaderGallery = ({ selectedVariant, onSelect, category }) => {
   const [shaders, setShaders] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [shaderPreviews, setShaderPreviews] = useState({});
@@ -232,8 +230,7 @@ const ShaderGallery = ({ selectedVariant, onSelect, section, category }) => {
     generateMissingPreviews(shaderList).then(() => {
       setIsLoading(false);
     });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [category]); // Pouze category jako dependency - generateMissingPreviews se nemění
+  }, [category, generateMissingPreviews]);
 
   if (isLoading) {
     return (

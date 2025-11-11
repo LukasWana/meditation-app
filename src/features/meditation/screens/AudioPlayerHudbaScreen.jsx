@@ -1,7 +1,6 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { FramerPageTransition, BackgroundShader } from '@components';
 import { AudioPlayer } from '@features/audio';
-import { useLanguage } from '@contexts/LanguageContext';
 import { useShaderSettings } from '@contexts/ShaderSettingsContext';
 import { useAudioAnalysis } from '@contexts/AudioAnalysisContext';
 import { usePlayback } from '@contexts/ShaderPlaybackContext';
@@ -16,7 +15,6 @@ const AudioPlayerHudbaScreen = ({
   onTouchEnd,
   onPlayerStateChange
 }) => {
-  const { t } = useLanguage();
   const { getShaderForSection, getColorForSection } = useShaderSettings();
   const { audioData } = useAudioAnalysis();
   const { transitionState } = usePlayback();

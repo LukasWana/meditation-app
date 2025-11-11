@@ -1,38 +1,7 @@
 import { useMemo } from 'react';
 import { useFirebaseHudbaScanner } from '@hooks/useFirebaseHudbaScanner';
-import fastMetadataService from '@services/fastMetadataService';
 
 const DEBUG_COVER_LOGS = false;
-
-// Funkce pro výpočet celkového času alba
-const calculateTotalDuration = (tracks) => {
-  let totalSeconds = 0;
-  let validDurations = 0;
-
-  tracks.forEach(track => {
-    const duration = track.duration;
-    if (duration && duration !== 'N/A') {
-      // Parse duration string like "5:30" to seconds
-      const parts = duration.split(':');
-      if (parts.length === 2) {
-        const minutes = parseInt(parts[0]);
-        const seconds = parseInt(parts[1]);
-        if (!isNaN(minutes) && !isNaN(seconds)) {
-          totalSeconds += minutes * 60 + seconds;
-          validDurations++;
-        }
-      }
-    }
-  });
-
-  if (validDurations === 0) {
-    return 'N/A';
-  }
-
-  const totalMinutes = Math.floor(totalSeconds / 60);
-  const remainingSeconds = totalSeconds % 60;
-  return `${totalMinutes}:${remainingSeconds.toString().padStart(2, '0')}`;
-};
 
 export const useFirebaseHudbaFilter = () => {
   const {
@@ -56,7 +25,6 @@ export const useFirebaseHudbaFilter = () => {
     // console.log('📊 availableFiles:', availableFiles?.length || 0);
     // console.log('📊 coverImages:', coverImages);
     const items = [];
-    const albums = new Map(); // Pro skupování album skladeb
 
     // Filtruj pouze hudební soubory (ze složky hudba/)
     const hudbaFiles = availableFiles.filter(file => file.type === 'hudba' && file.isAvailable);
@@ -161,7 +129,7 @@ export const useFirebaseHudbaFilter = () => {
 
         // Odstraň číslo skladby z názvu (např. "01 - Název skladby" -> "Název skladby")
         // Podporuje různé formáty: "01 - Název", "1. Název", "01 Název", atd.
-        return trackName.replace(/^\d+[\s\-\.]*/, '').trim();
+        return trackName.replace(/^\d+[\s.-]*/, '').trim();
       };
 
       // Vytvoř tracks pro album

@@ -133,8 +133,6 @@ export const useFirebaseAudioFilter = (userGender, userLanguage = 'sk') => {
   }, []);
 
   // Získej názvy souborů pro kompatibilitu s useAudioFilter
-  const audioFileNames = availableFiles.map(file => file.fileName);
-
   // Získej doporučené soubory - zobraz všechny kombinace hlasů a pohlaví pro každé téma
   const troubleItems = useMemo(() => {
     const getTroubleItems = () => {
@@ -152,15 +150,6 @@ export const useFirebaseAudioFilter = (userGender, userLanguage = 'sk') => {
         }
       });
     }
-
-    const topicConfig = {
-      'uzkost-osamelost': {},
-      'strach-osamelost': {},
-      'stres-praca': {},
-      'spank': {},
-      'depresia': {},
-      'relaxacia': {}
-    };
 
     // Seskup soubory podle témat
     const filesByTopic = filteredFiles.reduce((acc, file) => {
@@ -180,7 +169,6 @@ export const useFirebaseAudioFilter = (userGender, userLanguage = 'sk') => {
 
     Object.keys(filesByTopic).forEach(topicKey => {
       const topicFiles = filesByTopic[topicKey];
-      const config = topicConfig[topicKey] || { icon: '🎵' };
 
       // Zobraz pouze první soubor pro toto téma (varianty se přepínají v playeru)
       const file = topicFiles[0]; // Vezmi první soubor

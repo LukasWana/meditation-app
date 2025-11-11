@@ -88,6 +88,10 @@ export const shouldUseDarkMode = (shaderKey, colorHex = null) => {
     return true;
   }
 
+  if (colorHex) {
+    return isDarkColor(colorHex);
+  }
+
   // Pokud je to barva, zkontroluj její tmavost
   if (shaderKey.startsWith('__COLOR__')) {
     const color = shaderKey.replace('__COLOR__', '');

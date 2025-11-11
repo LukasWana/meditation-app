@@ -1,68 +1,15 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { ref, listAll, getDownloadURL, getMetadata } from 'firebase/storage';
-import { storage } from '@services/firebase';
-import { parseAudioFileName } from '@utils/hudbaParser';
 import cacheService from '@services/cacheServiceRefactored';
 import log from '@services/logger';
-import { performanceMonitor } from '@services/performanceMonitor';
-import { getComponentConfig } from '@config/performance';
 import { fastMetadataService } from '@services/fastMetadataService';
 import { realtimeMetadataService } from '@services/realtimeMetadataService';
-
-// Pomocná funkce pro načtení délky audio souboru
-const getAudioDuration = (audioSrc) => {
-  return new Promise((resolve) => {
-    const audio = new Audio();
-    audio.addEventListener('loadedmetadata', () => {
-      const duration = audio.duration;
-      if (isFinite(duration) && duration > 0) {
-        const minutes = Math.floor(duration / 60);
-        const seconds = Math.floor(duration % 60);
-        const durationString = `${minutes}:${seconds.toString().padStart(2, '0')}`;
-
-        // Ulož duration do cache
-        cacheService.setDuration(audioSrc, duration);
-
-        resolve(durationString);
-      } else {
-        resolve(null);
-      }
-    });
-    audio.addEventListener('error', () => {
-      resolve(null);
-    });
-    audio.src = audioSrc;
-    // Timeout po 5 sekundách
-    setTimeout(() => resolve(null), 5000);
-  });
-};
-
-// Pomocná funkce pro odhad délky na základě velikosti souboru
-const estimateDuration = (sizeInBytes, contentType) => {
-  if (!sizeInBytes || !contentType) return null;
-
-  // Pro MP3 soubory - přibližně 1MB = 1 minuta
-  if (contentType.includes('audio/mpeg')) {
-    const estimatedMinutes = Math.round(sizeInBytes / (1024 * 1024));
-    const minutes = Math.floor(estimatedMinutes);
-    const seconds = Math.floor((estimatedMinutes - minutes) * 60);
-    return `${minutes}:${seconds.toString().padStart(2, '0')}`;
-  }
-
-  return null;
-};
 
 export const useFirebaseHudbaScanner = () => {
   const [audioFiles, setAudioFiles] = useState([]);
   const [coverImages, setCoverImages] = useState(new Map());
   const [isLoading, setIsLoading] = useState(true);
-  const [isLoadingCovers, setIsLoadingCovers] = useState(false);
-  const [isLoadingDurations, setIsLoadingDurations] = useState(false);
   const [error, setError] = useState(null);
   const [lastUpdated, setLastUpdated] = useState(null);
-
-  // Získej konfiguraci pro tento hook
-  const config = getComponentConfig('useFirebaseHudbaScanner');
 
   // Použij ref pro sledování, zda už probíhá načítání
   const isLoadingRef = useRef(false);
@@ -444,8 +391,8 @@ export const useFirebaseHudbaScanner = () => {
 
     // State
     isLoading,
-    isLoadingCovers,
-    isLoadingDurations,
+    isLoadingCovers: false,
+    isLoadingDurations: false,
     error,
     lastUpdated,
 

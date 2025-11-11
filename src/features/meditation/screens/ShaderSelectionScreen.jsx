@@ -1,23 +1,18 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { FramerPageTransition, BackButton, ShaderGallery } from '@components';
 import { useLanguage } from '@contexts/LanguageContext';
 import { useShaderSettings } from '@contexts/ShaderSettingsContext';
 import { usePlayback } from '@contexts/ShaderPlaybackContext';
-import { getShaderList } from '@utils/shaderLoader';
 
 const ShaderSelectionScreen = ({
   onNavigateToScreen,
-  onTouchStart,
-  onTouchMove,
-  onTouchEnd,
   section = 'hudba' // Sekce pro kterou se vybírá shader
 }) => {
   const { t } = useLanguage();
-  const { getShaderForSection, setShaderForSection, getColorForSection, setColorForSection, clearColorForSection } = useShaderSettings();
+  const { getShaderForSection, setShaderForSection, getColorForSection, setColorForSection } = useShaderSettings();
   const { transitionState, startTransition } = usePlayback();
   const [selectedCategory, setSelectedCategory] = useState('built-in'); // 'built-in' nebo 'shaders'
-  const [showColorPicker, setShowColorPicker] = useState(false);
   const [selectedColor, setSelectedColor] = useState(getColorForSection(section) || '#000000');
   const selectedShader = getShaderForSection(section);
   const sectionLabel = t(section) || section;
@@ -96,8 +91,6 @@ const ShaderSelectionScreen = ({
       const to = { shaderKey: currentShader };
       startTransition(from, to);
     }
-
-    setShowColorPicker(false);
 
     // Vrať se zpět na správnou obrazovku
     const targetScreen = getTargetScreen();

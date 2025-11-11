@@ -5,6 +5,7 @@ const { spawn } = require('child_process');
 const path = require('path');
 const os = require('os');
 const fs = require('fs');
+const ffprobeStatic = require('ffprobe-static');
 
 // Inicializace Firebase Admin
 admin.initializeApp();
@@ -138,7 +139,7 @@ exports.extractMP3Metadata = functions.storage.object().onFinalize(async (object
  */
 function extractMetadataWithFFprobe(filePath) {
   return new Promise((resolve, reject) => {
-    const ffprobe = spawn('ffprobe', [
+    const ffprobe = spawn(ffprobeStatic.path, [
       '-v', 'quiet',
       '-print_format', 'json',
       '-show_format',

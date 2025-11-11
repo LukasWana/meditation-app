@@ -102,7 +102,7 @@ const ShaderPreviewAdminSection = () => {
       setError(err.message || 'Nepodařilo se požadavek odeslat');
     } finally {
       setPendingKey(null);
-    };
+    }
   };
 
   const handleRegenerateAll = async () => {

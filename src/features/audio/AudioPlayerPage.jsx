@@ -1,9 +1,7 @@
 import React from 'react';
-import { motion } from 'framer-motion';
 import { useAudioPlayer, useFirebaseAudio } from './hooks';
 import {
   AudioControls,
-  CloseButton,
   LoadingIndicator
 } from './components';
 import { FramerPageTransition, BackButton } from '@components';

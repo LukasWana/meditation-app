@@ -62,7 +62,7 @@ export const generateWaveformsForFolderViaFunction = async (folder, samples = 15
 
     // Filtruj soubory podle složky
     const folderFiles = Object.entries(allMetadata)
-      .filter(([_, metadata]) => {
+      .filter(([, metadata]) => {
         const fileFolder = metadata.folder || metadata.fileName?.split('/')[0];
         return fileFolder === folder;
       })

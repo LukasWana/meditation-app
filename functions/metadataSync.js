@@ -9,6 +9,9 @@ const cors = require('cors')({ origin: true });
 const path = require('path');
 const os = require('os');
 const fs = require('fs');
+const { spawn } = require('child_process');
+const ffmpegInstaller = require('@ffmpeg-installer/ffmpeg');
+const ffprobeStatic = require('ffprobe-static');
 
 // Inicializace Firebase Admin pouze pokud ještě není inicializován
 if (!admin.apps.length) {
@@ -68,9 +71,8 @@ async function extractAudioMetadata(fileName, bucketName) {
       // Extrahuj metadata pomocí ffprobe
       let duration = null;
       try {
-        const { spawn } = require('child_process');
         duration = await new Promise((resolve, reject) => {
-          const ffprobe = spawn('ffprobe', [
+          const ffprobe = spawn(ffprobeStatic.path, [
             '-v', 'quiet',
             '-print_format', 'json',
             '-show_format',
@@ -292,10 +294,8 @@ async function generateWaveformForFile(fileName, bucketName) {
     const pcmFilePath = path.join(os.tmpdir(), `pcm-${Date.now()}-${path.basename(fileName)}.raw`);
 
     try {
-      const { spawn } = require('child_process');
-
       // Konvertuj audio soubor na raw PCM data pomocí ffmpeg
-      const ffmpeg = spawn('ffmpeg', [
+      const ffmpeg = spawn(ffmpegInstaller.path, [
         '-i', tempFilePath,           // Vstupní soubor
         '-f', 's16le',                // Formát: signed 16-bit little-endian PCM
         '-ac', '1',                   // Mono (jeden kanál)
@@ -475,9 +475,8 @@ async function extractImageMetadata(fileName, bucketName) {
       let height = null;
 
       try {
-        const { spawn } = require('child_process');
         const ffprobeResult = await new Promise((resolve) => {
-          const ffprobe = spawn('ffprobe', [
+          const ffprobe = spawn(ffprobeStatic.path, [
             '-v', 'quiet',
             '-print_format', 'json',
             '-show_streams',

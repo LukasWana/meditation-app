@@ -88,7 +88,6 @@ const ShaderSelector = ({
     if (onNavigateToScreen) {
       // Ulož aktuální obrazovku do localStorage před otevřením shader-selection
       // Zjisti aktuální obrazovku z URL nebo z window
-      const currentPath = window.location.pathname;
       // Pokud máme nějaký způsob, jak zjistit aktuální obrazovku, použij to
       // Jinak použijeme 'hudba' jako default (protože ShaderSelector je v AudioPlayer)
       const currentScreen = localStorage.getItem('meditation-app-current-screen') || 'hudba';

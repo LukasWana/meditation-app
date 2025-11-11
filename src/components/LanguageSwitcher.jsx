@@ -6,19 +6,10 @@ import CzechFlagUrl from '@assets/flags/002-czech-republic.svg';
 import UKFlagUrl from '@assets/flags/001-united-kingdom.svg';
 
 const LanguageSwitcher = ({ className = "" }) => {
-  const { language, changeLanguage, getLanguageName, availableLanguages } = useLanguage();
+  const { language, changeLanguage } = useLanguage();
 
   const handleLanguageChange = (newLanguage) => {
     changeLanguage(newLanguage);
-  };
-
-  const getFlagUrl = (lang) => {
-    switch (lang) {
-      case 'SK': return SlovakiaFlagUrl;
-      case 'CZ': return CzechFlagUrl;
-      case 'EN': return UKFlagUrl;
-      default: return SlovakiaFlagUrl;
-    }
   };
 
   return (

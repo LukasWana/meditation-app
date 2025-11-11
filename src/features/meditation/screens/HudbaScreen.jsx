@@ -72,13 +72,15 @@ const HudbaScreen = ({
   }, [transitionState?.toShaderKey, colorOverride, getShaderForSection]);
 
   React.useEffect(() => {
-    console.log('🎨 HudbaScreen: Shader info', {
-      currentShader,
-      transitionState: transitionState?.toShaderKey,
-      shaderFromSettings: getShaderForSection('hudba'),
-      colorFromSettings: getColorForSection('hudba'),
-      isColorMode: currentShader && currentShader.startsWith('__COLOR__')
-    });
+    if (import.meta.env.MODE === 'development') {
+      console.log('🎨 HudbaScreen: Shader info', {
+        currentShader,
+        transitionState: transitionState?.toShaderKey,
+        shaderFromSettings: getShaderForSection('hudba'),
+        colorFromSettings: getColorForSection('hudba'),
+        isColorMode: currentShader && currentShader.startsWith('__COLOR__')
+      });
+    }
   }, [currentShader, transitionState, getShaderForSection, getColorForSection]);
 
   // Hlavní logika pro data HudbaScreen

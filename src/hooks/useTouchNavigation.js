@@ -4,9 +4,7 @@ export const useTouchNavigation = (options = {}) => {
   const {
     minSwipeDistance = 30,
     onSwipeLeft = null,
-    onSwipeRight = null,
-    onSwipeUp = null,
-    onSwipeDown = null
+    onSwipeRight = null
   } = options;
 
   const [touchStart, setTouchStart] = useState(null);

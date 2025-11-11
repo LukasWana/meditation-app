@@ -6,7 +6,6 @@ import CurrentTimeDisplay from './CurrentTimeDisplay';
 import VoiceSwitcher from './VoiceSwitcher';
 import TrackSwitcher from './TrackSwitcher';
 import ShaderSelector from './ShaderSelector';
-import AudioShaderBackground from '@components/AudioShaderBackground';
 
 const AudioControls = ({
   progress,

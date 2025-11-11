@@ -2,7 +2,6 @@ import { useState, useEffect, useMemo, useCallback } from 'react';
 import { ref, getDownloadURL } from 'firebase/storage';
 import { useFirebaseAudio } from './useFirebaseAudio';
 import { useAudioContext } from './useAudioContext';
-import { useAutoplay } from './useAutoplay';
 import { useVoiceSwitcher } from './useVoiceSwitcher';
 import { storage } from '@services/firebase';
 
@@ -10,9 +9,7 @@ export const useAudioPlayerLogic = ({
   audioSrc,
   albumTracks,
   currentTrackIndex,
-  onTrackChange,
-  allFiles,
-  autoplayEnabled
+  allFiles
 }) => {
   const [currentAudioFile, setCurrentAudioFile] = useState(audioSrc);
 

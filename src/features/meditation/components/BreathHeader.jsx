@@ -8,7 +8,6 @@ import CurrentTimeDisplay from '@features/audio/components/CurrentTimeDisplay';
  * @param {boolean} isBreathing - Zda probíhá dýchání
  * @param {'in'|'out'} breathPhase - Aktuální fáze dýchání
  * @param {number} currentTime - Aktuální uplynulý čas v sekundách
- * @param {number} totalTime - Celkový čas v sekundách
  * @param {Function} formatTime - Funkce pro formátování času
  * @param {Function} t - Funkce pro překlad
  */
@@ -16,7 +15,6 @@ const BreathHeader = ({
   isBreathing,
   breathPhase,
   currentTime,
-  totalTime,
   formatTime,
   t
 }) => {

@@ -1,12 +1,9 @@
-import React, { useState, useEffect, Suspense, lazy, useRef } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { motion } from 'framer-motion';
 import { Trash2, Plus, Play, Download, Upload } from 'lucide-react';
-import { FramerSection, FramerPageTransition, BackButton, FramerButton, BackgroundShader } from '@components';
+import { FramerSection, FramerPageTransition, BackButton, BackgroundShader } from '@components';
 import { useLanguage } from '@contexts/LanguageContext';
 import breathProfilesService from '@services/breathProfilesService';
-
-// Lazy loading modálu
-const WheelPickerModal = lazy(() => import('@components/TimePickerModal').then(m => ({ default: m.WheelPickerModal })));
 
 const BreathProfilesScreen = ({
   onNavigateToScreen,

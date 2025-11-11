@@ -132,12 +132,12 @@ export function useRealtimeMetadata() {
 
   // Filtruj metadata podle složky
   const getMetadataByFolder = useCallback((folder) => {
-    return Object.entries(metadata).filter(([_, data]) => data.folder === folder);
+    return Object.entries(metadata).filter(([, data]) => data.folder === folder);
   }, [metadata]);
 
   // Najdi metadata podle názvu souboru
   const findMetadataByFileName = useCallback((fileName) => {
-    return Object.entries(metadata).find(([_, data]) => data.fileName === fileName);
+    return Object.entries(metadata).find(([, data]) => data.fileName === fileName);
   }, [metadata]);
 
   // Získej seznam všech složek

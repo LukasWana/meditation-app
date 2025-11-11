@@ -2,7 +2,6 @@ import React, { useState, Suspense, lazy } from 'react';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { PageManager } from '@features/navigation';
 import { useNavigation, useTouchNavigation, useAppState, useBackgroundDataLoader, useTimer, useBreathPhase } from '@hooks';
-import { useOfflineStatus } from '@hooks/useOfflineStatus';
 import { LazyIntroScreen } from '@components/LazyWrapper';
 import { LanguageProvider } from '@contexts/LanguageContext';
 import { UIConfigProvider } from '@contexts/UIConfigContext';
@@ -10,7 +9,6 @@ import { ShaderSettingsProvider } from '@contexts/ShaderSettingsContext';
 import { AudioAnalysisProvider } from '@contexts/AudioAnalysisContext';
 import { ShaderPlaybackProvider } from '@contexts/ShaderPlaybackContext';
 import MonitoringDashboard from '@components/MonitoringDashboard';
-import OfflineIndicator from '@components/OfflineIndicator';
 
 import ErrorBoundary from '@components/ErrorBoundary';
 import { register } from '@services/serviceWorker';
@@ -38,10 +36,6 @@ function MeditationApp() {
 
   // Navigation state
   const { currentScreen, navigateToScreen } = useNavigation('intro');
-
-  // Offline status
-  const { isOffline, showOfflineMessage } = useOfflineStatus();
-
 
   // App state
   const {
@@ -343,7 +337,6 @@ function MeditationApp() {
       )}
 
       {/* Offline Indicator - ZAKOMENTOVÁNO */}
-      {/* <OfflineIndicator isOffline={isOffline} showOfflineMessage={showOfflineMessage} /> */}
 
       </div>
               </AudioAnalysisProvider>
@@ -371,7 +364,7 @@ export function AdminApp() {
           <SimpleAdminScreen />
         </Suspense>
 
-        {/* Monitoring Dashboard - pouze v admin */}
+        {/* Monitoring Dashboard - pouze v admin (development) */}
         {import.meta.env.MODE === 'development' && (
           <>
             <button

@@ -7,13 +7,13 @@
     // Audio metadata - veřejné čtení, zápis pouze pro autentifikované
     "audio-metadata": {
       ".read": true,
-      ".write": "auth != null"
+      ".write": "auth != null && auth.token != null && auth.token.admin == true"
     },
 
     // Audio statistiky - veřejné čtení, zápis pouze pro autentifikované
     "audio_stats": {
       ".read": true,
-      ".write": "auth != null"
+      ".write": "auth != null && auth.token != null && auth.token.admin == true"
     },
 
     // Test data - pouze pro autentifikované
@@ -25,14 +25,14 @@
     // Metadata - veřejné čtení, zápis pro autentifikované
     "metadata": {
       ".read": true,
-      ".write": "auth != null"
+      ".write": "auth != null && auth.token != null && auth.token.admin == true"
     },
 
     // Shader previews - veřejné čtení, zápis pouze pro admin uživatele
     "shader-previews": {
       ".read": true,
       "$shaderId": {
-        ".write": "auth != null"
+        ".write": "auth != null && auth.token != null && auth.token.admin == true"
       }
     },
 
@@ -59,7 +59,7 @@
     // UI data - veřejné čtení (texty, překlady, konfigurace), zápis pro autentifikované
     "ui-data": {
       ".read": true,
-      ".write": "auth != null"
+      ".write": "auth != null && auth.token != null && auth.token.admin == true"
     }
   }
 }

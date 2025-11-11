@@ -274,9 +274,10 @@ class UIDataService {
   getTexts(language) {
     if (!this.uiData || !this.uiData.texts) {
       const defaults = this.getDefaultUIData();
-      return defaults.texts;
+      return defaults.texts[language] || defaults.texts;
     }
-    return this.uiData.texts;
+    const texts = this.uiData.texts;
+    return texts[language] || texts;
   }
 
   /**

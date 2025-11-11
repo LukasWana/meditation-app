@@ -5,9 +5,7 @@ export const AudioPlayerAnimations = ({
   children,
   albumCover,
   backgroundColor = null, // Barva pozadí přehrávače (má prioritu před album cover)
-  className = "",
-  onClose,
-  fadeOutAndClose
+  className = ""
 }) => {
   // Overlay pozadí - pokud je barva, úplně transparentní, jinak velmi průhledné, aby shader prosvítal
   const overlayBackgroundStyle = backgroundColor

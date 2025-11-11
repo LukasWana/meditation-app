@@ -3,17 +3,6 @@ import { ref, set } from 'firebase/database';
 import { db as firestoreDb } from '../services/firebase.js';
 import { database } from '../services/firebase.js';
 
-// Funkce pro sanitizaci cesty pro Realtime Database
-function sanitizePath(path) {
-  return path
-    .replace(/\./g, '_DOT_')
-    .replace(/\//g, '_SLASH_')
-    .replace(/#/g, '_HASH_')
-    .replace(/\$/g, '_DOLLAR_')
-    .replace(/\[/g, '_LBRACKET_')
-    .replace(/\]/g, '_RBRACKET_');
-}
-
 // Hlavní funkce pro synchronizaci
 export async function syncFirestoreToRealtime() {
   try {

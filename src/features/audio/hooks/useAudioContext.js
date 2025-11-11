@@ -1,4 +1,5 @@
-import { useEffect } from 'react';
+import { useEffect } from 'react';
+
 export const useAudioContext = (audioUrl) => {
   // Automatická aktivace audio při načtení stránky a při změně skladby
   useEffect(() => {
@@ -17,14 +18,14 @@ export const useAudioContext = (audioUrl) => {
           audioContext.resume().then(() => {
             console.log('🎵 Audio activated for new track!');
             window.audioActivated = true;
-          }).catch((error) => {
+          }).catch(() => {
             console.log('🎵 Audio activation failed for new track');
           });
         } else {
           console.log('🎵 Audio already active for new track');
           window.audioActivated = true;
         }
-      } catch (error) {
+      } catch {
         console.log('🎵 Audio activation error for new track');
       }
     }
