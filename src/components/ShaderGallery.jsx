@@ -28,9 +28,44 @@ const ShaderGallery = ({ selectedVariant, onSelect, section, category }) => {
   const [shaders, setShaders] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [shaderPreviews, setShaderPreviews] = useState({});
+  const [remotePreviews, setRemotePreviews] = useState({});
   const [isGeneratingPreviews, setIsGeneratingPreviews] = useState(false);
   const shadersRef = useRef([]); // Ref pro aktuální seznam shaderů
+  const remoteServiceRef = useRef(null);
 
+  useEffect(() => {
+    let unsubscribe = null;
+    let isMounted = true;
+
+    const init = async () => {
+      try {
+        const { realtimeShaderPreviewService } = await import('@services/realtimeShaderPreviewService');
+        if (!isMounted) return;
+
+        remoteServiceRef.current = realtimeShaderPreviewService;
+
+        const initial = await realtimeShaderPreviewService.fetchAll();
+        if (!isMounted) return;
+        setRemotePreviews(initial || {});
+
+        unsubscribe = realtimeShaderPreviewService.subscribeAll((data) => {
+          if (!isMounted) return;
+          setRemotePreviews(data || {});
+        });
+      } catch (err) {
+        console.error('Failed to initialise realtime shader preview service', err);
+      }
+    };
+
+    init();
+
+    return () => {
+      isMounted = false;
+      if (typeof unsubscribe === 'function') {
+        unsubscribe();
+      }
+    };
+  }, []);
   // Načti cache z localStorage
   const loadCache = useCallback(() => {
     try {
@@ -43,25 +78,27 @@ const ShaderGallery = ({ selectedVariant, onSelect, section, category }) => {
   }, []);
 
   // Ulož náhled do cache
-  const savePreviewToCache = useCallback((id, dataUrl, shaderInfo) => {
+  const savePreviewToCache = useCallback((id, payload = {}, shaderInfo = null) => {
     try {
       const cachedData = JSON.parse(localStorage.getItem(SHADER_PREVIEWS_CACHE_KEY) || '{}');
       if (!cachedData.previews) {
         cachedData.previews = {};
       }
 
-      // Vytvoř hash pro detekci změn
-      let hash = null;
-      if (shaderInfo.path) {
-        // Pro shadery ze souborů použij cestu jako hash
-        hash = simpleHash(shaderInfo.path);
-      } else if (shaderInfo.variant) {
-        // Pro vestavěné shadery použij variant jako hash
-        hash = simpleHash(shaderInfo.variant);
+      let hash = payload.hash || null;
+      if (!hash && shaderInfo) {
+        if (shaderInfo.path) {
+          hash = simpleHash(shaderInfo.path);
+        } else if (shaderInfo.variant) {
+          hash = simpleHash(shaderInfo.variant);
+        } else {
+          hash = simpleHash(shaderInfo.id || id);
+        }
       }
 
       cachedData.previews[id] = {
-        dataUrl,
+        ...(cachedData.previews[id] || {}),
+        ...payload,
         hash,
         timestamp: Date.now()
       };
@@ -85,71 +122,91 @@ const ShaderGallery = ({ selectedVariant, onSelect, section, category }) => {
     // Najdi shader info pro uložení do cache - použij ref místo state
     const shaderInfo = shadersRef.current.find(s => s.id === id);
     if (shaderInfo) {
-      savePreviewToCache(id, dataUrl, shaderInfo);
+      savePreviewToCache(id, { dataUrl, source: 'local' }, shaderInfo);
     }
   }, [savePreviewToCache]);
 
   // Generuj náhledy pro shadery, které je ještě nemají
   const generateMissingPreviews = useCallback(async (shaderList) => {
     const cachedPreviews = loadCache();
-    const shadersToGenerate = [];
     const previewsToSet = {};
+    const shadersToGenerate = [];
 
     for (const shader of shaderList) {
-      const cached = cachedPreviews[shader.id];
-      let needsGeneration = true;
+      const remoteMeta = remotePreviews?.[shader.id];
 
-      if (cached && cached.dataUrl) {
-        // Zkontroluj, zda je cache stále platná
-        if (shader.path) {
-          const currentHash = simpleHash(shader.path);
-          if (cached.hash === currentHash) {
-            // Cache je platná, použij ji
+      if (remoteMeta && remoteMeta.previewUrl) {
+        const remoteUrl = remoteMeta.etag
+          ? `${remoteMeta.previewUrl}?v=${remoteMeta.etag}`
+          : remoteMeta.previewUrl;
+        previewsToSet[shader.id] = remoteUrl;
+        savePreviewToCache(
+          shader.id,
+          {
+            previewUrl: remoteUrl,
+            etag: remoteMeta.etag || null,
+            source: 'remote',
+            hash: remoteMeta.etag ? simpleHash(remoteMeta.etag) : simpleHash(remoteMeta.previewUrl || shader.id)
+          },
+          shader
+        );
+        continue;
+      }
+
+      const cached = cachedPreviews[shader.id];
+      if (cached) {
+        if (cached.source === 'remote' && cached.previewUrl) {
+          previewsToSet[shader.id] = cached.previewUrl;
+          continue;
+        }
+        if (cached.dataUrl) {
+          const reference = shader.path
+            ? simpleHash(shader.path)
+            : simpleHash(shader.variant || shader.id);
+          if (cached.hash === reference) {
             previewsToSet[shader.id] = cached.dataUrl;
-            needsGeneration = false;
-          }
-        } else if (shader.variant) {
-          const currentHash = simpleHash(shader.variant);
-          if (cached.hash === currentHash) {
-            // Cache je platná, použij ji
-            previewsToSet[shader.id] = cached.dataUrl;
-            needsGeneration = false;
+            continue;
           }
         }
       }
 
-      if (needsGeneration) {
-        shadersToGenerate.push(shader);
-      }
+      shadersToGenerate.push(shader);
     }
 
-    // Nastav všechny cached náhledy najednou (aby se předešlo zbytečným re-renderům)
     if (Object.keys(previewsToSet).length > 0) {
       setShaderPreviews(prev => {
-        // Zkontroluj, zda se něco změnilo
-        const hasChanges = Object.keys(previewsToSet).some(id => prev[id] !== previewsToSet[id]);
-        if (!hasChanges) {
-          return prev;
-        }
-        return { ...prev, ...previewsToSet };
+        let hasChanges = false;
+        const next = { ...prev };
+        Object.entries(previewsToSet).forEach(([id, value]) => {
+          if (next[id] !== value) {
+            next[id] = value;
+            hasChanges = true;
+          }
+        });
+        return hasChanges ? next : prev;
       });
     }
 
-    // Generuj náhledy pro shadery, které je potřebují
     if (shadersToGenerate.length > 0) {
       setIsGeneratingPreviews(true);
       await generateShaderPreviews(
         shadersToGenerate,
         handlePreviewGenerated,
         (id, current, total) => {
-          // Progress callback - můžeme použít pro zobrazení progress baru
           if (current === total) {
             setIsGeneratingPreviews(false);
           }
         }
       );
     }
-  }, [loadCache, handlePreviewGenerated]);
+  }, [loadCache, remotePreviews, savePreviewToCache, handlePreviewGenerated]);
+
+  useEffect(() => {
+    if (!shadersRef.current.length) {
+      return;
+    }
+    generateMissingPreviews(shadersRef.current);
+  }, [remotePreviews, generateMissingPreviews]);
 
   useEffect(() => {
     setIsLoading(true);

@@ -6,7 +6,10 @@
   "scripts": {
     "dev": "npx vite",
     "build": "npx vite build",
-    "lint": "eslint src/contexts/LanguageContext.jsx src/config/audioMetadataConfig.js src/services/audioMetadataStorageService.js src/services/globalMetadataPreloader.js src/services/unifiedMetadataService.js src/hooks/useFirebaseCDNScanner.js src/hooks/useFirebaseDychaniScanner.js src/hooks/useFirebaseDychaniFilter.js src/features/meditation/screens/SimpleAdminScreen.jsx src/features/meditation/screens/SoundThemeGalleryScreen.jsx src/features/meditation/screens/SettingsScreen.jsx",
+    "lint": "eslint --no-error-on-unmatched-pattern src/contexts/LanguageContext.jsx src/config/audioMetadataConfig.js src/services/audioMetadataStorageService.js src/services/globalMetadataPreloader.js src/services/unifiedMetadataService.js src/hooks/useFirebaseCDNScanner.js src/hooks/useFirebaseDychaniScanner.js src/hooks/useFirebaseDychaniFilter.js src/features/meditation/screens/SimpleAdminScreen.jsx src/features/meditation/screens/SoundThemeGalleryScreen.jsx src/features/meditation/screens/SettingsScreen.jsx",
+    "shader:generate": "node scripts/generateShaderPreviews.js --all",
+    "shader:queue": "node scripts/processShaderPreviewQueue.js",
+    "shader:queue:watch": "node scripts/processShaderPreviewQueue.js --watch",
     "preview": "npx vite preview",
     "test": "vitest",
     "test:ui": "vitest --ui",
@@ -16,6 +19,8 @@
   },
   "dependencies": {
     "firebase": "^12.4.0",
+    "firebase-admin": "^12.6.0",
+    "dotenv": "^16.4.5",
     "framer-motion": "^12.23.24",
     "lucide-react": "^0.263.1",
     "react": "^18.2.0",
@@ -49,6 +54,8 @@
     "tailwindcss": "^3.3.3",
     "typescript-eslint": "^8.46.1",
     "vite": "^7.1.11",
+    "vite-node": "^1.6.0",
+    "puppeteer": "^23.4.1",
     "vite-plugin-svgr": "^4.5.0",
     "vitest": "^1.0.4"
   }

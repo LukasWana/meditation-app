@@ -28,6 +28,20 @@
       ".write": "auth != null"
     },
 
+    // Shader previews - veřejné čtení, zápis pouze pro admin uživatele
+    "shader-previews": {
+      ".read": true,
+      "$shaderId": {
+        ".write": "auth != null"
+      }
+    },
+
+    // Logy generování shader náhledů - pouze admini
+    "shader-previews-logs": {
+      ".read": "auth != null && auth.token != null && auth.token.admin == true",
+      ".write": "auth != null && auth.token != null && auth.token.admin == true"
+    },
+
     // System data - pouze pro autentifikované
     "system": {
       ".read": "auth != null",

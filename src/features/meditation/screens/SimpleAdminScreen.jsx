@@ -13,6 +13,7 @@ import { syncAllFilesViaFunction } from '@utils/syncAllFilesViaFunction';
 import Waveform from '@components/Waveform';
 import { realtimeMetadataService } from '@services/realtimeMetadataService';
 import { MEDITACE_ROOTS, isMeditaceFilePath, normalizeMeditaceFolder, extractMeditaceLanguage } from '@utils/meditaceStorage';
+import ShaderPreviewAdminSection from '@features/meditation/components/ShaderPreviewAdminSection';
 
 const DYCHANI_FOLDER = 'dychani';
 const DYCHANI_LEGACY_FOLDER = 'dychanie';
@@ -1118,6 +1119,10 @@ const SimpleAdminScreen = () => {
             <span className="ml-2">{status || 'Připraveno'}</span>
           </div>
         </motion.div>
+
+        <div className="mb-6">
+          <ShaderPreviewAdminSection />
+        </div>
 
         {/* Hlavní funkce */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
