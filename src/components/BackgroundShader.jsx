@@ -805,6 +805,13 @@ void main() {
         return;
       }
 
+      // Pause rendering pokud je stránka skrytá - ale pokračuj v loopu
+      if (isPausedRef.current || document.hidden) {
+        // Pokračuj v loopu, ale nespouštěj renderování
+        animationFrameRef.current = requestAnimationFrame(render);
+        return;
+      }
+
       // Frame rate limiting - skip renderování pokud uplynulo méně než frameInterval ms
       const frameInterval = frameIntervalRef.current;
       if (lastFrameTimeRef.current > 0 && currentTime - lastFrameTimeRef.current < frameInterval) {
@@ -945,6 +952,9 @@ void main() {
   }, [gl, programInfo, enabled, intensity, breathPhase, breathInDuration, breathOutDuration, opacity, isColorMode, effectiveVariant]);
 
   // Page Visibility API - pause rendering když je stránka skrytá
+  // Pouze pause/resume pomocí ref, render loop se restartuje v hlavním useEffect
+  const isPausedRef = useRef(false);
+  
   useEffect(() => {
     if (!gl || !programInfo || isColorMode || opacity <= 0) {
       return;
@@ -952,7 +962,8 @@ void main() {
 
     const handleVisibilityChange = () => {
       if (document.hidden) {
-        // Pause rendering
+        // Pause rendering - označ jako paused
+        isPausedRef.current = true;
         if (animationFrameRef.current) {
           cancelAnimationFrame(animationFrameRef.current);
           animationFrameRef.current = null;
@@ -961,118 +972,9 @@ void main() {
           console.log('⏸️ BackgroundShader: Stránka skrytá - pause renderování');
         }
       } else {
-        // Resume rendering
-        if (gl && programInfo && opacity > 0 && !isColorMode) {
-          const render = (currentTime) => {
-            if (!gl || !programInfo) {
-              return;
-            }
-
-            // Frame rate limiting
-            const frameInterval = frameIntervalRef.current;
-            if (lastFrameTimeRef.current > 0 && currentTime - lastFrameTimeRef.current < frameInterval) {
-              animationFrameRef.current = requestAnimationFrame(render);
-              return;
-            }
-            lastFrameTimeRef.current = currentTime;
-
-            timeRef.current = currentTime * 0.001;
-            gl.useProgram(programInfo.program);
-
-            const viewportWidth = window.innerWidth || 1;
-            const viewportHeight = window.innerHeight || 1;
-
-            if (programInfo.uniforms.u_time) {
-              gl.uniform1f(programInfo.uniforms.u_time, timeRef.current);
-            }
-            const squareDimension = Math.min(viewportWidth, viewportHeight);
-            const shaderWidth = shouldForceSquare ? squareDimension : viewportWidth;
-            const shaderHeight = shouldForceSquare ? squareDimension : viewportHeight;
-
-            if (programInfo.uniforms.u_resolution) {
-              gl.uniform2f(programInfo.uniforms.u_resolution, shaderWidth, shaderHeight);
-            }
-            if (programInfo.uniforms.u_mouse !== undefined && programInfo.uniforms.u_mouse !== null) {
-              const mouseX = shaderWidth * 0.5;
-              const mouseY = shaderHeight * 0.5;
-              gl.uniform2f(programInfo.uniforms.u_mouse, mouseX, mouseY);
-            }
-            if (programInfo.uniforms.u_intensity) {
-              gl.uniform1f(programInfo.uniforms.u_intensity, intensity);
-            }
-
-            if (programInfo.uniforms.u_audioAmplitude !== undefined && programInfo.uniforms.u_audioAmplitude !== null) {
-              const amplitude = audioData?.amplitude || 0;
-              gl.uniform1f(programInfo.uniforms.u_audioAmplitude, amplitude);
-            }
-            if (programInfo.uniforms.u_audioBass !== undefined && programInfo.uniforms.u_audioBass !== null) {
-              const bass = audioData?.bass || 0;
-              gl.uniform1f(programInfo.uniforms.u_audioBass, bass);
-            }
-            if (programInfo.uniforms.u_audioMid !== undefined && programInfo.uniforms.u_audioMid !== null) {
-              const mid = audioData?.mid || 0;
-              gl.uniform1f(programInfo.uniforms.u_audioMid, mid);
-            }
-            if (programInfo.uniforms.u_audioTreble !== undefined && programInfo.uniforms.u_audioTreble !== null) {
-              const treble = audioData?.treble || 0;
-              gl.uniform1f(programInfo.uniforms.u_audioTreble, treble);
-            }
-
-            if (programInfo.uniforms.u_breathPhase !== undefined && programInfo.uniforms.u_breathPhase !== null) {
-              let breathPhaseValue = -1.0;
-              if (breathPhase && enabled) {
-                breathPhaseValue = breathPhase === 'in' ? 0.0 : 1.0;
-              }
-              gl.uniform1f(programInfo.uniforms.u_breathPhase, breathPhaseValue);
-            }
-            if (programInfo.uniforms.u_breathProgress !== undefined && programInfo.uniforms.u_breathProgress !== null) {
-              let breathProgressValue = 0.0;
-              if (breathPhase && enabled) {
-                const now = Date.now();
-                const elapsed = (now - phaseStartTimeRef.current) / 1000;
-                const phaseDuration = breathPhase === 'in' ? breathInDuration : breathOutDuration;
-                breathProgressValue = Math.min(elapsed / phaseDuration, 1.0);
-              }
-              gl.uniform1f(programInfo.uniforms.u_breathProgress, breathProgressValue);
-            }
-
-            // Quality uniform pro náročné shadery
-            const qualityLocation = programInfo.uniforms.u_quality || gl.getUniformLocation(programInfo.program, 'u_quality');
-            if (qualityLocation !== null) {
-              const quality = getShaderQuality();
-              gl.uniform1f(qualityLocation, quality);
-            }
-
-            if (!gl.positionBuffer) {
-              gl.positionBuffer = gl.createBuffer();
-              gl.bindBuffer(gl.ARRAY_BUFFER, gl.positionBuffer);
-              gl.bufferData(
-                gl.ARRAY_BUFFER,
-                new Float32Array([
-                  -1, -1,
-                   1, -1,
-                  -1,  1,
-                  -1,  1,
-                   1, -1,
-                   1,  1,
-                ]),
-                gl.STATIC_DRAW
-              );
-            }
-
-            const positionLocation = programInfo.attribs.a_position;
-            gl.bindBuffer(gl.ARRAY_BUFFER, gl.positionBuffer);
-            gl.enableVertexAttribArray(positionLocation);
-            gl.vertexAttribPointer(positionLocation, 2, gl.FLOAT, false, 0, 0);
-
-            gl.clearColor(0, 0, 0, 0);
-            gl.clear(gl.COLOR_BUFFER_BIT);
-            gl.drawArrays(gl.TRIANGLES, 0, 6);
-
-            animationFrameRef.current = requestAnimationFrame(render);
-          };
-          animationFrameRef.current = requestAnimationFrame(render);
-        }
+        // Resume rendering - označ jako resumed
+        // Hlavní render loop useEffect se postará o restart
+        isPausedRef.current = false;
         if (DEBUG_SHADER_LOGS) {
           console.log('▶️ BackgroundShader: Stránka viditelná - resume renderování');
         }
@@ -1084,7 +986,7 @@ void main() {
     return () => {
       document.removeEventListener('visibilitychange', handleVisibilityChange);
     };
-  }, [gl, programInfo, enabled, intensity, breathPhase, breathInDuration, breathOutDuration, opacity, isColorMode, effectiveVariant, audioData, shouldForceSquare]);
+  }, [gl, programInfo, isColorMode, opacity]);
 
   // Canvas se zobrazuje vždy, opacity se řídí opacity prop
   // To umožňuje plynulé prolnutí při změně opacity
