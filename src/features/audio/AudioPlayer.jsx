@@ -164,7 +164,7 @@ const AudioPlayer = ({
         />
 
         {/* Close Button - Top Right */}
-        <div className="absolute top-4 right-4 z-10">
+        <div className="absolute top-4 right-4 z-[100] pointer-events-auto">
           <CloseButton
             onClose={() => fadeOutAndClose(onClose, 3000)}
             className="w-10 h-10 sm:w-12 sm:h-12"

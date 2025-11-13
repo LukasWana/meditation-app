@@ -14,13 +14,15 @@ const CloseButton = ({
     <button
       onClick={(e) => {
         e.stopPropagation(); // Zabraň propagaci kliknutí
+        e.preventDefault(); // Zabraň výchozímu chování
         if (onClose) {
           onClose();
         }
       }}
-      className={`${className} rounded-full ${bgColor} backdrop-blur-sm border ${borderColor} flex items-center justify-center ${hoverBg} transition-colors cursor-pointer z-50 relative`}
+      className={`${className} rounded-full ${bgColor} backdrop-blur-sm border ${borderColor} flex items-center justify-center ${hoverBg} transition-colors cursor-pointer z-[100] relative pointer-events-auto`}
+      type="button"
     >
-      <span className={`text-2xl font-bold ${textColor}`}>×</span>
+      <span className={`text-2xl font-bold ${textColor} pointer-events-none`}>×</span>
     </button>
   );
 };
