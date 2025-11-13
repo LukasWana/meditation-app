@@ -306,9 +306,6 @@ export const useBreathSounds = (
       ? (breathOutSound !== 'none' ? outSoundRef.current : null)
       : (breathInSound !== 'none' ? inSoundRef.current : null);
 
-    // Délka fade out při změně fáze
-    const fadeOutDuration = 1.5; // 1.5 sekundy fade out
-
     // Pomocná funkce pro spuštění nového zvuku
     const startNewSound = (phaseToPlay) => {
       // Použij zadanou fázi nebo aktuální
@@ -325,13 +322,42 @@ export const useBreathSounds = (
         const soundDuration = sound.duration;
         const isLongSound = soundDuration && !isNaN(soundDuration) && soundDuration > duration;
 
-        // Pokud zvuk běží a je delší než fáze, necháme ho pokračovat bez resetování
+          // Pokud zvuk běží a je delší než fáze, necháme ho pokračovat bez resetování
         if (isLongSound && !sound.paused && sound.currentTime > 0) {
           // Zvuk je dlouhý a běží - necháme ho pokračovat, jen nastavíme fade in
           // NEPAUZUJEME a NERESETUJEME
           const currentIntervalRef = phase === 'in' ? inFadeIntervalRef : outFadeIntervalRef;
-          const fadeInDuration = 1.5;
+          // Fade in synchronizován s délkou fáze - max 15% fáze
+          const maxFadeInPercent = 0.15;
+          const minFadeDuration = 0.2;
+          const fadeInDuration = Math.min(
+            Math.max(duration * maxFadeInPercent, minFadeDuration),
+            duration * 0.3 // Maximálně 30% fáze pro fade in
+          );
           fadeIn(sound, fadeInDuration, currentIntervalRef);
+
+          // Nastav také fade out timeout pro dlouhý zvuk
+          const fadeOutTimeoutRef = phase === 'in' ? inFadeOutTimeoutRef : outFadeOutTimeoutRef;
+          if (fadeOutTimeoutRef.current) {
+            clearTimeout(fadeOutTimeoutRef.current);
+            fadeOutTimeoutRef.current = null;
+          }
+
+          const maxFadeOutPercent = 0.15;
+          const maxFadeOutDuration = duration - fadeInDuration;
+          const fadeOutDuration = Math.min(
+            Math.max(duration * maxFadeOutPercent, minFadeDuration),
+            maxFadeOutDuration
+          );
+
+          const fadeOutStartTime = (duration - fadeOutDuration) * 1000;
+          fadeOutTimeoutRef.current = setTimeout(() => {
+            if (sound && !sound.paused) {
+              fadeOut(sound, fadeOutDuration, currentIntervalRef);
+            }
+            fadeOutTimeoutRef.current = null;
+          }, fadeOutStartTime);
+
           return; // Ukonči funkci - zvuk už běží
         }
 
@@ -354,65 +380,91 @@ export const useBreathSounds = (
         });
 
         const currentIntervalRef = phase === 'in' ? inFadeIntervalRef : outFadeIntervalRef;
-        // Fade in nového zvuku - delší fade in při prvním spuštění (3 sekundy) nebo při prvním nádechu, jinak 1.5 sekundy
-        const fadeInDuration = (isFirstStart && phase === 'in') ? 3.0 : 1.5;
+        // Fade in a fade out MUSÍ se vejít do délky fáze a NEPRODLUŽOVAT ji
+        // Použijeme maximálně 15% fáze pro fade in a 15% fáze pro fade out
+        // Celkem 30% fáze pro fade efekty, zbytek (70%) je pro plnou hlasitost
+        // Minimální délka fade in/out je 0.2s pro velmi krátké fáze
+        const maxFadeInPercent = 0.15; // 15% fáze pro fade in
+        const maxFadeOutPercent = 0.15; // 15% fáze pro fade out
+        const minFadeDuration = 0.2; // Minimálně 0.2s pro fade efekty
+
+        // Vypočítej délky fade in a fade out tak, aby se vešly do fáze
+        // DŮLEŽITÉ: fadeInDuration + fadeOutDuration musí být <= duration
+        const fadeInDuration = Math.min(
+          Math.max(duration * maxFadeInPercent, minFadeDuration),
+          duration * 0.3 // Maximálně 30% fáze pro fade in
+        );
+        // Fade out musí se vejít do zbytku fáze po fade in
+        const maxFadeOutDuration = duration - fadeInDuration;
+        const fadeOutDuration = Math.min(
+          Math.max(duration * maxFadeOutPercent, minFadeDuration),
+          maxFadeOutDuration // Ujisti se, že fade out se vejde do zbytku fáze
+        );
+
+        // Spusť fade in okamžitě
         fadeIn(sound, fadeInDuration, currentIntervalRef);
 
-        // Pomocná funkce pro nastavení fade out
-        const setupFadeOut = () => {
-          const soundDuration = sound.duration;
-
-          if (!soundDuration || isNaN(soundDuration)) {
-            return;
-          }
-
-          // Pokud je zvuk delší než fáze, NESPAŠ fade out - zvuk bude pokračovat
-          // a při změně fáze se zastaví automaticky fade out mechanismem
-          // Tím zabráníme přerušení dlouhých zvuků při opakovaných fázích
-          if (soundDuration > duration) {
-            // Zvuk je delší než fáze - necháme ho běžet bez fade out
-            // Při změně fáze se zastaví automaticky
-            return;
-          } else {
-            // Pokud je zvuk kratší než fáze, fade out na konci zvuku
-            fadeOutTimeoutRef.current = setTimeout(() => {
-              if (sound && !sound.paused && sound.currentTime < soundDuration) {
-                const fadeIntervalRef = phase === 'in' ? inFadeIntervalRef : outFadeIntervalRef;
-                fadeOut(sound, 1.5, fadeIntervalRef);
-              }
-            }, (soundDuration - 1.5) * 1000);
-          }
-        };
-
-        // Zjisti délku zvuku a nastav fade out na konci fáze, pokud je zvuk delší
-        sound.addEventListener('loadedmetadata', setupFadeOut, { once: true });
-
-        // Pokud už jsou metadata načtená, zavolej okamžitě
-        if (sound.duration && !isNaN(sound.duration)) {
-          setupFadeOut();
+        // Nastav fade out timeout - MUSÍ začít tak, aby skončil přesně na konci fáze
+        // Fade out začne na (duration - fadeOutDuration) a skončí na duration
+        // Vyčisti předchozí fade out timeout pokud existuje
+        if (fadeOutTimeoutRef.current) {
+          clearTimeout(fadeOutTimeoutRef.current);
+          fadeOutTimeoutRef.current = null;
         }
+
+        // Vypočítej přesný čas, kdy má fade out začít (v milisekundách)
+        const fadeOutStartTime = (duration - fadeOutDuration) * 1000;
+
+        // Spusť fade out před koncem fáze - přesně tak, aby skončil na konci fáze
+        // DŮLEŽITÉ: Toto se nastaví OKAMŽITĚ po spuštění zvuku
+        fadeOutTimeoutRef.current = setTimeout(() => {
+          // Zkontroluj, zda zvuk stále běží a fáze se nezměnila
+          if (sound && !sound.paused) {
+            const fadeIntervalRef = phase === 'in' ? inFadeIntervalRef : outFadeIntervalRef;
+            // Spusť fade out s přesnou délkou, aby skončil na konci fáze
+            fadeOut(sound, fadeOutDuration, fadeIntervalRef);
+          }
+          // Vyčisti timeout ref
+          fadeOutTimeoutRef.current = null;
+        }, fadeOutStartTime);
       } catch (error) {
         console.warn('Error playing breath sound:', error);
       }
     };
 
-    // Při změně fáze: nejdříve fade out předchozího zvuku, poté spusť nový
+    // Při změně fáze: fade out už by měl běžet z setupFadeOut (začal před koncem fáze)
+    // DŮLEŽITÉ: Nový zvuk se spustí OKAMŽITĚ při změně fáze, nečekáme na dokončení fade out
+    // Fade out předchozího zvuku se okamžitě zastaví nebo rychle dokončí, aby neprodlužoval fázi
     if (phaseChanged && soundToStop && soundToStop.volume > 0) {
-      // Ulož čekající fázi
-      pendingPhaseRef.current = breathPhase;
+      const fadeOutTimeoutRef = breathPhase === 'in' ? outFadeOutTimeoutRef : inFadeOutTimeoutRef;
+      const fadeIntervalRef = breathPhase === 'in' ? outFadeIntervalRef : inFadeIntervalRef;
 
-      const stopIntervalRef = breathPhase === 'in' ? outFadeIntervalRef : inFadeIntervalRef;
-      // Fade out předchozího zvuku (1.5 sekundy), poté spusť nový
-      fadeOut(soundToStop, fadeOutDuration, stopIntervalRef, () => {
-        // Po dokončení fade out spusť nový zvuk pro čekající fázi
-        const nextPhase = pendingPhaseRef.current;
-        pendingPhaseRef.current = null;
-        if (nextPhase) {
-          startNewSound(nextPhase);
-        }
-      });
-    } else if (currentSound && (phaseChanged || isFirstStart)) {
-      // Spustit nový zvuk bez čekání - při prvním spuštění nebo pokud není co zastavit
+      // Zruš fade out timeout, pokud existuje - fáze se změnila, fade out už není potřeba
+      if (fadeOutTimeoutRef.current) {
+        clearTimeout(fadeOutTimeoutRef.current);
+        fadeOutTimeoutRef.current = null;
+      }
+
+      // Zastav fade out interval, pokud běží
+      if (fadeIntervalRef.current) {
+        clearInterval(fadeIntervalRef.current);
+        fadeIntervalRef.current = null;
+      }
+
+      // Okamžitě zastav zvuk - neprodlužujeme fázi fade outem
+      // Pokud chceme plynulý přechod, použijeme velmi krátký fade out (max 0.2s)
+      if (breathSoundFadeEnabled) {
+        fadeOut(soundToStop, 0.2, fadeIntervalRef);
+      } else {
+        soundToStop.volume = 0;
+        soundToStop.pause();
+        soundToStop.currentTime = 0;
+      }
+    }
+
+    // Spustit nový zvuk okamžitě při změně fáze nebo prvním spuštění
+    // Nečekáme na dokončení fade out předchozího zvuku - běží paralelně
+    if (currentSound && (phaseChanged || isFirstStart)) {
       startNewSound();
     }
 

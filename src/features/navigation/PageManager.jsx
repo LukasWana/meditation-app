@@ -66,6 +66,7 @@ const SCREEN_REGISTRY = {
       'breathOutSound',
       'breathClickSound',
       'breathFinalSound',
+      'breathCountdownSound',
       'breathSoundFadeEnabled',
       'onBreathSoundChange',
       'isPreparing',

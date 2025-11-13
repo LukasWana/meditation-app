@@ -6,7 +6,7 @@ import CircularProgress from '@features/audio/components/CircularProgress';
 import PlayPauseButton from '@features/audio/components/PlayPauseButton';
 import { useLanguage } from '@contexts/LanguageContext';
 import { useShaderSettings } from '@contexts/ShaderSettingsContext';
-import { useBreathSounds, useAdaptiveTextColors } from '@hooks';
+import { useBreathSounds, useAdaptiveTextColors, useCountdownSound, useFinalSound } from '@hooks';
 import BackgroundSettingsControls from '@features/meditation/components/BackgroundSettingsControls';
 
 // Lazy loading modálů pro lepší performance
@@ -66,6 +66,7 @@ const DychaniScreen = ({
   breathOutSound,
   breathClickSound,
   breathFinalSound,
+  breathCountdownSound,
   breathSoundFadeEnabled,
   onDurationChange,
   onPlayPause,
@@ -121,18 +122,70 @@ const DychaniScreen = ({
     breathOutDuration
   );
 
+  // Použij hook pro countdown zvuk během přípravy
+  useCountdownSound(breathCountdownSound, isPreparing, preparationCountdown);
+
+  // Použij hook pro finální zvuk na konci dýchání
+  const playFinalSound = useFinalSound(breathFinalSound, isPlaying);
+
+  // Sledování dokončení dýchání - přehraj finální zvuk když se dokončí
+  const finalSoundPlayedRef = useRef(false);
+  useEffect(() => {
+    if (isPlaying && time === 0 && !finalSoundPlayedRef.current) {
+      console.log('🔊 Dýchání dokončeno, přehrávám finální zvuk');
+      finalSoundPlayedRef.current = true;
+      // Počkej na dokončení aktuální fáze dýchání + fade out zvuku + 1 sekunda ticha
+      const currentPhaseDuration = breathPhase === 'in' ? breathInDuration : breathOutDuration;
+      const fadeOutDuration = Math.max(currentPhaseDuration * 0.2, 0.5);
+      const silenceDuration = 1.0;
+      const totalWaitTime = (currentPhaseDuration * 1000) + (fadeOutDuration * 1000) + (silenceDuration * 1000);
+
+      const timeout = setTimeout(() => {
+        playFinalSound();
+        // Zastav přehrávání po přehrání finálního zvuku
+        if (onPlayPause) {
+          onPlayPause();
+        }
+      }, totalWaitTime);
+
+      return () => {
+        clearTimeout(timeout);
+      };
+    }
+    // Resetuj flag když se spustí nové dýchání
+    if (!isPlaying) {
+      finalSoundPlayedRef.current = false;
+    }
+  }, [isPlaying, time, breathPhase, breathInDuration, breathOutDuration, playFinalSound, onPlayPause]);
+
   // Sledování času v cyklu dýchání - synchronizováno s fázemi
   const phaseStartTimeRef = useRef(Date.now());
   const previousPhaseRef = useRef(breathPhase);
+  const intervalRef = useRef(null);
+  const breathPhaseRef = useRef(breathPhase);
+
+  useEffect(() => {
+    breathPhaseRef.current = breathPhase;
+  }, [breathPhase]);
 
   useEffect(() => {
     if (!isPlaying) {
       setBreathCycleTime(0);
+      if (intervalRef.current) {
+        clearInterval(intervalRef.current);
+        intervalRef.current = null;
+      }
       return;
     }
 
     // Pokud se změnila fáze, resetuj čas začátku fáze
     if (previousPhaseRef.current !== breathPhase) {
+      // Zastav předchozí interval, pokud běží
+      if (intervalRef.current) {
+        clearInterval(intervalRef.current);
+        intervalRef.current = null;
+      }
+
       phaseStartTimeRef.current = Date.now();
       previousPhaseRef.current = breathPhase;
 
@@ -145,21 +198,51 @@ const DychaniScreen = ({
       }
     }
 
-    const interval = setInterval(() => {
+    // Vyčisti předchozí interval
+    if (intervalRef.current) {
+      clearInterval(intervalRef.current);
+      intervalRef.current = null;
+    }
+
+    const cycleDuration = breathInDuration + breathOutDuration;
+
+    intervalRef.current = setInterval(() => {
+      // Použij ref pro breathPhase, aby interval viděl aktuální hodnotu
+      const currentPhase = breathPhaseRef.current;
       const now = Date.now();
       const elapsed = (now - phaseStartTimeRef.current) / 1000; // sekundy
-      const cycleDuration = breathInDuration + breathOutDuration;
 
-      if (breathPhase === 'in') {
+      // DŮLEŽITÉ: Omezíme elapsed na délku fáze - když dosáhne maxima, zastavíme výpočet
+      const currentPhaseDuration = currentPhase === 'in' ? breathInDuration : breathOutDuration;
+      if (elapsed >= currentPhaseDuration) {
+        // Fáze dosáhla maximální délky - nastav finální hodnotu a zastav interval
+        if (currentPhase === 'in') {
+          setBreathCycleTime(breathInDuration);
+        } else {
+          setBreathCycleTime(cycleDuration);
+        }
+        if (intervalRef.current) {
+          clearInterval(intervalRef.current);
+          intervalRef.current = null;
+        }
+        return;
+      }
+
+      if (currentPhase === 'in') {
         // Během nádechu: čas cyklu = elapsed (0 až breathInDuration)
-        setBreathCycleTime(Math.min(elapsed, breathInDuration));
+        setBreathCycleTime(elapsed);
       } else {
         // Během výdechu: čas cyklu = breathInDuration + elapsed (breathInDuration až cycleDuration)
-        setBreathCycleTime(Math.min(breathInDuration + elapsed, cycleDuration));
+        setBreathCycleTime(breathInDuration + elapsed);
       }
     }, 100);
 
-    return () => clearInterval(interval);
+    return () => {
+      if (intervalRef.current) {
+        clearInterval(intervalRef.current);
+        intervalRef.current = null;
+      }
+    };
   }, [isPlaying, breathPhase, breathInDuration, breathOutDuration]);
 
   // Vypočítat progress pro CircularProgress (0-100)
@@ -169,39 +252,29 @@ const DychaniScreen = ({
   // Vypočítat progress pro rytmus dýchání (vnitřní kruhový ukazatel)
   const cycleDuration = breathInDuration + breathOutDuration;
   const breathRhythmProgress = isPlaying && cycleDuration > 0 ? (breathCycleTime / cycleDuration) * 100 : 0;
-  const breathPhaseProgress = useMemo(() => {
-    if (!isPlaying || cycleDuration <= 0) {
-      return 0;
-    }
-    if (breathPhase === 'in') {
-      const inhaleDuration = Math.max(breathInDuration, 0.001);
-      return Math.min(breathCycleTime / inhaleDuration, 1);
-    }
-    const exhaleElapsed = Math.max(breathCycleTime - breathInDuration, 0);
-    const exhaleDuration = Math.max(breathOutDuration, 0.001);
-    return Math.min(exhaleElapsed / exhaleDuration, 1);
-  }, [isPlaying, cycleDuration, breathPhase, breathCycleTime, breathInDuration, breathOutDuration]);
 
   // Pro výpočet, kde jsme v cyklu (nádech nebo výdech část)
   const inPhaseProgress = cycleDuration > 0 ? (breathInDuration / cycleDuration) * 100 : 50; // Procenta pro nádech část
+
+  // Rozsah zvětšení/zmenšení kolečka pro animaci dýchání
   const minScale = 0.55;
-  const maxScale = 1.45;
-  const targetScale = useMemo(() => {
+  const maxScale = 1.25; // Zmenšeno z 1.45, aby nezasahovalo do textových prvků
+
+  // Délka trvání animace podle aktuální fáze dýchání - navázáno na rytmus dýchání
+  const animationDuration = useMemo(() => {
+    if (!isPlaying) {
+      return 0.3;
+    }
+    return breathPhase === 'in' ? breathInDuration : breathOutDuration;
+  }, [isPlaying, breathPhase, breathInDuration, breathOutDuration]);
+
+  // Počáteční scale pro aktuální fázi
+  const initialScale = useMemo(() => {
     if (!isPlaying) {
       return 1;
     }
-    if (breathPhase === 'in') {
-      return minScale + (maxScale - minScale) * breathPhaseProgress;
-    }
-    return maxScale - (maxScale - minScale) * breathPhaseProgress;
-  }, [isPlaying, breathPhase, breathPhaseProgress]);
-  const targetOpacity = useMemo(() => {
-    if (!isPlaying) {
-      return 0.8;
-    }
-    const progressFactor = breathPhase === 'in' ? breathPhaseProgress : 1 - breathPhaseProgress;
-    return 0.65 + 0.35 * progressFactor;
-  }, [isPlaying, breathPhase, breathPhaseProgress]);
+    return breathPhase === 'in' ? minScale : maxScale;
+  }, [isPlaying, breathPhase]);
 
   const colorOverride = getColorForSection('dychani');
   const overlayConfig = getOverlaySettings('dychani') || {};
@@ -305,11 +378,6 @@ const DychaniScreen = ({
                   {t('priprava')}
                 </h1>
               </div>
-              <div className="flex justify-center gap-2 mt-4 mb-4">
-                <div className={`w-2 h-2 ${textColors.isDark ? 'bg-white' : 'bg-black'} rounded-full`}></div>
-                <div className={`w-2 h-2 ${textColors.isDark ? 'bg-white' : 'bg-black'} rounded-full`}></div>
-                <div className={`w-2 h-2 ${textColors.isDark ? 'bg-white' : 'bg-black'} rounded-full`}></div>
-              </div>
             </FramerSection>
 
             <FramerSection
@@ -317,13 +385,15 @@ const DychaniScreen = ({
               animationType="scaleIn"
               delay={0.2}
             >
-              {/* CircularProgress pro přípravu */}
-              <div className="relative flex-shrink-0 flex items-center justify-center">
-                <CircularProgress
-                  progress={preparationCountdown > 0 && preparationTime > 0 ? ((preparationTime - preparationCountdown) / preparationTime) * 100 : 0}
-                  onSeek={null}
-                  className="w-[50vw] h-[50vw] max-w-[400px] max-h-[400px] min-w-[250px] min-h-[250px]"
-                />
+              {/* CircularProgress pro přípravu - stejné rozměry jako hlavní kruh */}
+              <div className="relative flex-shrink-0 flex items-center justify-center" style={{ width: '50vw', height: '50vw', maxWidth: '400px', maxHeight: '400px', minWidth: '250px', minHeight: '250px', margin: '0 auto' }}>
+                <div className="absolute inset-0 flex items-center justify-center">
+                  <CircularProgress
+                    progress={preparationCountdown > 0 && preparationTime > 0 ? ((preparationTime - preparationCountdown) / preparationTime) * 100 : 0}
+                    onSeek={null}
+                    className="w-[50vw] h-[50vw] max-w-[400px] max-h-[400px] min-w-[250px] min-h-[250px]"
+                  />
+                </div>
 
                 {/* Odpočítávání v centru */}
                 <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
@@ -458,8 +528,8 @@ const DychaniScreen = ({
               )}
             </div>
 
-            {/* CircularProgress s Play/Pause Button - stejný jako v přehrávači */}
-            <div className="relative flex-shrink-0 flex items-center justify-center" style={{ isolation: 'isolate' }}>
+            {/* CircularProgress s Play/Pause Button - všechny kruhové prvky zarovnané vertikálně */}
+            <div className="relative flex-shrink-0 flex items-center justify-center" style={{ isolation: 'isolate', overflow: 'visible', width: '50vw', height: '50vw', maxWidth: '400px', maxHeight: '400px', minWidth: '250px', minHeight: '250px', margin: '0 auto' }}>
               {/* Dýchací animace během meditace - SPODNÍ vrstva - pod kruhovým ukazatelem */}
               {isPlaying && (
                 <div
@@ -467,10 +537,12 @@ const DychaniScreen = ({
                   style={{
                     zIndex: 0,
                     isolation: 'isolate',
-                    transform: 'translateZ(0)' // Force hardware acceleration and create stacking context
+                    transform: 'translateZ(0)', // Force hardware acceleration and create stacking context
+                    overflow: 'visible'
                   }}
                 >
-                  {/* Animace s maskou - bílý kruh uprostřed, černý okolo, vycentrovaná na tlačítko */}
+                  {/* Animace kolečka - nafukuje se při nádechu, vyfukuje při výdechu */}
+                  {/* Barvy: světlý režim = bílá, tmavý režim = černá/tmavá */}
                   <motion.div
                     key={breathPhase}
                     className="rounded-full"
@@ -481,51 +553,57 @@ const DychaniScreen = ({
                       maxHeight: '350px',
                       minWidth: '220px',
                       minHeight: '220px',
-                      background: 'radial-gradient(circle, rgba(255,255,255,1) 0%, rgba(255,255,255,1) 25%, rgba(255,255,255,1) 25%, rgba(255,255,255,1) 100%)',
+                      background: textColors.isDark
+                        ? 'radial-gradient(circle, rgba(0,0,0,1) 0%, rgba(0,0,0,1) 25%, rgba(0,0,0,1) 25%, rgba(0,0,0,1) 100%)'
+                        : 'radial-gradient(circle, rgba(255,255,255,1) 0%, rgba(255,255,255,1) 25%, rgba(255,255,255,1) 25%, rgba(255,255,255,1) 100%)',
                       transformOrigin: 'center center',
                       position: 'absolute',
+                      top: '50%',
+                      left: '50%',
                       zIndex: 0,
-                      willChange: 'transform, opacity' // Optimize animation performance
+                      willChange: 'transform' // Optimize animation performance
                     }}
                     initial={{
-                      opacity: targetOpacity,
-                      scale: targetScale
+                      scale: initialScale,
+                      x: '-50%',
+                      y: '-50%'
                     }}
                     animate={{
-                      scale: targetScale,
-                      opacity: targetOpacity
+                      scale: breathPhase === 'in' ? maxScale : minScale,
+                      x: '-50%',
+                      y: '-50%'
                     }}
                     exit={{ opacity: 0 }}
                     transition={{
-                      duration: 0.18,
-                      ease: 'easeOut'
+                      duration: animationDuration,
+                      ease: 'easeInOut'
                     }}
                   />
                 </div>
               )}
 
               {/* CircularProgress - nad animací - vytvoří nový stacking context s vyšším z-index */}
-              <div style={{ position: 'relative', zIndex: 10, isolation: 'isolate', transform: 'translateZ(0)' }}>
+              <div className="absolute inset-0 flex items-center justify-center" style={{ zIndex: 10, isolation: 'isolate', transform: 'translateZ(0)' }}>
                 <CircularProgress
                   progress={progress}
                   onSeek={null} // Pro meditaci nepotřebujeme seek
                   className="w-[50vw] h-[50vw] max-w-[400px] max-h-[400px] min-w-[250px] min-h-[250px]"
                   style={{ position: 'relative', zIndex: 10 }}
                 />
-                {/* Vnitřní kruhový ukazatel pro rytmus dýchání - tenký černý */}
+                {/* Vnitřní kruhový ukazatel pro rytmus dýchání - adaptivní barvy podle dark mode */}
                 {isPlaying && cycleDuration > 0 && (
                   <div className="absolute inset-0 flex items-center justify-center pointer-events-none" style={{ zIndex: 1 }}>
                     <svg
                       className="w-[40vw] h-[40vw] max-w-[320px] max-h-[320px] min-w-[200px] min-h-[200px] transform -rotate-90"
                       viewBox="0 0 450 450"
-                      style={{ aspectRatio: '1/1', position: 'absolute' }}
+                      style={{ aspectRatio: '1/1' }}
                     >
                       {/* Pozadí - celý kruh */}
                       <circle
                         cx="225"
                         cy="225"
                         r="200"
-                        stroke="rgba(0,0,0,0.15)"
+                        stroke={textColors.isDark ? 'rgba(255,255,255,0.15)' : 'rgba(0,0,0,0.15)'}
                         strokeWidth="6"
                         fill="none"
                       />
@@ -534,19 +612,19 @@ const DychaniScreen = ({
                         cx="225"
                         cy="225"
                         r="200"
-                        stroke="rgba(0,0,0,0.4)"
+                        stroke={textColors.isDark ? 'rgba(255,255,255,0.4)' : 'rgba(0,0,0,0.4)'}
                         strokeWidth="6"
                         fill="none"
                         strokeDasharray={`${2 * Math.PI * 200 * (inPhaseProgress / 100)} ${2 * Math.PI * 200}`}
                         strokeDashoffset="0"
                         style={{ strokeLinecap: 'butt' }}
                       />
-                      {/* Progress - aktuální pozice v cyklu - černý */}
+                      {/* Progress - aktuální pozice v cyklu */}
                       <motion.circle
                         cx="225"
                         cy="225"
                         r="200"
-                        stroke="black"
+                        stroke={textColors.isDark ? 'white' : 'black'}
                         strokeWidth="8"
                         fill="none"
                         strokeDasharray={`${2 * Math.PI * 200}`}
@@ -560,7 +638,16 @@ const DychaniScreen = ({
               </div>
 
               {/* Play/Pause Button - Center */}
-              <div className="absolute inset-0 flex items-center justify-center pointer-events-none" style={{ zIndex: 20 }}>
+              {/* Pro sekci dýchání:
+                  - Bílá animace (světlý režim) → černé tlačítko s bílou ikonou
+                  - Černá animace (tmavý režim) → bílé tlačítko s černou ikonou */}
+              <div
+                className="absolute inset-0 flex items-center justify-center pointer-events-none"
+                style={{
+                  zIndex: 30,
+                  isolation: 'isolate'
+                }}
+              >
                 <PlayPauseButton
                   isPlaying={isPlaying}
                   onToggle={onPlayPause}
@@ -679,26 +766,29 @@ const DychaniScreen = ({
             </FramerSection>
           )}
 
-          <FramerSection
-            className="flex justify-center gap-6 mb-6"
-            animationType="fadeIn"
-            delay={0.4}
-          >
-            <FramerButton
-              onClick={onReset}
-              variant="secondary"
-              className="w-20 h-20 rounded-full flex items-center justify-center p-0"
+          {/* Tlačítka Reset a Gallery - zobraz pouze když NEPROBÍHÁ přehrávání */}
+          {!isPlaying && (
+            <FramerSection
+              className="flex justify-center gap-6 mb-6"
+              animationType="fadeIn"
+              delay={0.4}
             >
-              <RotateCcw size={28} />
-            </FramerButton>
-            <FramerButton
-              onClick={() => setShowGallery(true)}
-              variant="secondary"
-              className="w-20 h-20 rounded-full flex items-center justify-center p-0"
-            >
-              <ImageIcon size={28} />
-            </FramerButton>
-          </FramerSection>
+              <FramerButton
+                onClick={onReset}
+                variant="secondary"
+                className="w-20 h-20 rounded-full flex items-center justify-center p-0"
+              >
+                <RotateCcw size={28} />
+              </FramerButton>
+              <FramerButton
+                onClick={() => setShowGallery(true)}
+                variant="secondary"
+                className="w-20 h-20 rounded-full flex items-center justify-center p-0"
+              >
+                <ImageIcon size={28} />
+              </FramerButton>
+            </FramerSection>
+          )}
 
           <FramerSection
             className="w-full flex justify-center mt-10 mb-6"
@@ -722,6 +812,7 @@ const DychaniScreen = ({
                 selectedOutSound={breathOutSound}
                 selectedClickSound={breathClickSound}
                 selectedFinalSound={breathFinalSound}
+                selectedCountdownSound={breathCountdownSound}
               />
             )}
           </Suspense>

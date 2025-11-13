@@ -150,11 +150,12 @@ const AudioPlayer = ({
 
   return (
     <AudioPlayerAnimations
-      albumCover={albumCover} // Album cover se zobrazí i když je barva (barva může být kombinována se shaderem)
+      albumCover={albumCover} // Album cover se zobrazí POUZE v sekci hudba
       backgroundColor={finalBackgroundColor || undefined} // Předaj barvu pozadí (může být kombinována se shaderem)
       className={className}
       onClose={onClose}
       fadeOutAndClose={fadeOutAndClose}
+      sectionKey={sectionKey} // Předaj sectionKey pro kontrolu, zda zobrazit album cover
     >
       {/* Main content container - max width 600px */}
       <div className="w-full max-w-[600px] h-full flex flex-col items-center justify-center relative">

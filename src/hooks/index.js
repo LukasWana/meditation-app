@@ -9,4 +9,6 @@ export { useBreathSounds } from './useBreathSounds';
 export { useAdaptiveTextColors } from './useAdaptiveTextColors';
 export { useFirebaseCDNScanner } from './useFirebaseCDNScanner';
 export { useFirebaseHudbaScanner } from './useFirebaseHudbaScanner';
+export { useCountdownSound } from './useCountdownSound';
+export { useFinalSound } from './useFinalSound';
 

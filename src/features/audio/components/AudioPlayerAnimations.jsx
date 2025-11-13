@@ -5,7 +5,8 @@ export const AudioPlayerAnimations = ({
   children,
   albumCover,
   backgroundColor = null, // Barva pozadí přehrávače (má prioritu před album cover)
-  className = ""
+  className = "",
+  sectionKey = null // Klíč sekce - album cover se zobrazuje pouze v sekci 'hudba'
 }) => {
   // Overlay pozadí - pokud je barva, úplně transparentní, jinak velmi průhledné, aby shader prosvítal
   const overlayBackgroundStyle = backgroundColor
@@ -63,8 +64,8 @@ export const AudioPlayerAnimations = ({
           damping: 25
         }}
       >
-        {/* Album cover background - zobraz, pokud není barva nebo pokud je shader pod ním */}
-        {albumCover && (
+        {/* Album cover background - zobraz POUZE v sekci hudba */}
+        {albumCover && sectionKey === 'hudba' && typeof albumCover === 'string' && albumCover.trim() !== '' && (
           <div
             className="absolute inset-0 bg-cover bg-center bg-no-repeat"
             style={{

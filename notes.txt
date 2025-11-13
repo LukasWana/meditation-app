@@ -1,0 +1,2 @@
+🔵 Breath Rhythm: {breathPhase: 'out', breathCycleTime: '11.91', cycleDuration: 12, breathRhythmProgress: '99.23', inPhaseProgress: '25.00', …}
+MeditationScreen.jsx:260 🔵 Breath Rhythm: {breathPhase: 'in', breathCycleTime: '12.00', cycleDuration: 12, breathRhythmProgress: '100.00', inPhaseProgress: '25.00', …}
