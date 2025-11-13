@@ -231,9 +231,14 @@ const AudioPlayerHudbaScreen = ({
 
         {/* Pozadí stránky - průhledné, aby shader prosvítal */}
         <div
-          className="min-h-screen w-full max-w-full bg-[#f4ddc4] fixed inset-0"
+          className="fixed max-w-full bg-[#f4ddc4]"
           style={{
             zIndex: 0,
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: '-20px',
+            height: 'calc(100dvh + 20px)',
             opacity: isColorMode ? 1 : 0.3 // Pokud je barva, neprůhledné, jinak průhledné
           }}
         />

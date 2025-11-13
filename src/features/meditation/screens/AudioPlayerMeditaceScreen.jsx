@@ -254,10 +254,15 @@ const AudioPlayerMeditaceScreen = ({
   return (
     <FramerPageTransition screenKey='audio-player-meditace' animation="fade">
       <div
-        className='min-h-screen w-full max-w-full fixed inset-0'
+        className='fixed max-w-full'
         style={{
           zIndex: 0,
-          backgroundColor: baseBackgroundColor
+          backgroundColor: baseBackgroundColor,
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: '-20px',
+          height: 'calc(100dvh + 20px)'
         }}
       />
 
@@ -271,9 +276,14 @@ const AudioPlayerMeditaceScreen = ({
       />
 
       <div
-        className="fixed inset-0 pointer-events-none"
+        className="fixed pointer-events-none"
         style={{
           zIndex: 3,
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: '-20px',
+          height: 'calc(100dvh + 20px)',
           background: overlayBackground,
           mixBlendMode: overlayBlendMode,
           transition: 'background 0.6s ease, mix-blend-mode 0.6s ease'

@@ -5,7 +5,6 @@ import SkipButton from './SkipButton';
 import CurrentTimeDisplay from './CurrentTimeDisplay';
 import VoiceSwitcher from './VoiceSwitcher';
 import TrackSwitcher from './TrackSwitcher';
-import ShaderSelector from './ShaderSelector';
 
 const AudioControls = ({
   progress,
@@ -28,10 +27,6 @@ const AudioControls = ({
   albumTracks = null,
   currentTrackIndex = 0,
   onTrackChange = null,
-  // Shader selector props
-  selectedShader = null,
-  onShaderChange = null,
-  onNavigateToScreen = null,
   // Data source indicator
   dataSource = null,
   // Dark mode
@@ -134,18 +129,6 @@ const AudioControls = ({
           onTrackChange={onTrackChange}
           isDarkMode={isDarkMode}
         />
-      )}
-
-      {/* Shader Selector - Bottom - pro výběr shaderu na pozadí */}
-      {onShaderChange && (
-        <div className="mt-6 pointer-events-auto z-10">
-          <ShaderSelector
-            selectedShader={selectedShader}
-            onShaderChange={onShaderChange}
-            onNavigateToScreen={onNavigateToScreen}
-            isDarkMode={isDarkMode}
-          />
-        </div>
       )}
 
     </div>

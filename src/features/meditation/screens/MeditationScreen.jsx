@@ -248,10 +248,15 @@ const DychaniScreen = ({
     return (
       <FramerPageTransition screenKey="dychani">
         <div
-          className="fixed inset-0 min-h-screen max-w-full"
+          className="fixed max-w-full"
           style={{
             zIndex: 0,
-            backgroundColor: baseBackgroundColor
+            backgroundColor: baseBackgroundColor,
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: '-20px',
+            height: 'calc(100dvh + 20px)'
           }}
         />
 
@@ -267,9 +272,14 @@ const DychaniScreen = ({
         />
 
         <div
-          className="fixed inset-0 pointer-events-none"
+          className="fixed pointer-events-none"
           style={{
             zIndex: 3,
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: '-20px',
+            height: 'calc(100dvh + 20px)',
             background: overlayBackground,
             mixBlendMode: overlayBlendMode,
             transition: 'background 0.6s ease, mix-blend-mode 0.6s ease'
@@ -366,10 +376,15 @@ const DychaniScreen = ({
       */}
       {/* Pozadí stránky - pod shaderem - průhledné při přehrávání, aby shader prosvítal */}
       <div
-        className="fixed inset-0 min-h-screen max-w-full"
+        className="fixed max-w-full"
         style={{
           zIndex: 0,
-          backgroundColor: baseBackgroundColor
+          backgroundColor: baseBackgroundColor,
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: '-20px',
+          height: 'calc(100dvh + 20px)'
         }}
       />
 
@@ -387,9 +402,14 @@ const DychaniScreen = ({
 
       {/* Jemný barevný overlay pro sjednocení se zbytkem UI */}
       <div
-        className="fixed inset-0 pointer-events-none"
+        className="fixed pointer-events-none"
         style={{
           zIndex: 3,
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: '-20px',
+          height: 'calc(100dvh + 20px)',
           background: overlayBackground,
           mixBlendMode: overlayBlendMode,
           transition: 'background 0.6s ease, mix-blend-mode 0.6s ease'

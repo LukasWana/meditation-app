@@ -4,6 +4,7 @@ import { useLanguage } from '@contexts/LanguageContext';
 import { useRealtimeMeditaceFilter } from '@hooks/useRealtimeMeditaceFilter';
 import { useShaderSettings } from '@contexts/ShaderSettingsContext';
 import { usePlayback } from '@contexts/ShaderPlaybackContext';
+import { useAdaptiveTextColors } from '@hooks';
 import { BackgroundSettingsControls } from '../components';
 
 const BLEND_MODE_TO_CSS = {
@@ -83,6 +84,17 @@ const MeditaceScreen = ({
     return getShaderForSection('meditace') || 'meditace';
   }, [getShaderForSection, transitionState?.toShaderKey]);
 
+  // Získej barvu pro pozadí (pokud je shader barva, použij ji, jinak použij baseBackgroundColor)
+  const backgroundColorForText = useMemo(() => {
+    if (meditaceShader?.startsWith('__COLOR__')) {
+      return meditaceShader.replace('__COLOR__', '');
+    }
+    return baseBackgroundColor;
+  }, [meditaceShader, baseBackgroundColor]);
+
+  // Použij adaptivní barvy textů
+  const textColors = useAdaptiveTextColors(backgroundColorForText, meditaceShader);
+
   console.log(`🔍 MeditaceScreen - meditaceItems:`, meditaceItems);
   console.log(`🔍 MeditaceScreen - isLoading:`, isLoading);
   console.log(`🔍 MeditaceScreen - error:`, error);
@@ -123,10 +135,15 @@ const MeditaceScreen = ({
     return (
       <FramerPageTransition screenKey="meditace">
         <div
-          className="fixed inset-0 min-h-screen max-w-full"
+          className="fixed max-w-full"
           style={{
             zIndex: 0,
-            backgroundColor: baseBackgroundColor
+            backgroundColor: baseBackgroundColor,
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: '-20px',
+            height: 'calc(100dvh + 20px)'
           }}
         />
         <BackgroundShader
@@ -137,9 +154,14 @@ const MeditaceScreen = ({
           zIndex={2}
         />
         <div
-          className="fixed inset-0 pointer-events-none"
+          className="fixed pointer-events-none"
           style={{
             zIndex: 3,
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: '-20px',
+            height: 'calc(100dvh + 20px)',
             background: overlayBackground,
             mixBlendMode: overlayBlendMode,
             transition: 'background 0.6s ease, mix-blend-mode 0.6s ease'
@@ -148,8 +170,8 @@ const MeditaceScreen = ({
         <div className="min-h-screen w-full max-w-full flex flex-col items-center justify-center p-2 sm:p-8 pb-20 overflow-x-hidden relative" style={{ position: 'relative', zIndex: 10, backgroundColor: 'transparent' }}>
           <BackButton onClick={() => onNavigateToScreen('home')} />
           <div className="text-center mt-10">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-gray-700 mx-auto mb-4"></div>
-            <p className="text-xl text-gray-700">{t('nacitamMeditace') || 'Načítám meditace...'}</p>
+            <div className={`animate-spin rounded-full h-12 w-12 border-b-2 ${textColors.isDark ? 'border-white' : 'border-gray-700'} mx-auto mb-4`}></div>
+            <p className={`text-xl ${textColors.primary}`}>{t('nacitamMeditace') || 'Načítám meditace...'}</p>
           </div>
         </div>
       </FramerPageTransition>
@@ -160,10 +182,15 @@ const MeditaceScreen = ({
     return (
       <FramerPageTransition screenKey="meditace">
         <div
-          className="fixed inset-0 min-h-screen max-w-full"
+          className="fixed max-w-full"
           style={{
             zIndex: 0,
-            backgroundColor: baseBackgroundColor
+            backgroundColor: baseBackgroundColor,
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: '-20px',
+            height: 'calc(100dvh + 20px)'
           }}
         />
         <BackgroundShader
@@ -174,9 +201,14 @@ const MeditaceScreen = ({
           zIndex={2}
         />
         <div
-          className="fixed inset-0 pointer-events-none"
+          className="fixed pointer-events-none"
           style={{
             zIndex: 3,
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: '-20px',
+            height: 'calc(100dvh + 20px)',
             background: overlayBackground,
             mixBlendMode: overlayBlendMode,
             transition: 'background 0.6s ease, mix-blend-mode 0.6s ease'
@@ -185,8 +217,8 @@ const MeditaceScreen = ({
         <div className="min-h-screen w-full max-w-full flex flex-col items-center justify-center p-2 sm:p-8 pb-20 overflow-x-hidden relative" style={{ position: 'relative', zIndex: 10, backgroundColor: 'transparent' }}>
           <BackButton onClick={() => onNavigateToScreen('home')} />
           <div className="text-center mt-10">
-            <p className="text-xl text-red-600 mb-4">{t('chybaPriNacitani') || 'Chyba při načítání'}</p>
-            <p className="text-gray-700">{error}</p>
+            <p className={`text-xl ${textColors.isDark ? 'text-red-400' : 'text-red-600'} mb-4`}>{t('chybaPriNacitani') || 'Chyba při načítání'}</p>
+            <p className={textColors.secondary}>{error}</p>
           </div>
         </div>
       </FramerPageTransition>
@@ -196,10 +228,15 @@ const MeditaceScreen = ({
   return (
     <FramerPageTransition screenKey="meditace">
       <div
-        className="fixed inset-0 min-h-screen max-w-full"
+        className="fixed max-w-full"
         style={{
           zIndex: 0,
-          backgroundColor: baseBackgroundColor
+          backgroundColor: baseBackgroundColor,
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: '-20px',
+          height: 'calc(100dvh + 20px)'
         }}
       />
 
@@ -212,9 +249,14 @@ const MeditaceScreen = ({
       />
 
       <div
-        className="fixed inset-0 pointer-events-none"
+        className="fixed pointer-events-none"
         style={{
           zIndex: 3,
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: '-20px',
+          height: 'calc(100dvh + 20px)',
           background: overlayBackground,
           mixBlendMode: overlayBlendMode,
           transition: 'background 0.6s ease, mix-blend-mode 0.6s ease'
@@ -237,20 +279,20 @@ const MeditaceScreen = ({
             delay={0.1}
           >
             <div style={{ height: '3.5rem', display: 'flex', flexDirection: 'column', justifyContent: 'flex-start', alignItems: 'center', marginBottom: '0.5rem' }}>
-              <h1 className="text-4xl font-light" style={{ minHeight: '2.5rem', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <h1 className={`text-4xl font-light ${textColors.heading}`} style={{ minHeight: '2.5rem', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                 {t('meditace')}
               </h1>
             </div>
-            <p className="text-xl text-center text-gray-700 mb-8">
+            <p className={`text-xl text-center ${textColors.secondary} mb-8`}>
               {t('mluvene')}
             </p>
           </FramerSection>
 
           <div className="space-y-4">
             {meditaceItems.length === 0 ? (
-              <div className="text-center py-8 bg-white/50 rounded-3xl border border-black/10 backdrop-blur">
-                <p className="text-gray-600 text-lg">{t('zadneMeditace') || 'Žiadne meditácie nie sú dostupné'}</p>
-                <p className="text-gray-500 text-sm mt-2">{t('zkusteZmenitNastaveni') || 'Skúste zmeniť nastavenia v menu'}</p>
+              <div className={`text-center py-8 ${textColors.bgCard} rounded-3xl ${textColors.border} border backdrop-blur`}>
+                <p className={`${textColors.secondary} text-lg`}>{t('zadneMeditace') || 'Žiadne meditácie nie sú dostupné'}</p>
+                <p className={`${textColors.muted} text-sm mt-2`}>{t('zkusteZmenitNastaveni') || 'Skúste zmeniť nastavenia v menu'}</p>
               </div>
             ) : (
               meditaceItems.map((item, idx) => (
@@ -261,17 +303,17 @@ const MeditaceScreen = ({
                 >
                   <FramerButton
                     variant="ghost"
-                    className="w-full p-6 text-left bg-white/60 backdrop-blur rounded-3xl border border-black/10 transition-all duration-200 hover:-translate-y-1"
+                    className={`w-full p-6 text-left ${textColors.bgCard} backdrop-blur rounded-3xl ${textColors.border} border transition-all duration-200 hover:-translate-y-1 ${textColors.isDark ? 'hover:bg-white/20' : 'hover:bg-white'}`}
                     onClick={() => handleItemClick(item)}
                   >
                     <div className="flex items-center justify-between">
                       <div>
-                        <h3 className="text-2xl font-light text-gray-900">
+                        <h3 className={`text-2xl font-light ${textColors.heading}`}>
                           {item.title}
                         </h3>
                       </div>
                       <div className="flex items-center space-x-3">
-                        <span className="text-xl font-light text-gray-500">
+                        <span className={`text-xl font-light ${textColors.muted}`}>
                           {item.duration}
                         </span>
                       </div>

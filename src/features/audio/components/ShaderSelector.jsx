@@ -1,17 +1,19 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { getShaderList } from '@utils/shaderLoader';
+import { useShaderSettings } from '@contexts/ShaderSettingsContext';
+import BackgroundShader from '@components/BackgroundShader';
+
+const FALLBACK_COLOR = '#f4ddc4';
 
 const ShaderSelector = ({
   selectedShader,
   onShaderChange,
   onNavigateToScreen = null, // Pokud je k dispozici, otevře stránku místo dropdownu
-  isDarkMode = false
+  isDarkMode = false,
+  section = 'hudba' // Sekce pro získání barvy
 }) => {
   const textColor = isDarkMode ? 'text-white' : 'text-black';
-  const bgColor = isDarkMode ? 'bg-white/20' : 'bg-white/20';
-  const borderColor = isDarkMode ? 'border-white/30' : 'border-black/10';
-  const hoverBg = isDarkMode ? 'hover:bg-white/30' : 'hover:bg-white/30';
   const dropdownBg = isDarkMode ? 'bg-gray-800/95' : 'bg-white/95';
   const dropdownBorder = isDarkMode ? 'border-white/20' : 'border-black/10';
   const categoryText = isDarkMode ? 'text-gray-300' : 'text-gray-500';
@@ -20,6 +22,51 @@ const ShaderSelector = ({
   const [isOpen, setIsOpen] = useState(false);
   const [shaders, setShaders] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
+
+  // Získej barvu pro sekci
+  const { getColorForSection, getOverlaySettings } = useShaderSettings();
+  const colorValue = useMemo(
+    () => getColorForSection(section) || FALLBACK_COLOR,
+    [getColorForSection, section]
+  );
+
+  const overlaySettings = getOverlaySettings(section) || {};
+
+  // Render náhledu shaderu pro kruhové tlačítko
+  const renderShaderPreview = useCallback(() => {
+    const isColorOnly =
+      !selectedShader ||
+      selectedShader === 'default' ||
+      selectedShader.startsWith('__COLOR__');
+
+    if (isColorOnly) {
+      const shaderColor = selectedShader?.startsWith('__COLOR__')
+        ? selectedShader.replace('__COLOR__', '')
+        : colorValue;
+
+      return (
+        <div
+          className="absolute inset-0"
+          style={{
+            background: `radial-gradient(circle at 30% 30%, ${shaderColor}, ${shaderColor}80)`
+          }}
+        />
+      );
+    }
+
+    return (
+      <div className="absolute inset-0 pointer-events-none">
+        <BackgroundShader
+          variant={selectedShader}
+          intensity={overlaySettings.intensity ?? 0.8}
+          opacity={overlaySettings.opacity ?? 0.9}
+          enabled={true}
+          forceSquare={true}
+          zIndex={0}
+        />
+      </div>
+    );
+  }, [selectedShader, overlaySettings.intensity, overlaySettings.opacity, colorValue]);
 
   // Načti dostupné shadery
   useEffect(() => {
@@ -72,54 +119,65 @@ const ShaderSelector = ({
     return shader.id;
   };
 
-  // Získej aktuální vybraný shader
-  const currentShader = shaders.find(s => s.id === selectedShader) || shaders[0];
-
-  if (isLoading) {
-    return (
-      <div className="flex items-center justify-center">
-        <div className={`text-xs ${isDarkMode ? 'text-gray-300' : 'text-gray-600'}`}>Načítám...</div>
-      </div>
-    );
-  }
-
   // Pokud je k dispozici onNavigateToScreen, otevři stránku místo dropdownu
   const handleClick = () => {
     if (onNavigateToScreen) {
       // Ulož aktuální obrazovku do localStorage před otevřením shader-selection
-      // Zjisti aktuální obrazovku z URL nebo z window
-      // Pokud máme nějaký způsob, jak zjistit aktuální obrazovku, použij to
-      // Jinak použijeme 'hudba' jako default (protože ShaderSelector je v AudioPlayer)
-      const currentScreen = localStorage.getItem('meditation-app-current-screen') || 'hudba';
-      localStorage.setItem('meditation-app-previous-screen', currentScreen);
+      // PageManager automaticky určí sekci na základě previousScreen
+      try {
+        const currentScreen = localStorage.getItem('meditation-app-current-screen') || section;
+        localStorage.setItem('meditation-app-previous-screen', currentScreen);
+      } catch (e) {
+        console.error('Failed to save previous screen to localStorage:', e);
+      }
       onNavigateToScreen('shader-selection');
     } else {
       setIsOpen(!isOpen);
     }
   };
 
+  // Pokud je loading, zobraz placeholder
+  if (isLoading) {
+    return (
+      <motion.button
+        type="button"
+        aria-label="Změnit pozadí"
+        className="relative w-12 h-12 sm:w-14 sm:h-14 rounded-full border border-gray-200 bg-white shadow-sm flex items-center justify-center"
+        disabled
+      >
+        <div className="w-6 h-6 border-2 border-gray-300 border-t-gray-600 rounded-full animate-spin" />
+      </motion.button>
+    );
+  }
+
   return (
-    <div className="relative flex flex-col items-center">
-      {/* Tlačítko pro otevření výběru */}
+    <div className="relative">
+      {/* Kruhové tlačítko pro otevření výběru */}
       <motion.button
         onClick={handleClick}
-        className={`
-          px-3 py-1.5 rounded-full text-xs font-medium transition-all duration-200
-          ${bgColor} backdrop-blur-sm ${textColor} ${hoverBg}
-          border ${borderColor}
-        `}
+        type="button"
+        aria-label="Změnit pozadí"
+        className="relative w-12 h-12 sm:w-14 sm:h-14 rounded-full border border-gray-200 bg-white shadow-sm flex items-center justify-center transition-shadow duration-200 hover:shadow-md"
         whileHover={{ scale: 1.05 }}
         whileTap={{ scale: 0.95 }}
-        transition={{
-          type: "spring",
-          stiffness: 300,
-          damping: 20
-        }}
       >
-        <div className="flex items-center space-x-1.5">
-          <span className="text-sm">🎨</span>
-          <span className="text-xs">{currentShader ? getShaderDisplayName(currentShader) : 'Shader'}</span>
-          {!onNavigateToScreen && <span className="text-xs">{isOpen ? '▲' : '▼'}</span>}
+        <div className="absolute inset-1 sm:inset-1.5 rounded-full overflow-hidden pointer-events-none">
+          <div
+            className="absolute inset-0"
+            style={{
+              background: colorValue,
+              clipPath: 'polygon(0 0, 50% 0, 50% 100%, 0 100%)'
+            }}
+          />
+          <div
+            className="absolute inset-0"
+            style={{
+              clipPath: 'polygon(50% 0, 100% 0, 100% 100%, 50% 100%)'
+            }}
+          >
+            {renderShaderPreview()}
+          </div>
+          <div className="absolute inset-y-1.5 sm:inset-y-2 left-1/2 w-[2px] bg-white/80 backdrop-blur" />
         </div>
       </motion.button>
 

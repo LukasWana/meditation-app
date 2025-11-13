@@ -176,10 +176,15 @@ const HudbaScreen = ({
     return (
       <FramerPageTransition screenKey="hudba">
         <div
-          className="fixed inset-0 min-h-screen max-w-full"
+          className="fixed max-w-full"
           style={{
             zIndex: 0,
-            backgroundColor: baseBackgroundColor
+            backgroundColor: baseBackgroundColor,
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: '-20px',
+            height: 'calc(100dvh + 20px)'
           }}
         />
         <BackgroundShader
@@ -190,9 +195,14 @@ const HudbaScreen = ({
           zIndex={2}
         />
         <div
-          className="fixed inset-0 pointer-events-none"
+          className="fixed pointer-events-none"
           style={{
             zIndex: 3,
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: '-20px',
+            height: 'calc(100dvh + 20px)',
             background: overlayBackground,
             mixBlendMode: overlayBlendMode,
             transition: 'background 0.6s ease, mix-blend-mode 0.6s ease'
@@ -201,7 +211,7 @@ const HudbaScreen = ({
         <div className="min-h-screen w-full max-w-full flex flex-col items-center justify-center p-2 sm:p-8 pb-20 overflow-x-hidden relative" style={{ position: 'relative', zIndex: 10, backgroundColor: 'transparent' }}>
           <BackButton onClick={() => onNavigateToScreen('home')} />
           <div className="text-center">
-            <p className="text-xl text-red-600 mb-4">Chyba při načítání</p>
+            <p className={`text-xl ${textColors.isDark ? 'text-red-400' : 'text-red-600'} mb-4`}>Chyba při načítání</p>
             <p className={textColors.secondary}>{error}</p>
           </div>
         </div>
@@ -218,10 +228,15 @@ const HudbaScreen = ({
       */}
       {/* Pozadí stránky */}
       <div
-        className="min-h-screen w-full max-w-full fixed inset-0"
+        className="fixed max-w-full"
         style={{
           zIndex: 0,
-          backgroundColor: baseBackgroundColor
+          backgroundColor: baseBackgroundColor,
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: '-20px',
+          height: 'calc(100dvh + 20px)'
         }}
       />
 
@@ -234,9 +249,14 @@ const HudbaScreen = ({
       />
 
       <div
-        className="fixed inset-0 pointer-events-none"
+        className="fixed pointer-events-none"
         style={{
           zIndex: 3,
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: '-20px',
+          height: 'calc(100dvh + 20px)',
           background: overlayBackground,
           mixBlendMode: overlayBlendMode,
           transition: 'background 0.6s ease, mix-blend-mode 0.6s ease'
@@ -302,6 +322,7 @@ const HudbaScreen = ({
             onItemClick={handleItemClick}
             getDisplayDuration={getDisplayDuration}
             isLoadingCovers={isLoadingCovers}
+            textColors={textColors}
           />
 
         <FramerSection

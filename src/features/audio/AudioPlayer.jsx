@@ -3,7 +3,8 @@ import { useAudioPlayer, useAudioPlayerLogic } from './hooks';
 import {
   AudioControls,
   CloseButton,
-  AudioPlayerAnimations
+  AudioPlayerAnimations,
+  ShaderSelector
 } from './components';
 import { useAudioAnalysis as useAudioAnalysisHook } from '@hooks/useAudioAnalysis';
 import { useAudioAnalysis as useAudioAnalysisContext } from '@contexts/AudioAnalysisContext';
@@ -164,7 +165,17 @@ const AudioPlayer = ({
         />
 
         {/* Close Button - Top Right */}
-        <div className="absolute top-4 right-4 z-[100] pointer-events-auto">
+        <div className="absolute top-4 right-4 z-[100] pointer-events-auto flex items-center space-x-3">
+          {/* Shader Selector - Kruhové tlačítko vpravo nahoře */}
+          {onNavigateToScreen && (
+            <ShaderSelector
+              selectedShader={selectedShader}
+              onShaderChange={handleShaderChange}
+              onNavigateToScreen={onNavigateToScreen}
+              isDarkMode={isDarkMode}
+              section={sectionKey}
+            />
+          )}
           <CloseButton
             onClose={() => fadeOutAndClose(onClose, 3000)}
             className="w-10 h-10 sm:w-12 sm:h-12"
@@ -196,10 +207,6 @@ const AudioPlayer = ({
           albumTracks={albumTracks}
           currentTrackIndex={currentTrackIndex}
           onTrackChange={onTrackChange}
-          // Shader selector props
-          selectedShader={selectedShader}
-          onShaderChange={handleShaderChange}
-          onNavigateToScreen={onNavigateToScreen}
           // Data source indicator
           dataSource={dataSource}
           // Dark mode

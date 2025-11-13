@@ -176,9 +176,14 @@ const BreathScreen = ({
       */}
       {/* Pozadí stránky - pod shaderem - průhledné při dýchání, aby shader prosvítal */}
       <div
-        className="min-h-screen w-full max-w-full bg-[#f4ddc4] fixed inset-0"
+        className="fixed max-w-full bg-[#f4ddc4]"
         style={{
-          zIndex: 0
+          zIndex: 0,
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: '-20px',
+          height: 'calc(100dvh + 20px)'
         }}
       />
 
