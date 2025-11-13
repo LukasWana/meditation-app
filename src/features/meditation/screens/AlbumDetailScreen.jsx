@@ -100,9 +100,11 @@ const AlbumDetailScreen = ({
       {/* Content overlay */}
       <div className="relative z-10 min-h-screen w-full bg-[#f4ddc4]/80 backdrop-blur-sm flex flex-col">
         {/* Header s back buttonem */}
-        <div className="p-2 sm:p-8 pt-4 pb-4">
-          <BackButton onClick={handleBackClick} />
-        </div>
+        {!activeAudio && (
+          <div className="p-2 sm:p-8 pt-4 pb-4">
+            <BackButton onClick={handleBackClick} />
+          </div>
+        )}
 
         {/* Album info */}
         <div className="flex-1 flex flex-col items-center justify-start p-2 sm:p-8 pb-20">

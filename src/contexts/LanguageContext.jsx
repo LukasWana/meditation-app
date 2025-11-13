@@ -427,11 +427,6 @@ export const LanguageProvider = ({ children }) => {
     return translations[language]?.[key] || key;
   };
 
-  const getLanguageFlag = () => {
-    // Tato funkce se už nepoužívá - vlajky se načítají z SVG souborů
-    return null;
-  };
-
   const getLanguageName = (lang) => {
     const names = {
       SK: 'Slovenčina',
@@ -445,7 +440,6 @@ export const LanguageProvider = ({ children }) => {
     language,
     changeLanguage,
     t,
-    getLanguageFlag,
     getLanguageName,
     translations,
     availableLanguages: ['SK', 'CZ', 'EN']

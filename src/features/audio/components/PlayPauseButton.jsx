@@ -4,8 +4,15 @@ import { motion, AnimatePresence } from 'framer-motion';
 const PlayPauseButton = ({
   isPlaying,
   onToggle,
-  className = "w-24 h-24"
+  className = "w-24 h-24",
+  isDarkMode = false
 }) => {
+  // Barvy podle dark mode
+  const bgColor = isDarkMode ? 'bg-white/80' : 'bg-black/80';
+  const borderColor = isDarkMode ? 'border-black/20' : 'border-white/20';
+  const iconColor = isDarkMode ? 'bg-white' : 'bg-black';
+  const playIconColor = isDarkMode ? 'border-l-black' : 'border-l-white';
+
   return (
     <motion.button
       onClick={onToggle}
@@ -14,7 +21,7 @@ const PlayPauseButton = ({
     >
       {/* Pozadí buttonu - 20% průhledné při přehrávání, jinak neprůhledné */}
       <div
-        className="absolute inset-0 rounded-full bg-black/80 backdrop-blur-sm border border-white/20"
+        className={`absolute inset-0 rounded-full ${bgColor} backdrop-blur-sm border ${borderColor}`}
         style={{ opacity: isPlaying ? 0.2 : 1 }}
       />
       {/* Ikona - vždy neprůhledná, relativní k buttonu */}
@@ -29,8 +36,8 @@ const PlayPauseButton = ({
               className="w-8 h-8 flex items-center justify-center"
             >
               <div className="flex space-x-3">
-                <div className="w-3 h-10 bg-black"></div>
-                <div className="w-3 h-10 bg-black"></div>
+                <div className={`w-3 h-10 ${iconColor}`}></div>
+                <div className={`w-3 h-10 ${iconColor}`}></div>
               </div>
             </motion.div>
           ) : (
@@ -39,7 +46,7 @@ const PlayPauseButton = ({
               initial={{ scale: 0 }}
               animate={{ scale: 1 }}
               exit={{ scale: 0 }}
-              className="w-0 h-0 border-l-[16px] border-l-white border-y-[12px] border-y-transparent ml-3"
+              className={`w-0 h-0 border-l-[16px] ${playIconColor} border-y-[12px] border-y-transparent ml-3`}
             />
           )}
         </AnimatePresence>

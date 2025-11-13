@@ -565,6 +565,7 @@ const DychaniScreen = ({
                   isPlaying={isPlaying}
                   onToggle={onPlayPause}
                   className="w-[18vw] h-[18vw] max-w-[120px] max-h-[120px] min-w-[80px] min-h-[80px] sm:w-[16vw] sm:h-[16vw] sm:max-w-[140px] sm:max-h-[140px] sm:min-w-[100px] sm:min-h-[100px]"
+                  isDarkMode={textColors.isDark}
                 />
               </div>
             </div>

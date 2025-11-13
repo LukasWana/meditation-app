@@ -85,10 +85,11 @@ const MeditaceTroubleScreen = ({
         onTouchMove={activeAudio ? undefined : onTouchMove}
         onTouchEnd={activeAudio ? undefined : onTouchEnd}
       >
-        <BackButton
-          onClick={() => onNavigateToScreen('home')}
-          className={activeAudio ? 'pointer-events-none opacity-50' : ''}
-        />
+        {!activeAudio && (
+          <BackButton
+            onClick={() => onNavigateToScreen('home')}
+          />
+        )}
 
         <div className="max-w-md w-full mt-16">
           <FramerSection

@@ -106,7 +106,7 @@ const SCREEN_REGISTRY = {
   'hudba': {
     component: HudbaScreen,
     requiresLayout: true,
-    props: ['onNavigateToScreen', 'onTouchStart', 'onTouchMove', 'onTouchEnd', 'gender', 'onPlayerStateChange', 'onAlbumSelect'],
+    props: ['onNavigateToScreen', 'onTouchStart', 'onTouchMove', 'onTouchEnd', 'onPlayerStateChange', 'onAlbumSelect'],
     transition: {
       type: 'fade',
       duration: 0.6

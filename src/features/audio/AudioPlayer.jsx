@@ -1,11 +1,13 @@
 import React from 'react';
+import { motion } from 'framer-motion';
+import { ArrowLeft } from 'lucide-react';
 import { useAudioPlayer, useAudioPlayerLogic } from './hooks';
 import {
   AudioControls,
-  CloseButton,
   AudioPlayerAnimations,
   ShaderSelector
 } from './components';
+import { FramerButton } from '@components';
 import { useAudioAnalysis as useAudioAnalysisHook } from '@hooks/useAudioAnalysis';
 import { useAudioAnalysis as useAudioAnalysisContext } from '@contexts/AudioAnalysisContext';
 import { useShaderSettings } from '@contexts/ShaderSettingsContext';
@@ -164,10 +166,26 @@ const AudioPlayer = ({
           crossOrigin="anonymous"
         />
 
-        {/* Close Button - Top Right */}
-        <div className="absolute top-4 right-4 z-[100] pointer-events-auto flex items-center space-x-3">
-          {/* Shader Selector - Kruhové tlačítko vpravo nahoře */}
-          {onNavigateToScreen && (
+        {/* Back Button - Top Left */}
+        <div className="absolute top-4 left-4 z-[100] pointer-events-auto">
+          <motion.div
+            initial={{ opacity: 0, x: -20 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ duration: 0.5, delay: 0.2 }}
+          >
+            <FramerButton
+              onClick={() => fadeOutAndClose(onClose, 3000)}
+              variant="ghost"
+              className="w-12 h-12 rounded-full bg-white/20 backdrop-blur-sm border border-black/10 hover:bg-white/30 flex items-center justify-center p-0"
+            >
+              <ArrowLeft size={20} />
+            </FramerButton>
+          </motion.div>
+        </div>
+
+        {/* Shader Selector - Top Right */}
+        {onNavigateToScreen && (
+          <div className="absolute top-4 right-4 z-[100] pointer-events-auto">
             <ShaderSelector
               selectedShader={selectedShader}
               onShaderChange={handleShaderChange}
@@ -175,13 +193,8 @@ const AudioPlayer = ({
               isDarkMode={isDarkMode}
               section={sectionKey}
             />
-          )}
-          <CloseButton
-            onClose={() => fadeOutAndClose(onClose, 3000)}
-            className="w-10 h-10 sm:w-12 sm:h-12"
-            isDarkMode={isDarkMode}
-          />
-        </div>
+          </div>
+        )}
 
         {/* Audio Controls - Centered */}
         <AudioControls
