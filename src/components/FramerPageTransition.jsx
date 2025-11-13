@@ -63,9 +63,9 @@ const VARIANTS = {
 const FramerPageTransition = ({
   children,
   screenKey,
-  animation = 'slide'
+  animation = 'fade'
 }) => {
-  const { initial, in: animate, out, transition } = VARIANTS[animation] || VARIANTS.slide;
+  const { initial, in: animate, out, transition } = VARIANTS[animation] || VARIANTS.fade;
 
   return (
     <AnimatePresence mode="wait">

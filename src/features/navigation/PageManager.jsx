@@ -37,8 +37,7 @@ const SCREEN_REGISTRY = {
     requiresLayout: true,
     props: ['onNavigateToScreen', 'onTouchStart', 'onTouchMove', 'onTouchEnd', 'audioPermission'],
     transition: {
-      type: 'slide',
-      direction: 'up',
+      type: 'fade',
       duration: 0.6
     }
   },
@@ -72,8 +71,7 @@ const SCREEN_REGISTRY = {
       'preparationCountdown'
     ],
     transition: {
-      type: 'slide',
-      direction: 'right',
+      type: 'fade',
       duration: 0.6
     }
   },
@@ -82,7 +80,7 @@ const SCREEN_REGISTRY = {
     requiresLayout: true,
     props: ['breathPhase', 'setBreathPhase', 'onNavigateToScreen', 'onTouchStart', 'onTouchMove', 'onTouchEnd', 'breathInDuration', 'breathOutDuration', 'onBreathRhythmChange', 'preparationTime', 'onPreparationTimeChange', 'isPreparing', 'preparationCountdown', 'breathDuration', 'breathTime', 'setBreathTime', 'isBreathing', 'setIsBreathing', 'onBreathDurationChange', 'onReset', 'breathInSound', 'breathOutSound', 'breathClickSound', 'breathFinalSound', 'breathCountdownSound', 'breathSoundFadeEnabled', 'onBreathSoundChange'],
     transition: {
-      type: 'scale',
+      type: 'fade',
       duration: 0.7
     }
   },
@@ -91,8 +89,7 @@ const SCREEN_REGISTRY = {
     requiresLayout: true,
     props: ['onNavigateToScreen', 'onTouchStart', 'onTouchMove', 'onTouchEnd', 'onPlayerStateChange', 'gender', 'onGenderChange'],
     transition: {
-      type: 'slide',
-      direction: 'up',
+      type: 'fade',
       duration: 0.6
     }
   },
@@ -101,8 +98,7 @@ const SCREEN_REGISTRY = {
     requiresLayout: true,
     props: ['onNavigateToScreen', 'onTouchStart', 'onTouchMove', 'onTouchEnd'],
     transition: {
-      type: 'slide',
-      direction: 'left',
+      type: 'fade',
       duration: 0.6
     }
   },
@@ -111,8 +107,7 @@ const SCREEN_REGISTRY = {
     requiresLayout: true,
     props: ['onNavigateToScreen', 'onTouchStart', 'onTouchMove', 'onTouchEnd', 'gender', 'onPlayerStateChange', 'onAlbumSelect'],
     transition: {
-      type: 'slide',
-      direction: 'up',
+      type: 'fade',
       duration: 0.6
     }
   },
@@ -121,8 +116,7 @@ const SCREEN_REGISTRY = {
     requiresLayout: true,
     props: ['onNavigateToScreen', 'onTouchStart', 'onTouchMove', 'onTouchEnd', 'gender', 'onPlayerStateChange', 'onGenderChange'],
     transition: {
-      type: 'slide',
-      direction: 'up',
+      type: 'fade',
       duration: 0.6
     }
   },
@@ -131,8 +125,7 @@ const SCREEN_REGISTRY = {
     requiresLayout: true,
     props: ['album', 'onNavigateToScreen', 'onPlayerStateChange', 'onTouchStart', 'onTouchMove', 'onTouchEnd'],
     transition: {
-      type: 'slide',
-      direction: 'left',
+      type: 'fade',
       duration: 0.6
     }
   },
@@ -141,7 +134,7 @@ const SCREEN_REGISTRY = {
     requiresLayout: false,
     props: ['audioSrc', 'title', 'onClose'],
     transition: {
-      type: 'modal',
+      type: 'fade',
       duration: 0.4
     }
   },
@@ -150,8 +143,7 @@ const SCREEN_REGISTRY = {
     requiresLayout: false,
     props: [],
     transition: {
-      type: 'slide',
-      direction: 'up',
+      type: 'fade',
       duration: 0.6
     }
   },
@@ -160,8 +152,7 @@ const SCREEN_REGISTRY = {
     requiresLayout: true,
     props: ['onNavigateToScreen', 'onTouchStart', 'onTouchMove', 'onTouchEnd', 'onSelectSound', 'selectedInSound', 'selectedOutSound', 'selectedClickSound', 'selectedFinalSound', 'selectedCountdownSound'],
     transition: {
-      type: 'slide',
-      direction: 'left',
+      type: 'fade',
       duration: 0.6
     }
   },
@@ -170,8 +161,7 @@ const SCREEN_REGISTRY = {
     requiresLayout: true,
     props: ['onNavigateToScreen', 'onTouchStart', 'onTouchMove', 'onTouchEnd', 'section'],
     transition: {
-      type: 'slide',
-      direction: 'left',
+      type: 'fade',
       duration: 0.6
     }
   },
@@ -198,8 +188,7 @@ const SCREEN_REGISTRY = {
     requiresLayout: true,
     props: ['onNavigateToScreen', 'onTouchStart', 'onTouchMove', 'onTouchEnd', 'breathInDuration', 'breathOutDuration', 'breathDuration', 'preparationTime', 'breathInSound', 'breathOutSound', 'breathClickSound', 'breathFinalSound', 'breathCountdownSound', 'breathSoundFadeEnabled', 'onBreathRhythmChange', 'onBreathDurationChange', 'onPreparationTimeChange', 'onBreathSoundChange', 'onBreathSoundFadeChange'],
     transition: {
-      type: 'slide',
-      direction: 'left',
+      type: 'fade',
       duration: 0.6
     }
   }
@@ -516,12 +505,18 @@ const PageManager = ({
     const transition = currentScreenConfig.transition;
     const variants = getTransitionVariants(transition.type, transition.direction);
 
-    const transitionConfig = {
-      type: "spring",
-      stiffness: 300,
-      damping: 30,
-      duration: transition.duration || 0.4
-    };
+    // Pro fade animace použijeme jednoduchý ease přechod bez spring efektu
+    const transitionConfig = transition.type === 'fade'
+      ? {
+          duration: transition.duration || 0.4,
+          ease: [0.4, 0, 0.2, 1]
+        }
+      : {
+          type: "spring",
+          stiffness: 300,
+          damping: 30,
+          duration: transition.duration || 0.4
+        };
 
     const screenElement = (
       <motion.div
