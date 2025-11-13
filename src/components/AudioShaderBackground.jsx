@@ -1,4 +1,6 @@
 import React, { useRef, useEffect, useState } from 'react';
+import { getWebGLContext } from '@utils/webgl/contextManager';
+import { getOptimalDPR } from '@utils/deviceDetection';
 
 /**
  * Jednoduchý WebGL shader pro pozadí aplikace při přehrávání MP3
@@ -100,11 +102,15 @@ const AudioShaderBackground = ({
 
     console.log('🎨 AudioShaderBackground: Canvas nalezen, inicializuji WebGL...');
 
-    // Zkus WebGL 2.0, pokud není podporováno, použij WebGL 1.0
-    let glContext = canvas.getContext('webgl2');
-    if (!glContext) {
-      glContext = canvas.getContext('webgl') || canvas.getContext('experimental-webgl');
-    }
+    // Použij getWebGLContext() pro optimalizované nastavení (Android optimalizace)
+    let glContext = getWebGLContext(canvas, {
+      alpha: true,
+      antialias: false, // Bude automaticky upraveno podle zařízení v contextManager
+      depth: false,
+      stencil: false,
+      preserveDrawingBuffer: false
+    });
+
     if (!glContext) {
       console.warn('⚠️ WebGL není podporován');
       return;
@@ -113,10 +119,11 @@ const AudioShaderBackground = ({
 
     console.log('✅ AudioShaderBackground: WebGL kontext vytvořen');
 
-    // Nastav velikost canvasu - použij fullscreen velikost
+    // Nastav velikost canvasu - použij fullscreen velikost s optimalizovaným DPR
+    // Na mobilních zařízeních max 1.5x DPR pro lepší výkon
     const resizeCanvas = () => {
       // Použij CSS velikost, ale nastav pixel rozlišení pro WebGL
-      const dpr = window.devicePixelRatio || 1;
+      const dpr = getOptimalDPR(); // Optimalizovaný DPR (max 1.5x na mobilních zařízeních)
       const width = window.innerWidth;
       const height = window.innerHeight;
 
@@ -125,7 +132,7 @@ const AudioShaderBackground = ({
       canvas.style.width = `${width}px`;
       canvas.style.height = `${height}px`;
       glContext.viewport(0, 0, canvas.width, canvas.height);
-      console.log('📐 AudioShaderBackground: Canvas velikost:', canvas.width, 'x', canvas.height, 'CSS:', width, 'x', height);
+      console.log('📐 AudioShaderBackground: Canvas velikost:', canvas.width, 'x', canvas.height, 'CSS:', width, 'x', height, 'DPR:', dpr);
     };
 
     resizeCanvas();

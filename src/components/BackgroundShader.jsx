@@ -1,6 +1,8 @@
 import React, { useRef, useEffect, useState, useMemo, useContext } from 'react';
 import { loadShader, convertShaderToWebGL } from '@utils/shaderLoader';
 import { createProgramManager } from '@utils/webgl/programManager';
+import { getWebGLContext } from '@utils/webgl/contextManager';
+import { getOptimalDPR, getOptimalFPS, getShaderQuality } from '@utils/deviceDetection';
 import { PlaybackContext } from '@contexts/ShaderPlaybackContext';
 
 const DEBUG_SHADER_LOGS = false;
@@ -35,6 +37,8 @@ const BackgroundShader = ({
   const previousPhaseRef = useRef(breathPhase);
   const previousVariantRef = useRef(variant);
   const renderDebugTimeRef = useRef(null);
+  const lastFrameTimeRef = useRef(0);
+  const frameIntervalRef = useRef(1000 / getOptimalFPS()); // Frame interval v ms
 
   // Zkus použít přehrávání shaderů z kontextu (pokud je k dispozici)
   // Použijeme useContext přímo, aby to fungovalo i když kontext není k dispozici
@@ -581,16 +585,21 @@ void main() {
     });
     }
 
-    // Zkus WebGL 2.0, pokud není podporováno, použij WebGL 1.0
-    let glContext = canvas.getContext('webgl2');
-    const isWebGL2 = !!glContext;
-    if (!glContext) {
-      glContext = canvas.getContext('webgl') || canvas.getContext('experimental-webgl');
-    }
+    // Použij getWebGLContext() pro optimalizované nastavení (Android optimalizace)
+    let glContext = getWebGLContext(canvas, {
+      alpha: true,
+      antialias: false, // Bude automaticky upraveno podle zařízení v contextManager
+      depth: false,
+      stencil: false,
+      preserveDrawingBuffer: false
+    });
+
     if (!glContext) {
       console.warn('⚠️ BackgroundShader: WebGL není podporován');
       return;
     }
+
+    const isWebGL2 = glContext instanceof WebGL2RenderingContext;
     if (DEBUG_SHADER_LOGS) {
     console.log('✅ BackgroundShader: WebGL verze:', glContext.getParameter(glContext.VERSION), 'isWebGL2:', isWebGL2);
     console.log('✅ BackgroundShader: WebGL kontext vytvořen');
@@ -600,10 +609,11 @@ void main() {
     glContext.enable(glContext.BLEND);
     glContext.blendFunc(glContext.SRC_ALPHA, glContext.ONE_MINUS_SRC_ALPHA);
 
-    // Nastav velikost canvasu - použij velikost okna s devicePixelRatio
+    // Nastav velikost canvasu - použij velikost okna s optimalizovaným DPR
+    // Na mobilních zařízeních max 1.5x DPR pro lepší výkon
     // Ale pro shadery použijeme viewport rozlišení (bez devicePixelRatio), aby byly vycentrované na play button
     const resizeCanvas = () => {
-      const dpr = window.devicePixelRatio || 1;
+      const dpr = getOptimalDPR(); // Optimalizovaný DPR (max 1.5x na mobilních zařízeních)
       const width = window.innerWidth;
       const height = window.innerHeight;
 
@@ -617,7 +627,7 @@ void main() {
 
       glContext.viewport(0, 0, canvas.width, canvas.height);
       if (DEBUG_SHADER_LOGS) {
-      console.log('📐 BackgroundShader: Canvas velikost:', canvas.width, 'x', canvas.height, 'CSS:', width, 'x', height, 'Viewport:', width, 'x', height);
+      console.log('📐 BackgroundShader: Canvas velikost:', canvas.width, 'x', canvas.height, 'CSS:', width, 'x', height, 'DPR:', dpr);
       }
     };
 
@@ -795,6 +805,14 @@ void main() {
         return;
       }
 
+      // Frame rate limiting - skip renderování pokud uplynulo méně než frameInterval ms
+      const frameInterval = frameIntervalRef.current;
+      if (lastFrameTimeRef.current > 0 && currentTime - lastFrameTimeRef.current < frameInterval) {
+        animationFrameRef.current = requestAnimationFrame(render);
+        return;
+      }
+      lastFrameTimeRef.current = currentTime;
+
       timeRef.current = currentTime * 0.001;
 
       gl.useProgram(programInfo.program);
@@ -862,6 +880,13 @@ void main() {
         gl.uniform1f(programInfo.uniforms.u_breathProgress, breathProgressValue);
       }
 
+      // Quality uniform pro náročné shadery (raymarching, atd.)
+      // Pouze pro shadery, které mají tento uniform definovaný
+      if (programInfo.uniforms.u_quality !== undefined && programInfo.uniforms.u_quality !== null) {
+        const quality = getShaderQuality(); // 0.3 na mobilních zařízeních, 1.0 na desktopu
+        gl.uniform1f(programInfo.uniforms.u_quality, quality);
+      }
+
       // Nastav pozice - vytvoř buffer jednou
       if (!gl.positionBuffer) {
         gl.positionBuffer = gl.createBuffer();
@@ -917,6 +942,146 @@ void main() {
       }
     };
   }, [gl, programInfo, enabled, intensity, breathPhase, breathInDuration, breathOutDuration, opacity, isColorMode, effectiveVariant]);
+
+  // Page Visibility API - pause rendering když je stránka skrytá
+  useEffect(() => {
+    if (!gl || !programInfo || isColorMode || opacity <= 0) {
+      return;
+    }
+
+    const handleVisibilityChange = () => {
+      if (document.hidden) {
+        // Pause rendering
+        if (animationFrameRef.current) {
+          cancelAnimationFrame(animationFrameRef.current);
+          animationFrameRef.current = null;
+        }
+        if (DEBUG_SHADER_LOGS) {
+          console.log('⏸️ BackgroundShader: Stránka skrytá - pause renderování');
+        }
+      } else {
+        // Resume rendering
+        if (gl && programInfo && opacity > 0 && !isColorMode) {
+          const render = (currentTime) => {
+            if (!gl || !programInfo) {
+              return;
+            }
+
+            // Frame rate limiting
+            const frameInterval = frameIntervalRef.current;
+            if (lastFrameTimeRef.current > 0 && currentTime - lastFrameTimeRef.current < frameInterval) {
+              animationFrameRef.current = requestAnimationFrame(render);
+              return;
+            }
+            lastFrameTimeRef.current = currentTime;
+
+            timeRef.current = currentTime * 0.001;
+            gl.useProgram(programInfo.program);
+
+            const viewportWidth = window.innerWidth || 1;
+            const viewportHeight = window.innerHeight || 1;
+
+            if (programInfo.uniforms.u_time) {
+              gl.uniform1f(programInfo.uniforms.u_time, timeRef.current);
+            }
+            const squareDimension = Math.min(viewportWidth, viewportHeight);
+            const shaderWidth = shouldForceSquare ? squareDimension : viewportWidth;
+            const shaderHeight = shouldForceSquare ? squareDimension : viewportHeight;
+
+            if (programInfo.uniforms.u_resolution) {
+              gl.uniform2f(programInfo.uniforms.u_resolution, shaderWidth, shaderHeight);
+            }
+            if (programInfo.uniforms.u_mouse !== undefined && programInfo.uniforms.u_mouse !== null) {
+              const mouseX = shaderWidth * 0.5;
+              const mouseY = shaderHeight * 0.5;
+              gl.uniform2f(programInfo.uniforms.u_mouse, mouseX, mouseY);
+            }
+            if (programInfo.uniforms.u_intensity) {
+              gl.uniform1f(programInfo.uniforms.u_intensity, intensity);
+            }
+
+            if (programInfo.uniforms.u_audioAmplitude !== undefined && programInfo.uniforms.u_audioAmplitude !== null) {
+              const amplitude = audioData?.amplitude || 0;
+              gl.uniform1f(programInfo.uniforms.u_audioAmplitude, amplitude);
+            }
+            if (programInfo.uniforms.u_audioBass !== undefined && programInfo.uniforms.u_audioBass !== null) {
+              const bass = audioData?.bass || 0;
+              gl.uniform1f(programInfo.uniforms.u_audioBass, bass);
+            }
+            if (programInfo.uniforms.u_audioMid !== undefined && programInfo.uniforms.u_audioMid !== null) {
+              const mid = audioData?.mid || 0;
+              gl.uniform1f(programInfo.uniforms.u_audioMid, mid);
+            }
+            if (programInfo.uniforms.u_audioTreble !== undefined && programInfo.uniforms.u_audioTreble !== null) {
+              const treble = audioData?.treble || 0;
+              gl.uniform1f(programInfo.uniforms.u_audioTreble, treble);
+            }
+
+            if (programInfo.uniforms.u_breathPhase !== undefined && programInfo.uniforms.u_breathPhase !== null) {
+              let breathPhaseValue = -1.0;
+              if (breathPhase && enabled) {
+                breathPhaseValue = breathPhase === 'in' ? 0.0 : 1.0;
+              }
+              gl.uniform1f(programInfo.uniforms.u_breathPhase, breathPhaseValue);
+            }
+            if (programInfo.uniforms.u_breathProgress !== undefined && programInfo.uniforms.u_breathProgress !== null) {
+              let breathProgressValue = 0.0;
+              if (breathPhase && enabled) {
+                const now = Date.now();
+                const elapsed = (now - phaseStartTimeRef.current) / 1000;
+                const phaseDuration = breathPhase === 'in' ? breathInDuration : breathOutDuration;
+                breathProgressValue = Math.min(elapsed / phaseDuration, 1.0);
+              }
+              gl.uniform1f(programInfo.uniforms.u_breathProgress, breathProgressValue);
+            }
+
+            if (programInfo.uniforms.u_quality !== undefined && programInfo.uniforms.u_quality !== null) {
+              const quality = getShaderQuality();
+              gl.uniform1f(programInfo.uniforms.u_quality, quality);
+            }
+
+            if (!gl.positionBuffer) {
+              gl.positionBuffer = gl.createBuffer();
+              gl.bindBuffer(gl.ARRAY_BUFFER, gl.positionBuffer);
+              gl.bufferData(
+                gl.ARRAY_BUFFER,
+                new Float32Array([
+                  -1, -1,
+                   1, -1,
+                  -1,  1,
+                  -1,  1,
+                   1, -1,
+                   1,  1,
+                ]),
+                gl.STATIC_DRAW
+              );
+            }
+
+            const positionLocation = programInfo.attribs.a_position;
+            gl.bindBuffer(gl.ARRAY_BUFFER, gl.positionBuffer);
+            gl.enableVertexAttribArray(positionLocation);
+            gl.vertexAttribPointer(positionLocation, 2, gl.FLOAT, false, 0, 0);
+
+            gl.clearColor(0, 0, 0, 0);
+            gl.clear(gl.COLOR_BUFFER_BIT);
+            gl.drawArrays(gl.TRIANGLES, 0, 6);
+
+            animationFrameRef.current = requestAnimationFrame(render);
+          };
+          animationFrameRef.current = requestAnimationFrame(render);
+        }
+        if (DEBUG_SHADER_LOGS) {
+          console.log('▶️ BackgroundShader: Stránka viditelná - resume renderování');
+        }
+      }
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+    };
+  }, [gl, programInfo, enabled, intensity, breathPhase, breathInDuration, breathOutDuration, opacity, isColorMode, effectiveVariant, audioData, shouldForceSquare]);
 
   // Canvas se zobrazuje vždy, opacity se řídí opacity prop
   // To umožňuje plynulé prolnutí při změně opacity

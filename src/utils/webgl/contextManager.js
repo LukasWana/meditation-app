@@ -3,6 +3,8 @@
  * Správné správa WebGL kontextů - prevence "Too many active WebGL contexts"
  */
 
+import { shouldDisableAntialiasing, isAndroid } from '@utils/deviceDetection';
+
 // Globální registry aktivních kontextů
 const activeContexts = new WeakMap();
 const contextRegistry = new Set();
@@ -94,15 +96,19 @@ export function getWebGLContext(canvas, options = {}) {
     }
   }
 
+  // Optimalizace pro Android
+  const isAndroidDevice = isAndroid();
+  const disableAntialiasing = shouldDisableAntialiasing();
+
   // Zkus vytvořit WebGL 2.0 kontext
   let glContext = canvas.getContext('webgl2', {
     alpha: options.alpha !== false,
-    antialias: options.antialias !== false,
+    antialias: options.antialias !== false && !disableAntialiasing,
     depth: options.depth !== false,
     stencil: options.stencil !== false,
     preserveDrawingBuffer: options.preserveDrawingBuffer || false,
-    powerPreference: options.powerPreference || 'default',
-    failIfMajorPerformanceCaveat: options.failIfMajorPerformanceCaveat || false
+    powerPreference: options.powerPreference || (isAndroidDevice ? 'low-power' : 'default'),
+    failIfMajorPerformanceCaveat: options.failIfMajorPerformanceCaveat !== undefined ? options.failIfMajorPerformanceCaveat : isAndroidDevice
   });
 
   const isWebGL2 = !!glContext;
@@ -111,20 +117,20 @@ export function getWebGLContext(canvas, options = {}) {
   if (!glContext) {
     glContext = canvas.getContext('webgl', {
       alpha: options.alpha !== false,
-      antialias: options.antialias !== false,
+      antialias: options.antialias !== false && !disableAntialiasing,
       depth: options.depth !== false,
       stencil: options.stencil !== false,
       preserveDrawingBuffer: options.preserveDrawingBuffer || false,
-      powerPreference: options.powerPreference || 'default',
-      failIfMajorPerformanceCaveat: options.failIfMajorPerformanceCaveat || false
+      powerPreference: options.powerPreference || (isAndroidDevice ? 'low-power' : 'default'),
+      failIfMajorPerformanceCaveat: options.failIfMajorPerformanceCaveat !== undefined ? options.failIfMajorPerformanceCaveat : isAndroidDevice
     }) || canvas.getContext('experimental-webgl', {
       alpha: options.alpha !== false,
-      antialias: options.antialias !== false,
+      antialias: options.antialias !== false && !disableAntialiasing,
       depth: options.depth !== false,
       stencil: options.stencil !== false,
       preserveDrawingBuffer: options.preserveDrawingBuffer || false,
-      powerPreference: options.powerPreference || 'default',
-      failIfMajorPerformanceCaveat: options.failIfMajorPerformanceCaveat || false
+      powerPreference: options.powerPreference || (isAndroidDevice ? 'low-power' : 'default'),
+      failIfMajorPerformanceCaveat: options.failIfMajorPerformanceCaveat !== undefined ? options.failIfMajorPerformanceCaveat : isAndroidDevice
     });
   }
 

@@ -257,6 +257,7 @@ function convertMainImageShader(shaderCode, isWebGL2 = false) {
     'uniform float u_audioMid;',
     'uniform float u_audioTreble;',
     'uniform float u_audioAmplitude;',
+    'uniform float u_quality;', // Quality multiplier pro náročné shadery (0.3 na mobilních, 1.0 na desktopu)
     `${isWebGL2 ? 'in' : 'varying'} vec2 v_uv;`
   ].filter(Boolean);
 

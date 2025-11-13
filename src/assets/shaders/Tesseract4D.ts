@@ -120,7 +120,9 @@ void mainImage(out vec4 fragColor, in vec2 fragCoord) {
     float tmax = 15.0;
     float closest = 1000.0;
     bool hit = false;
-    float quality = mix(20.0, 60.0, clamp(iAudio.w, 0.0, 1.0));
+    // Quality modulace: audio + device quality (u_quality je 0.3 na mobilních, 1.0 na desktopu)
+    float audioQuality = mix(20.0, 60.0, clamp(iAudio.w, 0.0, 1.0));
+    float quality = audioQuality * (u_quality > 0.0 ? u_quality : 1.0);
 
     // Colors
     vec3 col = vec3(0.0);

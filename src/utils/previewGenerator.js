@@ -7,6 +7,7 @@ import {
   createShaderPreviewRenderer,
   getBuiltInFragmentShader
 } from './previewRendererCore';
+import { shouldDisableAntialiasing, isAndroid } from './deviceDetection';
 
 let browserRenderer = null;
 
@@ -23,10 +24,15 @@ const createBrowserRenderer = () => {
       canvas.width = width;
       canvas.height = height;
 
+      // Optimalizace pro Android
+      const isAndroidDevice = isAndroid();
+      const disableAntialiasing = shouldDisableAntialiasing();
+
       const contextAttributes = {
-        antialias: false,
+        antialias: !disableAntialiasing,
         preserveDrawingBuffer: true,
-        powerPreference: 'low-power'
+        powerPreference: isAndroidDevice ? 'low-power' : 'default',
+        failIfMajorPerformanceCaveat: isAndroidDevice
       };
 
       let gl = canvas.getContext('webgl2', contextAttributes);

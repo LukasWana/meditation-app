@@ -75,7 +75,9 @@ float citySDF(vec3 p) {
 // Raymarching
 float raymarch(vec3 ro, vec3 rd) {
     float t = 0.0;
-    float quality = mix(50.0, 150.0, clamp(iAudio.w, 0.0, 1.0));
+    // Quality modulace: audio + device quality (u_quality je 0.3 na mobilních, 1.0 na desktopu)
+    float audioQuality = mix(50.0, 150.0, clamp(iAudio.w, 0.0, 1.0));
+    float quality = audioQuality * (u_quality > 0.0 ? u_quality : 1.0);
 
     for (int i = 0; i < 200; i++) {
         if (float(i) >= quality) break;

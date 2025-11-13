@@ -7,6 +7,7 @@ import { getWebGLContext, releaseWebGLContext, updateContextUsage } from '@utils
 import { getCachedShader, cacheShader, getCachedProgram, cacheProgram } from '@utils/shaderCache';
 import { recordShaderError, recordRecoveryAttempt, recordFallbackUsage } from '@utils/shaderErrorAnalytics';
 import { logDebug, getShaderDebugInfo, isDebugModeEnabled } from '@utils/shaderDebug';
+import { getOptimalDPR } from '@utils/deviceDetection';
 
 /**
  * Komponenta pro statický náhled shaderu
@@ -365,7 +366,7 @@ void main() {
     // Aktualizuj použití kontextu
     updateContextUsage(glContext);
 
-    const dpr = window.devicePixelRatio || 1;
+    const dpr = getOptimalDPR(); // Optimalizovaný DPR (max 1.5x na mobilních zařízeních)
     canvas.width = size * dpr;
     canvas.height = size * dpr;
     canvas.style.width = `${size}px`;
