@@ -7,6 +7,9 @@ import { usePlayback } from '@contexts/ShaderPlaybackContext';
 
 const ShaderSelectionScreen = ({
   onNavigateToScreen,
+  onTouchStart,
+  onTouchMove,
+  onTouchEnd,
   section = 'hudba' // Sekce pro kterou se vybírá shader
 }) => {
   const { t } = useLanguage();
@@ -106,7 +109,12 @@ const ShaderSelectionScreen = ({
 
   return (
     <FramerPageTransition screenKey="shader-selection">
-      <div className="min-h-screen w-full max-w-full bg-[#f4ddc4] flex flex-col items-center justify-start p-2 sm:p-8 pb-20 overflow-x-hidden relative">
+      <div
+        className="min-h-screen w-full max-w-full bg-[#f4ddc4] flex flex-col items-center justify-start p-2 sm:p-8 pb-20 overflow-x-hidden relative"
+        onTouchStart={onTouchStart}
+        onTouchMove={onTouchMove}
+        onTouchEnd={onTouchEnd}
+      >
         <BackButton onClick={() => {
           const targetScreen = getTargetScreen();
           onNavigateToScreen(targetScreen);

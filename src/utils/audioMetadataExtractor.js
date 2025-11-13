@@ -9,7 +9,7 @@
  * @returns {Promise<number>} - Délka v sekundách
  */
 export const getAudioDuration = (audioUrl) => {
-  return new Promise((resolve, reject) => {
+  return new Promise((resolve) => {
     // Kontrola platnosti URL
     if (!audioUrl || typeof audioUrl !== 'string') {
       console.warn('Invalid audio URL:', audioUrl);

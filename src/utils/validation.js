@@ -117,7 +117,7 @@ export const validateFirebaseDocId = (docId) => {
   if (docId !== docId.trim()) return false;
 
   // Nesmí obsahovat některé speciální znaky
-  const forbiddenChars = /[\/\s]/;
+  const forbiddenChars = /[\s/]/;
   if (forbiddenChars.test(docId)) return false;
 
   return true;
@@ -162,8 +162,11 @@ export const validateStoragePath = (path) => {
   if (path.includes('//')) return false;
 
   // Nesmí obsahovat zakázané znaky
-  const forbiddenChars = /[<>:"|?*\x00-\x1f]/;
+  const forbiddenChars = /[<>:"|?*]/;
   if (forbiddenChars.test(path)) return false;
+
+  const containsControlCharacters = [...path].some(char => char < ' '); // charCode < 32
+  if (containsControlCharacters) return false;
 
   return true;
 };

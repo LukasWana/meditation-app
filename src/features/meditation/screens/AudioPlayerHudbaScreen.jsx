@@ -217,48 +217,55 @@ const AudioPlayerHudbaScreen = ({
 
   return (
     <FramerPageTransition screenKey="audio-player-hudba" animation="fade">
-      {/* Vrstvení:
-          - Pozadí (bg-[#f4ddc4]): zIndex 0 (nejnižší)
-          - BackgroundShader: zIndex 5 (nad pozadím, pod přehrávačem)
-          - AudioPlayer: zIndex 10 (nad shaderem)
-      */}
-
-      {/* Pozadí stránky - průhledné, aby shader prosvítal */}
       <div
-        className="min-h-screen w-full max-w-full bg-[#f4ddc4] fixed inset-0"
-        style={{
-          zIndex: 0,
-          opacity: isColorMode ? 1 : 0.3 // Pokud je barva, neprůhledné, jinak průhledné
-        }}
-      />
+        className="relative min-h-screen w-full max-w-full"
+        onTouchStart={onTouchStart}
+        onTouchMove={onTouchMove}
+        onTouchEnd={onTouchEnd}
+      >
+        {/* Vrstvení:
+            - Pozadí (bg-[#f4ddc4]): zIndex 0 (nejnižší)
+            - BackgroundShader: zIndex 5 (nad pozadím, pod přehrávačem)
+            - AudioPlayer: zIndex 10 (nad shaderem)
+        */}
 
-      {/* BackgroundShader - zobraz shader nebo barvu */}
-      <BackgroundShader
-        variant={currentShader}
-        intensity={0.8}
-        enabled={true}
-        opacity={isColorMode ? 1.0 : 1.0} // Vždy zobraz s plnou opacity na stránce s přehrávačem
-        audioData={audioData} // Použij audio data pro audio-reactive shadery
-        forceSquare={currentShader?.startsWith('shader-') ? true : null}
-      />
-
-      {/* Audio Player - zobraz jako fullscreen overlay */}
-      {activeAudio && (
-        <AudioPlayer
-          sectionKey="hudba"
-          audioSrc={activeAudio.audioSrc}
-          title={activeAudio.title}
-          onClose={handleCloseAudio}
-          albumCover={activeAudio.albumCover}
-          albumTracks={activeAudio.albumTracks}
-          currentTrackIndex={activeAudio.currentTrackIndex}
-          onTrackChange={handleTrackChange}
-          autoplayEnabled={true}
-          onNavigateToScreen={onNavigateToScreen}
-          isDarkMode={isDarkMode}
-          backgroundColor={blendedOverlayColor} // Jemná barevná vrstva sjednocující pozadí
+        {/* Pozadí stránky - průhledné, aby shader prosvítal */}
+        <div
+          className="min-h-screen w-full max-w-full bg-[#f4ddc4] fixed inset-0"
+          style={{
+            zIndex: 0,
+            opacity: isColorMode ? 1 : 0.3 // Pokud je barva, neprůhledné, jinak průhledné
+          }}
         />
-      )}
+
+        {/* BackgroundShader - zobraz shader nebo barvu */}
+        <BackgroundShader
+          variant={currentShader}
+          intensity={0.8}
+          enabled={true}
+          opacity={isColorMode ? 1.0 : 1.0} // Vždy zobraz s plnou opacity na stránce s přehrávačem
+          audioData={audioData} // Použij audio data pro audio-reactive shadery
+          forceSquare={currentShader?.startsWith('shader-') ? true : null}
+        />
+
+        {/* Audio Player - zobraz jako fullscreen overlay */}
+        {activeAudio && (
+          <AudioPlayer
+            sectionKey="hudba"
+            audioSrc={activeAudio.audioSrc}
+            title={activeAudio.title}
+            onClose={handleCloseAudio}
+            albumCover={activeAudio.albumCover}
+            albumTracks={activeAudio.albumTracks}
+            currentTrackIndex={activeAudio.currentTrackIndex}
+            onTrackChange={handleTrackChange}
+            autoplayEnabled={true}
+            onNavigateToScreen={onNavigateToScreen}
+            isDarkMode={isDarkMode}
+            backgroundColor={blendedOverlayColor} // Jemná barevná vrstva sjednocující pozadí
+          />
+        )}
+      </div>
     </FramerPageTransition>
   );
 };

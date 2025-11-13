@@ -131,7 +131,8 @@ export const handleShaderError = (errorLog, shaderSource, shaderType = 'fragment
     errors: problematicLines,
     userMessage,
     canRecover,
-    recoveryStrategy: canRecover ? getRecoveryStrategy(parsedErrors) : null
+    recoveryStrategy: canRecover ? getRecoveryStrategy(parsedErrors) : null,
+    shaderType
   };
 };
 
@@ -160,7 +161,7 @@ const getContext = (lines, lineNum, contextSize = 3) => {
  * @param {Array<Object>} problematicLines - Problematické řádky s kontextem
  * @returns {string} Uživatelsky přívětivá zpráva
  */
-const createUserFriendlyMessage = (errors, problematicLines) => {
+const createUserFriendlyMessage = (errors) => {
   if (errors.length === 0) {
     return 'Neznámá chyba kompilace shaderu';
   }

@@ -7,10 +7,6 @@
 const activeContexts = new WeakMap();
 const contextRegistry = new Set();
 
-// Debouncing pro vytváření kontextů
-let contextCreationQueue = [];
-let contextCreationTimer = null;
-const CONTEXT_CREATION_DEBOUNCE = 100; // 100ms debounce
 const MAX_CONTEXTS_PER_SECOND = 4; // Maximálně 4 kontexty za sekundu
 let contextsCreatedThisSecond = 0;
 let lastSecondStart = Date.now();

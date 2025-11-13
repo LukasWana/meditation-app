@@ -7,9 +7,9 @@ import breathProfilesService from '@services/breathProfilesService';
 
 const BreathProfilesScreen = ({
   onNavigateToScreen,
-  onTouchStart,
-  onTouchMove,
-  onTouchEnd,
+  onTouchStart = () => {},
+  onTouchMove = () => {},
+  onTouchEnd = () => {},
   // Aktuální nastavení dýchání pro uložení
   breathInDuration,
   breathOutDuration,

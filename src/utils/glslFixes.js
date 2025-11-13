@@ -305,7 +305,7 @@ export const fixIntToFloatAssignments = (code) => {
   });
 
   // Oprav přiřazení: vec2 var = vec2(0, 1); -> vec2 var = vec2(0.0, 1.0);
-  code = code.replace(/\b(vec2|vec3|vec4)\s+(\w+)\s*=\s*\b(vec2|vec3|vec4)\s*\(([^)]+)\)/g, (fullMatch, type, varName, constructorType, args, offset) => {
+  code = code.replace(/\b(vec2|vec3|vec4)\s+(\w+)\s*=\s*\b(vec2|vec3|vec4)\s*\(([^)]+)\)/g, (fullMatch, type, varName, constructorType, args) => {
     // Převod čísel v argumentech na float
     const convertedArgs = args.split(',').map(arg => {
       const trimmedArg = arg.trim();

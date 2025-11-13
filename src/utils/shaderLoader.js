@@ -5,7 +5,7 @@
 
 // Import pomocných modulů
 import { getHelperFunctions, getHelperDefines } from './glslHelpers';
-import { applyAllFixes, fixForLoops, fixMatrixTypes, fixIntToFloatAssignments, fixDimensionMismatch } from './glslFixes';
+import { applyAllFixes } from './glslFixes';
 import {
   replaceISFVariables,
   replaceISFFunctions,
@@ -269,6 +269,78 @@ function convertMainImageShader(shaderCode, isWebGL2 = false) {
   return `${headerLines.join('\n')}\n${code}\n`;
 }
 
+function injectDeclarationsBeforeMain(code, declarations) {
+  const normalizedDeclarations = (declarations || []).filter(Boolean);
+  if (normalizedDeclarations.length === 0) {
+    return code;
+  }
+
+  if (!code.includes('void main')) {
+    return `${normalizedDeclarations.join('\n')}\n${code}`;
+  }
+
+  const indentedBlock = normalizedDeclarations.map(decl => `  ${decl}`).join('\n');
+  return code.replace(/void\s+main\s*\([^)]*\)\s*\{/, (match) => `${match}\n${indentedBlock}\n`);
+}
+
+function finalizeShader(code) {
+  let processed = sanitizeNumberFormats(code);
+  processed = sanitizeSyntaxErrors(processed);
+  processed = applyAllFixes(processed);
+  processed = addMissingCommonVariables(processed);
+  return processed;
+}
+
+function convertMiniShader(shaderCode, isWebGL2 = false) {
+  let code = sanitizeNumberFormats(shaderCode);
+  code = sanitizeSyntaxErrors(code);
+
+  const needs = detectNeeds(code);
+  const declarations = getVariableDeclarations(code);
+  const defines = getHelperDefines(needs);
+  const helpers = getHelperFunctions(needs);
+
+  code = addMiniShaderConstants(code, Boolean(needs.needsPI2), Boolean(needs.needsF4));
+
+  const wrapped = wrapMiniShader(code, needs, declarations, defines, helpers, isWebGL2);
+
+  return finalizeShader(wrapped);
+}
+
+function convertISFShader(shaderCode, isWebGL2 = false) {
+  let code = sanitizeNumberFormats(shaderCode);
+  code = sanitizeSyntaxErrors(code);
+
+  // Odeber existující #version a precision deklarace – přidáme vlastní hlavičku
+  code = code.replace(/^\s*#version[^\n]*$/gm, '');
+  code = code.replace(/^\s*precision\s+\w+\s+\w+\s*;?\s*$/gm, '');
+
+  code = replaceISFVariables(code);
+
+  const inputParams = [];
+  code = replaceISFFunctions(code, inputParams);
+
+  const { code: codeWithInputs, constantDeclarations } = processISFInputs(code, inputParams);
+  code = codeWithInputs;
+
+  code = fixBoolOperators(code, inputParams);
+  code = addConstants(code);
+
+  if (constantDeclarations.length > 0) {
+    code = injectDeclarationsBeforeMain(code, constantDeclarations);
+  }
+
+  const helperNeeds = detectNeeds(code);
+  const helperDefines = helperNeeds.needsMiniShaderVars ? getHelperDefines(helperNeeds) : '';
+  const helperFunctions = getHelperFunctions(helperNeeds);
+  const cleanedDefines = helperDefines ? helperDefines.trim() : '';
+  const cleanedHelpers = helperFunctions ? helperFunctions.trim() : '';
+
+  const withHeader = addStandardHeader(code, cleanedDefines, cleanedHelpers, isWebGL2);
+
+  return finalizeShader(withHeader);
+}
+
 /**
  * Sanitizuje neplatné formáty čísel v celém kódu shaderu
  * @param {string} code - GLSL kód
@@ -348,8 +420,8 @@ const addMissingCommonVariables = (code) => {
   }
 
   let fixedCode = code;
-  const lines = fixedCode.split('\n');
-  const mainIndex = lines.findIndex(line => line.includes('void main()'));
+  let lines = fixedCode.split('\n');
+  let mainIndex = lines.findIndex(line => line.includes('void main()'));
 
   if (mainIndex === -1) {
     return fixedCode;
@@ -479,7 +551,7 @@ const addMissingCommonVariables = (code) => {
       const allMatches = fixedCode.match(usageRegex);
       if (allMatches && allMatches.length > 0) {
         // Zkontroluj, zda je alespoň jedno použití v nezakomentovaném kódu
-        const lines = fixedCode.split('\n');
+        const codeLines = fixedCode.split('\n');
         let isUsed = false;
 
         // Vytvoř mapu komentářů - zjisti, které části kódu jsou zakomentované
@@ -487,7 +559,7 @@ const addMissingCommonVariables = (code) => {
           let inBlockComment = false;
 
           for (let i = 0; i <= lineIndex; i++) {
-            const line = lines[i];
+            const line = codeLines[i];
             const trimmedLine = line.trim();
 
             // Zkontroluj blokové komentáře
@@ -556,8 +628,8 @@ const addMissingCommonVariables = (code) => {
         };
 
         // Najdi všechna použití proměnné a zkontroluj, zda jsou v nezakomentovaném kódu
-        for (let i = 0; i < lines.length; i++) {
-          const line = lines[i];
+        for (let i = 0; i < codeLines.length; i++) {
+          const line = codeLines[i];
           const trimmedLine = line.trim();
 
           // Přeskoč řádky, které jsou celé zakomentované
@@ -800,7 +872,7 @@ const addMissingCommonVariables = (code) => {
     }
   } else if (mainIndex !== -1) {
     // Pokud PI už existuje, jen přidej běžné proměnné
-    const beforeMain = lines.slice(0, mainIndex).join('\n');
+    let beforeMain = lines.slice(0, mainIndex).join('\n');
     const mainLine = lines[mainIndex];
     const indent = mainLine.match(/^(\s*)/)?.[1] || '';
     const declarations = [];
@@ -864,12 +936,12 @@ const addMissingCommonVariables = (code) => {
       const allMatches = fixedCode.match(usageRegex);
       if (allMatches && allMatches.length > 0) {
         // Zkontroluj, zda je alespoň jedno použití v nezakomentovaném kódu
-        const lines = fixedCode.split('\n');
+        const scannedLines = fixedCode.split('\n');
         let isUsed = false;
         let isInComment = false;
 
-        for (let i = 0; i < lines.length; i++) {
-          const line = lines[i];
+        for (let i = 0; i < scannedLines.length; i++) {
+          const line = scannedLines[i];
           const trimmedLine = line.trim();
 
           // Zkontroluj, zda jsme v blokovém komentáři
@@ -1007,7 +1079,7 @@ export const sanitizeSyntaxErrors = (code) => {
   );
 
   // Oprava 3b: vec4(0.5)) -> vec4(0.5, 0.5, 0.5, 0.5) (ale pouze pokud není následováno operátorem nebo swizzle)
-  fixedCode = fixedCode.replace(/vec\d+\s*\(([^)]+)\)\)(?!\s*[\.\w\+\-\*\/])/g,
+  fixedCode = fixedCode.replace(/vec\d+\s*\(([^)]+)\)\)(?!\s*[.\w+*/-])/g,
     (match, first) => {
       // Pokud je to jediné číslo, použij ho pro všechny komponenty
       if (first.match(/^-?\d+\.?\d*$/)) {
@@ -1055,7 +1127,7 @@ export const sanitizeSyntaxErrors = (code) => {
   // Oprava 8: vec4(0.5)) -> vec4(0.5, 0.5, 0.5, 0.5) (vylepšená verze opravy 3b)
   // Musíme opravit i případy, kde je následováno operátorem (např. vec4(0.5)) + ...)
   // Nejdřív opravíme případy s operátorem
-  fixedCode = fixedCode.replace(/vec4\s*\(([^)]+)\)\)\s*([\+\-\*\/])/g,
+  fixedCode = fixedCode.replace(/vec4\s*\(([^)]+)\)\)\s*([+*/-])/g,
     (match, first, op) => {
       if (first.match(/^-?\d+\.?\d*$/)) {
         return `vec4(${first}, ${first}, ${first}, ${first}) ${op}`;

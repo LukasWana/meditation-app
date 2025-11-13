@@ -203,7 +203,6 @@ export const meditationAnimations = {
     if (!element) return { breatheIn: null, breatheOut: null, play: () => {} };
 
     let currentScale = 1;
-    let isBreathingIn = true;
 
     const breatheIn = () => {
       element.style.transform = `scale(${currentScale})`;

@@ -386,7 +386,7 @@ const fixSyntaxErrorsInCode = (code, error) => {
 
     // Oprava 4: vec4(0.5)) -> vec4(0.5, 0.5, 0.5, 0.5) (pouze pokud je to jediné číslo)
     const before4 = fixedCode;
-    fixedCode = fixedCode.replace(/vec\d+\s*\(([^)]+)\)\)(?!\s*[\.\w\+\-\*\/])/g,
+    fixedCode = fixedCode.replace(/vec\d+\s*\(([^)]+)\)\)(?!\s*[.\w+*/-])/g,
       (match, first) => {
         if (first.match(/^-?\d+\.?\d*$/)) {
           return `vec4(${first}, ${first}, ${first}, ${first})`;
@@ -443,7 +443,6 @@ const fixUndeclaredVariable = (code, error) => {
   }
 
   const lines = code.split('\n');
-  const lineNum = error.line;
 
   // Speciální případy pro rezervovaná slova
   if (error.token === 'sample') {
@@ -748,7 +747,7 @@ const fixTypeMismatch = (code, error) => {
 
     // Oprav vec2(...) + float -> vec2(...) + vec2(float)
     if (line.includes('vec2(') && line.includes('+') && line.match(/\d+\.?\d*/)) {
-      line = line.replace(/(vec2\([^)]+\))\s*\+\s*(\d+\.?\d*)\s*([,;\)])/g,
+      line = line.replace(/(vec2\([^)]+\))\s*\+\s*(\d+\.?\d*)\s*([,;)])/g,
         (match, vecExpr, scalar, suffix) => {
           changed = true;
           return `${vecExpr} + vec2(${scalar})${suffix}`;

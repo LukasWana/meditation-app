@@ -15,7 +15,7 @@ const HudbaScreen = ({
   const [activeAudio, setActiveAudio] = useState(null);
 
   // Použij nový filtrovací systém
-  const { troubleItems: hudbaItems, isLoading, error, userStats } = useFirebaseAudioFilter(gender);
+  const { troubleItems: hudbaItems, error, userStats } = useFirebaseAudioFilter(gender);
 
   const handleItemClick = (item) => {
     if (item.audioSrc) {
