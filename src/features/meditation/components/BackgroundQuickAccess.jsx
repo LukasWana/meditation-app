@@ -6,7 +6,7 @@ import BackgroundSettingsControls from './BackgroundSettingsControls';
 
 const FALLBACK_COLOR = '#f4ddc4';
 
-const BackgroundQuickAccess = ({ section, className = '' }) => {
+const BackgroundQuickAccess = ({ section, className = '', onNavigateToScreen }) => {
   const {
     getShaderForSection,
     getColorForSection,
@@ -63,15 +63,26 @@ const BackgroundQuickAccess = ({ section, className = '' }) => {
     [selectedShader, overlaySettings.intensity, overlaySettings.opacity, colorValue]
   );
 
+  const handleNavigateToSettings = useCallback(() => {
+    if (onNavigateToScreen) {
+      // Ulož aktuální obrazovku do localStorage pro návrat
+      try {
+        const currentScreen = localStorage.getItem('meditation-app-current-screen') || '';
+        localStorage.setItem('meditation-app-previous-screen', currentScreen);
+      } catch (e) {
+        console.error('Failed to save previous screen to localStorage:', e);
+      }
+      onNavigateToScreen('background-settings');
+    }
+  }, [onNavigateToScreen]);
+
   const triggerRenderer = useCallback(
-    ({ toggleOpen, isOpen }) => (
+    () => (
       <motion.button
-        onClick={toggleOpen}
+        onClick={handleNavigateToSettings}
         type="button"
         aria-label="Změnit pozadí"
-        className={`relative w-12 h-12 sm:w-14 sm:h-14 rounded-full border border-gray-200 bg-white shadow-sm flex items-center justify-center transition-shadow duration-200 ${
-          isOpen ? 'shadow-lg ring-2 ring-gray-300' : 'hover:shadow-md'
-        }`}
+        className="relative w-12 h-12 sm:w-14 sm:h-14 rounded-full border border-gray-200 bg-white shadow-sm flex items-center justify-center transition-shadow duration-200 hover:shadow-md"
         whileHover={{ scale: 1.05 }}
         whileTap={{ scale: 0.95 }}
       >
@@ -95,7 +106,7 @@ const BackgroundQuickAccess = ({ section, className = '' }) => {
         </div>
       </motion.button>
     ),
-    [colorValue, renderShaderPreview]
+    [colorValue, renderShaderPreview, handleNavigateToSettings]
   );
 
   return (

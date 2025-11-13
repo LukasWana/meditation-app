@@ -12,7 +12,8 @@ const Layout = ({
   onGenderChange,
   isPlayerActive = false,
   currentScreen = "",
-  className = ""
+  className = "",
+  onNavigateToScreen
 }) => {
   const { language, changeLanguage, t } = useLanguage();
 
@@ -118,6 +119,7 @@ const Layout = ({
             <BackgroundQuickAccess
               section={sectionForBackground}
               className="hidden sm:flex"
+              onNavigateToScreen={onNavigateToScreen}
             />
           )}
 
@@ -140,6 +142,7 @@ const Layout = ({
             <BackgroundQuickAccess
               section={sectionForBackground}
               className="sm:hidden flex"
+              onNavigateToScreen={onNavigateToScreen}
             />
           )}
 

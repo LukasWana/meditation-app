@@ -19,6 +19,7 @@ const BreathProfilesScreen = lazy(() => import('@features/meditation/screens/Bre
 const ShaderSelectionScreen = lazy(() => import('@features/meditation/screens/ShaderSelectionScreen'));
 const AudioPlayerHudbaScreen = lazy(() => import('@features/meditation/screens/AudioPlayerHudbaScreen'));
 const AudioPlayerMeditaceScreen = lazy(() => import('@features/meditation/screens/AudioPlayerMeditaceScreen'));
+const BackgroundSettingsScreen = lazy(() => import('@features/meditation/screens/BackgroundSettingsScreen'));
 
 
 // Registry stránek s jejich konfigurací
@@ -187,6 +188,15 @@ const SCREEN_REGISTRY = {
     component: BreathProfilesScreen,
     requiresLayout: true,
     props: ['onNavigateToScreen', 'onTouchStart', 'onTouchMove', 'onTouchEnd', 'breathInDuration', 'breathOutDuration', 'breathDuration', 'preparationTime', 'breathInSound', 'breathOutSound', 'breathClickSound', 'breathFinalSound', 'breathCountdownSound', 'breathSoundFadeEnabled', 'onBreathRhythmChange', 'onBreathDurationChange', 'onPreparationTimeChange', 'onBreathSoundChange', 'onBreathSoundFadeChange'],
+    transition: {
+      type: 'fade',
+      duration: 0.6
+    }
+  },
+  'background-settings': {
+    component: BackgroundSettingsScreen,
+    requiresLayout: true,
+    props: ['onNavigateToScreen', 'onTouchStart', 'onTouchMove', 'onTouchEnd', 'section'],
     transition: {
       type: 'fade',
       duration: 0.6
@@ -459,8 +469,8 @@ const PageManager = ({
           props.onBreathSoundFadeChange = onBreathSoundFadeChange;
           break;
         case 'section':
-          // Mapování aktuální obrazovky na sekci pro shader
-          if (screenKey === 'shader-selection') {
+          // Mapování aktuální obrazovky na sekci pro shader a background settings
+          if (screenKey === 'shader-selection' || screenKey === 'background-settings') {
             // Urči sekci na základě předchozí obrazovky
             // Pokud jsme přišli z hudba -> section = 'hudba'
             // Pokud jsme přišli z meditace -> section = 'meditace'
@@ -469,7 +479,9 @@ const PageManager = ({
               'hudba': 'hudba',
               'meditace': 'meditace',
               'breath': 'dychani',
-              'dychani': 'dychani'
+              'dychani': 'dychani',
+              'audio-player-hudba': 'hudba',
+              'audio-player-meditace': 'meditace'
             };
             // Zkus získat z localStorage nebo použij currentScreen jako fallback
             const previousScreen = localStorage.getItem('meditation-app-previous-screen') || currentScreen;
@@ -544,6 +556,7 @@ const PageManager = ({
           onVoicePreferenceChange={onVoicePreferenceChange}
           isPlayerActive={isPlayerActive}
           currentScreen={currentScreen}
+          onNavigateToScreen={onNavigateToScreen}
         >
           {screenElement}
         </Layout>
@@ -551,7 +564,7 @@ const PageManager = ({
     }
 
     return screenElement;
-  }, [currentScreen, currentScreenConfig, getScreenProps, getTransitionVariants, gender, onGenderChange, voicePreference, onVoicePreferenceChange, isPlayerActive]);
+  }, [currentScreen, currentScreenConfig, getScreenProps, getTransitionVariants, gender, onGenderChange, voicePreference, onVoicePreferenceChange, isPlayerActive, onNavigateToScreen]);
 
   return (
     <AnimatePresence mode="wait">

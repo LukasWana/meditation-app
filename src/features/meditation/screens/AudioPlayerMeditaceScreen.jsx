@@ -116,14 +116,14 @@ const AudioPlayerMeditaceScreen = ({
   const [showShaderPicker, setShowShaderPicker] = useState(false);
   const [shaderCategory, setShaderCategory] = useState('built-in');
 
-  const handleBackgroundToggle = () => {
-    setShowBackgroundSettings(prev => {
-      if (prev && showShaderPicker) {
-        setShowShaderPicker(false);
-      }
-      return !prev;
-    });
-  };
+  // const handleBackgroundToggle = () => {
+  //   setShowBackgroundSettings(prev => {
+  //     if (prev && showShaderPicker) {
+  //       setShowShaderPicker(false);
+  //     }
+  //     return !prev;
+  //   });
+  // };
 
   const handleOpenShaderSelection = () => {
     setShowShaderPicker(true);
@@ -296,7 +296,7 @@ const AudioPlayerMeditaceScreen = ({
         onNavigateToScreen={onNavigateToScreen}
       />
 
-      <div className="pointer-events-none fixed bottom-8 left-0 right-0 flex justify-center z-50">
+      {/* <div className="pointer-events-none fixed bottom-8 left-0 right-0 flex justify-center z-50">
         <FramerButton
           onClick={handleBackgroundToggle}
           variant="ghost"
@@ -304,7 +304,7 @@ const AudioPlayerMeditaceScreen = ({
         >
           {showBackgroundSettings ? 'Zavřít nastavení pozadí' : 'Změnit pozadí'}
         </FramerButton>
-      </div>
+      </div> */}
 
       <AnimatePresence>
         {showBackgroundSettings && (

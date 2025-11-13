@@ -23,10 +23,13 @@ const DEFAULT_CATEGORIES = [
 const BackgroundSettingsControls = ({
   section,
   defaultColor = '#f4ddc4',
-  buttonLabel = 'Změnit pozadí',
-  closeLabel = 'Zavřít nastavení pozadí',
+  // eslint-disable-next-line no-unused-vars
+  buttonLabel: _buttonLabel = 'Změnit pozadí',
+  // eslint-disable-next-line no-unused-vars
+  closeLabel: _closeLabel = 'Zavřít nastavení pozadí',
   wrapperClassName = 'w-full',
-  buttonClassName = 'rounded-full border border-black/15 bg-white/70 px-6 py-3 text-xs uppercase tracking-[0.25em]',
+  // eslint-disable-next-line no-unused-vars
+  buttonClassName: _buttonClassName = 'rounded-full border border-black/15 bg-white/70 px-6 py-3 text-xs uppercase tracking-[0.25em]',
   panelWrapperClassName = 'mx-auto max-w-xl space-y-5 rounded-3xl border border-black/10 bg-white/80 p-6 shadow-lg backdrop-blur',
   categories = DEFAULT_CATEGORIES,
   triggerRenderer = null
@@ -108,13 +111,14 @@ const BackgroundSettingsControls = ({
           overlaySettings
         })
       ) : (
-        <FramerButton
-          onClick={toggleOpen}
-          variant="ghost"
-          className={buttonClassName}
-        >
-          {isOpen ? closeLabel : buttonLabel}
-        </FramerButton>
+        // <FramerButton
+        //   onClick={toggleOpen}
+        //   variant="ghost"
+        //   className={buttonClassName}
+        // >
+        //   {isOpen ? closeLabel : buttonLabel}
+        // </FramerButton>
+        null
       )}
 
       <AnimatePresence>
