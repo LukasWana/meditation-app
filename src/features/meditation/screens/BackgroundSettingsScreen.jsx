@@ -167,11 +167,16 @@ const BackgroundSettingsScreen = ({
       */}
       {/* Pozadí stránky - barva */}
       <div
-        className="fixed inset-0 min-h-screen max-w-full"
+        className="fixed max-w-full"
         style={{
           zIndex: 0,
           backgroundColor: baseBackgroundColor,
-          transition: 'background-color 0.3s ease'
+          transition: 'background-color 0.3s ease',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: '-20px',
+          height: 'calc(100dvh + 20px)'
         }}
       />
 
@@ -189,9 +194,14 @@ const BackgroundSettingsScreen = ({
       {/* Overlay s blend mode */}
       {!isColorOnly && (
         <div
-          className="fixed inset-0 pointer-events-none"
+          className="fixed pointer-events-none"
           style={{
             zIndex: 3,
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: '-20px',
+            height: 'calc(100dvh + 20px)',
             background: overlayBackground,
             mixBlendMode: overlayBlendMode,
             transition: 'background 0.3s ease, mix-blend-mode 0.3s ease'
