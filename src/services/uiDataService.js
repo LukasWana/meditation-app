@@ -67,60 +67,10 @@ class UIDataService {
 
   /**
    * Vrátí defaultní UI data (fallback)
-   * @returns {Object} Defaultní UI data
+   * @returns {Object} Defaultní UI data - pouze config, texty jsou v LanguageContext
    */
   getDefaultUIData() {
     return {
-      translations: {
-        SK: {
-          hudba: 'hudba',
-          meditace: 'meditácia',
-          dychani: 'dýchanie',
-          nastavenie: 'nastavenie',
-          pomoc: 'pomoc',
-          loading: 'načítam...',
-          galeriaZvukovychTemat: 'galéria zvukových tém',
-          vyberteZvuky: 'Vyberte zvuky',
-          zvolteZvukNadech: 'nádech',
-          zvolteZvukVydech: 'výdech',
-          ziadnyZvuk: 'žiadny zvuk',
-          zobrazitGaleriu: 'zobraziť galériu',
-          dlzkaDychania: 'Dĺžka',
-          pripravaNaDychanie: 'Príprava na dýchanie...'
-        },
-        CZ: {
-          hudba: 'hudba',
-          meditace: 'meditace',
-          dychani: 'dýchání',
-          nastavenie: 'nastavení',
-          pomoc: 'pomoc',
-          loading: 'načítám...',
-          galeriaZvukovychTemat: 'galerie zvukových témat',
-          vyberteZvuky: 'Vyberte zvuky',
-          zvolteZvukNadech: 'nádech',
-          zvolteZvukVydech: 'výdech',
-          ziadnyZvuk: 'žádný zvuk',
-          zobrazitGaleriu: 'zobrazit galerii',
-          dlzkaDychania: 'Délka',
-          pripravaNaDychanie: 'Příprava na dýchání...'
-        },
-        EN: {
-          hudba: 'music',
-          meditace: 'meditation',
-          dychani: 'breathing',
-          nastavenie: 'settings',
-          pomoc: 'help',
-          loading: 'loading...',
-          galeriaZvukovychTemat: 'sound theme gallery',
-          vyberteZvuky: 'Select sounds',
-          zvolteZvukNadech: 'sound for inhale',
-          zvolteZvukVydech: 'sound for exhale',
-          ziadnyZvuk: 'no sound',
-          zobrazitGaleriu: 'show gallery',
-          dlzkaDychania: 'Duration',
-          pripravaNaDychanie: 'Preparing for breathing...'
-        }
-      },
       config: {
         colors: {
           primary: '#f4ddc4',
@@ -129,18 +79,6 @@ class UIDataService {
         },
         layout: {
           defaultLayout: 'grid'
-        }
-      },
-      texts: {
-        emptyState: {
-          SK: 'Žádné soubory nenalezeny',
-          CZ: 'Žádné soubory nenalezeny',
-          EN: 'No files found'
-        },
-        selected: {
-          SK: '✓ Vybráno',
-          CZ: '✓ Vybráno',
-          EN: '✓ Selected'
         }
       },
       version: '1.0.0',
@@ -242,19 +180,6 @@ class UIDataService {
   }
 
   /**
-   * Získá překlady pro konkrétní jazyk
-   * @param {string} language - Jazyk kódu (SK, CZ, EN)
-   * @returns {Object} Překlady pro daný jazyk
-   */
-  getTranslations(language) {
-    if (!this.uiData || !this.uiData.translations) {
-      const defaults = this.getDefaultUIData();
-      return defaults.translations[language] || defaults.translations.SK;
-    }
-    return this.uiData.translations[language] || this.uiData.translations.SK || {};
-  }
-
-  /**
    * Získá UI konfiguraci
    * @returns {Object} UI konfigurace
    */
@@ -264,20 +189,6 @@ class UIDataService {
       return defaults.config;
     }
     return this.uiData.config;
-  }
-
-  /**
-   * Získá texty pro konkrétní jazyk
-   * @param {string} language - Jazyk kódu (SK, CZ, EN)
-   * @returns {Object} Texty pro daný jazyk
-   */
-  getTexts(language) {
-    if (!this.uiData || !this.uiData.texts) {
-      const defaults = this.getDefaultUIData();
-      return defaults.texts[language] || defaults.texts;
-    }
-    const texts = this.uiData.texts;
-    return texts[language] || texts;
   }
 
   /**

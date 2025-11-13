@@ -1,6 +1,5 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import uiDataService from '@services/uiDataService';
-import { useLanguage } from './LanguageContext';
 
 const UIConfigContext = createContext();
 
@@ -13,7 +12,6 @@ export const useUIConfig = () => {
 };
 
 export const UIConfigProvider = ({ children }) => {
-  const { language } = useLanguage();
   const [config, setConfig] = useState({
     colors: {
       primary: '#f4ddc4',
@@ -24,20 +22,8 @@ export const UIConfigProvider = ({ children }) => {
       defaultLayout: 'grid'
     }
   });
-  const [texts, setTexts] = useState({
-    emptyState: {
-      SK: 'Žádné soubory nenalezeny',
-      CZ: 'Žádné soubory nenalezeny',
-      EN: 'No files found'
-    },
-    selected: {
-      SK: '✓ Vybráno',
-      CZ: '✓ Vybráno',
-      EN: '✓ Selected'
-    }
-  });
 
-  // Načti UI konfiguraci a texty z Realtime Database při startu
+  // Načti UI konfiguraci z Realtime Database při startu
   useEffect(() => {
     const loadUIConfig = async () => {
       try {
@@ -50,13 +36,8 @@ export const UIConfigProvider = ({ children }) => {
             setConfig(uiData.config);
           }
 
-          // Aktualizuj texty
-          if (uiData.texts) {
-            setTexts(uiData.texts);
-          }
-
           if (import.meta.env.MODE === 'development') {
-            console.log('✅ UI config and texts loaded from Realtime Database');
+            console.log('✅ UI config loaded from Realtime Database');
           }
         }
 
@@ -66,11 +47,8 @@ export const UIConfigProvider = ({ children }) => {
             if (data.config) {
               setConfig(data.config);
             }
-            if (data.texts) {
-              setTexts(data.texts);
-            }
             if (import.meta.env.MODE === 'development') {
-              console.log('📡 UI config and texts updated from real-time');
+              console.log('📡 UI config updated from real-time');
             }
           }
         });
@@ -90,16 +68,8 @@ export const UIConfigProvider = ({ children }) => {
     loadUIConfig();
   }, []);
 
-  // Získej text podle aktuálního jazyka
-  const getText = (key) => {
-    if (!texts[key]) return '';
-    return texts[key][language] || texts[key].SK || texts[key].CZ || texts[key].EN || '';
-  };
-
   const value = {
     config,
-    texts,
-    getText,
     colors: config.colors,
     layout: config.layout
   };
