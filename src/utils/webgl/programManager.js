@@ -88,6 +88,8 @@ function extractLocations(gl, program) {
       u_audioMid: gl.getUniformLocation(program, 'u_audioMid'),
       u_audioTreble: gl.getUniformLocation(program, 'u_audioTreble'),
       u_audioFrequencies: gl.getUniformLocation(program, 'u_audioFrequencies'),
+      // Quality uniform pro náročné shadery
+      u_quality: gl.getUniformLocation(program, 'u_quality'),
     },
     attribs: {
       a_position: gl.getAttribLocation(program, 'a_position'),

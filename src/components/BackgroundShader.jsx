@@ -881,10 +881,11 @@ void main() {
       }
 
       // Quality uniform pro náročné shadery (raymarching, atd.)
-      // Pouze pro shadery, které mají tento uniform definovaný
-      if (programInfo.uniforms.u_quality !== undefined && programInfo.uniforms.u_quality !== null) {
+      // Nastav hodnotu podle zařízení (0.3 na mobilních, 1.0 na desktopu)
+      const qualityLocation = programInfo.uniforms.u_quality || gl.getUniformLocation(programInfo.program, 'u_quality');
+      if (qualityLocation !== null) {
         const quality = getShaderQuality(); // 0.3 na mobilních zařízeních, 1.0 na desktopu
-        gl.uniform1f(programInfo.uniforms.u_quality, quality);
+        gl.uniform1f(qualityLocation, quality);
       }
 
       // Nastav pozice - vytvoř buffer jednou
@@ -1035,9 +1036,11 @@ void main() {
               gl.uniform1f(programInfo.uniforms.u_breathProgress, breathProgressValue);
             }
 
-            if (programInfo.uniforms.u_quality !== undefined && programInfo.uniforms.u_quality !== null) {
+            // Quality uniform pro náročné shadery
+            const qualityLocation = programInfo.uniforms.u_quality || gl.getUniformLocation(programInfo.program, 'u_quality');
+            if (qualityLocation !== null) {
               const quality = getShaderQuality();
-              gl.uniform1f(programInfo.uniforms.u_quality, quality);
+              gl.uniform1f(qualityLocation, quality);
             }
 
             if (!gl.positionBuffer) {
