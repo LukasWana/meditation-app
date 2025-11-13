@@ -236,16 +236,16 @@ export function cleanupInactiveContexts(maxAge = 2 * 1000) {
     const timeSinceCreated = now - contextInfo.createdAt;
 
     // Priorita 3-5: Uvolni kontext pouze pokud:
-    // 3. Nebyl použit déle než 1 sekundu (okamžité uvolnění neaktivních)
+    // 3. Nebyl použit déle než 5 sekund (zvýšeno z 1 sekundy pro stabilitu)
     // 4. Je starší než maxAge A nebyl použit dlouho
-    // 5. Je velmi starý (více než 10 sekund) bez ohledu na lastUsed
-    if (age > 1 * 1000 && timeSinceCreated > 1 * 1000) {
-      // Okamžité uvolnění neaktivních kontextů (starší než 1 sekunda)
+    // 5. Je velmi starý (více než 30 sekund) bez ohledu na lastUsed
+    if (age > 5 * 1000 && timeSinceCreated > 5 * 1000) {
+      // Uvolnění neaktivních kontextů (starší než 5 sekund)
       contextsToRemove.push({ context: glContext, priority: 3, age });
     } else if (age > maxAge && timeSinceCreated > maxAge * 2) {
       contextsToRemove.push({ context: glContext, priority: 4, age });
-    } else if (timeSinceCreated > 10 * 1000 && age > maxAge) {
-      // Velmi starý kontext, který nebyl dlouho používán
+    } else if (timeSinceCreated > 30 * 1000 && age > maxAge) {
+      // Velmi starý kontext, který nebyl dlouho používán (zvýšeno z 10 na 30 sekund)
       contextsToRemove.push({ context: glContext, priority: 5, age });
     }
   });
@@ -377,11 +377,11 @@ export function getActiveContextsCount() {
   return contextRegistry.size;
 }
 
-// Automatický cleanup každou sekundu (proaktivní správa kontextů)
-        // Zrychleno pro lepší správu kontextů
-        if (typeof window !== 'undefined') {
-          setInterval(() => {
-            cleanupInactiveContexts(2 * 1000); // Vyčisti kontexty starší než 2 sekundy
-          }, 250); // Zrychleno na 250ms pro ještě agresivnější cleanup
-        }
+// Automatický cleanup každé 2 sekundy (proaktivní správa kontextů)
+// Zpomaleno z 250ms na 2 sekundy pro stabilitu - cleanup je příliš agresivní
+if (typeof window !== 'undefined') {
+  setInterval(() => {
+    cleanupInactiveContexts(5 * 1000); // Vyčisti kontexty starší než 5 sekund (zvýšeno z 2 sekund)
+  }, 2 * 1000); // Zpomaleno z 250ms na 2 sekundy
+}
 

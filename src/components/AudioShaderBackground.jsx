@@ -1,5 +1,5 @@
 import React, { useRef, useEffect, useState } from 'react';
-import { getWebGLContext } from '@utils/webgl/contextManager';
+import { getWebGLContext, updateContextUsage } from '@utils/webgl/contextManager';
 import { getOptimalDPR } from '@utils/deviceDetection';
 
 /**
@@ -248,6 +248,9 @@ const AudioShaderBackground = ({
       }
 
       timeRef.current = currentTime * 0.001; // Převod na sekundy
+
+      // Aktualizuj lastUsed pro context manager (prevence agresivního cleanupu)
+      updateContextUsage(gl);
 
       // Nastav uniformy
       gl.useProgram(shaderProgram);

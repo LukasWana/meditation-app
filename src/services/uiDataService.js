@@ -85,7 +85,7 @@ class UIDataService {
           zvolteZvukVydech: 'výdech',
           ziadnyZvuk: 'žiadny zvuk',
           zobrazitGaleriu: 'zobraziť galériu',
-          dlzkaDychania: 'Dĺžka dýchania (minúty)',
+          dlzkaDychania: 'Dĺžka',
           pripravaNaDychanie: 'Príprava na dýchanie...'
         },
         CZ: {
@@ -101,7 +101,7 @@ class UIDataService {
           zvolteZvukVydech: 'výdech',
           ziadnyZvuk: 'žádný zvuk',
           zobrazitGaleriu: 'zobrazit galerii',
-          dlzkaDychania: 'Délka dýchání (minuty)',
+          dlzkaDychania: 'Délka',
           pripravaNaDychanie: 'Příprava na dýchání...'
         },
         EN: {
@@ -117,7 +117,7 @@ class UIDataService {
           zvolteZvukVydech: 'sound for exhale',
           ziadnyZvuk: 'no sound',
           zobrazitGaleriu: 'show gallery',
-          dlzkaDychania: 'Breathing duration (minutes)',
+          dlzkaDychania: 'Duration',
           pripravaNaDychanie: 'Preparing for breathing...'
         }
       },

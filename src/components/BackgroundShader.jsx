@@ -1,7 +1,7 @@
 import React, { useRef, useEffect, useState, useMemo, useContext } from 'react';
 import { loadShader, convertShaderToWebGL } from '@utils/shaderLoader';
 import { createProgramManager } from '@utils/webgl/programManager';
-import { getWebGLContext } from '@utils/webgl/contextManager';
+import { getWebGLContext, updateContextUsage } from '@utils/webgl/contextManager';
 import { getOptimalDPR, getOptimalFPS, getShaderQuality } from '@utils/deviceDetection';
 import { PlaybackContext } from '@contexts/ShaderPlaybackContext';
 
@@ -820,6 +820,9 @@ void main() {
       }
       lastFrameTimeRef.current = currentTime;
 
+      // Aktualizuj lastUsed pro context manager (prevence agresivního cleanupu)
+      updateContextUsage(gl);
+
       timeRef.current = currentTime * 0.001;
 
       gl.useProgram(programInfo.program);
@@ -954,7 +957,7 @@ void main() {
   // Page Visibility API - pause rendering když je stránka skrytá
   // Pouze pause/resume pomocí ref, render loop se restartuje v hlavním useEffect
   const isPausedRef = useRef(false);
-  
+
   useEffect(() => {
     if (!gl || !programInfo || isColorMode || opacity <= 0) {
       return;

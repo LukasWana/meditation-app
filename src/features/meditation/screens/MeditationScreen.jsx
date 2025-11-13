@@ -215,7 +215,6 @@ const DychaniScreen = ({
       ? (isPlaying ? 0.45 : 0.55)
       : 0.6;
   const overlayBackground = hexToRgba(baseBackgroundColor, overlayAlpha);
-  const formattedTotalTime = totalTime > 0 ? formatTime(totalTime) : '00:00';
 
   // Získej barvu pro pozadí (pokud je shader barva, použij ji, jinak použij baseBackgroundColor)
   const backgroundColorForText = useMemo(() => {
@@ -435,14 +434,6 @@ const DychaniScreen = ({
             <h1 className={`text-5xl font-light tracking-wide ${textColors.heading} sm:text-6xl`}>
               {t('dychani')}
             </h1>
-            <div className="mt-5 flex flex-col items-center space-y-1">
-              <span className={`text-xs uppercase tracking-[0.3em] ${textColors.muted}`}>
-                {t('dlzkaDychania')}
-              </span>
-              <span className={`text-4xl font-light ${textColors.secondary} sm:text-5xl`}>
-                {formattedTotalTime}
-              </span>
-            </div>
           </FramerSection>
 
           <FramerSection
@@ -452,12 +443,6 @@ const DychaniScreen = ({
           >
             {/* Title a Duration nad CircularProgress */}
             <div className="mb-6 z-10 w-full flex flex-col items-center space-y-0">
-              {/* Duration - Total Time */}
-              {totalTime > 0 && (
-                <div className={`${textColors.secondary} text-center mb-2 text-lg`}>
-                  {formatTime(totalTime)}
-                </div>
-              )}
               {/* Textový indikátor fáze dýchání */}
               {isPlaying && (
                 <motion.p
