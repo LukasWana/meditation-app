@@ -6,7 +6,7 @@ import CircularProgress from '@features/audio/components/CircularProgress';
 import PlayPauseButton from '@features/audio/components/PlayPauseButton';
 import { useLanguage } from '@contexts/LanguageContext';
 import { useShaderSettings } from '@contexts/ShaderSettingsContext';
-import { useBreathSounds } from '@hooks';
+import { useBreathSounds, useAdaptiveTextColors } from '@hooks';
 import BackgroundSettingsControls from '@features/meditation/components/BackgroundSettingsControls';
 
 // Lazy loading modálů pro lepší performance
@@ -217,6 +217,17 @@ const DychaniScreen = ({
   const overlayBackground = hexToRgba(baseBackgroundColor, overlayAlpha);
   const formattedTotalTime = totalTime > 0 ? formatTime(totalTime) : '00:00';
 
+  // Získej barvu pro pozadí (pokud je shader barva, použij ji, jinak použij baseBackgroundColor)
+  const backgroundColorForText = useMemo(() => {
+    if (breathShader?.startsWith('__COLOR__')) {
+      return breathShader.replace('__COLOR__', '');
+    }
+    return baseBackgroundColor;
+  }, [breathShader, baseBackgroundColor]);
+
+  // Použij adaptivní barvy textů
+  const textColors = useAdaptiveTextColors(backgroundColorForText, breathShader);
+
   // Debug logování
   useEffect(() => {
     if (isPlaying) {
@@ -281,14 +292,14 @@ const DychaniScreen = ({
               delay={0.1}
             >
               <div style={{ height: '3.5rem', display: 'flex', flexDirection: 'column', justifyContent: 'flex-start', alignItems: 'center', marginBottom: '0.5rem' }}>
-                <h1 className="text-4xl font-light" style={{ minHeight: '2.5rem', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <h1 className={`text-4xl font-light ${textColors.heading}`} style={{ minHeight: '2.5rem', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                   {t('priprava')}
                 </h1>
               </div>
               <div className="flex justify-center gap-2 mt-4 mb-4">
-                <div className="w-2 h-2 bg-black rounded-full"></div>
-                <div className="w-2 h-2 bg-black rounded-full"></div>
-                <div className="w-2 h-2 bg-black rounded-full"></div>
+                <div className={`w-2 h-2 ${textColors.isDark ? 'bg-white' : 'bg-black'} rounded-full`}></div>
+                <div className={`w-2 h-2 ${textColors.isDark ? 'bg-white' : 'bg-black'} rounded-full`}></div>
+                <div className={`w-2 h-2 ${textColors.isDark ? 'bg-white' : 'bg-black'} rounded-full`}></div>
               </div>
             </FramerSection>
 
@@ -309,7 +320,7 @@ const DychaniScreen = ({
                 <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
                   <motion.div
                     key={preparationCountdown}
-                    className="text-6xl font-light text-black"
+                    className={`text-6xl font-light ${textColors.primary}`}
                     initial={{ opacity: 0, scale: 0.8 }}
                     animate={{ opacity: 1, scale: 1 }}
                     exit={{ opacity: 0, scale: 0.8 }}
@@ -322,7 +333,7 @@ const DychaniScreen = ({
 
               {/* Text pod odpočítáváním */}
               <div className="mt-6 text-center">
-                <div className="text-black font-medium text-xl">
+                <div className={`${textColors.primary} font-medium text-xl`}>
                   {t('pripravaNaDychanie')}
                 </div>
               </div>
@@ -401,14 +412,14 @@ const DychaniScreen = ({
             animationType="fadeIn"
             delay={0.1}
           >
-            <h1 className="text-5xl font-light tracking-wide text-gray-900 sm:text-6xl">
+            <h1 className={`text-5xl font-light tracking-wide ${textColors.heading} sm:text-6xl`}>
               {t('dychani')}
             </h1>
             <div className="mt-5 flex flex-col items-center space-y-1">
-              <span className="text-xs uppercase tracking-[0.3em] text-gray-500">
+              <span className={`text-xs uppercase tracking-[0.3em] ${textColors.muted}`}>
                 {t('dlzkaDychania')}
               </span>
-              <span className="text-4xl font-light text-gray-800 sm:text-5xl">
+              <span className={`text-4xl font-light ${textColors.secondary} sm:text-5xl`}>
                 {formattedTotalTime}
               </span>
             </div>
@@ -423,7 +434,7 @@ const DychaniScreen = ({
             <div className="mb-6 z-10 w-full flex flex-col items-center space-y-0">
               {/* Duration - Total Time */}
               {totalTime > 0 && (
-                <div className="text-gray-600 text-center mb-2 text-lg">
+                <div className={`${textColors.secondary} text-center mb-2 text-lg`}>
                   {formatTime(totalTime)}
                 </div>
               )}
@@ -431,7 +442,7 @@ const DychaniScreen = ({
               {isPlaying && (
                 <motion.p
                   key={breathPhase}
-                  className="text-2xl font-light text-gray-600"
+                  className={`text-2xl font-light ${textColors.secondary}`}
                   initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: -10 }}
@@ -555,7 +566,7 @@ const DychaniScreen = ({
 
             {/* Current Time Display - pod CircularProgress */}
             <div className="mt-6 text-center">
-              <div className="text-black font-medium text-2xl">
+              <div className={`${textColors.primary} font-medium text-2xl`}>
                 {formatTime(time)}
               </div>
             </div>
@@ -571,11 +582,11 @@ const DychaniScreen = ({
                 <div className="flex flex-col items-center">
                   <button
                     onClick={() => setShowPreparationPicker(true)}
-                    className="text-4xl md:text-5xl font-sans font-medium text-gray-800 hover:text-black transition-colors cursor-pointer mb-1"
+                    className={`text-4xl md:text-5xl font-sans font-medium ${textColors.secondary} ${textColors.isDark ? 'hover:text-white' : 'hover:text-black'} transition-colors cursor-pointer mb-1`}
                   >
                     {formatPreparationTime(preparationTime)}
                   </button>
-                  <span className="text-base md:text-lg font-serif text-gray-800 font-light">
+                  <span className={`text-base md:text-lg font-serif ${textColors.secondary} font-light`}>
                     {t('priprava') || 'příprava'}
                   </span>
                 </div>
@@ -583,11 +594,11 @@ const DychaniScreen = ({
                 <div className="flex flex-col items-center">
                   <button
                     onClick={() => setShowDurationPicker(true)}
-                    className="text-4xl md:text-5xl font-sans font-medium text-gray-800 hover:text-black transition-colors cursor-pointer mb-1"
+                    className={`text-4xl md:text-5xl font-sans font-medium ${textColors.secondary} ${textColors.isDark ? 'hover:text-white' : 'hover:text-black'} transition-colors cursor-pointer mb-1`}
                   >
                     {selectedDuration}
                   </button>
-                  <span className="text-base md:text-lg font-serif text-gray-800 font-light">
+                  <span className={`text-base md:text-lg font-serif ${textColors.secondary} font-light`}>
                     {t('dlzkaDychania') || 'délka'}
                   </span>
                 </div>
@@ -595,11 +606,11 @@ const DychaniScreen = ({
                 <div className="flex flex-col items-center">
                   <button
                     onClick={() => setShowRhythmPicker(true)}
-                    className="text-4xl md:text-5xl font-sans font-medium text-gray-800 hover:text-black transition-colors cursor-pointer mb-1"
+                    className={`text-4xl md:text-5xl font-sans font-medium ${textColors.secondary} ${textColors.isDark ? 'hover:text-white' : 'hover:text-black'} transition-colors cursor-pointer mb-1`}
                   >
                     {breathInDuration} : {breathOutDuration}
                   </button>
-                  <span className="text-base md:text-lg font-serif text-gray-800 font-light">
+                  <span className={`text-base md:text-lg font-serif ${textColors.secondary} font-light`}>
                     {t('rytmus') || 'rytmus'}
                   </span>
                 </div>

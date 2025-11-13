@@ -3,6 +3,7 @@ import { FramerButton } from '@components';
 import { useShaderSettings } from '@contexts/ShaderSettingsContext';
 import { usePlayback } from '@contexts/ShaderPlaybackContext';
 import { AnimatePresence, motion } from 'framer-motion';
+import { useAdaptiveTextColors } from '@hooks';
 
 const ShaderGallery = lazy(() => import('@components/ShaderGallery'));
 
@@ -61,6 +62,17 @@ const BackgroundSettingsControls = ({
   );
 
   const colorValue = colorOverride || defaultColor;
+
+  // Získej barvu pro pozadí (pokud je shader barva, použij ji, jinak použij colorValue)
+  const baseBackgroundColor = useMemo(() => {
+    if (selectedShader?.startsWith('__COLOR__')) {
+      return selectedShader.replace('__COLOR__', '');
+    }
+    return colorValue;
+  }, [selectedShader, colorValue]);
+
+  // Použij adaptivní barvy textů
+  const textColors = useAdaptiveTextColors(baseBackgroundColor, selectedShader);
 
   const toggleOpen = () => {
     setIsOpen(prev => {
@@ -130,9 +142,9 @@ const BackgroundSettingsControls = ({
             transition={{ duration: 0.3 }}
             className="w-full"
           >
-            <div className={panelWrapperClassName}>
+            <div className={`${panelWrapperClassName} border ${textColors.border} ${textColors.bgCard}`}>
               <div className="flex flex-wrap items-center gap-3">
-                <span className="text-sm font-medium text-gray-700">Barva</span>
+                <span className={`text-sm font-medium ${textColors.label}`}>Barva</span>
                 <input
                   type="color"
                   value={colorValue}
@@ -143,28 +155,28 @@ const BackgroundSettingsControls = ({
                 <FramerButton
                   onClick={() => clearColorForSection(section)}
                   variant="ghost"
-                  className="rounded-full border border-black/10 bg-white px-3 py-1.5 text-xs uppercase tracking-[0.2em]"
+                  className={`rounded-full border ${textColors.border} ${textColors.bgCard} px-3 py-1.5 text-xs uppercase tracking-[0.2em] ${textColors.primary}`}
                 >
                   Reset
                 </FramerButton>
               </div>
 
               <div className="flex flex-wrap items-center gap-3">
-                <span className="text-sm font-medium text-gray-700">Shader</span>
+                <span className={`text-sm font-medium ${textColors.label}`}>Shader</span>
                 <FramerButton
                   onClick={() => setIsGalleryVisible(prev => !prev)}
                   variant="ghost"
-                  className="rounded-full border border-black/10 bg-white px-4 py-2 text-xs uppercase tracking-[0.2em]"
+                  className={`rounded-full border ${textColors.border} ${textColors.bgCard} px-4 py-2 text-xs uppercase tracking-[0.2em] ${textColors.primary}`}
                 >
                   {isGalleryVisible ? 'Skrýt shadery' : 'Vybrat shader'}
                 </FramerButton>
-                <span className="text-xs uppercase tracking-[0.3em] text-gray-500">
+                <span className={`text-xs uppercase tracking-[0.3em] ${textColors.muted}`}>
                   {selectedShader}
                 </span>
               </div>
 
               <div>
-                <label className="flex items-center justify-between text-xs uppercase tracking-[0.3em] text-gray-500">
+                <label className={`flex items-center justify-between text-xs uppercase tracking-[0.3em] ${textColors.muted}`}>
                   <span>Průhlednost shaderu</span>
                   <span>{shaderOpacityPercent}%</span>
                 </label>
@@ -175,12 +187,12 @@ const BackgroundSettingsControls = ({
                   step={5}
                   value={shaderOpacityPercent}
                   onChange={handleShaderOpacityChange}
-                  className="mt-2 w-full accent-black"
+                  className={`mt-2 w-full ${textColors.isDark ? 'accent-white' : 'accent-black'}`}
                 />
               </div>
 
               <div>
-                <label className="flex items-center justify-between text-xs uppercase tracking-[0.3em] text-gray-500">
+                <label className={`flex items-center justify-between text-xs uppercase tracking-[0.3em] ${textColors.muted}`}>
                   <span>Intenzita shaderu</span>
                   <span>{shaderIntensityPercent}%</span>
                 </label>
@@ -191,21 +203,32 @@ const BackgroundSettingsControls = ({
                   step={5}
                   value={shaderIntensityPercent}
                   onChange={handleShaderIntensityChange}
-                  className="mt-2 w-full accent-black"
+                  className={`mt-2 w-full ${textColors.isDark ? 'accent-white' : 'accent-black'}`}
                 />
               </div>
 
               <div>
-                <label className="mb-2 block text-xs uppercase tracking-[0.3em] text-gray-500">
+                <label className={`mb-2 block text-xs uppercase tracking-[0.3em] ${textColors.muted}`}>
                   Efekt
                 </label>
                 <select
                   value={blendMode}
                   onChange={handleBlendModeChange}
-                  className="w-full rounded-2xl border border-black/10 bg-white/80 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-black/10"
+                  className={`w-full rounded-2xl border ${textColors.border} ${textColors.bgCard} px-3 py-2 text-sm focus:outline-none focus:ring-2 ${textColors.isDark ? 'focus:ring-white/20' : 'focus:ring-black/10'} ${textColors.primary}`}
+                  style={{
+                    color: textColors.isDark ? '#ffffff' : '#000000',
+                    backgroundColor: textColors.isDark ? 'rgba(255, 255, 255, 0.1)' : 'rgba(255, 255, 255, 0.8)'
+                  }}
                 >
                   {BLEND_MODE_OPTIONS.map(option => (
-                    <option key={option.value} value={option.value}>
+                    <option
+                      key={option.value}
+                      value={option.value}
+                      style={{
+                        color: textColors.isDark ? '#ffffff' : '#000000',
+                        backgroundColor: textColors.isDark ? '#1a1a1a' : '#ffffff'
+                      }}
+                    >
                       {option.label}
                     </option>
                   ))}
@@ -219,7 +242,7 @@ const BackgroundSettingsControls = ({
                     animate={{ opacity: 1, height: 'auto' }}
                     exit={{ opacity: 0, height: 0 }}
                     transition={{ duration: 0.25 }}
-                    className="overflow-hidden rounded-2xl border border-black/10 bg-white/70 p-4"
+                    className={`overflow-hidden rounded-2xl border ${textColors.border} ${textColors.bgCard} p-4`}
                   >
                     <div className="mb-3 flex gap-2">
                       {categories.map(({ key, label }) => (

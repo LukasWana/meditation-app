@@ -6,6 +6,7 @@ import { useLanguage } from '@contexts/LanguageContext';
 import { useShaderSettings } from '@contexts/ShaderSettingsContext';
 import { usePlayback } from '@contexts/ShaderPlaybackContext';
 import { BackgroundSettingsControls } from '../components';
+import { useAdaptiveTextColors } from '@hooks';
 
 const BLEND_MODE_TO_CSS = {
   normal: 'normal',
@@ -99,6 +100,17 @@ const HudbaScreen = ({
   const baseBackgroundColor = colorOverride || '#f4ddc4';
   const overlayAlpha = blendMode === 'normal' ? 0.55 : 0.6;
   const overlayBackground = hexToRgba(baseBackgroundColor, overlayAlpha);
+
+  // Získej barvu pro pozadí (pokud je shader barva, použij ji, jinak použij baseBackgroundColor)
+  const backgroundColorForText = useMemo(() => {
+    if (currentShader?.startsWith('__COLOR__')) {
+      return currentShader.replace('__COLOR__', '');
+    }
+    return baseBackgroundColor;
+  }, [currentShader, baseBackgroundColor]);
+
+  // Použij adaptivní barvy textů
+  const textColors = useAdaptiveTextColors(backgroundColorForText, currentShader);
   const handleItemClick = (item) => {
     // Ulož data o vybrané skladbě do localStorage pro přehrávač
     let audioData = null;
@@ -190,7 +202,7 @@ const HudbaScreen = ({
           <BackButton onClick={() => onNavigateToScreen('home')} />
           <div className="text-center">
             <p className="text-xl text-red-600 mb-4">Chyba při načítání</p>
-            <p className="text-gray-700">{error}</p>
+            <p className={textColors.secondary}>{error}</p>
           </div>
         </div>
       </FramerPageTransition>
@@ -250,7 +262,7 @@ const HudbaScreen = ({
             delay={0.1}
           >
             <div style={{ height: '3.5rem', display: 'flex', flexDirection: 'column', justifyContent: 'flex-start', alignItems: 'center', marginBottom: '0.5rem' }}>
-              <h1 className="text-4xl font-light" style={{ minHeight: '2.5rem', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <h1 className={`text-4xl font-light ${textColors.heading}`} style={{ minHeight: '2.5rem', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                 {t('hudba')}
               </h1>
             </div>

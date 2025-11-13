@@ -25,4 +25,5 @@ export { useBreathSounds } from './useBreathSounds';
 export { useRealtimeMeditaceFilter } from './useRealtimeMeditaceFilter';
 export { useFirebaseDychaniScanner } from './useFirebaseDychaniScanner';
 export { useFirebaseDychaniFilter } from './useFirebaseDychaniFilter';
+export { useAdaptiveTextColors } from './useAdaptiveTextColors';
 // useOptimizedPreloader removed - using useBackgroundDataLoader instead
