@@ -107,20 +107,17 @@ export const pageTransitionVariants = {
   slide: {
     initial: {
       opacity: 0,
-      y: 30,
-      scale: 0.98,
     },
     in: {
       opacity: 1,
-      y: 0,
-      scale: 1,
     },
     out: {
       opacity: 0,
-      y: -30,
-      scale: 0.98,
     },
-    transition: spring.pageTransition,
+    transition: {
+      duration: durations.pageTransition,
+      ease: easings.easeOut,
+    },
   },
 
   fade: {
@@ -142,59 +139,51 @@ export const pageTransitionVariants = {
   scale: {
     initial: {
       opacity: 0,
-      scale: 0.92,
     },
     in: {
       opacity: 1,
-      scale: 1,
     },
     out: {
       opacity: 0,
-      scale: 1.04,
     },
     transition: {
-      duration: durations.pageTransitionScale,
+      duration: durations.pageTransition,
       ease: easings.easeOut,
     },
   },
 };
 
 // Varianty pro section animace (FramerSection)
+// Všechny animace jsou pouze fadeIn/fadeOut bez pohybu
 export const sectionVariants = {
   fadeIn: {
-    initial: { opacity: 0, y: 30 },
-    animate: { opacity: 1, y: 0 },
-    exit: { opacity: 0, y: -30 },
+    initial: { opacity: 0 },
+    animate: { opacity: 1 },
+    exit: { opacity: 0 },
   },
 
   slideInLeft: {
-    initial: { opacity: 0, x: -100 },
-    animate: { opacity: 1, x: 0 },
-    exit: { opacity: 0, x: -100 },
+    initial: { opacity: 0 },
+    animate: { opacity: 1 },
+    exit: { opacity: 0 },
   },
 
   slideInUp: {
-    initial: { opacity: 0, y: 100 },
-    animate: { opacity: 1, y: 0 },
-    exit: { opacity: 0, y: 100 },
+    initial: { opacity: 0 },
+    animate: { opacity: 1 },
+    exit: { opacity: 0 },
   },
 
   scaleIn: {
-    initial: { opacity: 0, scale: 0.8 },
-    animate: { opacity: 1, scale: 1 },
-    exit: { opacity: 0, scale: 0.8 },
+    initial: { opacity: 0 },
+    animate: { opacity: 1 },
+    exit: { opacity: 0 },
   },
 
   slideInTop: {
-    initial: { opacity: 0, y: -250, scale: 0.7, rotateX: -20 },
-    animate: {
-      opacity: 1,
-      y: 0,
-      scale: 1,
-      rotateX: 0,
-      transition: spring.slideInTop,
-    },
-    exit: { opacity: 0, y: -250, scale: 0.7, rotateX: -20 },
+    initial: { opacity: 0 },
+    animate: { opacity: 1 },
+    exit: { opacity: 0 },
   },
 };
 
@@ -209,20 +198,20 @@ export const sectionTransitions = {
   slideInTop: spring.slideInTop,
 };
 
-// Button animace
+// Button animace - bez pohybu, jen opacity
 export const buttonAnimations = {
   hover: {
-    scale: 0.95,
+    opacity: 0.9,
     transition: spring.buttonHover,
   },
 
   tap: {
-    scale: 0.9,
+    opacity: 0.8,
     transition: spring.buttonTap,
   },
 
   animate: {
-    scale: 1,
+    opacity: 1,
     transition: spring.buttonAnimate,
   },
 
@@ -230,17 +219,15 @@ export const buttonAnimations = {
   cssTransition: 'transition-colors duration-200 ease-out',
 };
 
-// Section hover/tap animace
+// Section hover/tap animace - bez pohybu, jen opacity
 export const sectionInteractions = {
   hover: {
-    scale: 1.03,
-    y: -5,
+    opacity: 0.9,
     transition: spring.sectionHover,
   },
 
   tap: {
-    scale: 0.97,
-    y: 2,
+    opacity: 0.8,
     transition: spring.sectionTap,
   },
 };
@@ -258,9 +245,9 @@ export const audioPlayerAnimations = {
   },
 
   container: {
-    initial: { scale: 0.95, opacity: 0 },
-    animate: { scale: 1, opacity: 1 },
-    exit: { scale: 0.95, opacity: 0 },
+    initial: { opacity: 0 },
+    animate: { opacity: 1 },
+    exit: { opacity: 0 },
     transition: {
       duration: durations.medium,
       ease: 'easeOut',
@@ -269,14 +256,12 @@ export const audioPlayerAnimations = {
   },
 };
 
-// Text animace
+// Text animace - bez pohybu, jen opacity
 export const textAnimations = {
   default: {
-    initial: { opacity: 0, y: 20, scale: 0.95 },
+    initial: { opacity: 0 },
     animate: {
       opacity: 1,
-      y: 0,
-      scale: 1,
       transition: {
         delay: 0.3, // Text se zobrazí po sekci
         duration: durations.slower,

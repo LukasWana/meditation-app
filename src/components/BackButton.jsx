@@ -13,9 +13,9 @@ const BackButton = ({ onClick, className = '' }) => {
     <motion.div
       className={`absolute top-6 left-6 ${className}`}
       style={{ zIndex: theme.zIndex.fixed }}
-      initial={{ opacity: 0, x: -20 }}
-      animate={{ opacity: 1, x: 0 }}
-      transition={{ duration: config.durations.medium, delay: 0.2, ease: config.easings.easeOut }}
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      transition={{ duration: config.durations.medium, ease: config.easings.easeOut }}
     >
       <FramerButton
         onClick={onClick}

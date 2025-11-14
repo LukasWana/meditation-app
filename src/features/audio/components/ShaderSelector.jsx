@@ -180,8 +180,8 @@ const ShaderSelector = ({
         onMouseLeave={(e) => {
           e.currentTarget.style.boxShadow = theme.shadows.sm;
         }}
-        whileHover={{ scale: 1.05 }}
-        whileTap={{ scale: 0.95 }}
+        whileHover={{ opacity: 0.9 }}
+        whileTap={{ opacity: 0.8 }}
       >
         <div className="absolute inset-1 sm:inset-1.5 rounded-full overflow-hidden pointer-events-none">
           <div
@@ -211,9 +211,9 @@ const ShaderSelector = ({
       <AnimatePresence>
         {isOpen && (
           <motion.div
-            initial={{ opacity: 0, y: -10, scale: 0.95 }}
-            animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, y: -10, scale: 0.95 }}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
             transition={{ duration: 0.2 }}
             className="absolute top-full mt-2 w-56 max-h-64 overflow-y-auto backdrop-blur-md rounded-lg border"
             style={{
@@ -261,8 +261,8 @@ const ShaderSelector = ({
                             e.currentTarget.style.backgroundColor = 'transparent';
                           }
                         }}
-                        whileHover={{ scale: 1.02, x: 2 }}
-                        whileTap={{ scale: 0.98 }}
+                        whileHover={{ opacity: 0.9 }}
+                        whileTap={{ opacity: 0.8 }}
                       >
                         {getShaderDisplayName(shader)}
                       </motion.button>
@@ -308,8 +308,8 @@ const ShaderSelector = ({
                               e.currentTarget.style.backgroundColor = 'transparent';
                             }
                           }}
-                          whileHover={{ scale: 1.02, x: 2 }}
-                          whileTap={{ scale: 0.98 }}
+                          whileHover={{ opacity: 0.9 }}
+                          whileTap={{ opacity: 0.8 }}
                         >
                           {getShaderDisplayName(shader)}
                         </motion.button>

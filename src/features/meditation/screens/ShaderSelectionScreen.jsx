@@ -167,8 +167,8 @@ const ShaderSelectionScreen = ({
                   e.currentTarget.style.backgroundColor = theme.colors.white;
                 }
               }}
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
+              whileHover={{ opacity: 0.9 }}
+              whileTap={{ opacity: 0.8 }}
             >
               Vestavěné
             </motion.button>
@@ -191,8 +191,8 @@ const ShaderSelectionScreen = ({
                   e.currentTarget.style.backgroundColor = theme.colors.white;
                 }
               }}
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
+              whileHover={{ opacity: 0.9 }}
+              whileTap={{ opacity: 0.8 }}
             >
               Shadery
             </motion.button>
@@ -227,21 +227,21 @@ const ShaderSelectionScreen = ({
                   style={{
                     backgroundColor: color,
                     borderColor: selectedColor === color ? theme.colors.black : theme.colors.gray[300],
-                    transform: selectedColor === color ? 'scale(1.1)' : 'scale(1)',
-                    boxShadow: selectedColor === color ? theme.shadows.lg : 'none'
+                    boxShadow: selectedColor === color ? theme.shadows.lg : 'none',
+                    opacity: selectedColor === color ? 1 : 0.9
                   }}
                   onMouseEnter={(e) => {
                     if (selectedColor !== color) {
-                      e.currentTarget.style.transform = 'scale(1.05)';
+                      e.currentTarget.style.opacity = '0.95';
                     }
                   }}
                   onMouseLeave={(e) => {
                     if (selectedColor !== color) {
-                      e.currentTarget.style.transform = 'scale(1)';
+                      e.currentTarget.style.opacity = '0.9';
                     }
                   }}
-                  whileHover={{ scale: 1.1 }}
-                  whileTap={{ scale: 0.95 }}
+                  whileHover={{ opacity: 0.9 }}
+                  whileTap={{ opacity: 0.8 }}
                   title={color}
                 />
               ))}
@@ -270,8 +270,8 @@ const ShaderSelectionScreen = ({
                 onMouseLeave={(e) => {
                   e.currentTarget.style.backgroundColor = theme.colors.black;
                 }}
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
+                whileHover={{ opacity: 0.9 }}
+                whileTap={{ opacity: 0.8 }}
               >
                 Použít barvu
               </motion.button>

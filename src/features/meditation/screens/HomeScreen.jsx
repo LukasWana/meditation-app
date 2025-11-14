@@ -30,25 +30,24 @@ const HomeScreen = ({
         onTouchStart={onTouchStart}
         onTouchMove={onTouchMove}
         onTouchEnd={onTouchEnd}
-        initial={{ opacity: 0, scale: 1.1 }}
-        animate={{ opacity: 1, scale: 1 }}
-        transition={{ duration: 0.15, ease: "easeOut" }}
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ duration: 0.3, ease: "easeOut" }}
         style={{ height: '100vh' }}
       >
         <motion.div
           className="flex-1 flex items-center justify-center bg-[#f4ddc4] cursor-pointer relative"
           onClick={() => onNavigateToScreen('meditace')}
           onTouchStart={onTouchStart}
-          initial={{ opacity: 0, scale: 0.9 }}
-          animate={{ opacity: 1, scale: 1 }}
-          whileTap={{ scale: 0.95 }}
-          transition={{ type: "spring", stiffness: 400, damping: 25 }}
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: 0.3, ease: "easeOut" }}
         >
           <motion.div
             className="text-center px-2 sm:px-8 py-4"
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.05, duration: 0.15, ease: "easeOut" }}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 0.3, ease: "easeOut" }}
           >
             <div
               className="text-5xl font-light tracking-wide py-4 leading-loose"
@@ -62,16 +61,15 @@ const HomeScreen = ({
           className="flex-1 flex items-center justify-center bg-[#ffffff] cursor-pointer"
           onClick={() => onNavigateToScreen('hudba')}
           onTouchStart={onTouchStart}
-          initial={{ opacity: 0, scale: 0.9 }}
-          animate={{ opacity: 1, scale: 1 }}
-          whileTap={{ scale: 0.95 }}
-          transition={{ type: "spring", stiffness: 400, damping: 25 }}
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: 0.3, ease: "easeOut" }}
         >
           <motion.div
             className="text-center px-2 sm:px-8 py-4"
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.1, duration: 0.15, ease: "easeOut" }}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 0.3, ease: "easeOut" }}
           >
             <div
               className="text-5xl font-light tracking-wide py-4 leading-loose"
@@ -84,16 +82,15 @@ const HomeScreen = ({
         <motion.div
           className="flex-1 flex items-center justify-center bg-[#f4ddc4] cursor-pointer"
           onClick={() => onNavigateToScreen('dychani')}
-          initial={{ opacity: 0, scale: 0.9 }}
-          animate={{ opacity: 1, scale: 1 }}
-          whileTap={{ scale: 0.95 }}
-          transition={{ type: "spring", stiffness: 400, damping: 25 }}
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: 0.3, ease: "easeOut" }}
         >
           <motion.div
             className="text-center px-2 sm:px-8 py-4"
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.15, duration: 0.15, ease: "easeOut" }}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 0.3, ease: "easeOut" }}
           >
             <div
               className="text-5xl font-light tracking-wide mb-4 py-4 leading-loose"
@@ -106,16 +103,15 @@ const HomeScreen = ({
         <motion.div
           className="flex-1 flex items-center justify-center bg-[#ffffff] cursor-pointer"
           onClick={() => onNavigateToScreen('settings')}
-          initial={{ opacity: 0, scale: 0.9 }}
-          animate={{ opacity: 1, scale: 1 }}
-          whileTap={{ scale: 0.95 }}
-          transition={{ type: "spring", stiffness: 400, damping: 25 }}
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: 0.3, ease: "easeOut" }}
         >
           <motion.div
             className="text-center px-2 sm:px-8 py-4"
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.2, duration: 0.15, ease: "easeOut" }}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 0.3, ease: "easeOut" }}
           >
             <div
               className="text-5xl font-light tracking-wide py-4 leading-loose"

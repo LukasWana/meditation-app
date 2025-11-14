@@ -1,32 +1,21 @@
-import React, { useMemo } from 'react';
+import React from 'react';
 import { motion } from 'framer-motion';
-import { useAnimationConfig } from '@hooks/useAnimationConfig';
-import { useAnimationControl } from '@contexts/AnimationContext';
 import { useTheme } from '@hooks/useTheme';
 
+/**
+ * AnimatedText - zjednodušená verze bez animací
+ * Animace textu byly vypnuty - komponenta se chová jako obyčejný div
+ * Zachováváme motion.div pro kompatibilitu, ale bez animací
+ */
 const AnimatedText = ({
   children,
-  delay = 0,
+  delay, // Ignorováno - animace vypnuty
   className = '',
   style = {}
 }) => {
-  const config = useAnimationConfig();
-  const { isActive } = useAnimationControl();
   const theme = useTheme();
-
-  const animation = useMemo(() => {
-    const baseAnim = config.textAnimations.default;
-    return {
-      ...baseAnim,
-      animate: {
-        ...baseAnim.animate,
-        transition: {
-          ...baseAnim.animate.transition,
-          delay: delay + baseAnim.animate.transition.delay,
-        },
-      },
-    };
-  }, [config.textAnimations, delay]);
+  // Animace vypnuty - ignorujeme delay
+  void delay;
 
   return (
     <motion.div
@@ -37,8 +26,8 @@ const AnimatedText = ({
         paddingBottom: theme.spacing.md,
         lineHeight: theme.typography.lineHeight.loose,
       }}
-      initial={isActive ? animation.initial : {}}
-      animate={isActive ? animation.animate : {}}
+      initial={false}
+      animate={false}
     >
       {children}
     </motion.div>

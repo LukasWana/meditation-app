@@ -1,65 +1,29 @@
-import React, { useMemo } from 'react';
+import React from 'react';
 import { motion } from 'framer-motion';
-import { useAnimationConfig } from '@hooks/useAnimationConfig';
-import { useAnimationControl } from '@contexts/AnimationContext';
 
+/**
+ * FramerSection - zjednodušená verze bez animací
+ * Animace prvků byly vypnuty - komponenta se chová jako obyčejný div
+ * Zachováváme motion.div pro kompatibilitu, ale bez animací
+ */
 const FramerSection = ({
   children,
   className = '',
   onClick,
-  animationType = 'fadeIn',
-  delay = 0,
+  animationType, // Ignorováno - animace vypnuty
+  delay, // Ignorováno - animace vypnuty
   ...props
 }) => {
-  const config = useAnimationConfig();
-  const { isActive } = useAnimationControl();
-
-  const variants = useMemo(() => {
-    // Mapování názvů animací na klíče v konfiguraci
-    const variantMap = {
-      'fadeIn': 'fadeIn',
-      'slideInLeft': 'slideInLeft',
-      'slideInUp': 'slideInUp',
-      'scaleIn': 'scaleIn',
-      'slideInTop': 'slideInTop',
-    };
-    const variantKey = variantMap[animationType] || 'fadeIn';
-    return config.sectionVariants[variantKey] || config.sectionVariants.fadeIn;
-  }, [animationType, config.sectionVariants]);
-
-  const transition = useMemo(() => {
-    if (animationType === 'slideInTop') {
-      return {
-        delay: delay,
-        ...config.sectionTransitions.slideInTop,
-      };
-    }
-
-    return {
-      ...config.sectionTransitions.default,
-      delay: delay,
-    };
-  }, [delay, animationType, config.sectionTransitions]);
-
-  // Pokud jsou animace deaktivovány, použij instant transition
-  const finalTransition = isActive ? transition : { duration: 0 };
-  const finalVariants = isActive ? variants : {
-    initial: {},
-    animate: {},
-    exit: {},
-  };
-
+  // Animace vypnuty - ignorujeme animationType a delay
+  void animationType;
+  void delay;
   return (
     <motion.div
       className={`${className} max-w-full overflow-x-hidden`}
       onClick={onClick}
-      initial={isActive ? "initial" : false}
-      animate={isActive ? "animate" : false}
-      exit={isActive ? "exit" : false}
-      variants={finalVariants}
-      transition={finalTransition}
-      whileHover={onClick && isActive ? config.sectionInteractions.hover : {}}
-      whileTap={onClick && isActive ? config.sectionInteractions.tap : {}}
+      initial={false}
+      animate={false}
+      exit={false}
       {...props}
     >
       {children}

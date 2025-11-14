@@ -308,9 +308,9 @@ const DychaniScreen = ({
                   <motion.div
                     key={preparationCountdown}
                     className={`text-6xl font-light ${textColors.primary}`}
-                    initial={isActive ? { opacity: 0, scale: 0.8 } : {}}
-                    animate={isActive ? { opacity: 1, scale: 1 } : {}}
-                    exit={isActive ? { opacity: 0, scale: 0.8 } : {}}
+                    initial={isActive ? { opacity: 0 } : {}}
+                    animate={isActive ? { opacity: 1 } : {}}
+                    exit={isActive ? { opacity: 0 } : {}}
                     transition={isActive ? { duration: config.durations.normal, ease: config.easings.easeOut } : { duration: 0 }}
                   >
                     {preparationCountdown}

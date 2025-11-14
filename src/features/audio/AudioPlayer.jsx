@@ -183,9 +183,9 @@ const AudioPlayer = ({
         {/* Back Button - Top Left */}
         <div className="absolute top-4 left-4 z-[100] pointer-events-auto">
           <motion.div
-            initial={isActive ? { opacity: 0, x: -20 } : {}}
-            animate={isActive ? { opacity: 1, x: 0 } : {}}
-            transition={isActive ? { duration: config.durations.medium, delay: 0.2, ease: config.easings.easeOut } : { duration: 0 }}
+            initial={isActive ? { opacity: 0 } : {}}
+            animate={isActive ? { opacity: 1 } : {}}
+            transition={isActive ? { duration: config.durations.medium, ease: config.easings.easeOut } : { duration: 0 }}
           >
             <FramerButton
               onClick={() => fadeOutAndClose(onClose, 3000)}

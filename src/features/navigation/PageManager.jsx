@@ -205,7 +205,7 @@ const SCREEN_REGISTRY = {
   }
 };
 
-// Definice animací
+// Definice animací - všechny jsou jen fade (prolnutí) bez pohybu
 const TRANSITION_VARIANTS = {
   fade: {
     initial: { opacity: 0 },
@@ -214,35 +214,35 @@ const TRANSITION_VARIANTS = {
   },
   slide: {
     up: {
-      initial: { opacity: 0, y: 30, scale: 0.98 },
-      in: { opacity: 1, y: 0, scale: 1 },
-      out: { opacity: 0, y: -30, scale: 0.98 }
+      initial: { opacity: 0 },
+      in: { opacity: 1 },
+      out: { opacity: 0 }
     },
     down: {
-      initial: { opacity: 0, y: -30, scale: 0.98 },
-      in: { opacity: 1, y: 0, scale: 1 },
-      out: { opacity: 0, y: 30, scale: 0.98 }
+      initial: { opacity: 0 },
+      in: { opacity: 1 },
+      out: { opacity: 0 }
     },
     left: {
-      initial: { opacity: 0, x: 30, scale: 0.98 },
-      in: { opacity: 1, x: 0, scale: 1 },
-      out: { opacity: 0, x: -30, scale: 0.98 }
+      initial: { opacity: 0 },
+      in: { opacity: 1 },
+      out: { opacity: 0 }
     },
     right: {
-      initial: { opacity: 0, x: -30, scale: 0.98 },
-      in: { opacity: 1, x: 0, scale: 1 },
-      out: { opacity: 0, x: 30, scale: 0.98 }
+      initial: { opacity: 0 },
+      in: { opacity: 1 },
+      out: { opacity: 0 }
     }
   },
   scale: {
-    initial: { opacity: 0, scale: 0.9 },
-    in: { opacity: 1, scale: 1 },
-    out: { opacity: 0, scale: 1.1 }
+    initial: { opacity: 0 },
+    in: { opacity: 1 },
+    out: { opacity: 0 }
   },
   modal: {
-    initial: { opacity: 0, scale: 0.8, y: 50 },
-    in: { opacity: 1, scale: 1, y: 0 },
-    out: { opacity: 0, scale: 0.8, y: 50 }
+    initial: { opacity: 0 },
+    in: { opacity: 1 },
+    out: { opacity: 0 }
   }
 };
 
@@ -307,12 +307,9 @@ const PageManager = ({
     return SCREEN_REGISTRY[currentScreen] || null;
   }, [currentScreen]);
 
-  // Získání variant animace
-  const getTransitionVariants = useCallback((transitionType, direction = null) => {
-    if (transitionType === 'slide' && direction) {
-      return TRANSITION_VARIANTS.slide[direction];
-    }
-    return TRANSITION_VARIANTS[transitionType] || TRANSITION_VARIANTS.fade;
+  // Zjednodušeno - všechny přechody jsou jen fade (prolnutí)
+  const getTransitionVariants = useCallback(() => {
+    return TRANSITION_VARIANTS.fade;
   }, []);
 
   // Vytvoření props pro komponentu
@@ -516,20 +513,13 @@ const PageManager = ({
     const Component = currentScreenConfig.component;
     const props = getScreenProps(currentScreen);
     const transition = currentScreenConfig.transition;
-    const variants = getTransitionVariants(transition.type, transition.direction);
+    const variants = getTransitionVariants(); // Všechny přechody jsou fade
 
-    // Pro fade animace použijeme jednoduchý ease přechod bez spring efektu
-    const transitionConfig = transition.type === 'fade'
-      ? {
-          duration: transition.duration || 0.4,
-          ease: [0.4, 0, 0.2, 1]
-        }
-      : {
-          type: "spring",
-          stiffness: 300,
-          damping: 30,
-          duration: transition.duration || 0.4
-        };
+    // Všechny přechody jsou jen fade (prolnutí) bez pohybu
+    const transitionConfig = {
+      duration: transition.duration || 0.3,
+      ease: [0.4, 0, 0.2, 1]
+    };
 
     const screenElement = (
       <motion.div

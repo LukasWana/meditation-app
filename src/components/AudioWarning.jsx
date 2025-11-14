@@ -10,9 +10,9 @@ const AudioWarning = ({ isVisible, onClose, onActivateAudio }) => {
   return (
     <AnimatePresence>
       <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        exit={{ opacity: 0, y: 20 }}
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
         className="fixed bottom-4 left-4 right-4 rounded-lg p-4 shadow-lg max-w-md mx-auto border"
         style={{
           backgroundColor: theme.colors.blue[100],

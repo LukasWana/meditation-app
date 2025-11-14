@@ -27,9 +27,9 @@ const VoiceSwitcher = ({
       {/* Text "mluví" nad aktivním ukazatelem */}
       <motion.div
         key={selectedVoice}
-        initial={{ opacity: 0, y: 5, scale: 0.9 }}
-        animate={{ opacity: 1, y: 0, scale: 1 }}
-        exit={{ opacity: 0, y: -5, scale: 0.9 }}
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
         transition={{ duration: 0.3, ease: "easeOut" }}
         className="text-xs font-medium mb-2"
         style={{ color: textColor }}
@@ -40,8 +40,8 @@ const VoiceSwitcher = ({
       <motion.div
         className="flex space-x-2 backdrop-blur-sm rounded-full p-1 shadow-inner"
         style={{ backgroundColor: theme.colors.overlay.white10 }}
-        initial={{ opacity: 0, scale: 0.9 }}
-        animate={{ opacity: 1, scale: 1 }}
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
         transition={{ duration: 0.3, ease: "easeOut" }}
       >
         {voiceOptions.map((option) => {
@@ -69,8 +69,8 @@ const VoiceSwitcher = ({
                   e.currentTarget.style.backgroundColor = inactiveBg;
                 }
               }}
-              whileHover={option.available ? { scale: 1.1 } : {}}
-              whileTap={option.available ? { scale: 0.95 } : {}}
+              whileHover={option.available ? { opacity: 0.9 } : {}}
+              whileTap={option.available ? { opacity: 0.8 } : {}}
               transition={{ type: "spring", stiffness: 300, damping: 20 }}
             >
               {option.label}

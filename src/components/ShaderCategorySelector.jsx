@@ -25,10 +25,10 @@ const ShaderCategorySelector = ({ selectedCategory, onSelect }) => {
         {categories.map((category) => (
           <motion.div
             key={category.id}
-            initial={{ opacity: 0, scale: 0.9 }}
-            animate={{ opacity: 1, scale: 1 }}
-            whileHover={{ scale: 1.02 }}
-            whileTap={{ scale: 0.98 }}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            whileHover={{ opacity: 0.9 }}
+            whileTap={{ opacity: 0.8 }}
             onClick={() => onSelect && onSelect(category.id)}
             style={{
               padding: theme.spacing.lg,
