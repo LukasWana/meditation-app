@@ -2,6 +2,7 @@ import React from 'react';
 import { motion } from 'framer-motion';
 import { useAnimationConfig } from '@hooks/useAnimationConfig';
 import { useAnimationControl } from '@contexts/AnimationContext';
+import { useTheme } from '@hooks/useTheme';
 
 export const AudioPlayerAnimations = ({
   children,
@@ -12,6 +13,7 @@ export const AudioPlayerAnimations = ({
 }) => {
   const config = useAnimationConfig();
   const { isActive } = useAnimationControl();
+  const theme = useTheme();
 
   // Zkontroluj, zda má být zobrazeno album cover
   const hasAlbumCover = albumCover && sectionKey === 'hudba' && typeof albumCover === 'string' && albumCover.trim() !== '';
@@ -87,12 +89,18 @@ export const AudioPlayerAnimations = ({
         )}
 
         {/* Side bars for wide screens - zobraz pouze pokud není nastavena barva pozadí */}
-        {!backgroundColor && (
-          <div className="hidden lg:block absolute inset-0 pointer-events-none z-5">
-            <div className="absolute left-0 top-0 w-[calc((100vw-600px)/2)] h-full bg-gradient-to-r from-[#f4ddc4]/30 to-transparent"></div>
-            <div className="absolute right-0 top-0 w-[calc((100vw-600px)/2)] h-full bg-gradient-to-l from-[#f4ddc4]/30 to-transparent"></div>
-          </div>
-        )}
+              {!backgroundColor && (
+                <div className="hidden lg:block absolute inset-0 pointer-events-none z-5">
+                  <div
+                    className="absolute left-0 top-0 w-[calc((100vw-600px)/2)] h-full bg-gradient-to-r to-transparent"
+                    style={{ backgroundImage: `linear-gradient(to right, ${theme.colors.overlay.primary30}, transparent)` }}
+                  ></div>
+                  <div
+                    className="absolute right-0 top-0 w-[calc((100vw-600px)/2)] h-full bg-gradient-to-l to-transparent"
+                    style={{ backgroundImage: `linear-gradient(to left, ${theme.colors.overlay.primary30}, transparent)` }}
+                  ></div>
+                </div>
+              )}
 
         {/* Content overlay */}
         <div className="relative z-10 w-full h-full flex flex-col items-center justify-center">

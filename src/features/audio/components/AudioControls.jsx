@@ -5,6 +5,7 @@ import SkipButton from './SkipButton';
 import CurrentTimeDisplay from './CurrentTimeDisplay';
 import VoiceSwitcher from './VoiceSwitcher';
 import TrackSwitcher from './TrackSwitcher';
+import { useTheme } from '@hooks/useTheme';
 
 const AudioControls = ({
   progress,
@@ -33,21 +34,32 @@ const AudioControls = ({
   isDarkMode = false,
   className = "w-full flex flex-col items-center justify-center h-full"
 }) => {
+  const theme = useTheme();
   // Barvy pro dark mode
-  const textColor = isDarkMode ? 'text-white' : 'text-black';
-  const textGrayColor = isDarkMode ? 'text-gray-300' : 'text-gray-600';
+  const textColor = isDarkMode ? theme.colors.white : theme.colors.black;
+  const textGrayColor = isDarkMode ? theme.colors.gray[300] : theme.colors.gray[600];
   return (
     <div className={className}>
       {/* Title and Duration - Above Circular Progress with fixed height */}
       <div className="mb-6 z-10 w-full pl-10 pr-10 sm:pl-20 sm:pr-20 flex flex-col items-center space-y-0 audio-controls-container">
         {/* Duration - Total Time - Above title - zobraz pouze když je stabilní */}
         {duration && duration > 0 && durationStable && (
-          <div className={`${textGrayColor} text-center mb-2 text-clamp-duration`}>
+          <div
+            className="text-center mb-2 text-clamp-duration"
+            style={{ color: textGrayColor }}
+          >
             {formatTime(duration)}
           </div>
         )}
         {/* Title - Fixed height container for 2-line support */}
-        <div className={`font-light text-center ${textColor} leading-tight text-clamp-title min-h-[60px] flex items-center justify-center`} style={{lineHeight: '1.2'}}>
+        <div
+          className="font-light text-center leading-tight text-clamp-title min-h-[60px] flex items-center justify-center"
+          style={{
+            color: textColor,
+            lineHeight: '1.2',
+            fontWeight: theme.typography.fontWeight.light
+          }}
+        >
           <span>{title || 'Meditácia'}</span>
           {/* Data source indicator */}
           {dataSource && (
@@ -98,7 +110,8 @@ const AudioControls = ({
           <CurrentTimeDisplay
             currentTime={currentTime}
             formatTime={formatTime}
-            className={`${textColor} font-medium text-center text-clamp-time`}
+            className="font-medium text-center text-clamp-time"
+            style={{ color: textColor }}
           />
         </div>
 

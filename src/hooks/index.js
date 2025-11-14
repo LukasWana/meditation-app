@@ -12,4 +12,18 @@ export { useFirebaseHudbaScanner } from './useFirebaseHudbaScanner';
 export { useCountdownSound } from './useCountdownSound';
 export { useFinalSound } from './useFinalSound';
 export { useAnimationConfig, useAnimationConfigValue } from './useAnimationConfig';
+export {
+  useTheme,
+  useThemeValue,
+  getButtonClasses,
+  getCardClasses,
+  getModalClasses,
+  getTextClasses,
+  getToggleButtonClasses,
+  getOverlayColor,
+  getSpacing,
+  getShadow,
+  getBorderRadius,
+  getInputClasses
+} from './useTheme';
 

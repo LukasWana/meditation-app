@@ -1,5 +1,6 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect, useMemo } from 'react';
 import uiDataService from '@services/uiDataService';
+import theme from '@config/theme';
 
 const UIConfigContext = createContext();
 
@@ -14,9 +15,9 @@ export const useUIConfig = () => {
 export const UIConfigProvider = ({ children }) => {
   const [config, setConfig] = useState({
     colors: {
-      primary: '#f4ddc4',
-      secondary: '#000000',
-      background: '#f4ddc4'
+      primary: theme.colors.primary,
+      secondary: theme.colors.secondary,
+      background: theme.colors.background
     },
     layout: {
       defaultLayout: 'grid'
@@ -69,11 +70,25 @@ export const UIConfigProvider = ({ children }) => {
     loadUIConfig();
   }, []);
 
-  const value = {
+  // Merge theme s dynamickou konfigurací z DB
+  const mergedTheme = useMemo(() => {
+    return {
+      ...theme,
+      colors: {
+        ...theme.colors,
+        primary: config.colors.primary,
+        secondary: config.colors.secondary,
+        background: config.colors.background,
+      }
+    };
+  }, [config]);
+
+  const value = useMemo(() => ({
     config,
     colors: config.colors,
-    layout: config.layout
-  };
+    layout: config.layout,
+    theme: mergedTheme, // Poskytni celou theme konfiguraci
+  }), [config, mergedTheme]);
 
   return (
     <UIConfigContext.Provider value={value}>

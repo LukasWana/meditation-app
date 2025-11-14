@@ -10,6 +10,7 @@ import { AudioAnalysisProvider } from '@contexts/AudioAnalysisContext';
 import { ShaderPlaybackProvider } from '@contexts/ShaderPlaybackContext';
 import { AnimationProvider } from '@contexts/AnimationContext';
 import MonitoringDashboard from '@components/MonitoringDashboard';
+import { useTheme } from '@hooks/useTheme';
 
 import ErrorBoundary from '@components/ErrorBoundary';
 import { register } from '@services/serviceWorker';
@@ -32,6 +33,7 @@ export default function App() {
 
 // Meditační aplikace
 function MeditationApp() {
+  const theme = useTheme();
   // Intro state
   const [showIntro, setShowIntro] = useState(true);
 
@@ -277,7 +279,10 @@ function MeditationApp() {
             <ShaderSettingsProvider>
               <ShaderPlaybackProvider>
                 <AudioAnalysisProvider>
-                <div className="min-h-screen w-full bg-[#f4ddc4] overflow-x-hidden relative">
+                <div
+                  className="min-h-screen w-full overflow-x-hidden relative"
+                  style={{ backgroundColor: theme.colors.background }}
+                >
       {/* Intro animace s písmem "Meditácia" */}
       {showIntro && (
         <LazyIntroScreen onIntroComplete={handleIntroComplete} />
@@ -357,6 +362,7 @@ function MeditationApp() {
 
 // Admin aplikace - jednoduchá verze
 export function AdminApp() {
+  const theme = useTheme();
   // Monitoring state
   const [showMonitoring, setShowMonitoring] = useState(false);
 
@@ -366,7 +372,10 @@ export function AdminApp() {
         <LanguageProvider>
         <Suspense fallback={
           <div className="flex items-center justify-center min-h-screen">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-gray-600"></div>
+            <div
+              className="animate-spin rounded-full h-12 w-12 border-b-2"
+              style={{ borderBottomColor: theme.colors.gray[600] }}
+            ></div>
           </div>
         }>
           <SimpleAdminScreen />
@@ -377,7 +386,18 @@ export function AdminApp() {
           <>
             <button
               onClick={() => setShowMonitoring(!showMonitoring)}
-              className="fixed top-4 right-4 bg-blue-500 text-white px-3 py-2 rounded-lg text-sm shadow-lg hover:bg-blue-600 transition-colors z-50"
+              className="fixed top-4 right-4 px-3 py-2 rounded-lg text-sm shadow-lg transition-colors"
+              style={{
+                backgroundColor: theme.colors.blue[500],
+                color: theme.colors.white,
+                zIndex: theme.zIndex.fixed
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.backgroundColor = theme.colors.blue[600];
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.backgroundColor = theme.colors.blue[500];
+              }}
             >
               📊 Monitor
             </button>

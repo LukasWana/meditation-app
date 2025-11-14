@@ -2,6 +2,7 @@ import React from 'react';
 import { motion } from 'framer-motion';
 import { useAnimationConfig } from '@hooks/useAnimationConfig';
 import { useAnimationControl } from '@contexts/AnimationContext';
+import { getButtonClasses } from '@hooks/useTheme';
 
 const FramerButton = ({
   children,
@@ -14,20 +15,7 @@ const FramerButton = ({
   const config = useAnimationConfig();
   const { isActive } = useAnimationControl();
 
-  const getVariantClasses = () => {
-    switch (variant) {
-      case 'primary':
-        return 'bg-black text-white hover:bg-gray-800';
-      case 'secondary':
-        return 'bg-white border-2 border-black text-black hover:bg-gray-100';
-      case 'ghost':
-        return 'bg-transparent border-2 border-black/20 text-black hover:bg-black/5 hover:text-black';
-      case 'rounded':
-        return 'bg-black text-white rounded-full hover:bg-gray-800';
-      default:
-        return 'bg-black text-white hover:bg-gray-800';
-    }
-  };
+  const variantClasses = getButtonClasses(variant, disabled);
 
   return (
     <motion.button
@@ -37,7 +25,7 @@ const FramerButton = ({
         leading-loose
         min-h-[3rem]
         ${config.buttonAnimations.cssTransition}
-        ${getVariantClasses()}
+        ${variantClasses}
         ${disabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}
         ${className}
       `}

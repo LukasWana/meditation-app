@@ -3,8 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { getShaderList } from '@utils/shaderLoader';
 import { useShaderSettings } from '@contexts/ShaderSettingsContext';
 import BackgroundShader from '@components/BackgroundShader';
-
-const FALLBACK_COLOR = '#f4ddc4';
+import { useTheme } from '@hooks/useTheme';
 
 const ShaderSelector = ({
   selectedShader,
@@ -13,12 +12,14 @@ const ShaderSelector = ({
   isDarkMode = false,
   section = 'hudba' // Sekce pro získání barvy
 }) => {
-  const textColor = isDarkMode ? 'text-white' : 'text-black';
-  const dropdownBg = isDarkMode ? 'bg-gray-800/95' : 'bg-white/95';
-  const dropdownBorder = isDarkMode ? 'border-white/20' : 'border-black/10';
-  const categoryText = isDarkMode ? 'text-gray-300' : 'text-gray-500';
-  const activeBg = isDarkMode ? 'bg-white text-black' : 'bg-black text-white';
-  const inactiveHover = isDarkMode ? 'hover:bg-gray-700' : 'hover:bg-gray-100';
+  const theme = useTheme();
+  const textColor = isDarkMode ? theme.colors.white : theme.colors.black;
+  const dropdownBgOpacity = isDarkMode ? theme.colors.overlay.black80 : theme.colors.overlay.white90;
+  const dropdownBorder = isDarkMode ? theme.colors.overlay.white20 : theme.colors.overlay.black10;
+  const categoryText = isDarkMode ? theme.colors.gray[300] : theme.colors.gray[500];
+  const activeBg = isDarkMode ? theme.colors.white : theme.colors.black;
+  const activeTextColor = isDarkMode ? theme.colors.black : theme.colors.white;
+  const inactiveHover = isDarkMode ? theme.colors.gray[700] : theme.colors.gray[100];
   const [isOpen, setIsOpen] = useState(false);
   const [shaders, setShaders] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -26,8 +27,8 @@ const ShaderSelector = ({
   // Získej barvu pro sekci
   const { getColorForSection, getOverlaySettings } = useShaderSettings();
   const colorValue = useMemo(
-    () => getColorForSection(section) || FALLBACK_COLOR,
-    [getColorForSection, section]
+    () => getColorForSection(section) || theme.colors.background,
+    [getColorForSection, section, theme.colors.background]
   );
 
   const overlaySettings = getOverlaySettings(section) || {};
@@ -142,10 +143,20 @@ const ShaderSelector = ({
       <motion.button
         type="button"
         aria-label="Změnit pozadí"
-        className="relative w-12 h-12 sm:w-14 sm:h-14 rounded-full border border-gray-200 bg-white shadow-sm flex items-center justify-center"
+        className="relative w-12 h-12 sm:w-14 sm:h-14 rounded-full border shadow-sm flex items-center justify-center"
+        style={{
+          backgroundColor: theme.colors.white,
+          borderColor: theme.colors.gray[200]
+        }}
         disabled
       >
-        <div className="w-6 h-6 border-2 border-gray-300 border-t-gray-600 rounded-full animate-spin" />
+        <div
+          className="w-6 h-6 border-2 rounded-full animate-spin"
+          style={{
+            borderColor: theme.colors.gray[300],
+            borderTopColor: theme.colors.gray[600]
+          }}
+        />
       </motion.button>
     );
   }
@@ -157,7 +168,18 @@ const ShaderSelector = ({
         onClick={handleClick}
         type="button"
         aria-label="Změnit pozadí"
-        className="relative w-12 h-12 sm:w-14 sm:h-14 rounded-full border border-gray-200 bg-white shadow-sm flex items-center justify-center transition-shadow duration-200 hover:shadow-md"
+        className="relative w-12 h-12 sm:w-14 sm:h-14 rounded-full border shadow-sm flex items-center justify-center transition-shadow duration-200"
+        style={{
+          backgroundColor: theme.colors.white,
+          borderColor: theme.colors.gray[200],
+          boxShadow: theme.shadows.sm
+        }}
+        onMouseEnter={(e) => {
+          e.currentTarget.style.boxShadow = theme.shadows.md;
+        }}
+        onMouseLeave={(e) => {
+          e.currentTarget.style.boxShadow = theme.shadows.sm;
+        }}
         whileHover={{ scale: 1.05 }}
         whileTap={{ scale: 0.95 }}
       >
@@ -177,7 +199,10 @@ const ShaderSelector = ({
           >
             {renderShaderPreview()}
           </div>
-          <div className="absolute inset-y-1.5 sm:inset-y-2 left-1/2 w-[2px] bg-white/80 backdrop-blur" />
+          <div
+            className="absolute inset-y-1.5 sm:inset-y-2 left-1/2 w-[2px] backdrop-blur"
+            style={{ backgroundColor: theme.colors.overlay.white80 }}
+          />
         </div>
       </motion.button>
 
@@ -190,66 +215,106 @@ const ShaderSelector = ({
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: -10, scale: 0.95 }}
             transition={{ duration: 0.2 }}
-            className={`
-              absolute top-full mt-2 w-56 max-h-64 overflow-y-auto
-              ${dropdownBg} backdrop-blur-md rounded-lg shadow-lg
-              border ${dropdownBorder} z-50
-            `}
-            style={{ maxHeight: '16rem' }}
+            className="absolute top-full mt-2 w-56 max-h-64 overflow-y-auto backdrop-blur-md rounded-lg border"
+            style={{
+              maxHeight: '16rem',
+              backgroundColor: dropdownBgOpacity,
+              borderColor: dropdownBorder,
+              boxShadow: theme.shadows.lg,
+              zIndex: theme.zIndex.dropdown
+            }}
           >
             <div className="p-2">
               {/* Vestavěné shadery */}
               <div className="mb-2">
-                <div className={`text-xs font-semibold ${categoryText} px-2 py-1 mb-1`}>
+                <div
+                  className="text-xs font-semibold px-2 py-1 mb-1"
+                  style={{
+                    color: categoryText,
+                    fontSize: theme.typography.fontSize.xs,
+                    fontWeight: theme.typography.fontWeight.semibold
+                  }}
+                >
                   Vestavěné
                 </div>
                 {shaders
                   .filter(s => s.category === 'built-in')
-                  .map((shader) => (
-                    <motion.button
-                      key={shader.id}
-                      onClick={() => handleShaderSelect(shader.id)}
-                      className={`
-                        w-full text-left px-2 py-1.5 rounded-md text-xs transition-all duration-200
-                        ${selectedShader === shader.id
-                          ? `${activeBg}`
-                          : `${textColor} ${inactiveHover}`
-                        }
-                      `}
-                      whileHover={{ scale: 1.02, x: 2 }}
-                      whileTap={{ scale: 0.98 }}
-                    >
-                      {getShaderDisplayName(shader)}
-                    </motion.button>
-                  ))}
-              </div>
-
-              {/* Shadery */}
-              {shaders.filter(s => s.category === 'shaders').length > 0 && (
-                <div className="mb-2">
-                  <div className={`text-xs font-semibold ${categoryText} px-2 py-1 mb-1`}>
-                    Shadery
-                  </div>
-                  {shaders
-                    .filter(s => s.category === 'shaders')
-                    .slice(0, 8) // Zobraz pouze prvních 8
-                    .map((shader) => (
+                  .map((shader) => {
+                    const isActive = selectedShader === shader.id;
+                    return (
                       <motion.button
                         key={shader.id}
                         onClick={() => handleShaderSelect(shader.id)}
-                        className={`
-                          w-full text-left px-2 py-1.5 rounded-md text-xs transition-all duration-200
-                          ${selectedShader === shader.id
-                            ? 'bg-black text-white'
-                            : 'text-black hover:bg-gray-100'
+                        className="w-full text-left px-2 py-1.5 rounded-md text-xs transition-all duration-200"
+                        style={{
+                          backgroundColor: isActive ? activeBg : 'transparent',
+                          color: isActive ? activeTextColor : textColor,
+                          fontSize: theme.typography.fontSize.xs
+                        }}
+                        onMouseEnter={(e) => {
+                          if (!isActive) {
+                            e.currentTarget.style.backgroundColor = inactiveHover;
                           }
-                        `}
+                        }}
+                        onMouseLeave={(e) => {
+                          if (!isActive) {
+                            e.currentTarget.style.backgroundColor = 'transparent';
+                          }
+                        }}
                         whileHover={{ scale: 1.02, x: 2 }}
                         whileTap={{ scale: 0.98 }}
                       >
                         {getShaderDisplayName(shader)}
                       </motion.button>
-                    ))}
+                    );
+                  })}
+              </div>
+
+              {/* Shadery */}
+              {shaders.filter(s => s.category === 'shaders').length > 0 && (
+                <div className="mb-2">
+                  <div
+                    className="text-xs font-semibold px-2 py-1 mb-1"
+                    style={{
+                      color: categoryText,
+                      fontSize: theme.typography.fontSize.xs,
+                      fontWeight: theme.typography.fontWeight.semibold
+                    }}
+                  >
+                    Shadery
+                  </div>
+                  {shaders
+                    .filter(s => s.category === 'shaders')
+                    .slice(0, 8) // Zobraz pouze prvních 8
+                    .map((shader) => {
+                      const isActive = selectedShader === shader.id;
+                      return (
+                        <motion.button
+                          key={shader.id}
+                          onClick={() => handleShaderSelect(shader.id)}
+                          className="w-full text-left px-2 py-1.5 rounded-md text-xs transition-all duration-200"
+                          style={{
+                            backgroundColor: isActive ? theme.colors.black : 'transparent',
+                            color: isActive ? theme.colors.white : theme.colors.black,
+                            fontSize: theme.typography.fontSize.xs
+                          }}
+                          onMouseEnter={(e) => {
+                            if (!isActive) {
+                              e.currentTarget.style.backgroundColor = theme.colors.gray[100];
+                            }
+                          }}
+                          onMouseLeave={(e) => {
+                            if (!isActive) {
+                              e.currentTarget.style.backgroundColor = 'transparent';
+                            }
+                          }}
+                          whileHover={{ scale: 1.02, x: 2 }}
+                          whileTap={{ scale: 0.98 }}
+                        >
+                          {getShaderDisplayName(shader)}
+                        </motion.button>
+                      );
+                    })}
                 </div>
               )}
             </div>
@@ -261,7 +326,8 @@ const ShaderSelector = ({
       {/* Overlay pro zavření při kliknutí mimo - pouze pokud není onNavigateToScreen */}
       {!onNavigateToScreen && isOpen && (
         <div
-          className="fixed inset-0 z-40"
+          className="fixed inset-0"
+          style={{ zIndex: theme.zIndex.dropdown - 1 }}
           onClick={() => setIsOpen(false)}
         />
       )}

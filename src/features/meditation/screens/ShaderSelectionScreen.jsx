@@ -4,6 +4,7 @@ import { FramerPageTransition, BackButton, ShaderGallery } from '@components';
 import { useLanguage } from '@contexts/LanguageContext';
 import { useShaderSettings } from '@contexts/ShaderSettingsContext';
 import { usePlayback } from '@contexts/ShaderPlaybackContext';
+import { useTheme } from '@hooks/useTheme';
 
 const ShaderSelectionScreen = ({
   onNavigateToScreen,
@@ -13,6 +14,7 @@ const ShaderSelectionScreen = ({
   section = 'hudba' // Sekce pro kterou se vybírá shader
 }) => {
   const { t } = useLanguage();
+  const theme = useTheme();
   const { getShaderForSection, setShaderForSection, getColorForSection, setColorForSection } = useShaderSettings();
   const { transitionState, startTransition } = usePlayback();
   const [selectedCategory, setSelectedCategory] = useState('built-in'); // 'built-in' nebo 'shaders'
@@ -110,7 +112,8 @@ const ShaderSelectionScreen = ({
   return (
     <FramerPageTransition screenKey="shader-selection">
       <div
-        className="min-h-screen w-full max-w-full bg-[#f4ddc4] flex flex-col items-center justify-start p-2 sm:p-8 pb-20 overflow-x-hidden relative"
+        className="min-h-screen w-full max-w-full flex flex-col items-center justify-start p-2 sm:p-8 pb-20 overflow-x-hidden relative"
+        style={{ backgroundColor: theme.colors.background }}
         onTouchStart={onTouchStart}
         onTouchMove={onTouchMove}
         onTouchEnd={onTouchEnd}
@@ -123,10 +126,22 @@ const ShaderSelectionScreen = ({
         <div className="max-w-2xl w-full" style={{ marginTop: '4rem', paddingTop: 0 }}>
           {/* Nadpis */}
           <div className="text-center mb-8">
-            <h1 className="text-4xl font-light mb-2">
+            <h1
+              className="mb-2"
+              style={{
+                fontSize: theme.typography.fontSize['4xl'],
+                fontWeight: theme.typography.fontWeight.light
+              }}
+            >
               {sectionLabel} - {t('shader') || 'Shader'}
             </h1>
-            <p className="text-gray-600 text-sm">
+            <p
+              className="text-sm"
+              style={{
+                color: theme.colors.gray[600],
+                fontSize: theme.typography.fontSize.sm
+              }}
+            >
               Vyberte shader pro pozadí
             </p>
           </div>
@@ -135,11 +150,23 @@ const ShaderSelectionScreen = ({
           <div className="flex gap-2 mb-6">
             <motion.button
               onClick={() => setSelectedCategory('built-in')}
-              className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
-                selectedCategory === 'built-in'
-                  ? 'bg-black text-white'
-                  : 'bg-white text-black hover:bg-gray-100'
-              }`}
+              className="px-4 py-2 rounded-lg text-sm font-medium transition-all"
+              style={{
+                backgroundColor: selectedCategory === 'built-in' ? theme.colors.black : theme.colors.white,
+                color: selectedCategory === 'built-in' ? theme.colors.white : theme.colors.black,
+                fontSize: theme.typography.fontSize.sm,
+                fontWeight: theme.typography.fontWeight.medium
+              }}
+              onMouseEnter={(e) => {
+                if (selectedCategory !== 'built-in') {
+                  e.currentTarget.style.backgroundColor = theme.colors.gray[100];
+                }
+              }}
+              onMouseLeave={(e) => {
+                if (selectedCategory !== 'built-in') {
+                  e.currentTarget.style.backgroundColor = theme.colors.white;
+                }
+              }}
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
             >
@@ -147,11 +174,23 @@ const ShaderSelectionScreen = ({
             </motion.button>
             <motion.button
               onClick={() => setSelectedCategory('shaders')}
-              className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
-                selectedCategory === 'shaders'
-                  ? 'bg-black text-white'
-                  : 'bg-white text-black hover:bg-gray-100'
-              }`}
+              className="px-4 py-2 rounded-lg text-sm font-medium transition-all"
+              style={{
+                backgroundColor: selectedCategory === 'shaders' ? theme.colors.black : theme.colors.white,
+                color: selectedCategory === 'shaders' ? theme.colors.white : theme.colors.black,
+                fontSize: theme.typography.fontSize.sm,
+                fontWeight: theme.typography.fontWeight.medium
+              }}
+              onMouseEnter={(e) => {
+                if (selectedCategory !== 'shaders') {
+                  e.currentTarget.style.backgroundColor = theme.colors.gray[100];
+                }
+              }}
+              onMouseLeave={(e) => {
+                if (selectedCategory !== 'shaders') {
+                  e.currentTarget.style.backgroundColor = theme.colors.white;
+                }
+              }}
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
             >
@@ -169,7 +208,14 @@ const ShaderSelectionScreen = ({
 
           {/* Barva místo shaderu */}
           <div className="mt-8">
-            <h2 className="text-xl font-medium mb-4 text-gray-700">
+            <h2
+              className="mb-4"
+              style={{
+                fontSize: theme.typography.fontSize.xl,
+                fontWeight: theme.typography.fontWeight.medium,
+                color: theme.colors.gray[700]
+              }}
+            >
               Barva místo shaderu
             </h2>
             <div className="grid grid-cols-5 sm:grid-cols-8 gap-3">
@@ -177,14 +223,23 @@ const ShaderSelectionScreen = ({
                 <motion.button
                   key={color}
                   onClick={() => handleColorSelect(color)}
-                  className={`
-                    w-12 h-12 rounded-lg border-2 transition-all
-                    ${selectedColor === color
-                      ? 'border-black scale-110 shadow-lg'
-                      : 'border-gray-300 hover:scale-105'
+                  className="w-12 h-12 rounded-lg border-2 transition-all"
+                  style={{
+                    backgroundColor: color,
+                    borderColor: selectedColor === color ? theme.colors.black : theme.colors.gray[300],
+                    transform: selectedColor === color ? 'scale(1.1)' : 'scale(1)',
+                    boxShadow: selectedColor === color ? theme.shadows.lg : 'none'
+                  }}
+                  onMouseEnter={(e) => {
+                    if (selectedColor !== color) {
+                      e.currentTarget.style.transform = 'scale(1.05)';
                     }
-                  `}
-                  style={{ backgroundColor: color }}
+                  }}
+                  onMouseLeave={(e) => {
+                    if (selectedColor !== color) {
+                      e.currentTarget.style.transform = 'scale(1)';
+                    }
+                  }}
                   whileHover={{ scale: 1.1 }}
                   whileTap={{ scale: 0.95 }}
                   title={color}
@@ -197,11 +252,24 @@ const ShaderSelectionScreen = ({
                 type="color"
                 value={selectedColor}
                 onChange={(e) => setSelectedColor(e.target.value)}
-                className="w-16 h-16 rounded-lg border-2 border-gray-300 cursor-pointer"
+                className="w-16 h-16 rounded-lg border-2 cursor-pointer"
+                style={{ borderColor: theme.colors.gray[300] }}
               />
               <motion.button
                 onClick={() => handleColorSelect(selectedColor)}
-                className="px-4 py-2 bg-black text-white rounded-lg text-sm font-medium"
+                className="px-4 py-2 rounded-lg text-sm font-medium"
+                style={{
+                  backgroundColor: theme.colors.black,
+                  color: theme.colors.white,
+                  fontSize: theme.typography.fontSize.sm,
+                  fontWeight: theme.typography.fontWeight.medium
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.backgroundColor = theme.colors.gray[800];
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.backgroundColor = theme.colors.black;
+                }}
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
               >

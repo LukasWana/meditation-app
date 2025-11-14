@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
+import { useTheme } from '@hooks/useTheme';
 
 const TrackSwitcher = ({
   tracks,
@@ -7,10 +8,15 @@ const TrackSwitcher = ({
   onTrackChange,
   isDarkMode = false
 }) => {
-  const activeBg = isDarkMode ? 'bg-white text-black' : 'bg-black text-white';
-  const inactiveBg = isDarkMode ? 'bg-white/20 text-white hover:bg-white/30' : 'bg-white text-black hover:bg-gray-100';
-  const disabledBg = isDarkMode ? 'bg-gray-700 text-gray-500 opacity-20' : 'bg-gray-200 text-gray-400 opacity-20';
-  const textColor = isDarkMode ? 'text-white' : 'text-black';
+  const theme = useTheme();
+  const activeBg = isDarkMode ? theme.colors.white : theme.colors.black;
+  const activeTextColor = isDarkMode ? theme.colors.black : theme.colors.white;
+  const inactiveBg = isDarkMode ? theme.colors.overlay.white20 : theme.colors.white;
+  const inactiveTextColor = isDarkMode ? theme.colors.white : theme.colors.black;
+  const inactiveHoverBg = isDarkMode ? theme.colors.overlay.white30 : theme.colors.gray[100];
+  const disabledBg = isDarkMode ? theme.colors.gray[700] : theme.colors.gray[200];
+  const disabledTextColor = isDarkMode ? theme.colors.gray[500] : theme.colors.gray[400];
+  const textColor = isDarkMode ? theme.colors.white : theme.colors.black;
   const [currentPage, setCurrentPage] = useState(0);
   const tracksPerPage = 10;
 
@@ -45,13 +51,22 @@ const TrackSwitcher = ({
             <motion.button
               key={globalIndex}
               onClick={() => globalIndex !== currentTrackIndex && onTrackChange(globalIndex)}
-              className={`
-                w-10 h-10 sm:w-12 sm:h-12 rounded-full flex items-center justify-center text-sm font-medium transition-all duration-200 flex-shrink-0
-                ${globalIndex === currentTrackIndex
-                  ? `${activeBg} cursor-default`
-                  : `${inactiveBg} cursor-pointer`
+              className="w-10 h-10 sm:w-12 sm:h-12 rounded-full flex items-center justify-center text-sm font-medium transition-all duration-200 flex-shrink-0"
+              style={{
+                backgroundColor: globalIndex === currentTrackIndex ? activeBg : inactiveBg,
+                color: globalIndex === currentTrackIndex ? activeTextColor : inactiveTextColor,
+                cursor: globalIndex === currentTrackIndex ? 'default' : 'pointer'
+              }}
+              onMouseEnter={(e) => {
+                if (globalIndex !== currentTrackIndex) {
+                  e.currentTarget.style.backgroundColor = inactiveHoverBg;
                 }
-              `}
+              }}
+              onMouseLeave={(e) => {
+                if (globalIndex !== currentTrackIndex) {
+                  e.currentTarget.style.backgroundColor = inactiveBg;
+                }
+              }}
               whileHover={globalIndex !== currentTrackIndex ? { scale: 1.05 } : {}}
               whileTap={globalIndex !== currentTrackIndex ? { scale: 0.95 } : {}}
               transition={{
@@ -106,13 +121,22 @@ const TrackSwitcher = ({
                     onTrackChange(globalIndex);
                   }
                 }}
-                className={`
-                  w-10 h-10 sm:w-12 sm:h-12 rounded-full flex items-center justify-center text-sm font-medium transition-all duration-200 flex-shrink-0
-                  ${globalIndex === currentTrackIndex
-                    ? 'bg-black text-white cursor-default'
-                    : 'bg-white text-black hover:bg-gray-100 cursor-pointer'
+                className="w-10 h-10 sm:w-12 sm:h-12 rounded-full flex items-center justify-center text-sm font-medium transition-all duration-200 flex-shrink-0"
+                style={{
+                  backgroundColor: globalIndex === currentTrackIndex ? activeBg : inactiveBg,
+                  color: globalIndex === currentTrackIndex ? activeTextColor : inactiveTextColor,
+                  cursor: globalIndex === currentTrackIndex ? 'default' : 'pointer'
+                }}
+                onMouseEnter={(e) => {
+                  if (globalIndex !== currentTrackIndex) {
+                    e.currentTarget.style.backgroundColor = inactiveHoverBg;
                   }
-                `}
+                }}
+                onMouseLeave={(e) => {
+                  if (globalIndex !== currentTrackIndex) {
+                    e.currentTarget.style.backgroundColor = inactiveBg;
+                  }
+                }}
                 whileHover={globalIndex !== currentTrackIndex ? { scale: 1.05 } : {}}
                 whileTap={globalIndex !== currentTrackIndex ? { scale: 0.95 } : {}}
                 transition={{
@@ -135,13 +159,23 @@ const TrackSwitcher = ({
           <motion.button
             onClick={goToPrevPage}
             disabled={currentPage === 0}
-            className={`
-              w-10 h-10 rounded-full flex items-center justify-center text-base font-medium transition-all duration-200
-              ${currentPage === 0
-                ? `${disabledBg} cursor-not-allowed`
-                : `${inactiveBg} cursor-pointer`
+            className="w-10 h-10 rounded-full flex items-center justify-center text-base font-medium transition-all duration-200"
+            style={{
+              backgroundColor: currentPage === 0 ? disabledBg : inactiveBg,
+              color: currentPage === 0 ? disabledTextColor : inactiveTextColor,
+              cursor: currentPage === 0 ? 'not-allowed' : 'pointer',
+              opacity: currentPage === 0 ? 0.2 : 1
+            }}
+            onMouseEnter={(e) => {
+              if (currentPage > 0) {
+                e.currentTarget.style.backgroundColor = inactiveHoverBg;
               }
-            `}
+            }}
+            onMouseLeave={(e) => {
+              if (currentPage > 0) {
+                e.currentTarget.style.backgroundColor = inactiveBg;
+              }
+            }}
             whileHover={currentPage > 0 ? { scale: 1.05 } : {}}
             whileTap={currentPage > 0 ? { scale: 0.95 } : {}}
             transition={{
@@ -154,7 +188,10 @@ const TrackSwitcher = ({
           </motion.button>
 
           {/* Informace o stránce */}
-          <span className={`text-sm ${textColor} font-medium`}>
+          <span
+            className="text-sm font-medium"
+            style={{ color: textColor }}
+          >
             {currentPage + 1} / {totalPages}
           </span>
 
@@ -162,13 +199,23 @@ const TrackSwitcher = ({
           <motion.button
             onClick={goToNextPage}
             disabled={currentPage === totalPages - 1}
-            className={`
-              w-10 h-10 rounded-full flex items-center justify-center text-base font-medium transition-all duration-200
-              ${currentPage === totalPages - 1
-                ? `${disabledBg} cursor-not-allowed`
-                : `${inactiveBg} cursor-pointer`
+            className="w-10 h-10 rounded-full flex items-center justify-center text-base font-medium transition-all duration-200"
+            style={{
+              backgroundColor: currentPage === totalPages - 1 ? disabledBg : inactiveBg,
+              color: currentPage === totalPages - 1 ? disabledTextColor : inactiveTextColor,
+              cursor: currentPage === totalPages - 1 ? 'not-allowed' : 'pointer',
+              opacity: currentPage === totalPages - 1 ? 0.2 : 1
+            }}
+            onMouseEnter={(e) => {
+              if (currentPage < totalPages - 1) {
+                e.currentTarget.style.backgroundColor = inactiveHoverBg;
               }
-            `}
+            }}
+            onMouseLeave={(e) => {
+              if (currentPage < totalPages - 1) {
+                e.currentTarget.style.backgroundColor = inactiveBg;
+              }
+            }}
             whileHover={currentPage < totalPages - 1 ? { scale: 1.05 } : {}}
             whileTap={currentPage < totalPages - 1 ? { scale: 0.95 } : {}}
             transition={{

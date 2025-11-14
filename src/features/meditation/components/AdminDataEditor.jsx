@@ -4,6 +4,7 @@ import { Edit, Save, Play, Pause, FileAudio, RefreshCw } from 'lucide-react';
 import Waveform from '@components/Waveform';
 import { ref as dbRef, get, set } from 'firebase/database';
 import { database } from '@services/firebase';
+import { useTheme } from '@hooks/useTheme';
 
 /**
  * Komponenta pro editaci admin dat
@@ -15,14 +16,15 @@ const AdminDataEditor = ({
   setStatus,
   isDarkMode
 }) => {
+  const theme = useTheme();
   const [soundFiles, setSoundFiles] = useState([]);
   const [editingDescriptions, setEditingDescriptions] = useState({});
   const [playingPreview, setPlayingPreview] = useState(null);
   const previewAudioRef = useRef(null);
 
-  const cardClasses = isDarkMode
-    ? 'bg-gray-800 border-gray-700 text-white'
-    : 'bg-white border-gray-200 text-gray-900';
+  const cardBg = isDarkMode ? theme.colors.gray[800] : theme.colors.white;
+  const cardBorder = isDarkMode ? theme.colors.gray[700] : theme.colors.gray[200];
+  const cardText = isDarkMode ? theme.colors.white : theme.colors.gray[900];
 
   const loadSoundFiles = async () => {
     setLoading(true);
@@ -150,17 +152,43 @@ const AdminDataEditor = ({
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay: 0.5 }}
-      className={`p-6 rounded-lg border mt-6 ${cardClasses}`}
+      className="p-6 rounded-lg border mt-6"
+      style={{
+        backgroundColor: cardBg,
+        borderColor: cardBorder,
+        color: cardText,
+        borderRadius: theme.borderRadius.lg
+      }}
     >
       <div className="flex justify-between items-center mb-4">
-        <h3 className="text-xl font-semibold flex items-center">
-          <Edit className="mr-2 text-indigo-500" size={24} />
+        <h3
+          className="flex items-center"
+          style={{
+            fontSize: theme.typography.fontSize.xl,
+            fontWeight: theme.typography.fontWeight.semibold
+          }}
+        >
+          <Edit className="mr-2" size={24} style={{ color: theme.colors.indigo[500] }} />
           Editace popisků zvuků
         </h3>
         <button
           onClick={loadSoundFiles}
           disabled={loading}
-          className="px-4 py-2 bg-indigo-500 hover:bg-indigo-600 disabled:bg-gray-400 text-white rounded-lg transition-colors flex items-center"
+          className="px-4 py-2 text-white rounded-lg transition-colors flex items-center"
+          style={{
+            backgroundColor: loading ? theme.colors.gray[400] : theme.colors.indigo[500],
+            borderRadius: theme.borderRadius.lg
+          }}
+          onMouseEnter={(e) => {
+            if (!loading) {
+              e.currentTarget.style.backgroundColor = theme.colors.indigo[600];
+            }
+          }}
+          onMouseLeave={(e) => {
+            if (!loading) {
+              e.currentTarget.style.backgroundColor = theme.colors.indigo[500];
+            }
+          }}
         >
           {loading ? (
             <RefreshCw className="animate-spin mr-2" size={16} />
@@ -172,7 +200,13 @@ const AdminDataEditor = ({
       </div>
 
       {soundFiles.length === 0 ? (
-        <p className="text-gray-500 text-center py-8">
+        <p
+          className="text-center py-8"
+          style={{
+            color: theme.colors.gray[500],
+            fontSize: theme.typography.fontSize.base
+          }}
+        >
           Klikněte na &quot;Načíst zvuky&quot; pro zobrazení seznamu zvuků k editaci popisků.
         </p>
       ) : (
@@ -180,12 +214,22 @@ const AdminDataEditor = ({
           {soundFiles.map((file) => (
             <motion.div
               key={file.id}
-              className={`p-4 rounded-lg border ${
-                isDarkMode ? 'bg-gray-700 border-gray-600' : 'bg-gray-50 border-gray-300'
-              }`}
+              className="p-4 rounded-lg border"
+              style={{
+                backgroundColor: isDarkMode ? theme.colors.gray[700] : theme.colors.gray[50],
+                borderColor: isDarkMode ? theme.colors.gray[600] : theme.colors.gray[300],
+                borderRadius: theme.borderRadius.lg
+              }}
             >
               <div className="mb-3">
-                <div className={`text-sm font-medium mb-1 ${isDarkMode ? 'text-white' : 'text-gray-800'}`}>
+                <div
+                  className="mb-1"
+                  style={{
+                    fontSize: theme.typography.fontSize.sm,
+                    fontWeight: theme.typography.fontWeight.medium,
+                    color: isDarkMode ? theme.colors.white : theme.colors.gray[800]
+                  }}
+                >
                   {file.name}
                 </div>
                 {editingDescriptions[file.fileName] !== undefined ? (
@@ -198,11 +242,14 @@ const AdminDataEditor = ({
                           [file.fileName]: e.target.value
                         }));
                       }}
-                      className={`w-full p-2 rounded border text-sm ${
-                        isDarkMode
-                          ? 'bg-gray-800 border-gray-600 text-white'
-                          : 'bg-white border-gray-300 text-gray-900'
-                      }`}
+                      className="w-full p-2 rounded border text-sm"
+                      style={{
+                        backgroundColor: isDarkMode ? theme.colors.gray[800] : theme.colors.white,
+                        borderColor: isDarkMode ? theme.colors.gray[600] : theme.colors.gray[300],
+                        color: isDarkMode ? theme.colors.white : theme.colors.gray[900],
+                        fontSize: theme.typography.fontSize.sm,
+                        borderRadius: theme.borderRadius.md
+                      }}
                       rows={2}
                       placeholder="Zadejte popisek..."
                     />
@@ -210,7 +257,22 @@ const AdminDataEditor = ({
                       <button
                         onClick={() => saveDescription(file.fileName, editingDescriptions[file.fileName])}
                         disabled={loading}
-                        className="px-3 py-1.5 bg-green-500 hover:bg-green-600 disabled:bg-gray-400 text-white rounded text-sm transition-colors flex items-center"
+                        className="px-3 py-1.5 text-white rounded text-sm transition-colors flex items-center"
+                        style={{
+                          backgroundColor: loading ? theme.colors.gray[400] : theme.colors.green[500],
+                          fontSize: theme.typography.fontSize.sm,
+                          borderRadius: theme.borderRadius.md
+                        }}
+                        onMouseEnter={(e) => {
+                          if (!loading) {
+                            e.currentTarget.style.backgroundColor = theme.colors.green[600];
+                          }
+                        }}
+                        onMouseLeave={(e) => {
+                          if (!loading) {
+                            e.currentTarget.style.backgroundColor = theme.colors.green[500];
+                          }
+                        }}
                       >
                         <Save size={14} className="mr-1" />
                         Uložit
@@ -223,7 +285,18 @@ const AdminDataEditor = ({
                             return next;
                           });
                         }}
-                        className="px-3 py-1.5 bg-gray-500 hover:bg-gray-600 text-white rounded text-sm transition-colors"
+                        className="px-3 py-1.5 text-white rounded text-sm transition-colors"
+                        style={{
+                          backgroundColor: theme.colors.gray[500],
+                          fontSize: theme.typography.fontSize.sm,
+                          borderRadius: theme.borderRadius.md
+                        }}
+                        onMouseEnter={(e) => {
+                          e.currentTarget.style.backgroundColor = theme.colors.gray[600];
+                        }}
+                        onMouseLeave={(e) => {
+                          e.currentTarget.style.backgroundColor = theme.colors.gray[500];
+                        }}
                       >
                         Zrušit
                       </button>
@@ -231,7 +304,13 @@ const AdminDataEditor = ({
                   </div>
                 ) : (
                   <div className="flex items-start justify-between gap-2">
-                    <div className={`text-xs flex-1 ${isDarkMode ? 'text-gray-300' : 'text-gray-600'}`}>
+                    <div
+                      className="flex-1"
+                      style={{
+                        fontSize: theme.typography.fontSize.xs,
+                        color: isDarkMode ? theme.colors.gray[300] : theme.colors.gray[600]
+                      }}
+                    >
                       {file.description || <span className="italic">Žádný popisek</span>}
                     </div>
                     <button
@@ -241,7 +320,18 @@ const AdminDataEditor = ({
                           [file.fileName]: file.description || ''
                         }));
                       }}
-                      className="px-2 py-1 bg-indigo-500 hover:bg-indigo-600 text-white rounded text-xs transition-colors flex items-center"
+                      className="px-2 py-1 text-white rounded text-xs transition-colors flex items-center"
+                      style={{
+                        backgroundColor: theme.colors.indigo[500],
+                        fontSize: theme.typography.fontSize.xs,
+                        borderRadius: theme.borderRadius.md
+                      }}
+                      onMouseEnter={(e) => {
+                        e.currentTarget.style.backgroundColor = theme.colors.indigo[600];
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.backgroundColor = theme.colors.indigo[500];
+                      }}
                     >
                       <Edit size={12} className="mr-1" />
                       Editovat
@@ -259,18 +349,43 @@ const AdminDataEditor = ({
                     globalMax={file.waveformMax}
                     width="100%"
                     height={50}
-                    color={isDarkMode ? "#9ca3af" : "#6b7280"}
+                    color={isDarkMode ? theme.colors.gray[400] : theme.colors.gray[500]}
                   />
                 </div>
                 <button
                   onClick={() => handlePreview(file)}
-                  className={`p-2 rounded-full transition-colors flex items-center justify-center flex-shrink-0 ${
-                    playingPreview === file.fileName
-                      ? 'bg-indigo-600 text-white hover:bg-indigo-700'
+                  className="p-2 rounded-full transition-colors flex items-center justify-center flex-shrink-0"
+                  style={{
+                    backgroundColor: playingPreview === file.fileName
+                      ? theme.colors.indigo[600]
                       : isDarkMode
-                      ? 'bg-gray-600 hover:bg-gray-500 text-white'
-                      : 'bg-gray-200 hover:bg-gray-300 text-gray-700'
-                  }`}
+                      ? theme.colors.gray[600]
+                      : theme.colors.gray[200],
+                    color: playingPreview === file.fileName
+                      ? theme.colors.white
+                      : isDarkMode
+                      ? theme.colors.white
+                      : theme.colors.gray[700],
+                    borderRadius: theme.borderRadius.full
+                  }}
+                  onMouseEnter={(e) => {
+                    if (playingPreview === file.fileName) {
+                      e.currentTarget.style.backgroundColor = theme.colors.indigo[700];
+                    } else if (isDarkMode) {
+                      e.currentTarget.style.backgroundColor = theme.colors.gray[500];
+                    } else {
+                      e.currentTarget.style.backgroundColor = theme.colors.gray[300];
+                    }
+                  }}
+                  onMouseLeave={(e) => {
+                    if (playingPreview === file.fileName) {
+                      e.currentTarget.style.backgroundColor = theme.colors.indigo[600];
+                    } else if (isDarkMode) {
+                      e.currentTarget.style.backgroundColor = theme.colors.gray[600];
+                    } else {
+                      e.currentTarget.style.backgroundColor = theme.colors.gray[200];
+                    }
+                  }}
                   title={playingPreview === file.fileName ? 'Zastavit' : 'Přehrát'}
                   type="button"
                 >

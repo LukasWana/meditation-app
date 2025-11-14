@@ -1,14 +1,16 @@
 import React from 'react';
+import { useTheme } from '@hooks/useTheme';
 
 const CloseButton = ({
   onClose,
   className = "w-12 h-12",
   isDarkMode = false // New prop
 }) => {
-  const bgColor = isDarkMode ? 'bg-white/20' : 'bg-white/30';
-  const borderColor = isDarkMode ? 'border-white/20' : 'border-black/20';
-  const textColor = isDarkMode ? 'text-white' : 'text-black';
-  const hoverBg = isDarkMode ? 'hover:bg-white/30' : 'hover:bg-white/40';
+  const theme = useTheme();
+  const bgColor = isDarkMode ? theme.colors.overlay.white20 : theme.colors.overlay.white30;
+  const borderColor = isDarkMode ? theme.colors.overlay.white20 : theme.colors.overlay.black20;
+  const textColor = isDarkMode ? theme.colors.white : theme.colors.black;
+  const hoverBg = isDarkMode ? theme.colors.overlay.white30 : theme.colors.overlay.white40;
 
   return (
     <button
@@ -19,10 +21,26 @@ const CloseButton = ({
           onClose();
         }
       }}
-      className={`${className} rounded-full ${bgColor} backdrop-blur-sm border ${borderColor} flex items-center justify-center ${hoverBg} transition-colors cursor-pointer z-[100] relative pointer-events-auto`}
+      className={`${className} rounded-full backdrop-blur-sm border flex items-center justify-center transition-colors cursor-pointer relative pointer-events-auto`}
+      style={{
+        backgroundColor: bgColor,
+        borderColor: borderColor,
+        zIndex: theme.zIndex.dropdown
+      }}
+      onMouseEnter={(e) => {
+        e.currentTarget.style.backgroundColor = hoverBg;
+      }}
+      onMouseLeave={(e) => {
+        e.currentTarget.style.backgroundColor = bgColor;
+      }}
       type="button"
     >
-      <span className={`text-2xl font-bold ${textColor} pointer-events-none`}>×</span>
+      <span
+        className="text-2xl font-bold pointer-events-none"
+        style={{ color: textColor }}
+      >
+        ×
+      </span>
     </button>
   );
 };

@@ -1,10 +1,12 @@
 import React from 'react';
 import { motion } from 'framer-motion';
+import { useTheme } from '@hooks/useTheme';
 
 /**
  * Komponenta pro výběr kategorie shaderů
  */
 const ShaderCategorySelector = ({ selectedCategory, onSelect }) => {
+  const theme = useTheme();
 
   const categories = [
     { id: 'shaders', name: 'Shaders', count: 30 }
@@ -29,11 +31,11 @@ const ShaderCategorySelector = ({ selectedCategory, onSelect }) => {
             whileTap={{ scale: 0.98 }}
             onClick={() => onSelect && onSelect(category.id)}
             style={{
-              padding: '24px',
-              backgroundColor: selectedCategory === category.id ? '#000' : 'rgba(255, 255, 255, 0.5)',
+              padding: theme.spacing.lg,
+              backgroundColor: selectedCategory === category.id ? theme.colors.black : theme.colors.overlay.white50,
               border: '2px solid',
-              borderColor: selectedCategory === category.id ? '#000' : 'rgba(0, 0, 0, 0.2)',
-              borderRadius: '8px',
+              borderColor: selectedCategory === category.id ? theme.colors.black : theme.colors.overlay.black20,
+              borderRadius: theme.borderRadius.lg,
               cursor: 'pointer',
               textAlign: 'center',
               transition: 'all 0.2s ease'
@@ -41,18 +43,18 @@ const ShaderCategorySelector = ({ selectedCategory, onSelect }) => {
           >
             <h3
               style={{
-                fontSize: '20px',
-                fontWeight: '600',
-                color: selectedCategory === category.id ? '#fff' : '#000',
-                marginBottom: '8px'
+                fontSize: theme.typography.fontSize.xl,
+                fontWeight: theme.typography.fontWeight.semibold,
+                color: selectedCategory === category.id ? theme.colors.white : theme.colors.black,
+                marginBottom: theme.spacing.sm
               }}
             >
               {category.name}
             </h3>
             <p
               style={{
-                fontSize: '14px',
-                color: selectedCategory === category.id ? 'rgba(255, 255, 255, 0.7)' : '#666',
+                fontSize: theme.typography.fontSize.sm,
+                color: selectedCategory === category.id ? theme.colors.overlay.white70 : theme.colors.gray[600],
                 margin: 0
               }}
             >

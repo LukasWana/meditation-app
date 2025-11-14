@@ -10,6 +10,7 @@ import {
 import { FramerButton } from '@components';
 import { useAnimationConfig } from '@hooks/useAnimationConfig';
 import { useAnimationControl } from '@contexts/AnimationContext';
+import { useTheme } from '@hooks/useTheme';
 import { useAudioAnalysis as useAudioAnalysisHook } from '@hooks/useAudioAnalysis';
 import { useAudioAnalysis as useAudioAnalysisContext } from '@contexts/AudioAnalysisContext';
 import { useShaderSettings } from '@contexts/ShaderSettingsContext';
@@ -35,6 +36,7 @@ const AudioPlayer = ({
 }) => {
   const config = useAnimationConfig();
   const { isActive } = useAnimationControl();
+  const theme = useTheme();
 
   // Hlavní logika komponenty
   const {
@@ -188,9 +190,19 @@ const AudioPlayer = ({
             <FramerButton
               onClick={() => fadeOutAndClose(onClose, 3000)}
               variant="ghost"
-              className="w-12 h-12 rounded-full bg-white/20 backdrop-blur-sm border border-black/10 hover:bg-white/30 flex items-center justify-center p-0"
+              className="w-12 h-12 rounded-full backdrop-blur-sm border flex items-center justify-center p-0"
+              style={{
+                backgroundColor: theme.colors.overlay.white20,
+                borderColor: theme.colors.overlay.black10
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.backgroundColor = theme.colors.overlay.white30;
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.backgroundColor = theme.colors.overlay.white20;
+              }}
             >
-              <ArrowLeft size={20} />
+              <ArrowLeft size={theme.sizes.icon.md} />
             </FramerButton>
           </motion.div>
         </div>

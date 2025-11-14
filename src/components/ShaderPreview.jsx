@@ -8,6 +8,7 @@ import { getCachedShader, cacheShader, getCachedProgram, cacheProgram } from '@u
 import { recordShaderError, recordRecoveryAttempt, recordFallbackUsage } from '@utils/shaderErrorAnalytics';
 import { logDebug, getShaderDebugInfo, isDebugModeEnabled } from '@utils/shaderDebug';
 import { getOptimalDPR } from '@utils/deviceDetection';
+import { useTheme } from '@hooks/useTheme';
 
 /**
  * Komponenta pro statický náhled shaderu
@@ -22,6 +23,7 @@ const ShaderPreview = ({
   onClick,
   intensity = 0.8
 }) => {
+  const theme = useTheme();
   const canvasRef = useRef(null);
   const animationFrameRef = useRef(null);
   const timeRef = useRef(0);
@@ -1009,12 +1011,12 @@ void main() {
         height: size,
         position: 'relative',
         cursor: onClick ? 'pointer' : 'default',
-        border: isSelected ? '3px solid #000' : (isUsingFallback ? '2px solid #ff9800' : '1px solid rgba(0, 0, 0, 0.2)'),
-        borderRadius: '4px',
+        border: isSelected ? `3px solid ${theme.colors.black}` : (isUsingFallback ? `2px solid ${theme.colors.yellow?.[500] || '#ff9800'}` : `1px solid ${theme.colors.overlay.black20}`),
+        borderRadius: theme.borderRadius.md,
         overflow: 'hidden',
-        backgroundColor: '#f4ddc4',
+        backgroundColor: theme.colors.background,
         transition: 'border-color 0.2s ease',
-        boxShadow: isUsingFallback ? '0 0 4px rgba(255, 152, 0, 0.5)' : 'none'
+        boxShadow: isUsingFallback ? `0 0 4px ${theme.colors.yellow?.[500] || '#ff9800'}80` : 'none'
       }}
       title={isUsingFallback ? '⚠️ Using fallback shader - original shader had compilation errors' : undefined}
     >

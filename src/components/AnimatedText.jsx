@@ -2,6 +2,7 @@ import React, { useMemo } from 'react';
 import { motion } from 'framer-motion';
 import { useAnimationConfig } from '@hooks/useAnimationConfig';
 import { useAnimationControl } from '@contexts/AnimationContext';
+import { useTheme } from '@hooks/useTheme';
 
 const AnimatedText = ({
   children,
@@ -11,6 +12,7 @@ const AnimatedText = ({
 }) => {
   const config = useAnimationConfig();
   const { isActive } = useAnimationControl();
+  const theme = useTheme();
 
   const animation = useMemo(() => {
     const baseAnim = config.textAnimations.default;
@@ -28,8 +30,13 @@ const AnimatedText = ({
 
   return (
     <motion.div
-      className={`${className} py-4 leading-loose`}
-      style={style}
+      className={className}
+      style={{
+        ...style,
+        paddingTop: theme.spacing.md,
+        paddingBottom: theme.spacing.md,
+        lineHeight: theme.typography.lineHeight.loose,
+      }}
       initial={isActive ? animation.initial : {}}
       animate={isActive ? animation.animate : {}}
     >

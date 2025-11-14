@@ -5,6 +5,7 @@ import { useShaderSettings } from '@contexts/ShaderSettingsContext';
 import { useAudioAnalysis } from '@contexts/AudioAnalysisContext';
 import { usePlayback } from '@contexts/ShaderPlaybackContext';
 import { shouldUseDarkMode } from '@utils/colorUtils';
+import { useTheme } from '@hooks/useTheme';
 
 const DEBUG_AUDIO_PLAYER_LOGS = false; // Debug logy deaktivovány - příliš mnoho výpisů
 
@@ -15,6 +16,7 @@ const AudioPlayerHudbaScreen = ({
   onTouchEnd,
   onPlayerStateChange
 }) => {
+  const theme = useTheme();
   const { getShaderForSection, getColorForSection } = useShaderSettings();
   const { audioData } = useAudioAnalysis();
   const { transitionState } = usePlayback();
@@ -231,7 +233,7 @@ const AudioPlayerHudbaScreen = ({
 
         {/* Pozadí stránky - průhledné, aby shader prosvítal */}
         <div
-          className="fixed max-w-full bg-[#f4ddc4]"
+          className="fixed max-w-full"
           style={{
             zIndex: 0,
             top: 0,
@@ -239,6 +241,7 @@ const AudioPlayerHudbaScreen = ({
             right: 0,
             bottom: '-20px',
             height: 'calc(100dvh + 20px)',
+            backgroundColor: theme.colors.background,
             opacity: isColorMode ? 1 : 0.3 // Pokud je barva, neprůhledné, jinak průhledné
           }}
         />

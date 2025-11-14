@@ -2,6 +2,7 @@ import React from 'react';
 import { motion } from 'framer-motion';
 import CircularProgress from '@features/audio/components/CircularProgress';
 import { useLanguage } from '@contexts/LanguageContext';
+import { useTheme } from '@hooks/useTheme';
 
 function formatTime(seconds) {
   const mins = Math.floor(seconds / 60);
@@ -28,7 +29,15 @@ const MeditationTimer = ({
   textColors
 }) => {
   const { t } = useLanguage();
+  const theme = useTheme();
   const cycleDuration = breathInDuration + breathOutDuration;
+
+  // Fallback na theme, pokud textColors není poskytnuto
+  const colors = textColors || {
+    primary: theme.colors.black,
+    secondary: theme.colors.gray[700],
+    isDark: false
+  };
 
   return (
     <>
@@ -38,7 +47,13 @@ const MeditationTimer = ({
         {isPlaying && (
           <motion.p
             key={breathPhase}
-            className={`text-2xl font-light ${textColors.secondary}`}
+            className="text-2xl font-light"
+            style={{
+              color: typeof colors.secondary === 'string' && colors.secondary.startsWith('text-')
+                ? theme.colors.gray[700]
+                : colors.secondary || theme.colors.gray[700],
+              fontWeight: theme.typography.fontWeight.light
+            }}
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -10 }}
@@ -73,9 +88,9 @@ const MeditationTimer = ({
                 maxHeight: '350px',
                 minWidth: '220px',
                 minHeight: '220px',
-                background: textColors.isDark
-                  ? 'radial-gradient(circle, rgba(0,0,0,1) 0%, rgba(0,0,0,1) 25%, rgba(0,0,0,1) 25%, rgba(0,0,0,1) 100%)'
-                  : 'radial-gradient(circle, rgba(255,255,255,1) 0%, rgba(255,255,255,1) 25%, rgba(255,255,255,1) 25%, rgba(255,255,255,1) 100%)',
+                background: colors.isDark
+                  ? `radial-gradient(circle, ${theme.colors.black} 0%, ${theme.colors.black} 25%, ${theme.colors.black} 25%, ${theme.colors.black} 100%)`
+                  : `radial-gradient(circle, ${theme.colors.white} 0%, ${theme.colors.white} 25%, ${theme.colors.white} 25%, ${theme.colors.white} 100%)`,
                 transformOrigin: 'center center',
                 position: 'absolute',
                 top: '50%',
@@ -123,7 +138,7 @@ const MeditationTimer = ({
                   cx="225"
                   cy="225"
                   r="200"
-                  stroke={textColors.isDark ? 'rgba(255,255,255,0.15)' : 'rgba(0,0,0,0.15)'}
+                  stroke={colors.isDark ? theme.colors.overlay.white15 : theme.colors.overlay.black15}
                   strokeWidth="6"
                   fill="none"
                 />
@@ -132,7 +147,7 @@ const MeditationTimer = ({
                   cx="225"
                   cy="225"
                   r="200"
-                  stroke={textColors.isDark ? 'rgba(255,255,255,0.4)' : 'rgba(0,0,0,0.4)'}
+                  stroke={colors.isDark ? theme.colors.overlay.white40 : theme.colors.overlay.black20}
                   strokeWidth="6"
                   fill="none"
                   strokeDasharray={`${2 * Math.PI * 200 * (inPhaseProgress / 100)} ${2 * Math.PI * 200}`}
@@ -144,7 +159,7 @@ const MeditationTimer = ({
                   cx="225"
                   cy="225"
                   r="200"
-                  stroke={textColors.isDark ? 'white' : 'black'}
+                  stroke={colors.isDark ? theme.colors.white : theme.colors.black}
                   strokeWidth="8"
                   fill="none"
                   strokeDasharray={`${2 * Math.PI * 200}`}
@@ -166,9 +181,23 @@ const MeditationTimer = ({
  * Komponenta pro zobrazení času meditace
  */
 export const MeditationTimeDisplay = ({ time, textColors }) => {
+  const theme = useTheme();
+  const colors = textColors || {
+    primary: theme.colors.black
+  };
+
   return (
     <div className="mt-6 text-center">
-      <div className={`${textColors.primary} font-medium text-2xl`}>
+      <div
+        className="font-medium text-2xl"
+        style={{
+          color: typeof colors.primary === 'string' && colors.primary.startsWith('text-')
+            ? theme.colors.black
+            : colors.primary || theme.colors.black,
+          fontWeight: theme.typography.fontWeight.medium,
+          fontSize: theme.typography.fontSize['2xl']
+        }}
+      >
         {formatTime(time)}
       </div>
     </div>

@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { X, ArrowDown, ArrowUp, MousePointerClick, CheckCircle, Play, Pause, Clock } from 'lucide-react';
 import { useLanguage } from '@contexts/LanguageContext';
 import { realtimeMetadataService } from '@services/realtimeMetadataService';
+import { useTheme, getCardClasses, getToggleButtonClasses, getOverlayColor } from '@hooks/useTheme';
 import Waveform from './Waveform';
 
 const SoundThemeGallery = ({ isOpen, onClose, onSelectSound, selectedInSound, selectedOutSound, selectedClickSound, selectedFinalSound, selectedCountdownSound }) => {
@@ -13,6 +14,34 @@ const SoundThemeGallery = ({ isOpen, onClose, onSelectSound, selectedInSound, se
   const safeSelectedFinalSound = selectedFinalSound || 'none';
   const safeSelectedCountdownSound = selectedCountdownSound || 'none';
   const { t } = useLanguage();
+  const theme = useTheme();
+  const cardClasses = getCardClasses('default');
+
+  // Helper komponenta pro toggle buttony
+  const ToggleButton = ({ isActive, onClick, children, className = '', ...props }) => {
+    const toggleClasses = getToggleButtonClasses(isActive);
+    return (
+      <button
+        type="button"
+        onClick={onClick}
+        className={`${toggleClasses.className} ${className}`}
+        style={toggleClasses.style}
+        onMouseEnter={toggleClasses.hoverStyle && !isActive ? (e) => {
+          if (e.currentTarget) {
+            Object.assign(e.currentTarget.style, toggleClasses.hoverStyle);
+          }
+        } : undefined}
+        onMouseLeave={toggleClasses.hoverStyle && !isActive ? (e) => {
+          if (e.currentTarget) {
+            Object.assign(e.currentTarget.style, toggleClasses.style);
+          }
+        } : undefined}
+        {...props}
+      >
+        {children}
+      </button>
+    );
+  };
 
   // Funkce pro parsování délky zvuku v sekundách
   const parseDurationToSeconds = (duration) => {
@@ -482,14 +511,22 @@ const SoundThemeGallery = ({ isOpen, onClose, onSelectSound, selectedInSound, se
     <AnimatePresence>
       {isOpen && (
         <motion.div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm"
+          className="fixed inset-0 flex items-center justify-center backdrop-blur-sm"
+          style={{
+            zIndex: theme.zIndex.modal,
+            backgroundColor: getOverlayColor('black', 50)
+          }}
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
           onClick={onClose}
         >
           <motion.div
-            className="bg-[#f4ddc4] w-full max-w-md max-h-[90vh] overflow-y-auto p-4 relative m-4 border border-black/10"
+            className="w-full max-w-md max-h-[90vh] overflow-y-auto p-4 relative m-4 border"
+            style={{
+              backgroundColor: theme.colors.background,
+              borderColor: theme.colors.overlay.black10,
+            }}
             initial={{ scale: 0.9, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
             exit={{ scale: 0.9, opacity: 0 }}
@@ -497,14 +534,28 @@ const SoundThemeGallery = ({ isOpen, onClose, onSelectSound, selectedInSound, se
           >
             {/* Header */}
             <div className="flex items-center justify-between mb-4">
-              <h2 className="text-2xl font-light">
+              <h2
+                style={{
+                  fontSize: theme.typography.fontSize['2xl'],
+                  fontWeight: theme.typography.fontWeight.light
+                }}
+              >
                 {t('vyberteZvuky')}
               </h2>
               <button
                 onClick={onClose}
-                className="p-2 hover:bg-black/10 rounded-full transition-colors"
+                className="p-2 rounded-full transition-colors"
+                style={{
+                  backgroundColor: 'transparent',
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.backgroundColor = getOverlayColor('black', 10);
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.backgroundColor = 'transparent';
+                }}
               >
-                <X size={20} />
+                <X size={theme.sizes.icon.md} />
               </button>
             </div>
 
@@ -515,109 +566,82 @@ const SoundThemeGallery = ({ isOpen, onClose, onSelectSound, selectedInSound, se
                 {categories.length > 0 && (
                   <>
                     {/* Všechny */}
-                    <button
+                    <ToggleButton
+                      isActive={selectedCategory === 'all'}
                       onClick={() => setSelectedCategory('all')}
-                      className={`px-3 py-1.5 rounded-full text-sm transition-colors flex items-center gap-1.5 ${
-                        selectedCategory === 'all'
-                          ? 'bg-black text-white'
-                          : 'bg-white/70 hover:bg-white text-gray-700 border border-black/10'
-                      }`}
-                      type="button"
                     >
                       <span className="hidden sm:inline">Vše</span>
                       <span className="sm:hidden">A</span>
-                    </button>
+                    </ToggleButton>
 
                 {/* Background */}
                 {categories.includes('background') && (
-                  <button
+                  <ToggleButton
+                    isActive={selectedCategory === 'background'}
                     onClick={() => setSelectedCategory('background')}
-                    className={`px-3 py-1.5 rounded-full text-sm transition-colors flex items-center gap-1.5 ${
-                      selectedCategory === 'background'
-                        ? 'bg-black text-white'
-                        : 'bg-white/70 hover:bg-white text-gray-700 border border-black/10'
-                    }`}
-                    type="button"
                     title="Background"
                   >
                     <span className="hidden sm:inline">Background</span>
                     <span className="sm:hidden">BG</span>
-                  </button>
+                  </ToggleButton>
                 )}
 
                 {/* Mnich */}
                 {categories.includes('mnich') && (
-                  <button
+                  <ToggleButton
+                    isActive={selectedCategory === 'mnich'}
                     onClick={() => setSelectedCategory('mnich')}
-                    className={`px-3 py-1.5 rounded-full text-sm transition-colors flex items-center gap-1.5 ${
-                      selectedCategory === 'mnich'
-                        ? 'bg-black text-white'
-                        : 'bg-white/70 hover:bg-white text-gray-700 border border-black/10'
-                    }`}
-                    type="button"
                     title="Mnich"
                   >
                     <span className="hidden sm:inline">Mnich</span>
                     <span className="sm:hidden">MN</span>
-                  </button>
+                  </ToggleButton>
                 )}
 
                 {/* Krátké */}
                 {categories.includes('kratke') && (
-                  <button
+                  <ToggleButton
+                    isActive={selectedCategory === 'kratke'}
                     onClick={() => setSelectedCategory('kratke')}
-                    className={`px-3 py-1.5 rounded-full text-sm transition-colors flex items-center gap-1.5 ${
-                      selectedCategory === 'kratke'
-                        ? 'bg-black text-white'
-                        : 'bg-white/70 hover:bg-white text-gray-700 border border-black/10'
-                    }`}
-                    type="button"
                     title="Krátké zvuky"
                   >
                     <span className="hidden sm:inline">Krátké</span>
                     <span className="sm:hidden">OT/PT</span>
-                  </button>
+                  </ToggleButton>
                 )}
 
                 {/* PT Voice */}
                 {categories.includes('pt_voice') && (
-                  <button
+                  <ToggleButton
+                    isActive={selectedCategory === 'pt_voice'}
                     onClick={() => setSelectedCategory('pt_voice')}
-                    className={`px-3 py-1.5 rounded-full text-sm transition-colors flex items-center gap-1.5 ${
-                      selectedCategory === 'pt_voice'
-                        ? 'bg-black text-white'
-                        : 'bg-white/70 hover:bg-white text-gray-700 border border-black/10'
-                    }`}
-                    type="button"
                     title="PT Voice"
                   >
                     <span className="hidden sm:inline">PT Voice</span>
                     <span className="sm:hidden">PTV</span>
-                  </button>
+                  </ToggleButton>
                 )}
                   </>
                 )}
 
                 {/* Silence - poslední záložka (vždy zobrazena) */}
-                <button
+                <ToggleButton
+                  isActive={selectedCategory === 'silence'}
                   onClick={() => setSelectedCategory('silence')}
-                  className={`px-3 py-1.5 rounded-full text-sm transition-colors flex items-center gap-1.5 ${
-                    selectedCategory === 'silence'
-                      ? 'bg-black text-white'
-                      : 'bg-white/70 hover:bg-white text-gray-700 border border-black/10'
-                  }`}
-                  type="button"
                   title="Silence"
                 >
                   <span className="hidden sm:inline">Silence</span>
                   <span className="sm:hidden">🔇</span>
-                </button>
+                </ToggleButton>
               </div>
             )}
 
             {/* Loading state */}
             {loading && (
-              <div className="text-center py-4 text-gray-600">
+              <div
+                className="text-center py-4"
+                style={{ color: theme.colors.gray[600] }}
+              >
                 <p>{t('loading')}...</p>
               </div>
             )}
@@ -660,18 +684,39 @@ const SoundThemeGallery = ({ isOpen, onClose, onSelectSound, selectedInSound, se
               <div className="mb-4 space-y-3">
                 {/* První položka: Všechny události najednou */}
                 <motion.div
-                  className="bg-white/50 backdrop-blur rounded-lg border border-black/10 p-3 hover:bg-white/70 transition-colors flex flex-col"
+                  className={`${cardClasses} p-3 flex flex-col`}
+                  style={{
+                    backgroundColor: theme.colors.overlay.white50,
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.backgroundColor = theme.colors.overlay.white70;
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.backgroundColor = theme.colors.overlay.white50;
+                  }}
                   whileHover={{ scale: 1.02 }}
                   whileTap={{ scale: 0.98 }}
                   onClick={(e) => e.stopPropagation()}
                 >
                   <div className="w-full mb-2 flex items-center justify-center mt-1">
-                    <div className="w-full h-[50px] flex items-center justify-center bg-gray-100 rounded">
-                      <span className="text-gray-400 text-sm">{t('ziadnyZvuk') || 'Žádný zvuk - všechny události'}</span>
+                    <div
+                      className="w-full flex items-center justify-center rounded"
+                      style={{
+                        height: '50px',
+                        backgroundColor: theme.colors.gray[100],
+                      }}
+                    >
+                      <span
+                        className="text-sm"
+                        style={{ color: theme.colors.gray[400] }}
+                      >
+                        {t('ziadnyZvuk') || 'Žádný zvuk - všechny události'}
+                      </span>
                     </div>
                   </div>
                   <div className="flex items-center gap-1.5 mt-2">
-                    <button
+                    <ToggleButton
+                      isActive={safeSelectedInSound === 'none' && safeSelectedOutSound === 'none' && safeSelectedClickSound === 'none' && safeSelectedFinalSound === 'none' && safeSelectedCountdownSound === 'none'}
                       onClick={(e) => {
                         e.preventDefault();
                         e.stopPropagation();
@@ -681,16 +726,11 @@ const SoundThemeGallery = ({ isOpen, onClose, onSelectSound, selectedInSound, se
                         handleFileSelect('final', 'none');
                         handleFileSelect('countdown', 'none');
                       }}
-                      className={`flex-1 p-2 rounded transition-colors flex items-center justify-center cursor-pointer ${
-                        safeSelectedInSound === 'none' && safeSelectedOutSound === 'none' && safeSelectedClickSound === 'none' && safeSelectedFinalSound === 'none' && safeSelectedCountdownSound === 'none'
-                          ? 'bg-black text-white hover:bg-gray-800'
-                          : 'bg-white/70 hover:bg-white text-gray-700 border border-black/10'
-                      }`}
+                      className="flex-1 p-2 rounded flex items-center justify-center cursor-pointer"
                       title={t('ziadnyZvuk') || 'Žádný zvuk pro všechny'}
-                      type="button"
                     >
-                      <X size={16} />
-                    </button>
+                      <X size={theme.sizes.icon.sm} />
+                    </ToggleButton>
                     <div className="flex-1"></div>
                     <div className="flex-1"></div>
                     <div className="flex-1"></div>
@@ -700,111 +740,106 @@ const SoundThemeGallery = ({ isOpen, onClose, onSelectSound, selectedInSound, se
 
                 {/* Druhá položka: Jednotlivé události */}
                 <motion.div
-                  className="bg-white/50 backdrop-blur rounded-lg border border-black/10 p-3 hover:bg-white/70 transition-colors flex flex-col"
+                  className={`${cardClasses} p-3 flex flex-col`}
+                  style={{
+                    backgroundColor: theme.colors.overlay.white50,
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.backgroundColor = theme.colors.overlay.white70;
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.backgroundColor = theme.colors.overlay.white50;
+                  }}
                   whileHover={{ scale: 1.02 }}
                   whileTap={{ scale: 0.98 }}
                   onClick={(e) => e.stopPropagation()}
                 >
                   <div className="w-full mb-2 flex items-center justify-center mt-1">
-                    <div className="w-full h-[50px] flex items-center justify-center bg-gray-100 rounded">
-                      <span className="text-gray-400 text-sm">{t('zvolteProJednotliveUdalosti') || 'Žádný zvuk pro jednotlivé události'}</span>
+                    <div
+                      className="w-full flex items-center justify-center rounded"
+                      style={{
+                        height: '50px',
+                        backgroundColor: theme.colors.gray[100],
+                      }}
+                    >
+                      <span
+                        className="text-sm"
+                        style={{ color: theme.colors.gray[400] }}
+                      >
+                        {t('zvolteProJednotliveUdalosti') || 'Žádný zvuk pro jednotlivé události'}
+                      </span>
                     </div>
                   </div>
                   <div className="flex items-center gap-1.5 mt-2">
                     {/* Tlačítko nádech - žádný zvuk */}
-                    <button
+                    <ToggleButton
+                      isActive={safeSelectedInSound === 'none'}
                       onClick={(e) => {
                         e.preventDefault();
                         e.stopPropagation();
-                        // if (DEBUG_SOUND_THEME_GALLERY) console.log('🔊 Clicked IN button for: none, Current selected:', safeSelectedInSound);
                         handleFileSelect('in', 'none');
                       }}
-                      className={`flex-1 p-2 rounded transition-colors flex items-center justify-center cursor-pointer ${
-                        safeSelectedInSound === 'none'
-                          ? 'bg-black text-white hover:bg-gray-800'
-                          : 'bg-white/70 hover:bg-white text-gray-700 border border-black/10'
-                      }`}
+                      className="flex-1 p-2 rounded flex items-center justify-center cursor-pointer"
                       title={t('zvolteZvukNadech') || 'Nádech - žádný zvuk'}
-                      type="button"
                     >
-                      <ArrowDown size={16} />
-                    </button>
+                      <ArrowDown size={theme.sizes.icon.sm} />
+                    </ToggleButton>
 
                     {/* Tlačítko výdech - žádný zvuk */}
-                    <button
+                    <ToggleButton
+                      isActive={safeSelectedOutSound === 'none'}
                       onClick={(e) => {
                         e.preventDefault();
                         e.stopPropagation();
-                        // if (DEBUG_SOUND_THEME_GALLERY) console.log('🔊 Clicked OUT button for: none, Current selected:', safeSelectedOutSound);
                         handleFileSelect('out', 'none');
                       }}
-                      className={`flex-1 p-2 rounded transition-colors flex items-center justify-center cursor-pointer ${
-                        safeSelectedOutSound === 'none'
-                          ? 'bg-black text-white hover:bg-gray-800'
-                          : 'bg-white/70 hover:bg-white text-gray-700 border border-black/10'
-                      }`}
+                      className="flex-1 p-2 rounded flex items-center justify-center cursor-pointer"
                       title={t('zvolteZvukVydech') || 'Výdech - žádný zvuk'}
-                      type="button"
                     >
-                      <ArrowUp size={16} />
-                    </button>
+                      <ArrowUp size={theme.sizes.icon.sm} />
+                    </ToggleButton>
 
                     {/* Tlačítko kliknutí - žádný zvuk */}
-                    <button
+                    <ToggleButton
+                      isActive={safeSelectedClickSound === 'none'}
                       onClick={(e) => {
                         e.preventDefault();
                         e.stopPropagation();
-                        // if (DEBUG_SOUND_THEME_GALLERY) console.log('🔊 Clicked CLICK button for: none, Current selected:', safeSelectedClickSound);
                         handleFileSelect('click', 'none');
                       }}
-                      className={`flex-1 p-2 rounded transition-colors flex items-center justify-center cursor-pointer ${
-                        safeSelectedClickSound === 'none'
-                          ? 'bg-black text-white hover:bg-gray-800'
-                          : 'bg-white/70 hover:bg-white text-gray-700 border border-black/10'
-                      }`}
+                      className="flex-1 p-2 rounded flex items-center justify-center cursor-pointer"
                       title={t('zvolteZvukKliknuti') || 'Kliknutí - žádný zvuk'}
-                      type="button"
                     >
-                      <MousePointerClick size={16} />
-                    </button>
+                      <MousePointerClick size={theme.sizes.icon.sm} />
+                    </ToggleButton>
 
                     {/* Tlačítko finální - žádný zvuk */}
-                    <button
+                    <ToggleButton
+                      isActive={safeSelectedFinalSound === 'none'}
                       onClick={(e) => {
                         e.preventDefault();
                         e.stopPropagation();
-                        // if (DEBUG_SOUND_THEME_GALLERY) console.log('🔊 Clicked FINAL button for: none, Current selected:', safeSelectedFinalSound);
                         handleFileSelect('final', 'none');
                       }}
-                      className={`flex-1 p-2 rounded transition-colors flex items-center justify-center cursor-pointer ${
-                        safeSelectedFinalSound === 'none'
-                          ? 'bg-black text-white hover:bg-gray-800'
-                          : 'bg-white/70 hover:bg-white text-gray-700 border border-black/10'
-                      }`}
+                      className="flex-1 p-2 rounded flex items-center justify-center cursor-pointer"
                       title={t('zvolteZvukFinalni') || 'Finální - žádný zvuk'}
-                      type="button"
                     >
-                      <CheckCircle size={16} />
-                    </button>
+                      <CheckCircle size={theme.sizes.icon.sm} />
+                    </ToggleButton>
 
                     {/* Tlačítko odpočítávání - žádný zvuk */}
-                    <button
+                    <ToggleButton
+                      isActive={safeSelectedCountdownSound === 'none'}
                       onClick={(e) => {
                         e.preventDefault();
                         e.stopPropagation();
-                        // if (DEBUG_SOUND_THEME_GALLERY) console.log('🔊 Clicked COUNTDOWN button for: none, Current selected:', safeSelectedCountdownSound);
                         handleFileSelect('countdown', 'none');
                       }}
-                      className={`flex-1 p-2 rounded transition-colors flex items-center justify-center cursor-pointer ${
-                        safeSelectedCountdownSound === 'none'
-                          ? 'bg-black text-white hover:bg-gray-800'
-                          : 'bg-white/70 hover:bg-white text-gray-700 border border-black/10'
-                      }`}
+                      className="flex-1 p-2 rounded flex items-center justify-center cursor-pointer"
                       title={t('zvolteZvukOdpocitavani') || 'Odpočítávání - žádný zvuk'}
-                      type="button"
                     >
-                      <Clock size={16} />
-                    </button>
+                      <Clock size={theme.sizes.icon.sm} />
+                    </ToggleButton>
                   </div>
                 </motion.div>
               </div>

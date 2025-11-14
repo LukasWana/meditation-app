@@ -1,5 +1,101 @@
 import React from 'react';
 import errorMonitoring from '@services/errorMonitoring';
+import { useTheme, getCardClasses } from '@hooks/useTheme';
+
+// Wrapper komponenta pro přístup k theme v class komponentě
+const ErrorBoundaryContent = ({ error, errorInfo, onRetry }) => {
+  const theme = useTheme();
+  const cardClasses = getCardClasses('default');
+
+  return (
+    <div
+      className="min-h-screen flex items-center justify-center p-4"
+      style={{ backgroundColor: theme.colors.background }}
+    >
+      <div className="text-center max-w-md">
+        <div className="mb-8">
+          <h1
+            className="mb-4"
+            style={{
+              fontSize: theme.typography.fontSize['6xl'],
+              fontWeight: theme.typography.fontWeight.light
+            }}
+          >
+            Oops!
+          </h1>
+          <p
+            className="mb-6"
+            style={{
+              fontSize: theme.typography.fontSize.xl,
+              color: theme.colors.gray[700]
+            }}
+          >
+            Něco se pokazilo. Aplikace se pokusí obnovit.
+          </p>
+        </div>
+
+        <div className="space-y-4">
+          <button
+            onClick={() => window.location.reload()}
+            className={`w-full ${cardClasses} px-6 py-3 transition-colors`}
+            style={{ color: theme.colors.gray[700] }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.backgroundColor = theme.colors.overlay.white70;
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.backgroundColor = theme.colors.overlay.white50;
+            }}
+          >
+            Obnovit stránku
+          </button>
+
+          <button
+            onClick={onRetry}
+            className="w-full rounded-lg px-6 py-3 transition-colors text-white"
+            style={{
+              backgroundColor: theme.colors.gray[800],
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.backgroundColor = theme.colors.gray[700];
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.backgroundColor = theme.colors.gray[800];
+            }}
+          >
+            Zkusit znovu
+          </button>
+        </div>
+
+        {import.meta.env.MODE === 'development' && (
+          <details className="mt-8 text-left">
+            <summary
+              className="cursor-pointer hover:opacity-80"
+              style={{
+                fontSize: theme.typography.fontSize.sm,
+                color: theme.colors.gray[600]
+              }}
+            >
+              Technické detaily (pouze pro vývojáře)
+            </summary>
+            <div
+              className="mt-4 p-4 rounded-lg overflow-auto max-h-64"
+              style={{
+                backgroundColor: theme.colors.overlay.white30,
+                fontSize: theme.typography.fontSize.xs,
+                color: theme.colors.gray[600]
+              }}
+            >
+              <pre className="whitespace-pre-wrap">
+                {error && error.toString()}
+                {errorInfo && errorInfo.componentStack}
+              </pre>
+            </div>
+          </details>
+        )}
+      </div>
+    </div>
+  );
+};
 
 class ErrorBoundary extends React.Component {
   constructor(props) {
@@ -26,48 +122,11 @@ class ErrorBoundary extends React.Component {
     if (this.state.hasError) {
       // Fallback UI
       return (
-        <div className="min-h-screen bg-[#f4ddc4] flex items-center justify-center p-4">
-          <div className="text-center max-w-md">
-            <div className="mb-8">
-              <h1 className="text-6xl font-light mb-4">
-                Oops!
-              </h1>
-              <p className="text-xl text-gray-700 mb-6">
-                Něco se pokazilo. Aplikace se pokusí obnovit.
-              </p>
-            </div>
-
-            <div className="space-y-4">
-              <button
-                onClick={() => window.location.reload()}
-                className="w-full bg-white/50 backdrop-blur rounded-lg border border-black/10 px-6 py-3 text-gray-700 hover:bg-white/70 transition-colors"
-              >
-                Obnovit stránku
-              </button>
-
-              <button
-                onClick={() => this.setState({ hasError: false, error: null, errorInfo: null })}
-                className="w-full bg-gray-800 text-white rounded-lg px-6 py-3 hover:bg-gray-700 transition-colors"
-              >
-                Zkusit znovu
-              </button>
-            </div>
-
-            {import.meta.env.MODE === 'development' && (
-              <details className="mt-8 text-left">
-                <summary className="cursor-pointer text-sm text-gray-600 hover:text-gray-800">
-                  Technické detaily (pouze pro vývojáře)
-                </summary>
-                <div className="mt-4 p-4 bg-white/30 rounded-lg text-xs text-gray-600 overflow-auto max-h-64">
-                  <pre className="whitespace-pre-wrap">
-                    {this.state.error && this.state.error.toString()}
-                    {this.state.errorInfo && this.state.errorInfo.componentStack}
-                  </pre>
-                </div>
-              </details>
-            )}
-          </div>
-        </div>
+        <ErrorBoundaryContent
+          error={this.state.error}
+          errorInfo={this.state.errorInfo}
+          onRetry={() => this.setState({ hasError: false, error: null, errorInfo: null })}
+        />
       );
     }
 

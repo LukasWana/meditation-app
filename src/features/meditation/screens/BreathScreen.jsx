@@ -3,6 +3,7 @@ import { AnimatePresence } from 'framer-motion';
 import { FramerPageTransition, BackButton, BackgroundShader } from '@components';
 import { useLanguage } from '@contexts/LanguageContext';
 import { useShaderSettings } from '@contexts/ShaderSettingsContext';
+import { useTheme } from '@hooks/useTheme';
 import { useBreathSounds } from '@hooks';
 import { useBreathPhase } from '@hooks/useBreathPhase';
 import { useCountdownSound } from '@hooks/useCountdownSound';
@@ -39,6 +40,7 @@ const BreathScreen = ({
   breathSoundFadeEnabled
 }) => {
   const { t } = useLanguage();
+  const theme = useTheme();
   const { getShaderForSection } = useShaderSettings();
   const [showPreparationPicker, setShowPreparationPicker] = useState(false);
   const [showDurationPicker, setShowDurationPicker] = useState(false);
@@ -178,14 +180,15 @@ const BreathScreen = ({
       */}
       {/* Pozadí stránky - pod shaderem - průhledné při dýchání, aby shader prosvítal */}
       <div
-        className="fixed max-w-full bg-[#f4ddc4]"
+        className="fixed max-w-full"
         style={{
           zIndex: 0,
           top: 0,
           left: 0,
           right: 0,
           bottom: '-20px',
-          height: 'calc(100dvh + 20px)'
+          height: 'calc(100dvh + 20px)',
+          backgroundColor: theme.colors.background
         }}
       />
 
@@ -204,7 +207,7 @@ const BreathScreen = ({
       {/* Hlavní obsah */}
       <div
         className="min-h-screen w-full max-w-full flex flex-col items-center justify-start px-4 sm:px-6 pb-16 pt-12 overflow-x-hidden overflow-y-auto"
-        style={{ position: 'relative', zIndex: 10, backgroundColor: '#f4ddc4' }}
+        style={{ position: 'relative', zIndex: 10, backgroundColor: theme.colors.background }}
         onTouchStart={onTouchStart}
         onTouchMove={onTouchMove}
         onTouchEnd={onTouchEnd}
