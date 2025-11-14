@@ -20,6 +20,8 @@ import {
   wrapMiniShader,
   addStandardHeader
 } from './miniShaderConverter';
+import errorHandler from './error-handler';
+import { getCachedSource, cacheSource } from './shaderSourceCache';
 
 // Načti všechny mini-shader soubory
 const miniShadersModules = import.meta.glob('/src/assets/mini-shaders/*.glsl', {
@@ -68,14 +70,22 @@ export const getShaderList = () => {
 };
 
 /**
- * Načti obsah shader souboru
+ * Načti obsah shader souboru (s cache)
  */
 export const loadShader = async (shaderPath) => {
+  // Zkus získat z cache
+  const cached = getCachedSource(shaderPath);
+  if (cached) {
+    return cached;
+  }
+
   try {
+    let source = null;
+
     if (shaderPath.includes('mini-shaders')) {
       const module = miniShadersModules[shaderPath];
       if (module) {
-        return await module();
+        source = await module();
       }
     } else if (shaderPath.includes('shaders')) {
       const module = shadersModules[shaderPath];
@@ -84,19 +94,29 @@ export const loadShader = async (shaderPath) => {
         const moduleExports = await module();
         // Pokud je to objekt s default, vezmi default, jinak vezmi přímo
         if (moduleExports && typeof moduleExports === 'object' && 'default' in moduleExports) {
-          return moduleExports.default;
+          source = moduleExports.default;
+        } else if (typeof moduleExports === 'string') {
+          // Pokud je to string, vrať ho přímo
+          source = moduleExports;
+        } else {
+          // Fallback: zkus najít source
+          source = moduleExports?.source || moduleExports;
         }
-        // Pokud je to string, vrať ho přímo
-        if (typeof moduleExports === 'string') {
-          return moduleExports;
-        }
-        // Fallback: zkus najít source
-        return moduleExports?.source || moduleExports;
       }
     }
-    return null;
+
+    // Ulož do cache pokud byl načten
+    if (source) {
+      cacheSource(shaderPath, source);
+    }
+
+    return source;
   } catch (error) {
     console.error('Failed to load shader:', shaderPath, error);
+    errorHandler.handleError(error, {
+      type: 'shader_load_error',
+      shaderPath
+    });
     return null;
   }
 };
@@ -177,9 +197,50 @@ export const convertShaderToWebGL = (shaderCode, shaderPath, isWebGL2 = false) =
     return shaderCode;
   } catch (error) {
     console.error('Error converting shader:', error);
+    errorHandler.handleError(error, {
+      type: 'shader_conversion_error',
+      shaderPath,
+      isWebGL2
+    });
     throw error;
   }
 };
+
+/**
+ * Odstraní všechny varianty #version a precision deklarací z shader kódu
+ * @param {string} code - Shader kód
+ * @returns {string} Kód bez #version a precision deklarací
+ */
+function removeVersionAndPrecision(code) {
+  if (!code || typeof code !== 'string') {
+    return code;
+  }
+
+  let cleaned = code;
+
+  // Odstranit všechny varianty #version (s mezerami, bez mezer, s komentáři, atd.)
+  // Podporuje: #version 300 es, #version 300, #version 330, #version 100, atd.
+  cleaned = cleaned.replace(/^\s*#version\s+[^\n\r]*$/gm, '');
+  cleaned = cleaned.replace(/\r?\n\s*#version\s+[^\n\r]*\r?\n/g, '\n');
+  cleaned = cleaned.replace(/\r?\n\s*#version\s+[^\n\r]*/g, '');
+
+  // Pokud kód začíná #version, odstranit ho
+  if (cleaned.trim().startsWith('#version')) {
+    cleaned = cleaned.replace(/^\s*#version\s+[^\n\r]*\r?\n?/m, '');
+  }
+
+  // Odstranit všechny varianty precision (s mezerami, bez mezer, s různými typy, atd.)
+  // Podporuje: precision mediump float;, precision highp float;, precision lowp float;, atd.
+  cleaned = cleaned.replace(/^\s*precision\s+\w+\s+\w+\s*;?\s*$/gm, '');
+  cleaned = cleaned.replace(/\r?\n\s*precision\s+\w+\s+\w+\s*;?\s*\r?\n/g, '\n');
+  cleaned = cleaned.replace(/\r?\n\s*precision\s+\w+\s+\w+\s*;?\s*/g, '');
+
+  // Vyčistit prázdné řádky na začátku
+  cleaned = cleaned.replace(/^\s*\r?\n+/, '');
+  cleaned = cleaned.replace(/\r?\n\s*\r?\n\s*\r?\n/g, '\n\n');
+
+  return cleaned;
+}
 
 function convertMainImageShader(shaderCode, isWebGL2 = false) {
   let code = shaderCode;
@@ -198,13 +259,8 @@ function convertMainImageShader(shaderCode, isWebGL2 = false) {
     }
   }
 
-  // Odeber #version – přidáme vlastní
-  code = code.replace(/^\s*#version\s+\d+\s*\w*\s*$/gm, '');
-  code = code.replace(/\n\s*#version\s+\d+\s*\w*\s*\n/g, '\n');
-  code = code.replace(/\r?\n\s*#version\s+\d+\s*\w*\s*\r?\n/g, '\n');
-  if (code.trim().startsWith('#version')) {
-    code = code.replace(/^\s*#version\s+\d+\s*\w*\s*\r?\n?/m, '');
-  }
+  // Odeber všechny varianty #version a precision – přidáme vlastní
+  code = removeVersionAndPrecision(code);
 
   // Převod mainImage → main
   code = code.replace(/void\s+mainImage\s*\(\s*out\s+vec4\s+fragColor\s*,\s*in\s+vec2\s+fragCoord\s*\)/g, 'void main()');
@@ -241,10 +297,8 @@ function convertMainImageShader(shaderCode, isWebGL2 = false) {
     code = code.replace(/\bfragColor\b/g, 'gl_FragColor');
   }
 
-  // Odeber existující precision deklarace
-  code = code.replace(/^\s*precision\s+\w+\s+\w+\s*;?\s*$/gm, '');
-  code = code.replace(/\n\s*precision\s+\w+\s+\w+\s*;?\s*\n/g, '\n');
-  code = code.replace(/^\s*\n+/, '');
+  // Ujistit se, že nejsou žádné zbývající #version nebo precision deklarace
+  code = removeVersionAndPrecision(code);
 
   const headerLines = [
     isWebGL2 ? '#version 300 es' : '',
@@ -312,9 +366,8 @@ function convertISFShader(shaderCode, isWebGL2 = false) {
   let code = sanitizeNumberFormats(shaderCode);
   code = sanitizeSyntaxErrors(code);
 
-  // Odeber existující #version a precision deklarace – přidáme vlastní hlavičku
-  code = code.replace(/^\s*#version[^\n]*$/gm, '');
-  code = code.replace(/^\s*precision\s+\w+\s+\w+\s*;?\s*$/gm, '');
+  // Odeber všechny varianty #version a precision deklarace – přidáme vlastní hlavičku
+  code = removeVersionAndPrecision(code);
 
   code = replaceISFVariables(code);
 

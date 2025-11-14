@@ -4,6 +4,7 @@ import { createProgramManager } from '@utils/webgl/programManager';
 import { getWebGLContext, updateContextUsage } from '@utils/webgl/contextManager';
 import { getOptimalDPR, getOptimalFPS, getShaderQuality } from '@utils/deviceDetection';
 import { PlaybackContext } from '@contexts/ShaderPlaybackContext';
+import errorHandler from '@utils/error-handler';
 
 const DEBUG_SHADER_LOGS = false;
 
@@ -670,6 +671,12 @@ void main() {
         } catch (error) {
           const errorMessage = `Failed to convert shader (${effectiveVariant}): ${error?.message || error?.toString() || 'Unknown error'}`;
           console.error('❌ BackgroundShader:', errorMessage, error);
+          errorHandler.handleError(error, {
+            type: 'shader_conversion_error',
+            variant: effectiveVariant,
+            shaderPath,
+            isWebGL2
+          });
           setShaderError(errorMessage);
           return;
         }
@@ -695,6 +702,13 @@ void main() {
         if (error) {
           const errorMessage = `Shader compilation/linking error (${key}):\n${error}`;
           console.error(`❌ BackgroundShader: ${errorMessage}`);
+          errorHandler.handleError(new Error(errorMessage), {
+            type: 'shader_compilation_error',
+            variant: effectiveVariant,
+            programKey: key,
+            isWebGL2,
+            shaderError: error
+          });
           setShaderError(errorMessage);
         } else {
           // Vymaž chybu při úspěšné kompilaci
@@ -706,6 +720,12 @@ void main() {
     if (!programInfo) {
       const errorMessage = `Failed to create shader program for variant: ${effectiveVariant} (key: ${programKey})`;
       console.error(`❌ BackgroundShader: ${errorMessage}`);
+      errorHandler.handleError(new Error(errorMessage), {
+        type: 'shader_program_error',
+        variant: effectiveVariant,
+        programKey,
+        isWebGL2
+      });
       setShaderError(errorMessage);
       return;
     }

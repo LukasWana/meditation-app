@@ -1,17 +1,18 @@
-import React, { useState, useEffect, useRef, Suspense, lazy, useMemo } from 'react';
+import React, { useEffect, useRef, Suspense, lazy, useMemo } from 'react';
 import { motion } from 'framer-motion';
 import { RotateCcw, Image as ImageIcon } from 'lucide-react';
 import { FramerButton, FramerSection, FramerPageTransition, BackButton, BackgroundShader } from '@components';
-import CircularProgress from '@features/audio/components/CircularProgress';
-import PlayPauseButton from '@features/audio/components/PlayPauseButton';
 import { useLanguage } from '@contexts/LanguageContext';
 import { useShaderSettings } from '@contexts/ShaderSettingsContext';
 import { useBreathSounds, useAdaptiveTextColors, useCountdownSound, useFinalSound } from '@hooks';
 import BackgroundSettingsControls from '@features/meditation/components/BackgroundSettingsControls';
+import MeditationTimer, { MeditationTimeDisplay } from '@features/meditation/components/MeditationTimer';
+import MeditationControls from '@features/meditation/components/MeditationControls';
+import MeditationSettings from '@features/meditation/components/MeditationSettings';
+import { useMeditationState } from '@features/meditation/hooks/useMeditationState';
+import CircularProgress from '@features/audio/components/CircularProgress';
 
 // Lazy loading modálů pro lepší performance
-const WheelPickerModal = lazy(() => import('@components/TimePickerModal').then(m => ({ default: m.WheelPickerModal })));
-const DualWheelPickerModal = lazy(() => import('@components/TimePickerModal').then(m => ({ default: m.DualWheelPickerModal })));
 const SoundThemeGallery = lazy(() => import('@components/SoundThemeGallery'));
 
 const BLEND_MODE_TO_CSS = {
@@ -43,17 +44,6 @@ const hexToRgba = (hex, alpha = 1) => {
   return `rgba(${r}, ${g}, ${b}, ${alpha})`;
 };
 
-function formatTime(seconds) {
-  const mins = Math.floor(seconds / 60);
-  const secs = Math.floor(seconds % 60);
-  return `${mins}:${secs.toString().padStart(2, '0')}`;
-}
-
-function formatPreparationTime(seconds) {
-  const mins = Math.floor(seconds / 60);
-  const secs = seconds % 60;
-  return `${mins}:${secs.toString().padStart(2, '0')}`;
-}
 
 const DychaniScreen = ({
   time,
@@ -99,11 +89,31 @@ const DychaniScreen = ({
     return shader || 'dychani';
   }, [shaderSettings]);
 
-  const [showGallery, setShowGallery] = useState(false);
-  const [showDurationPicker, setShowDurationPicker] = useState(false);
-  const [showPreparationPicker, setShowPreparationPicker] = useState(false);
-  const [showRhythmPicker, setShowRhythmPicker] = useState(false);
-  const [breathCycleTime, setBreathCycleTime] = useState(0); // Čas v aktuálním cyklu dýchání (0 až breathInDuration + breathOutDuration)
+  // Použij custom hook pro state management
+  const meditationState = useMeditationState({
+    isPlaying,
+    breathPhase,
+    breathInDuration,
+    breathOutDuration
+  });
+
+  const {
+    showGallery,
+    setShowGallery,
+    showDurationPicker,
+    setShowDurationPicker,
+    showPreparationPicker,
+    setShowPreparationPicker,
+    showRhythmPicker,
+    setShowRhythmPicker,
+    breathCycleTime,
+    breathRhythmProgress,
+    inPhaseProgress,
+    animationDuration,
+    initialScale,
+    minScale,
+    maxScale
+  } = meditationState;
 
   useEffect(() => {
     try {
@@ -162,123 +172,9 @@ const DychaniScreen = ({
     }
   }, [isPlaying, time, breathPhase, breathInDuration, breathOutDuration, playFinalSound, onPlayPause]);
 
-  // Sledování času v cyklu dýchání - synchronizováno s fázemi
-  const phaseStartTimeRef = useRef(Date.now());
-  const previousPhaseRef = useRef(breathPhase);
-  const intervalRef = useRef(null);
-  const breathPhaseRef = useRef(breathPhase);
-
-  useEffect(() => {
-    breathPhaseRef.current = breathPhase;
-  }, [breathPhase]);
-
-  useEffect(() => {
-    if (!isPlaying) {
-      setBreathCycleTime(0);
-      if (intervalRef.current) {
-        clearInterval(intervalRef.current);
-        intervalRef.current = null;
-      }
-      return;
-    }
-
-    // Pokud se změnila fáze, resetuj čas začátku fáze
-    if (previousPhaseRef.current !== breathPhase) {
-      // Zastav předchozí interval, pokud běží
-      if (intervalRef.current) {
-        clearInterval(intervalRef.current);
-        intervalRef.current = null;
-      }
-
-      phaseStartTimeRef.current = Date.now();
-      previousPhaseRef.current = breathPhase;
-
-      // Pokud začínáme nový cyklus (nádech), resetuj čas cyklu
-      if (breathPhase === 'in') {
-        setBreathCycleTime(0);
-      } else {
-        // Pokud začíná výdech, nastav čas na začátek výdechové části
-        setBreathCycleTime(breathInDuration);
-      }
-    }
-
-    // Vyčisti předchozí interval
-    if (intervalRef.current) {
-      clearInterval(intervalRef.current);
-      intervalRef.current = null;
-    }
-
-    const cycleDuration = breathInDuration + breathOutDuration;
-
-    intervalRef.current = setInterval(() => {
-      // Použij ref pro breathPhase, aby interval viděl aktuální hodnotu
-      const currentPhase = breathPhaseRef.current;
-      const now = Date.now();
-      const elapsed = (now - phaseStartTimeRef.current) / 1000; // sekundy
-
-      // DŮLEŽITÉ: Omezíme elapsed na délku fáze - když dosáhne maxima, zastavíme výpočet
-      const currentPhaseDuration = currentPhase === 'in' ? breathInDuration : breathOutDuration;
-      if (elapsed >= currentPhaseDuration) {
-        // Fáze dosáhla maximální délky - nastav finální hodnotu a zastav interval
-        if (currentPhase === 'in') {
-          setBreathCycleTime(breathInDuration);
-        } else {
-          setBreathCycleTime(cycleDuration);
-        }
-        if (intervalRef.current) {
-          clearInterval(intervalRef.current);
-          intervalRef.current = null;
-        }
-        return;
-      }
-
-      if (currentPhase === 'in') {
-        // Během nádechu: čas cyklu = elapsed (0 až breathInDuration)
-        setBreathCycleTime(elapsed);
-      } else {
-        // Během výdechu: čas cyklu = breathInDuration + elapsed (breathInDuration až cycleDuration)
-        setBreathCycleTime(breathInDuration + elapsed);
-      }
-    }, 100);
-
-    return () => {
-      if (intervalRef.current) {
-        clearInterval(intervalRef.current);
-        intervalRef.current = null;
-      }
-    };
-  }, [isPlaying, breathPhase, breathInDuration, breathOutDuration]);
-
   // Vypočítat progress pro CircularProgress (0-100)
   const totalTime = selectedDuration * 60; // v sekundách
   const progress = totalTime > 0 ? ((totalTime - time) / totalTime) * 100 : 0;
-
-  // Vypočítat progress pro rytmus dýchání (vnitřní kruhový ukazatel)
-  const cycleDuration = breathInDuration + breathOutDuration;
-  const breathRhythmProgress = isPlaying && cycleDuration > 0 ? (breathCycleTime / cycleDuration) * 100 : 0;
-
-  // Pro výpočet, kde jsme v cyklu (nádech nebo výdech část)
-  const inPhaseProgress = cycleDuration > 0 ? (breathInDuration / cycleDuration) * 100 : 50; // Procenta pro nádech část
-
-  // Rozsah zvětšení/zmenšení kolečka pro animaci dýchání
-  const minScale = 0.55;
-  const maxScale = 1.25; // Zmenšeno z 1.45, aby nezasahovalo do textových prvků
-
-  // Délka trvání animace podle aktuální fáze dýchání - navázáno na rytmus dýchání
-  const animationDuration = useMemo(() => {
-    if (!isPlaying) {
-      return 0.3;
-    }
-    return breathPhase === 'in' ? breathInDuration : breathOutDuration;
-  }, [isPlaying, breathPhase, breathInDuration, breathOutDuration]);
-
-  // Počáteční scale pro aktuální fázi
-  const initialScale = useMemo(() => {
-    if (!isPlaying) {
-      return 1;
-    }
-    return breathPhase === 'in' ? minScale : maxScale;
-  }, [isPlaying, breathPhase]);
 
   const colorOverride = getColorForSection('dychani');
   const overlayConfig = getOverlaySettings('dychani') || {};
@@ -307,6 +203,7 @@ const DychaniScreen = ({
   // Debug logování
   useEffect(() => {
     if (isPlaying) {
+      const cycleDuration = breathInDuration + breathOutDuration;
       console.log('🔵 Breath Rhythm:', {
         breathPhase,
         breathCycleTime: breathCycleTime.toFixed(2),
@@ -317,7 +214,7 @@ const DychaniScreen = ({
         breathOutDuration
       });
     }
-  }, [isPlaying, breathPhase, breathCycleTime, cycleDuration, breathRhythmProgress, inPhaseProgress, breathInDuration, breathOutDuration]);
+  }, [isPlaying, breathPhase, breathCycleTime, breathRhythmProgress, inPhaseProgress, breathInDuration, breathOutDuration]);
 
   // Pokud probíhá příprava, zobraz odpočítávání přípravy
   if (isPreparing) {
@@ -515,289 +412,32 @@ const DychaniScreen = ({
             animationType="scaleIn"
             delay={0.2}
           >
-            {/* Title a Duration nad CircularProgress */}
-            <div className="mb-6 z-10 w-full flex flex-col items-center space-y-0">
-              {/* Textový indikátor fáze dýchání */}
-              {isPlaying && (
-                <motion.p
-                  key={breathPhase}
-                  className={`text-2xl font-light ${textColors.secondary}`}
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -10 }}
-                  transition={{ duration: 0.3 }}
-                >
-                  {breathPhase === 'in' ? t('nadech') : t('vydech')}
-                </motion.p>
-              )}
-            </div>
-
-            {/* CircularProgress s Play/Pause Button - všechny kruhové prvky zarovnané vertikálně */}
             <div className="relative flex-shrink-0 flex items-center justify-center" style={{ isolation: 'isolate', overflow: 'visible', width: '50vw', height: '50vw', maxWidth: '400px', maxHeight: '400px', minWidth: '250px', minHeight: '250px', margin: '0 auto' }}>
-              {/* Dýchací animace během meditace - SPODNÍ vrstva - pod kruhovým ukazatelem */}
-              {isPlaying && (
-                <div
-                  className="absolute inset-0 flex items-center justify-center pointer-events-none"
-                  style={{
-                    zIndex: 0,
-                    isolation: 'isolate',
-                    transform: 'translateZ(0)', // Force hardware acceleration and create stacking context
-                    overflow: 'visible'
-                  }}
-                >
-                  {/* Animace kolečka - nafukuje se při nádechu, vyfukuje při výdechu */}
-                  {/* Barvy: světlý režim = bílá, tmavý režim = černá/tmavá */}
-                  <motion.div
-                    key={breathPhase}
-                    className="rounded-full"
-                    style={{
-                      width: '45vw',
-                      height: '45vw',
-                      maxWidth: '350px',
-                      maxHeight: '350px',
-                      minWidth: '220px',
-                      minHeight: '220px',
-                      background: textColors.isDark
-                        ? 'radial-gradient(circle, rgba(0,0,0,1) 0%, rgba(0,0,0,1) 25%, rgba(0,0,0,1) 25%, rgba(0,0,0,1) 100%)'
-                        : 'radial-gradient(circle, rgba(255,255,255,1) 0%, rgba(255,255,255,1) 25%, rgba(255,255,255,1) 25%, rgba(255,255,255,1) 100%)',
-                      transformOrigin: 'center center',
-                      position: 'absolute',
-                      top: '50%',
-                      left: '50%',
-                      zIndex: 0,
-                      willChange: 'transform' // Optimize animation performance
-                    }}
-                    initial={{
-                      scale: initialScale,
-                      x: '-50%',
-                      y: '-50%'
-                    }}
-                    animate={{
-                      scale: breathPhase === 'in' ? maxScale : minScale,
-                      x: '-50%',
-                      y: '-50%'
-                    }}
-                    exit={{ opacity: 0 }}
-                    transition={{
-                      duration: animationDuration,
-                      ease: 'easeInOut'
-                    }}
-                  />
-                </div>
-              )}
-
-              {/* CircularProgress - nad animací - vytvoří nový stacking context s vyšším z-index */}
-              <div className="absolute inset-0 flex items-center justify-center" style={{ zIndex: 10, isolation: 'isolate', transform: 'translateZ(0)' }}>
-                <CircularProgress
-                  progress={progress}
-                  onSeek={null} // Pro meditaci nepotřebujeme seek
-                  className="w-[50vw] h-[50vw] max-w-[400px] max-h-[400px] min-w-[250px] min-h-[250px]"
-                  style={{ position: 'relative', zIndex: 10 }}
-                />
-                {/* Vnitřní kruhový ukazatel pro rytmus dýchání - adaptivní barvy podle dark mode */}
-                {isPlaying && cycleDuration > 0 && (
-                  <div className="absolute inset-0 flex items-center justify-center pointer-events-none" style={{ zIndex: 1 }}>
-                    <svg
-                      className="w-[40vw] h-[40vw] max-w-[320px] max-h-[320px] min-w-[200px] min-h-[200px] transform -rotate-90"
-                      viewBox="0 0 450 450"
-                      style={{ aspectRatio: '1/1' }}
-                    >
-                      {/* Pozadí - celý kruh */}
-                      <circle
-                        cx="225"
-                        cy="225"
-                        r="200"
-                        stroke={textColors.isDark ? 'rgba(255,255,255,0.15)' : 'rgba(0,0,0,0.15)'}
-                        strokeWidth="6"
-                        fill="none"
-                      />
-                      {/* Nádech část - zvýrazněná podle poměru */}
-                      <circle
-                        cx="225"
-                        cy="225"
-                        r="200"
-                        stroke={textColors.isDark ? 'rgba(255,255,255,0.4)' : 'rgba(0,0,0,0.4)'}
-                        strokeWidth="6"
-                        fill="none"
-                        strokeDasharray={`${2 * Math.PI * 200 * (inPhaseProgress / 100)} ${2 * Math.PI * 200}`}
-                        strokeDashoffset="0"
-                        style={{ strokeLinecap: 'butt' }}
-                      />
-                      {/* Progress - aktuální pozice v cyklu */}
-                      <motion.circle
-                        cx="225"
-                        cy="225"
-                        r="200"
-                        stroke={textColors.isDark ? 'white' : 'black'}
-                        strokeWidth="8"
-                        fill="none"
-                        strokeDasharray={`${2 * Math.PI * 200}`}
-                        strokeDashoffset={`${2 * Math.PI * 200 * (1 - breathRhythmProgress / 100)}`}
-                        style={{ strokeLinecap: 'round' }}
-                        transition={{ duration: 0.1 }}
-                      />
-                    </svg>
-                  </div>
-                )}
-              </div>
-
-              {/* Play/Pause Button - Center */}
-              {/* Pro sekci dýchání:
-                  - Bílá animace (světlý režim) → černé tlačítko s bílou ikonou
-                  - Černá animace (tmavý režim) → bílé tlačítko s černou ikonou */}
-              <div
-                className="absolute inset-0 flex items-center justify-center pointer-events-none"
-                style={{
-                  zIndex: 30,
-                  isolation: 'isolate'
-                }}
-              >
-                <PlayPauseButton
-                  isPlaying={isPlaying}
-                  onToggle={onPlayPause}
-                  className="w-[18vw] h-[18vw] max-w-[120px] max-h-[120px] min-w-[80px] min-h-[80px] sm:w-[16vw] sm:h-[16vw] sm:max-w-[140px] sm:max-h-[140px] sm:min-w-[100px] sm:min-h-[100px]"
-                  isDarkMode={textColors.isDark}
-                />
-              </div>
+              <MeditationTimer
+                time={time}
+                selectedDuration={selectedDuration}
+                isPlaying={isPlaying}
+                breathPhase={breathPhase}
+                progress={progress}
+                breathCycleTime={breathCycleTime}
+                breathInDuration={breathInDuration}
+                breathOutDuration={breathOutDuration}
+                breathRhythmProgress={breathRhythmProgress}
+                inPhaseProgress={inPhaseProgress}
+                animationDuration={animationDuration}
+                initialScale={initialScale}
+                minScale={minScale}
+                maxScale={maxScale}
+                textColors={textColors}
+              />
+              <MeditationControls
+                isPlaying={isPlaying}
+                onPlayPause={onPlayPause}
+                textColors={textColors}
+              />
             </div>
-
-            {/* Current Time Display - pod CircularProgress */}
-            <div className="mt-6 text-center">
-              <div className={`${textColors.primary} font-medium text-2xl`}>
-                {formatTime(time)}
-              </div>
-            </div>
+            <MeditationTimeDisplay time={time} textColors={textColors} />
           </FramerSection>
-
-          {/* Info o délce dýchání a rytmu - zobraz při přehrávání */}
-          {isPlaying && (
-            <FramerSection
-              className="mb-12"
-              animationType="fadeIn"
-              delay={0.3}
-            >
-              <div className="flex justify-center items-start gap-8 md:gap-12 mb-4">
-                <div className="flex flex-col items-center">
-                  <div className={`text-4xl md:text-5xl font-sans font-medium ${textColors.secondary} mb-1`}>
-                    {selectedDuration}
-                  </div>
-                  <span className={`text-base md:text-lg font-serif ${textColors.secondary} font-light`}>
-                    {t('dlzkaDychania') || 'délka'}
-                  </span>
-                </div>
-
-                <div className="flex flex-col items-center">
-                  <div className={`text-4xl md:text-5xl font-sans font-medium ${textColors.secondary} mb-1`}>
-                    {breathInDuration} : {breathOutDuration}
-                  </div>
-                  <span className={`text-base md:text-lg font-serif ${textColors.secondary} font-light`}>
-                    {t('rytmus') || 'rytmus'}
-                  </span>
-                </div>
-              </div>
-            </FramerSection>
-          )}
-
-          {!isPlaying && (
-            <FramerSection
-              className="mb-12"
-              animationType="fadeIn"
-              delay={0.3}
-            >
-              <div className="flex justify-center items-start gap-8 md:gap-12 mb-4">
-                <div className="flex flex-col items-center">
-                  <button
-                    onClick={() => setShowPreparationPicker(true)}
-                    className={`text-4xl md:text-5xl font-sans font-medium ${textColors.secondary} ${textColors.isDark ? 'hover:text-white' : 'hover:text-black'} transition-colors cursor-pointer mb-1`}
-                  >
-                    {formatPreparationTime(preparationTime)}
-                  </button>
-                  <span className={`text-base md:text-lg font-serif ${textColors.secondary} font-light`}>
-                    {t('priprava') || 'příprava'}
-                  </span>
-                </div>
-
-                <div className="flex flex-col items-center">
-                  <button
-                    onClick={() => setShowDurationPicker(true)}
-                    className={`text-4xl md:text-5xl font-sans font-medium ${textColors.secondary} ${textColors.isDark ? 'hover:text-white' : 'hover:text-black'} transition-colors cursor-pointer mb-1`}
-                  >
-                    {selectedDuration}
-                  </button>
-                  <span className={`text-base md:text-lg font-serif ${textColors.secondary} font-light`}>
-                    {t('dlzkaDychania') || 'délka'}
-                  </span>
-                </div>
-
-                <div className="flex flex-col items-center">
-                  <button
-                    onClick={() => setShowRhythmPicker(true)}
-                    className={`text-4xl md:text-5xl font-sans font-medium ${textColors.secondary} ${textColors.isDark ? 'hover:text-white' : 'hover:text-black'} transition-colors cursor-pointer mb-1`}
-                  >
-                    {breathInDuration} : {breathOutDuration}
-                  </button>
-                  <span className={`text-base md:text-lg font-serif ${textColors.secondary} font-light`}>
-                    {t('rytmus') || 'rytmus'}
-                  </span>
-                </div>
-              </div>
-
-              {(showDurationPicker || showGallery || showPreparationPicker || showRhythmPicker) && (
-                <Suspense fallback={null}>
-                  {showPreparationPicker && (
-                    <WheelPickerModal
-                      isOpen={showPreparationPicker}
-                      onClose={() => setShowPreparationPicker(false)}
-                      value={preparationTime}
-                      onChange={(value) => {
-                        onPreparationTimeChange?.(value);
-                      }}
-                      min={0}
-                      max={60}
-                      step={1}
-                      label={t('sekund')}
-                      title={t('priprava') || 'příprava'}
-                    />
-                  )}
-
-                  {showDurationPicker && (
-                    <WheelPickerModal
-                      isOpen={showDurationPicker}
-                      onClose={() => setShowDurationPicker(false)}
-                      value={selectedDuration}
-                      onChange={onDurationChange}
-                      min={1}
-                      max={60}
-                      step={1}
-                      label={t('dlzkaDychania')}
-                      title={t('dlzkaDychania')}
-                    />
-                  )}
-
-                  {showRhythmPicker && (
-                    <DualWheelPickerModal
-                      isOpen={showRhythmPicker}
-                      onClose={() => setShowRhythmPicker(false)}
-                      leftValue={breathInDuration}
-                      rightValue={breathOutDuration}
-                      onChange={(inValue, outValue) => {
-                        onBreathRhythmChange?.(inValue, outValue);
-                      }}
-                      leftLabel={t('nadech') || 'nádech'}
-                      rightLabel={t('vydech') || 'výdech'}
-                      leftMin={1}
-                      leftMax={20}
-                      leftStep={1}
-                      rightMin={1}
-                      rightMax={20}
-                      rightStep={1}
-                      title={t('rytmusDychania') || 'rytmus dýchání'}
-                    />
-                  )}
-                </Suspense>
-              )}
-            </FramerSection>
-          )}
 
           {/* Tlačítka Reset a Gallery - zobraz pouze když NEPROBÍHÁ přehrávání */}
           {!isPlaying && (
@@ -822,6 +462,27 @@ const DychaniScreen = ({
               </FramerButton>
             </FramerSection>
           )}
+
+          <MeditationSettings
+            isPlaying={isPlaying}
+            selectedDuration={selectedDuration}
+            breathInDuration={breathInDuration}
+            breathOutDuration={breathOutDuration}
+            preparationTime={preparationTime}
+            showDurationPicker={showDurationPicker}
+            showPreparationPicker={showPreparationPicker}
+            showRhythmPicker={showRhythmPicker}
+            onShowDurationPicker={() => setShowDurationPicker(true)}
+            onShowPreparationPicker={() => setShowPreparationPicker(true)}
+            onShowRhythmPicker={() => setShowRhythmPicker(true)}
+            onHideDurationPicker={() => setShowDurationPicker(false)}
+            onHidePreparationPicker={() => setShowPreparationPicker(false)}
+            onHideRhythmPicker={() => setShowRhythmPicker(false)}
+            onDurationChange={onDurationChange}
+            onBreathRhythmChange={onBreathRhythmChange}
+            onPreparationTimeChange={onPreparationTimeChange}
+            textColors={textColors}
+          />
 
           <FramerSection
             className="w-full flex justify-center mt-10 mb-6"

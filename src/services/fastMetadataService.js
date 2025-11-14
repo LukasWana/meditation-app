@@ -6,6 +6,8 @@ import log from './logger';
 import { parseAudioFileName } from '@utils/hudbaParser';
 import { realtimeMetadataService } from './realtimeMetadataService';
 import { staticMetadataService } from './staticMetadataService';
+import errorHandler from '@utils/error-handler';
+import { deduplicateRequest } from '@utils/metadataRequestManager';
 
 class FastMetadataService {
   constructor() {
@@ -148,7 +150,12 @@ class FastMetadataService {
 
       log.info('🚀 Loading metadata snapshot from Realtime Database...');
 
-      const realtimeMetadata = await realtimeMetadataService.getAllMetadata();
+      // Použij deduplication pro getAllMetadata request
+      const realtimeMetadata = await deduplicateRequest(
+        'all-metadata',
+        () => realtimeMetadataService.getAllMetadata(),
+        'realtime'
+      );
 
       this.metadata.clear();
 
@@ -234,6 +241,11 @@ class FastMetadataService {
         log.debug(`✅ Cover image processed: ${file.name}`);
       } catch (error) {
         log.warn(`Failed to process image ${file.name}:`, error);
+        errorHandler.handleError(error, {
+          type: 'metadata_image_processing_error',
+          fileName: file.name,
+          folder: file.folder
+        });
       }
     }
 
@@ -246,6 +258,11 @@ class FastMetadataService {
         this.metadata.set(metadata.fileName, metadata);
       } catch (error) {
         log.warn(`Failed to process file ${file.name}:`, error);
+        errorHandler.handleError(error, {
+          type: 'metadata_audio_processing_error',
+          fileName: file.name,
+          folder: file.folder
+        });
       }
     }
 
@@ -258,6 +275,11 @@ class FastMetadataService {
         this.metadata.set(metadata.fileName, metadata);
       } catch (error) {
         log.warn(`Failed to process dychani file ${file.name}:`, error);
+        errorHandler.handleError(error, {
+          type: 'metadata_dychani_processing_error',
+          fileName: file.name,
+          folder: file.folder
+        });
       }
     }
 

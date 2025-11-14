@@ -103,7 +103,12 @@ function extractLocations(gl, program) {
  */
 export function createProgramManager() {
   const state = {
-    programs: {}, // Key: string, Value: { program, uniforms, attribs }
+    programs: {}, // Key: string, Value: { program, uniforms, attribs, lastUsed, useCount }
+    stats: {
+      hits: 0,
+      misses: 0,
+      total: 0
+    }
   };
 
   return {
@@ -123,6 +128,11 @@ export function createProgramManager() {
       if (cached) {
         // Verify program is still valid
         if (gl.isProgram(cached.program)) {
+          // Aktualizuj statistiky a tracking použití
+          cached.lastUsed = Date.now();
+          cached.useCount = (cached.useCount || 0) + 1;
+          state.stats.hits++;
+          state.stats.total++;
           onError(key, null); // Clear any previous errors
           return cached;
         } else {
@@ -130,6 +140,10 @@ export function createProgramManager() {
           delete state.programs[key];
         }
       }
+
+      // Cache miss
+      state.stats.misses++;
+      state.stats.total++;
 
       // Compile shaders
       const vertexShader = compileShader(
@@ -163,6 +177,9 @@ export function createProgramManager() {
 
       // Extract locations and cache
       const programInfo = extractLocations(gl, program);
+      // Přidej tracking informace
+      programInfo.lastUsed = Date.now();
+      programInfo.useCount = 1;
       state.programs[key] = programInfo;
       onError(key, null); // Clear errors on success
 
@@ -200,6 +217,53 @@ export function createProgramManager() {
      */
     getState() {
       return state;
+    },
+
+    /**
+     * Gets cache statistics
+     * @returns {Object} Cache statistics
+     */
+    getStats() {
+      const hitRate = state.stats.total > 0
+        ? (state.stats.hits / state.stats.total * 100).toFixed(2)
+        : 0;
+
+      return {
+        programCount: Object.keys(state.programs).length,
+        hits: state.stats.hits,
+        misses: state.stats.misses,
+        total: state.stats.total,
+        hitRate: `${hitRate}%`,
+        programs: Object.entries(state.programs).map(([key, value]) => ({
+          key,
+          useCount: value.useCount || 0,
+          lastUsed: Date.now() - (value.lastUsed || Date.now()),
+          age: Date.now() - (value.createdAt || Date.now())
+        }))
+      };
+    },
+
+    /**
+     * Cleans up least recently used programs (LRU)
+     * @param {number} maxSize - Maximum number of programs to keep
+     */
+    cleanupLRU(maxSize = 20) {
+      const entries = Object.entries(state.programs);
+      if (entries.length <= maxSize) {
+        return;
+      }
+
+      // Seřaď podle posledního použití
+      entries.sort((a, b) => (a[1].lastUsed || 0) - (b[1].lastUsed || 0));
+
+      // Odstraň nejstarší programy
+      const toRemove = entries.length - maxSize;
+      for (let i = 0; i < toRemove; i++) {
+        const [key] = entries[i];
+        delete state.programs[key];
+      }
+
+      console.log(`🧹 cleanupLRU: Vyčištěno ${toRemove} programů z cache`);
     },
   };
 }

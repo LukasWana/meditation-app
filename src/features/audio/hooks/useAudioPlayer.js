@@ -3,6 +3,7 @@ import cacheService from '@services/cacheServiceRefactored';
 import log from '@services/logger';
 import globalMetadataPreloader from '@services/globalMetadataPreloader';
 import offlineCacheService from '@services/offlineCacheService';
+import errorHandler from '@utils/error-handler';
 import { useAutoplay } from './useAutoplay';
 
 export const useAudioPlayer = (audioUrl, albumTracks = null, currentTrackIndex = 0, onTrackChange = null, autoplayEnabled = true) => {
@@ -127,6 +128,11 @@ export const useAudioPlayer = (audioUrl, albumTracks = null, currentTrackIndex =
         }
       } catch (error) {
         log.error('❌ Error loading from cache:', error);
+        errorHandler.handleError(error, {
+          type: 'audio_cache_error',
+          audioUrl,
+          fileName: extractFileNameFromUrl(audioUrl)
+        });
         setCachedAudioUrl(null);
       } finally {
         setIsLoadingFromCache(false);
@@ -277,13 +283,20 @@ export const useAudioPlayer = (audioUrl, albumTracks = null, currentTrackIndex =
 
     // Přidej event listener pro error handling
     const handleError = (event) => {
+      const error = event.error || new Error(event.error?.message || 'Audio loading failed');
       log.error('🎵 Audio loading error:', event);
+      errorHandler.handleError(error, {
+        type: 'audio_loading_error',
+        audioUrl,
+        eventType: event.type,
+        errorCode: event.error?.code
+      });
       setPlaybackState(prev => ({
         ...prev,
         isLoading: false,
         // Nezměň duration při chybě - zachovej existující hodnotu
         hasError: true,
-        errorMessage: event.error?.message || 'Audio loading failed'
+        errorMessage: error.message || 'Audio loading failed'
       }));
     };
 

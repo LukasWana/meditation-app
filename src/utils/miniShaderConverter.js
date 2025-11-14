@@ -186,19 +186,66 @@ void main() {
  * @param {string} helpers - Helper funkce
  * @returns {string} Opravený kód
  */
+/**
+ * Odstraní všechny varianty #version a precision deklarací z shader kódu
+ * @param {string} code - Shader kód
+ * @returns {string} Kód bez #version a precision deklarací
+ */
+function removeVersionAndPrecision(code) {
+  if (!code || typeof code !== 'string') {
+    return code;
+  }
+
+  let cleaned = code;
+
+  // Odstranit všechny varianty #version (s mezerami, bez mezer, s komentáři, atd.)
+  cleaned = cleaned.replace(/^\s*#version\s+[^\n\r]*$/gm, '');
+  cleaned = cleaned.replace(/\r?\n\s*#version\s+[^\n\r]*\r?\n/g, '\n');
+  cleaned = cleaned.replace(/\r?\n\s*#version\s+[^\n\r]*/g, '');
+
+  // Pokud kód začíná #version, odstranit ho
+  if (cleaned.trim().startsWith('#version')) {
+    cleaned = cleaned.replace(/^\s*#version\s+[^\n\r]*\r?\n?/m, '');
+  }
+
+  // Odstranit všechny varianty precision (s mezerami, bez mezer, s různými typy, atd.)
+  cleaned = cleaned.replace(/^\s*precision\s+\w+\s+\w+\s*;?\s*$/gm, '');
+  cleaned = cleaned.replace(/\r?\n\s*precision\s+\w+\s+\w+\s*;?\s*\r?\n/g, '\n');
+  cleaned = cleaned.replace(/\r?\n\s*precision\s+\w+\s+\w+\s*;?\s*/g, '');
+
+  // Vyčistit prázdné řádky na začátku
+  cleaned = cleaned.replace(/^\s*\r?\n+/, '');
+  cleaned = cleaned.replace(/\r?\n\s*\r?\n\s*\r?\n/g, '\n\n');
+
+  return cleaned;
+}
+
 export const addStandardHeader = (code, defines, helpers, isWebGL2 = false) => {
-  if (!code.includes('precision mediump float')) {
-    // Pro WebGL 2.0 (GLSL ES 3.00) použij #version 300 es
-    // #version MUSÍ být na prvním řádku bez žádných mezer nebo prázdných řádků
-    const versionHeader = isWebGL2 ? '#version 300 es' : '';
-    const varyingOut = isWebGL2 ? 'in' : 'varying';
-    const fragColor = isWebGL2 ? 'out vec4 fragColor;' : '';
+  // Nejdřív odstranit všechny existující #version a precision deklarace
+  let cleanedCode = removeVersionAndPrecision(code);
 
-    if (isWebGL2) {
-      // Odstraň mezery a prázdné řádky z defines a helpers pro čistý začátek
-      const cleanDefines = defines ? defines.trim() : '';
-      const cleanHelpers = helpers ? helpers.trim() : '';
+  // Zkontrolovat, zda už není precision (po odstranění by neměla být)
+  const hasPrecision = /\bprecision\s+\w+\s+\w+\s*;/.test(cleanedCode);
+  const hasVersion = /^\s*#version\s+[^\n\r]/.test(cleanedCode.trim());
 
+  // Pokud už jsou, nepřidávat znovu
+  if (hasPrecision && hasVersion) {
+    return cleanedCode;
+  }
+
+  // Pro WebGL 2.0 (GLSL ES 3.00) použij #version 300 es
+  // #version MUSÍ být na prvním řádku bez žádných mezer nebo prázdných řádků
+  const versionHeader = isWebGL2 ? '#version 300 es' : '';
+  const varyingOut = isWebGL2 ? 'in' : 'varying';
+  const fragColor = isWebGL2 ? 'out vec4 fragColor;' : '';
+
+  if (isWebGL2) {
+    // Odstraň mezery a prázdné řádky z defines a helpers pro čistý začátek
+    const cleanDefines = defines ? defines.trim() : '';
+    const cleanHelpers = helpers ? helpers.trim() : '';
+
+    // Přidat header pouze pokud chybí
+    if (!hasVersion && !hasPrecision) {
       return `${versionHeader}
 ${cleanDefines}
 precision mediump float;
@@ -209,9 +256,33 @@ ${varyingOut} vec2 v_uv;
 ${fragColor}
 ${cleanHelpers}
 
-${code}
+${cleanedCode}
 `;
-    } else {
+    } else if (!hasVersion) {
+      // Přidat pouze #version
+      return `${versionHeader}
+${cleanDefines}
+${cleanHelpers}
+
+${cleanedCode}
+`;
+    } else if (!hasPrecision) {
+      // Přidat pouze precision
+      return `${cleanDefines}
+precision mediump float;
+uniform float u_time;
+uniform vec2 u_resolution;
+uniform float u_intensity;
+${varyingOut} vec2 v_uv;
+${fragColor}
+${cleanHelpers}
+
+${cleanedCode}
+`;
+    }
+  } else {
+    // WebGL 1.0 - přidat pouze precision pokud chybí
+    if (!hasPrecision) {
       return `
       ${defines}
       precision mediump float;
@@ -222,10 +293,11 @@ ${code}
 
       ${helpers}
 
-      ${code}
+      ${cleanedCode}
     `;
     }
   }
-  return code;
+
+  return cleanedCode;
 };
 

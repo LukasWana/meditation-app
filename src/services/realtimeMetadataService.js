@@ -3,6 +3,7 @@
 import { database } from './firebase';
 import { ref, get, onValue, off } from 'firebase/database';
 import log from './logger';
+import { deduplicateRequest } from '@utils/metadataRequestManager';
 
 class RealtimeMetadataService {
   constructor() {
@@ -22,29 +23,36 @@ class RealtimeMetadataService {
   }
 
   async getFileMetadata(filePath) {
-    try {
-      const safePath = this.sanitizePath(filePath);
-      const metadataRef = ref(this.database, `audio-metadata/${safePath}`);
-      const snapshot = await get(metadataRef);
+    // Použij deduplication pro jednotlivé soubory
+    return deduplicateRequest(
+      filePath,
+      async () => {
+        try {
+          const safePath = this.sanitizePath(filePath);
+          const metadataRef = ref(this.database, `audio-metadata/${safePath}`);
+          const snapshot = await get(metadataRef);
 
-      if (snapshot.exists()) {
-        const data = snapshot.val();
-        log.debug(`✅ Metadata loaded from Realtime Database: ${safePath}`);
+          if (snapshot.exists()) {
+            const data = snapshot.val();
+            log.debug(`✅ Metadata loaded from Realtime Database: ${safePath}`);
 
-        // ✅ OPRAVA: Normalizuj waveform data - může být objekt místo pole
-        if (data && data.waveformData) {
-          data.waveformData = this.normalizeWaveformData(data.waveformData);
+            // ✅ OPRAVA: Normalizuj waveform data - může být objekt místo pole
+            if (data && data.waveformData) {
+              data.waveformData = this.normalizeWaveformData(data.waveformData);
+            }
+
+            return data;
+          } else {
+            log.debug(`📭 No metadata found for: ${filePath}`);
+            return null;
+          }
+        } catch (error) {
+          log.error(`❌ Failed to load metadata for ${filePath}:`, error);
+          return null;
         }
-
-        return data;
-      } else {
-        log.debug(`📭 No metadata found for: ${filePath}`);
-        return null;
-      }
-    } catch (error) {
-      log.error(`❌ Failed to load metadata for ${filePath}:`, error);
-      return null;
-    }
+      },
+      'realtime'
+    );
   }
 
   async getAllMetadata() {

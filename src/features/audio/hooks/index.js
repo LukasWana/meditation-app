@@ -1,5 +1,9 @@
 // Audio hooks exports
 export { useAudioPlayer } from './useAudioPlayer';
+export { useAudioState } from './useAudioState';
+export { useAudioSeek } from './useAudioSeek';
+export { useAudioFade } from './useAudioFade';
+export { useAudioCache } from './useAudioCache';
 export { useAudioPlayerSimple } from './useAudioPlayerSimple';
 export { useFirebaseAudio, AUDIO_FILES, ALL_AUDIO_FILES } from './useFirebaseAudio';
 export { useDirectAudio, DIRECT_AUDIO_URLS } from './useDirectAudio';

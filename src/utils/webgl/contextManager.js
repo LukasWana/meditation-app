@@ -62,7 +62,7 @@ export function getWebGLContext(canvas, options = {}) {
     return null;
   }
 
-  // Zkontroluj limit aktivních kontextů (sníženo na 2 pro lepší stabilitu)
+  // Zkontroluj limit aktivních kontextů (sníženo na 2 pro lepší stabilitu, s prioritním systémem)
   const maxContexts = options.maxContexts || 2;
   if (contextRegistry.size >= maxContexts) {
     console.warn(`⚠️ getWebGLContext: Dosáhl limitu ${maxContexts} aktivních kontextů. Okamžitě uvolním nejstarší kontext.`);
@@ -151,11 +151,15 @@ export function getWebGLContext(canvas, options = {}) {
   // Aktualizuj počítadlo kontextů za sekundu
   contextsCreatedThisSecond++;
 
-  // Přidej event listenery pro detekci ztráty kontextu
+  // Přidej event listenery pro detekci ztráty kontextu - okamžité uvolnění
   canvas.addEventListener('webglcontextlost', (event) => {
     event.preventDefault();
     console.warn('⚠️ WebGL context lost:', canvas);
+    // Okamžitě uvolni kontext při ztrátě
     handleContextLost(glContext);
+    // Okamžitě vyčisti z registru
+    contextRegistry.delete(glContext);
+    activeContexts.delete(glContext);
   });
 
   canvas.addEventListener('webglcontextrestored', () => {
@@ -202,8 +206,8 @@ export function releaseWebGLContext(glContext) {
 }
 
 /**
- * Vyčistí neaktivní kontexty (starší než 8 sekund)
- * @param {number} maxAge - Maximální stáří kontextu v ms (default: 8 sekund)
+ * Vyčistí neaktivní kontexty s prioritním systémem
+ * @param {number} maxAge - Maximální stáří kontextu v ms (default: 2 sekundy)
  */
 export function cleanupInactiveContexts(maxAge = 2 * 1000) {
   const now = Date.now();
@@ -236,16 +240,16 @@ export function cleanupInactiveContexts(maxAge = 2 * 1000) {
     const timeSinceCreated = now - contextInfo.createdAt;
 
     // Priorita 3-5: Uvolni kontext pouze pokud:
-    // 3. Nebyl použit déle než 5 sekund (zvýšeno z 1 sekundy pro stabilitu)
-    // 4. Je starší než maxAge A nebyl použit dlouho
-    // 5. Je velmi starý (více než 30 sekund) bez ohledu na lastUsed
-    if (age > 5 * 1000 && timeSinceCreated > 5 * 1000) {
-      // Uvolnění neaktivních kontextů (starší než 5 sekund)
+    // 3. Nebyl použit déle než maxAge (optimalizováno pro rychlejší cleanup)
+    // 4. Je starší než maxAge * 2 A nebyl použit dlouho
+    // 5. Je velmi starý (více než 10 sekund) bez ohledu na lastUsed
+    if (age > maxAge && timeSinceCreated > maxAge) {
+      // Uvolnění neaktivních kontextů (starší než maxAge)
       contextsToRemove.push({ context: glContext, priority: 3, age });
-    } else if (age > maxAge && timeSinceCreated > maxAge * 2) {
+    } else if (age > maxAge * 2 && timeSinceCreated > maxAge * 2) {
       contextsToRemove.push({ context: glContext, priority: 4, age });
-    } else if (timeSinceCreated > 30 * 1000 && age > maxAge) {
-      // Velmi starý kontext, který nebyl dlouho používán (zvýšeno z 10 na 30 sekund)
+    } else if (timeSinceCreated > 10 * 1000 && age > maxAge) {
+      // Velmi starý kontext, který nebyl dlouho používán (optimalizováno na 10 sekund)
       contextsToRemove.push({ context: glContext, priority: 5, age });
     }
   });
@@ -381,7 +385,7 @@ export function getActiveContextsCount() {
 // Zpomaleno z 250ms na 2 sekundy pro stabilitu - cleanup je příliš agresivní
 if (typeof window !== 'undefined') {
   setInterval(() => {
-    cleanupInactiveContexts(5 * 1000); // Vyčisti kontexty starší než 5 sekund (zvýšeno z 2 sekund)
+    cleanupInactiveContexts(2 * 1000); // Vyčisti kontexty starší než 2 sekundy (optimalizováno pro rychlejší cleanup)
   }, 2 * 1000); // Zpomaleno z 250ms na 2 sekundy
 }
 
