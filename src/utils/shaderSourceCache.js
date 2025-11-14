@@ -95,7 +95,8 @@ function cleanupOldCacheEntries() {
     sourceCache.delete(entries[i][0]);
   }
 
-  console.log(`🧹 cleanupOldCacheEntries: Vyčištěno ${toRemove} shader source položek z cache`);
+  // Debug log deaktivován - příliš mnoho výpisů
+  // console.log(`🧹 cleanupOldCacheEntries: Vyčištěno ${toRemove} shader source položek z cache`);
 }
 
 /**
@@ -103,18 +104,19 @@ function cleanupOldCacheEntries() {
  */
 export function cleanupExpiredCache() {
   const now = Date.now();
-  let removed = 0;
+  // let removed = 0; // Nevyužíváno - logy deaktivovány
 
   sourceCache.forEach((value, key) => {
     if (now > value.expiresAt) {
       sourceCache.delete(key);
-      removed++;
+      // removed++; // Nevyužíváno - logy deaktivovány
     }
   });
 
-  if (removed > 0) {
-    console.log(`🧹 cleanupExpiredCache: Vyčištěno ${removed} shader source položek`);
-  }
+  // Debug log deaktivován - příliš mnoho výpisů
+  // if (removed > 0) {
+  //   console.log(`🧹 cleanupExpiredCache: Vyčištěno ${removed} shader source položek`);
+  // }
 }
 
 /**
@@ -125,7 +127,8 @@ export function clearCache() {
   stats.hits = 0;
   stats.misses = 0;
   stats.total = 0;
-  console.log('🧹 clearCache: Shader source cache vyčištěna');
+  // Debug log deaktivován - příliš mnoho výpisů
+  // console.log('🧹 clearCache: Shader source cache vyčištěna');
 }
 
 /**

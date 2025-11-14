@@ -366,13 +366,15 @@ export const LanguageProvider = ({ children }) => {
             return merged;
           });
 
-          if (import.meta.env.MODE === 'development') {
-            console.log('✅ Translations loaded from Realtime Database');
-          }
+          // Translations logy deaktivovány - příliš mnoho výpisů
+          // if (import.meta.env.MODE === 'development') {
+          //   console.log('✅ Translations loaded from Realtime Database');
+          // }
         } else {
-          if (import.meta.env.MODE === 'development') {
-            console.warn('⚠️ No translations found in DB, using defaults');
-          }
+          // Translations warning deaktivováno - příliš mnoho výpisů
+          // if (import.meta.env.MODE === 'development') {
+          //   console.warn('⚠️ No translations found in DB, using defaults');
+          // }
         }
 
         // Nastav real-time listener pro aktualizace

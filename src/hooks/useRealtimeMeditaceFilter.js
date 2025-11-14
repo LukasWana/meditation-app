@@ -3,8 +3,10 @@ import { meditaceDataService } from '@services/meditaceDataService';
 import log from '@services/logger';
 
 export const useRealtimeMeditaceFilter = (userGender, userLanguage = 'sk') => {
-  console.log(`🔍 useRealtimeMeditaceFilter called with: userGender=${userGender}, userLanguage=${userLanguage}`);
-  console.log(`🔍 Gender type: ${typeof userGender}, value: "${userGender}"`);
+  // Debug logy deaktivovány - příliš mnoho výpisů
+  // const DEBUG_MEDITACE_FILTER = false;
+  // if (DEBUG_MEDITACE_FILTER) console.log(`🔍 useRealtimeMeditaceFilter called with: userGender=${userGender}, userLanguage=${userLanguage}`);
+  // if (DEBUG_MEDITACE_FILTER) console.log(`🔍 Gender type: ${typeof userGender}, value: "${userGender}"`);
 
   const [meditaceItems, setMeditaceItems] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -18,12 +20,12 @@ export const useRealtimeMeditaceFilter = (userGender, userLanguage = 'sk') => {
 
   // Načti předpřipravená data meditací
   useEffect(() => {
-    console.log(`🔍 useRealtimeMeditaceFilter useEffect triggered with: userGender=${userGender}, userLanguage=${userLanguage}`);
-    console.log('🔍 useEffect is running...');
+    // if (DEBUG_MEDITACE_FILTER) console.log(`🔍 useRealtimeMeditaceFilter useEffect triggered with: userGender=${userGender}, userLanguage=${userLanguage}`);
+    // if (DEBUG_MEDITACE_FILTER) console.log('🔍 useEffect is running...');
 
     const loadMeditaceData = async () => {
       try {
-        console.log('🔍 Starting loadMeditaceData function...');
+        // if (DEBUG_MEDITACE_FILTER) console.log('🔍 Starting loadMeditaceData function...');
         setIsLoading(true);
         setError(null);
 
@@ -31,19 +33,19 @@ export const useRealtimeMeditaceFilter = (userGender, userLanguage = 'sk') => {
         log.info(`🔍 Parameters: userGender=${userGender}, userLanguage=${userLanguage}`);
 
         // Zkontroluj, jestli je meditaceDataService inicializovaný
-        console.log('🔍 Checking if meditaceDataService is initialized...');
-        console.log('🔍 meditaceDataService.isInitialized:', meditaceDataService.isInitialized);
+        // if (DEBUG_MEDITACE_FILTER) console.log('🔍 Checking if meditaceDataService is initialized...');
+        // if (DEBUG_MEDITACE_FILTER) console.log('🔍 meditaceDataService.isInitialized:', meditaceDataService.isInitialized);
         if (!meditaceDataService.isInitialized) {
-          console.log('⚠️ MeditaceDataService not initialized, trying to initialize...');
+          // if (DEBUG_MEDITACE_FILTER) console.log('⚠️ MeditaceDataService not initialized, trying to initialize...');
           await meditaceDataService.initialize();
-          console.log('🔍 After initialization - meditaceDataService.isInitialized:', meditaceDataService.isInitialized);
+          // if (DEBUG_MEDITACE_FILTER) console.log('🔍 After initialization - meditaceDataService.isInitialized:', meditaceDataService.isInitialized);
         }
 
         // Získej předpřipravená data z meditaceDataService
         const meditaceData = meditaceDataService.getMeditaceData(userGender, userLanguage);
         const stats = meditaceDataService.getStats(userGender, userLanguage);
 
-        console.log(`✅ Meditace data loaded: ${meditaceData.length} items`);
+        // if (DEBUG_MEDITACE_FILTER) console.log(`✅ Meditace data loaded: ${meditaceData.length} items`);
         log.success(`✅ Meditace data loaded: ${meditaceData.length} items`);
 
         setMeditaceItems(meditaceData);
@@ -60,7 +62,7 @@ export const useRealtimeMeditaceFilter = (userGender, userLanguage = 'sk') => {
       }
     };
 
-    console.log('🔍 About to call loadMeditaceData...');
+    // if (DEBUG_MEDITACE_FILTER) console.log('🔍 About to call loadMeditaceData...');
     loadMeditaceData();
   }, [userGender, userLanguage]);
 

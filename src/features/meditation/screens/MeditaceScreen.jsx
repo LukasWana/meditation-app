@@ -63,8 +63,10 @@ const MeditaceScreen = ({
     }
   }, []);
 
-  console.log(`🔍 MeditaceScreen - Current language: ${language}`);
-  console.log(`🔍 MeditaceScreen - Current gender: ${gender}`);
+  // Debug logy deaktivovány - příliš mnoho výpisů
+  // const DEBUG_MEDITACE_SCREEN = false;
+  // if (DEBUG_MEDITACE_SCREEN) console.log(`🔍 MeditaceScreen - Current language: ${language}`);
+  // if (DEBUG_MEDITACE_SCREEN) console.log(`🔍 MeditaceScreen - Current gender: ${gender}`);
 
   const normalizedLanguage = useMemo(() => language.toLowerCase(), [language]);
 
@@ -95,9 +97,9 @@ const MeditaceScreen = ({
   // Použij adaptivní barvy textů
   const textColors = useAdaptiveTextColors(backgroundColorForText, meditaceShader);
 
-  console.log(`🔍 MeditaceScreen - meditaceItems:`, meditaceItems);
-  console.log(`🔍 MeditaceScreen - isLoading:`, isLoading);
-  console.log(`🔍 MeditaceScreen - error:`, error);
+  // if (DEBUG_MEDITACE_SCREEN) console.log(`🔍 MeditaceScreen - meditaceItems:`, meditaceItems);
+  // if (DEBUG_MEDITACE_SCREEN) console.log(`🔍 MeditaceScreen - isLoading:`, isLoading);
+  // if (DEBUG_MEDITACE_SCREEN) console.log(`🔍 MeditaceScreen - error:`, error);
 
   const handleItemClick = (item) => {
     const audioSrc = item.audioSrc || item.fileName;

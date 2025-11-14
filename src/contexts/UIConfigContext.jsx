@@ -36,9 +36,10 @@ export const UIConfigProvider = ({ children }) => {
             setConfig(uiData.config);
           }
 
-          if (import.meta.env.MODE === 'development') {
-            console.log('✅ UI config loaded from Realtime Database');
-          }
+          // UI config logy deaktivovány - příliš mnoho výpisů
+          // if (import.meta.env.MODE === 'development') {
+          //   console.log('✅ UI config loaded from Realtime Database');
+          // }
         }
 
         // Nastav real-time listener pro aktualizace

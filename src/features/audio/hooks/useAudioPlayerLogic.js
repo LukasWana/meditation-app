@@ -115,7 +115,8 @@ export const useAudioPlayerLogic = ({
           if (isMounted) {
             setManualAudioUrl(mapUrlForDevProxy(url));
             setManualDataSource('firebase');
-            console.warn('⚠️ useAudioPlayerLogic: Resolved audio URL via manual getDownloadURL fallback', { fileName });
+            // Warning deaktivován - příliš mnoho výpisů
+            // console.warn('⚠️ useAudioPlayerLogic: Resolved audio URL via manual getDownloadURL fallback', { fileName });
           }
           return;
         } catch (fallbackError) {

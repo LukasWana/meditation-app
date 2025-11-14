@@ -263,7 +263,8 @@ export function createProgramManager() {
         delete state.programs[key];
       }
 
-      console.log(`🧹 cleanupLRU: Vyčištěno ${toRemove} programů z cache`);
+      // Debug log deaktivován - příliš mnoho výpisů
+      // console.log(`🧹 cleanupLRU: Vyčištěno ${toRemove} programů z cache`);
     },
   };
 }

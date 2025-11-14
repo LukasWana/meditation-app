@@ -48,24 +48,25 @@ const SoundThemeGallery = ({ isOpen, onClose, onSelectSound, selectedInSound, se
     return seconds !== null && seconds <= 1;
   };
 
-  // Debug logging pro kontrolu props
-  useEffect(() => {
-    if (isOpen) {
-      console.log('🔍 SoundThemeGallery props changed:', {
-        selectedInSound,
-        selectedOutSound,
-        selectedClickSound,
-        selectedFinalSound,
-        selectedCountdownSound,
-        safeSelectedInSound,
-        safeSelectedOutSound,
-        safeSelectedClickSound,
-        safeSelectedFinalSound,
-        safeSelectedCountdownSound,
-        onSelectSound: typeof onSelectSound
-      });
-    }
-  }, [isOpen, selectedInSound, selectedOutSound, selectedClickSound, selectedFinalSound, selectedCountdownSound, safeSelectedInSound, safeSelectedOutSound, safeSelectedClickSound, safeSelectedFinalSound, safeSelectedCountdownSound]);
+  // Debug logging pro kontrolu props - deaktivováno
+  // const DEBUG_SOUND_THEME_GALLERY = false;
+  // useEffect(() => {
+  //   if (isOpen) {
+  //     if (DEBUG_SOUND_THEME_GALLERY) console.log('🔍 SoundThemeGallery props changed:', {
+  //       selectedInSound,
+  //       selectedOutSound,
+  //       selectedClickSound,
+  //       selectedFinalSound,
+  //       selectedCountdownSound,
+  //       safeSelectedInSound,
+  //       safeSelectedOutSound,
+  //       safeSelectedClickSound,
+  //       safeSelectedFinalSound,
+  //       safeSelectedCountdownSound,
+  //       onSelectSound: typeof onSelectSound
+  //     });
+  //   }
+  // }, [isOpen, selectedInSound, selectedOutSound, selectedClickSound, selectedFinalSound, selectedCountdownSound, safeSelectedInSound, safeSelectedOutSound, safeSelectedClickSound, safeSelectedFinalSound, safeSelectedCountdownSound]);
   const [audioFiles, setAudioFiles] = useState([]);
   const [loading, setLoading] = useState(true);
   const [playingPreview, setPlayingPreview] = useState(null); // Aktuálně přehrávaný soubor
@@ -245,19 +246,21 @@ const SoundThemeGallery = ({ isOpen, onClose, onSelectSound, selectedInSound, se
       setLoading(true);
       const allMetadata = await realtimeMetadataService.getAllMetadata();
 
-      console.log('🔍 SoundThemeGallery: Načteno metadata:', Object.keys(allMetadata).length);
+      // Debug logy deaktivovány - příliš mnoho výpisů
+      // const DEBUG_SOUND_THEME_GALLERY = false;
+      // if (DEBUG_SOUND_THEME_GALLERY) console.log('🔍 SoundThemeGallery: Načteno metadata:', Object.keys(allMetadata).length);
 
-      // Debug: zobraz všechny soubory s "dychani" v názvu
-      const allDychaniFiles = Object.values(allMetadata).filter(file => {
-        const fileName = (file.fileName || '').toLowerCase();
-        return fileName.includes('dychani') || fileName.includes('dychanie');
-      });
-      console.log('🫁 SoundThemeGallery: Všechny soubory s "dychani":', allDychaniFiles.length);
-      console.log('🫁 Sample dychani files:', allDychaniFiles.slice(0, 5).map(f => ({
-        fileName: f.fileName,
-        folder: f.folder,
-        hasDownloadURL: !!(f.downloadURL || f.audioSrc)
-      })));
+      // Debug: zobraz všechny soubory s "dychani" v názvu - deaktivováno
+      // const allDychaniFiles = Object.values(allMetadata).filter(file => {
+      //   const fileName = (file.fileName || '').toLowerCase();
+      //   return fileName.includes('dychani') || fileName.includes('dychanie');
+      // });
+      // if (DEBUG_SOUND_THEME_GALLERY) console.log('🫁 SoundThemeGallery: Všechny soubory s "dychani":', allDychaniFiles.length);
+      // if (DEBUG_SOUND_THEME_GALLERY) console.log('🫁 Sample dychani files:', allDychaniFiles.slice(0, 5).map(f => ({
+      //   fileName: f.fileName,
+      //   folder: f.folder,
+      //   hasDownloadURL: !!(f.downloadURL || f.audioSrc)
+      // })));
 
       // Filtruj pouze soubory z kategorie "dychani" (OGG formát)
       const dychaniFiles = Object.values(allMetadata).filter(file => {
@@ -267,14 +270,14 @@ const SoundThemeGallery = ({ isOpen, onClose, onSelectSound, selectedInSound, se
         const isMp3File = fileName.endsWith('.mp3'); // Fallback pro MP3
 
         const matches = isInDychaniFolder && (isOggFile || isMp3File);
-        if (isInDychaniFolder) {
-          console.log(`🫁 Soubor dychani: ${fileName}, isOgg: ${isOggFile}, isMp3: ${isMp3File}, matches: ${matches}`);
-        }
+        // if (DEBUG_SOUND_THEME_GALLERY && isInDychaniFolder) {
+        //   console.log(`🫁 Soubor dychani: ${fileName}, isOgg: ${isOggFile}, isMp3: ${isMp3File}, matches: ${matches}`);
+        // }
 
         return matches;
       });
 
-      console.log('🫁 SoundThemeGallery: Filtrováno dychani souborů:', dychaniFiles.length);
+      // if (DEBUG_SOUND_THEME_GALLERY) console.log('🫁 SoundThemeGallery: Filtrováno dychani souborů:', dychaniFiles.length);
 
       // KROK 1: Mapuj na formát pro galerii a získej absolutní hodnoty
       const mappedFiles = dychaniFiles.map(file => {
@@ -285,29 +288,29 @@ const SoundThemeGallery = ({ isOpen, onClose, onSelectSound, selectedInSound, se
         const waveformData = file.waveformData || file.waveform || null;
         const waveformMax = file.waveformMax || null; // Metadata pro globální normalizaci
 
-        // ✅ DEBUG: Ověř, zda má každý soubor unikátní data
-        if (waveformData && Array.isArray(waveformData) && waveformData.length > 0) {
-          const first5 = waveformData.slice(0, 5);
-          const last5 = waveformData.slice(-5);
-          const maxVal = Math.max(...waveformData);
-          const minVal = Math.min(...waveformData);
-          const avgVal = waveformData.reduce((a, b) => a + b, 0) / waveformData.length;
-
-          console.log(`🔍 ${file.fileName}:`, {
-            samples: waveformData.length,
-            first5: first5.map(v => v.toFixed(2)),
-            last5: last5.map(v => v.toFixed(2)),
-            min: minVal.toFixed(2),
-            max: maxVal.toFixed(2),
-            avg: avgVal.toFixed(2),
-            isAbsolute: maxVal > 1,
-            // Zkontroluj, zda jsou data stejná jako u předchozího souboru
-            firstValue: waveformData[0]?.toFixed(4),
-            lastValue: waveformData[waveformData.length - 1]?.toFixed(4)
-          });
-        } else {
-          console.warn(`⚠️ ${file.fileName}: NEMÁ waveformData!`);
-        }
+        // ✅ DEBUG: Ověř, zda má každý soubor unikátní data - deaktivováno (proměnné nevyužívány)
+        // if (waveformData && Array.isArray(waveformData) && waveformData.length > 0) {
+        //   const first5 = waveformData.slice(0, 5);
+        //   const last5 = waveformData.slice(-5);
+        //   const maxVal = Math.max(...waveformData);
+        //   const minVal = Math.min(...waveformData);
+        //   const avgVal = waveformData.reduce((a, b) => a + b, 0) / waveformData.length;
+        //
+        //   if (DEBUG_SOUND_THEME_GALLERY) console.log(`🔍 ${file.fileName}:`, {
+        //     samples: waveformData.length,
+        //     first5: first5.map(v => v.toFixed(2)),
+        //     last5: last5.map(v => v.toFixed(2)),
+        //     min: minVal.toFixed(2),
+        //     max: maxVal.toFixed(2),
+        //     avg: avgVal.toFixed(2),
+        //     isAbsolute: maxVal > 1,
+        //     // Zkontroluj, zda jsou data stejná jako u předchozího souboru
+        //     firstValue: waveformData[0]?.toFixed(4),
+        //     lastValue: waveformData[waveformData.length - 1]?.toFixed(4)
+        //   });
+        // } else {
+        //   if (DEBUG_SOUND_THEME_GALLERY) console.warn(`⚠️ ${file.fileName}: NEMÁ waveformData!`);
+        // }
 
         // Generuj popisek, pokud není v metadatech
         const description = file.description || generateDescription(file.fileName, name);
@@ -365,43 +368,43 @@ const SoundThemeGallery = ({ isOpen, onClose, onSelectSound, selectedInSound, se
         file.globalMax = globalMax > 0 ? globalMax : 1; // Ulož globální maximum do každého souboru
       });
 
-      // ✅ DEBUG: Zobraz globální maximum a hodnoty pro každý soubor
-      console.log(`🌊 Globální maximum pro normalizaci: ${globalMax.toFixed(4)}`);
-      mappedFiles.slice(0, 3).forEach(file => {
-        if (file.waveformData && Array.isArray(file.waveformData) && file.waveformData.length > 0) {
-          const maxValue = Math.max(...file.waveformData);
-          const avgValue = file.waveformData.reduce((a, b) => a + b, 0) / file.waveformData.length;
-          const first5 = file.waveformData.slice(0, 5);
-          console.log(`📊 ${file.fileName}: max=${maxValue.toFixed(4)}, avg=${avgValue.toFixed(4)}, globalMax=${file.globalMax?.toFixed(4)}, first5=${first5.map(v => v.toFixed(2)).join(',')}`);
-        }
-      });
+      // ✅ DEBUG: Zobraz globální maximum a hodnoty pro každý soubor - deaktivováno
+      // if (DEBUG_SOUND_THEME_GALLERY) console.log(`🌊 Globální maximum pro normalizaci: ${globalMax.toFixed(4)}`);
+      // mappedFiles.slice(0, 3).forEach(file => {
+      //   if (file.waveformData && Array.isArray(file.waveformData) && file.waveformData.length > 0) {
+      //     const maxValue = Math.max(...file.waveformData);
+      //     const avgValue = file.waveformData.reduce((a, b) => a + b, 0) / file.waveformData.length;
+      //     const first5 = file.waveformData.slice(0, 5);
+      //     console.log(`📊 ${file.fileName}: max=${maxValue.toFixed(4)}, avg=${avgValue.toFixed(4)}, globalMax=${file.globalMax?.toFixed(4)}, first5=${first5.map(v => v.toFixed(2)).join(',')}`);
+      //   }
+      // });
 
       if (hasAbsoluteValues) {
-        console.log(`🌊 Nalezeno absolutních hodnot - globální maximum: ${globalMax.toFixed(2)}`);
-        console.log(`🌊 Použijeme globální normalizaci pro zachování rozdílů mezi soubory`);
+        // if (DEBUG_SOUND_THEME_GALLERY) console.log(`🌊 Nalezeno absolutních hodnot - globální maximum: ${globalMax.toFixed(2)}`);
+        // if (DEBUG_SOUND_THEME_GALLERY) console.log(`🌊 Použijeme globální normalizaci pro zachování rozdílů mezi soubory`);
 
         mappedFiles.forEach(file => {
           if (file.waveformData && Array.isArray(file.waveformData) && file.waveformData.length > 0) {
             const maxValue = Math.max(...file.waveformData);
-            const minValue = Math.min(...file.waveformData);
-            const avgValue = file.waveformData.reduce((a, b) => a + b, 0) / file.waveformData.length;
+            // const minValue = Math.min(...file.waveformData); // Nevyužíváno - logy deaktivovány
+            // const avgValue = file.waveformData.reduce((a, b) => a + b, 0) / file.waveformData.length; // Nevyužíváno - logy deaktivovány
 
             if (maxValue > 1) {
               // Absolutní hodnoty - ZACHOVÁME je tak jak jsou!
               // Normalizace bude provedena v drawWaveformFromData podle vlastního maxima
-              console.log(`✅ Zachováno ${file.fileName}: min=${minValue.toFixed(2)}, max=${maxValue.toFixed(2)}, avg=${avgValue.toFixed(2)} (absolutní hodnoty)`);
+              // if (DEBUG_SOUND_THEME_GALLERY) console.log(`✅ Zachováno ${file.fileName}: min=${minValue.toFixed(2)}, max=${maxValue.toFixed(2)}, avg=${avgValue.toFixed(2)} (absolutní hodnoty)`);
             } else {
               // Stará normalizovaná data (0-1) - potřebují být znovu vygenerována
-              console.warn(`⚠️ ${file.fileName} má stará normalizovaná data (0-1) - potřebuje být znovu vygenerován s absolutními hodnotami`);
+              // if (DEBUG_SOUND_THEME_GALLERY) console.warn(`⚠️ ${file.fileName} má stará normalizovaná data (0-1) - potřebuje být znovu vygenerován s absolutními hodnotami`);
             }
           }
         });
       } else {
-        console.warn('⚠️ Nenašli jsme absolutní hodnoty - možná jsou všechna data stále normalizovaná na 0-1');
-        console.warn('⚠️ Pro správné zobrazení je potřeba znovu vygenerovat waveformy pomocí "🚀 Automatická synchronizace všech souborů"');
+        // if (DEBUG_SOUND_THEME_GALLERY) console.warn('⚠️ Nenašli jsme absolutní hodnoty - možná jsou všechna data stále normalizovaná na 0-1');
+        // if (DEBUG_SOUND_THEME_GALLERY) console.warn('⚠️ Pro správné zobrazení je potřeba znovu vygenerovat waveformy pomocí "🚀 Automatická synchronizace všech souborů"');
       }
 
-      console.log('🫁 SoundThemeGallery: Zmapováno souborů:', mappedFiles.length);
+      // if (DEBUG_SOUND_THEME_GALLERY) console.log('🫁 SoundThemeGallery: Zmapováno souborů:', mappedFiles.length);
       setAudioFiles(mappedFiles);
       setLoading(false);
     } catch (error) {
@@ -460,14 +463,14 @@ const SoundThemeGallery = ({ isOpen, onClose, onSelectSound, selectedInSound, se
   if (!isOpen) return null;
 
   const handleFileSelect = (type, fileName) => {
-    console.log('🔊 SoundThemeGallery: handleFileSelect called', { type, fileName, onSelectSound: typeof onSelectSound });
+    // if (DEBUG_SOUND_THEME_GALLERY) console.log('🔊 SoundThemeGallery: handleFileSelect called', { type, fileName, onSelectSound: typeof onSelectSound });
     if (!onSelectSound) {
       console.error('❌ SoundThemeGallery: onSelectSound is not defined!');
       return;
     }
     try {
       onSelectSound(type, fileName);
-      console.log('✅ SoundThemeGallery: onSelectSound called successfully', { type, fileName });
+      // if (DEBUG_SOUND_THEME_GALLERY) console.log('✅ SoundThemeGallery: onSelectSound called successfully', { type, fileName });
     } catch (error) {
       console.error('❌ SoundThemeGallery: Error calling onSelectSound:', error);
     }
@@ -713,7 +716,7 @@ const SoundThemeGallery = ({ isOpen, onClose, onSelectSound, selectedInSound, se
                       onClick={(e) => {
                         e.preventDefault();
                         e.stopPropagation();
-                        console.log('🔊 Clicked IN button for: none, Current selected:', safeSelectedInSound);
+                        // if (DEBUG_SOUND_THEME_GALLERY) console.log('🔊 Clicked IN button for: none, Current selected:', safeSelectedInSound);
                         handleFileSelect('in', 'none');
                       }}
                       className={`flex-1 p-2 rounded transition-colors flex items-center justify-center cursor-pointer ${
@@ -732,7 +735,7 @@ const SoundThemeGallery = ({ isOpen, onClose, onSelectSound, selectedInSound, se
                       onClick={(e) => {
                         e.preventDefault();
                         e.stopPropagation();
-                        console.log('🔊 Clicked OUT button for: none, Current selected:', safeSelectedOutSound);
+                        // if (DEBUG_SOUND_THEME_GALLERY) console.log('🔊 Clicked OUT button for: none, Current selected:', safeSelectedOutSound);
                         handleFileSelect('out', 'none');
                       }}
                       className={`flex-1 p-2 rounded transition-colors flex items-center justify-center cursor-pointer ${
@@ -751,7 +754,7 @@ const SoundThemeGallery = ({ isOpen, onClose, onSelectSound, selectedInSound, se
                       onClick={(e) => {
                         e.preventDefault();
                         e.stopPropagation();
-                        console.log('🔊 Clicked CLICK button for: none, Current selected:', safeSelectedClickSound);
+                        // if (DEBUG_SOUND_THEME_GALLERY) console.log('🔊 Clicked CLICK button for: none, Current selected:', safeSelectedClickSound);
                         handleFileSelect('click', 'none');
                       }}
                       className={`flex-1 p-2 rounded transition-colors flex items-center justify-center cursor-pointer ${
@@ -770,7 +773,7 @@ const SoundThemeGallery = ({ isOpen, onClose, onSelectSound, selectedInSound, se
                       onClick={(e) => {
                         e.preventDefault();
                         e.stopPropagation();
-                        console.log('🔊 Clicked FINAL button for: none, Current selected:', safeSelectedFinalSound);
+                        // if (DEBUG_SOUND_THEME_GALLERY) console.log('🔊 Clicked FINAL button for: none, Current selected:', safeSelectedFinalSound);
                         handleFileSelect('final', 'none');
                       }}
                       className={`flex-1 p-2 rounded transition-colors flex items-center justify-center cursor-pointer ${
@@ -789,7 +792,7 @@ const SoundThemeGallery = ({ isOpen, onClose, onSelectSound, selectedInSound, se
                       onClick={(e) => {
                         e.preventDefault();
                         e.stopPropagation();
-                        console.log('🔊 Clicked COUNTDOWN button for: none, Current selected:', safeSelectedCountdownSound);
+                        // if (DEBUG_SOUND_THEME_GALLERY) console.log('🔊 Clicked COUNTDOWN button for: none, Current selected:', safeSelectedCountdownSound);
                         handleFileSelect('countdown', 'none');
                       }}
                       className={`flex-1 p-2 rounded transition-colors flex items-center justify-center cursor-pointer ${
@@ -876,7 +879,7 @@ const SoundThemeGallery = ({ isOpen, onClose, onSelectSound, selectedInSound, se
                             onClick={(e) => {
                               e.preventDefault();
                               e.stopPropagation();
-                              console.log('🔊 Clicked COUNTDOWN button for:', file.fileName, 'Current selected:', safeSelectedCountdownSound);
+                              // if (DEBUG_SOUND_THEME_GALLERY) console.log('🔊 Clicked COUNTDOWN button for:', file.fileName, 'Current selected:', safeSelectedCountdownSound);
                               handleFileSelect('countdown', file.fileName);
                             }}
                             className={`flex-1 min-w-[60px] p-2 rounded transition-colors flex items-center justify-center cursor-pointer ${
@@ -905,7 +908,7 @@ const SoundThemeGallery = ({ isOpen, onClose, onSelectSound, selectedInSound, se
                             onClick={(e) => {
                               e.preventDefault();
                               e.stopPropagation();
-                              console.log('🔊 Clicked IN button for:', file.fileName, 'Current selected:', safeSelectedInSound);
+                              // if (DEBUG_SOUND_THEME_GALLERY) console.log('🔊 Clicked IN button for:', file.fileName, 'Current selected:', safeSelectedInSound);
                               handleFileSelect('in', file.fileName);
                             }}
                             className={`flex-1 min-w-[60px] p-2 rounded transition-colors flex items-center justify-center cursor-pointer ${
@@ -923,7 +926,7 @@ const SoundThemeGallery = ({ isOpen, onClose, onSelectSound, selectedInSound, se
                             onClick={(e) => {
                               e.preventDefault();
                               e.stopPropagation();
-                              console.log('🔊 Clicked OUT button for:', file.fileName, 'Current selected:', safeSelectedOutSound);
+                              // if (DEBUG_SOUND_THEME_GALLERY) console.log('🔊 Clicked OUT button for:', file.fileName, 'Current selected:', safeSelectedOutSound);
                               handleFileSelect('out', file.fileName);
                             }}
                             className={`flex-1 min-w-[60px] p-2 rounded transition-colors flex items-center justify-center cursor-pointer ${
@@ -949,7 +952,7 @@ const SoundThemeGallery = ({ isOpen, onClose, onSelectSound, selectedInSound, se
                         onClick={(e) => {
                           e.preventDefault();
                           e.stopPropagation();
-                          console.log('🔊 Clicked CLICK button for:', file.fileName, 'Current selected:', safeSelectedClickSound);
+                          // if (DEBUG_SOUND_THEME_GALLERY) console.log('🔊 Clicked CLICK button for:', file.fileName, 'Current selected:', safeSelectedClickSound);
                           handleFileSelect('click', file.fileName);
                         }}
                         className={`flex-1 min-w-[60px] p-2 rounded transition-colors flex items-center justify-center cursor-pointer ${
@@ -968,7 +971,7 @@ const SoundThemeGallery = ({ isOpen, onClose, onSelectSound, selectedInSound, se
                         onClick={(e) => {
                           e.preventDefault();
                           e.stopPropagation();
-                          console.log('🔊 Clicked FINAL button for:', file.fileName, 'Current selected:', safeSelectedFinalSound);
+                          // if (DEBUG_SOUND_THEME_GALLERY) console.log('🔊 Clicked FINAL button for:', file.fileName, 'Current selected:', safeSelectedFinalSound);
                           handleFileSelect('final', file.fileName);
                         }}
                         className={`flex-1 min-w-[60px] p-2 rounded transition-colors flex items-center justify-center cursor-pointer ${

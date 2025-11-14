@@ -146,7 +146,8 @@ const DychaniScreen = ({
   const finalSoundPlayedRef = useRef(false);
   useEffect(() => {
     if (isPlaying && time === 0 && !finalSoundPlayedRef.current) {
-      console.log('🔊 Dýchání dokončeno, přehrávám finální zvuk');
+      // Debug log deaktivován - příliš mnoho výpisů
+      // console.log('🔊 Dýchání dokončeno, přehrávám finální zvuk');
       finalSoundPlayedRef.current = true;
       // Počkej na dokončení aktuální fáze dýchání + fade out zvuku + 1 sekunda ticha
       const currentPhaseDuration = breathPhase === 'in' ? breathInDuration : breathOutDuration;
@@ -200,9 +201,11 @@ const DychaniScreen = ({
   // Použij adaptivní barvy textů
   const textColors = useAdaptiveTextColors(backgroundColorForText, breathShader);
 
-  // Debug logování
+  // Debug logování - deaktivováno pro produkci (příliš mnoho výpisů)
+  // Pro debugování odkomentujte a nastavte DEBUG_BREATH_RHYTHM na true
+  const DEBUG_BREATH_RHYTHM = false;
   useEffect(() => {
-    if (isPlaying) {
+    if (DEBUG_BREATH_RHYTHM && isPlaying) {
       const cycleDuration = breathInDuration + breathOutDuration;
       console.log('🔵 Breath Rhythm:', {
         breathPhase,

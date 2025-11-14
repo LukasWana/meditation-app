@@ -200,8 +200,10 @@ export const useAppState = () => {
   }, []);
 
   // Handlers pro zvuky dýchání
+  // Debug logy deaktivovány - příliš mnoho výpisů
+  // const DEBUG_APP_STATE = false;
   const handleBreathSoundChange = useCallback((type, soundId) => {
-    console.log('🔊 handleBreathSoundChange called', { type, soundId });
+    // if (DEBUG_APP_STATE) console.log('🔊 handleBreathSoundChange called', { type, soundId });
     if (type === 'in') {
       setBreathInSound(soundId);
       localStorage.setItem('meditation-app-breath-in-sound', soundId);
@@ -209,15 +211,15 @@ export const useAppState = () => {
       setBreathOutSound(soundId);
       localStorage.setItem('meditation-app-breath-out-sound', soundId);
     } else if (type === 'click') {
-      console.log('✅ Setting breathClickSound to:', soundId);
+      // if (DEBUG_APP_STATE) console.log('✅ Setting breathClickSound to:', soundId);
       setBreathClickSound(soundId);
       localStorage.setItem('meditation-app-breath-click-sound', soundId);
     } else if (type === 'final') {
-      console.log('✅ Setting breathFinalSound to:', soundId);
+      // if (DEBUG_APP_STATE) console.log('✅ Setting breathFinalSound to:', soundId);
       setBreathFinalSound(soundId);
       localStorage.setItem('meditation-app-breath-final-sound', soundId);
     } else if (type === 'countdown') {
-      console.log('✅ Setting breathCountdownSound to:', soundId);
+      // if (DEBUG_APP_STATE) console.log('✅ Setting breathCountdownSound to:', soundId);
       setBreathCountdownSound(soundId);
       localStorage.setItem('meditation-app-breath-countdown-sound', soundId);
     } else {

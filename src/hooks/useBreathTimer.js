@@ -79,7 +79,9 @@ export const useBreathTimer = (
 
             // Použij aktuální fázi z refu (ne z props, aby se to neměnilo při re-renderu)
             const currentPhase = currentPhaseRef.current;
-            console.log('⏰ Breath time reached 0, stopping timer and waiting for cycle completion', { currentPhase, breathInDuration, breathOutDuration });
+            // Debug log deaktivován - příliš mnoho výpisů
+            // const DEBUG_BREATH_TIMER = false;
+            // if (DEBUG_BREATH_TIMER) console.log('⏰ Breath time reached 0, stopping timer and waiting for cycle completion', { currentPhase, breathInDuration, breathOutDuration });
 
             // Ulož aktuální fázi pro výpočet čekacího času
             waitingPhaseRef.current = currentPhase;
@@ -90,7 +92,7 @@ export const useBreathTimer = (
             const silenceDuration = 1.0; // 1 sekunda ticha před finálním zvukem
             const totalWaitTime = (currentPhaseDuration * 1000) + (fadeOutDuration * 1000) + (silenceDuration * 1000);
 
-            console.log(`⏳ Waiting ${totalWaitTime}ms for cycle completion (phase: ${currentPhase}, duration: ${currentPhaseDuration}s + fade: ${fadeOutDuration}s + silence: ${silenceDuration}s)`);
+            // if (DEBUG_BREATH_TIMER) console.log(`⏳ Waiting ${totalWaitTime}ms for cycle completion (phase: ${currentPhase}, duration: ${currentPhaseDuration}s + fade: ${fadeOutDuration}s + silence: ${silenceDuration}s)`);
 
             // Vyčisti předchozí timeout, pokud existuje (ochrana proti duplicitnímu timeoutu)
             if (completionTimeoutRef.current) {
@@ -100,11 +102,12 @@ export const useBreathTimer = (
 
             // Počkej na dokončení aktuální fáze + fade out + 1 sekunda ticha, pak přehraj finální zvuk
             completionTimeoutRef.current = setTimeout(() => {
-              console.log('✅ Cycle completed, playing final sound and stopping breathing');
+              // Debug log deaktivován - příliš mnoho výpisů
+              // if (DEBUG_BREATH_TIMER) console.log('✅ Cycle completed, playing final sound and stopping breathing');
               if (breathFinalSound && breathFinalSound !== 'none') {
                 playFinalSound();
               } else {
-                console.log('⚠️ No final sound configured');
+                // if (DEBUG_BREATH_TIMER) console.log('⚠️ No final sound configured');
               }
               setIsBreathing(false);
               waitingForCycleCompletionRef.current = false;

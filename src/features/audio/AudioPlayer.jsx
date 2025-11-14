@@ -122,23 +122,29 @@ const AudioPlayer = ({
 
       // Pokud není v procesu transition a klíč se liší, synchronizuj
       if (!isCurrentlyTransitioning && currentKey !== targetShaderKey) {
-        console.log('🔄 AudioPlayer: Synchronizuji shader/barvu (z settings)', {
-          from: currentKey,
-          to: targetShaderKey,
-          selectedColor,
-          selectedShader,
-          willUseColorOverlay: !!selectedColor && !!selectedShader,
-          isCurrentlyTransitioning
-        });
+        // Debug log deaktivován - příliš mnoho výpisů
+        // const DEBUG_AUDIO_PLAYER = false;
+        // if (DEBUG_AUDIO_PLAYER) {
+        //   console.log('🔄 AudioPlayer: Synchronizuji shader/barvu (z settings)', {
+        //     from: currentKey,
+        //     to: targetShaderKey,
+        //     selectedColor,
+        //     selectedShader,
+        //     willUseColorOverlay: !!selectedColor && !!selectedShader,
+        //     isCurrentlyTransitioning
+        //   });
+        // }
         const from = { shaderKey: currentKey };
         const to = { shaderKey: targetShaderKey };
         startTransition(from, to);
       } else if (isCurrentlyTransitioning) {
-        console.log('⏸️ AudioPlayer: Přeskakuji synchronizaci - právě probíhá transition', {
-          currentKey,
-          targetShaderKey,
-          isCurrentlyTransitioning
-        });
+        // if (DEBUG_AUDIO_PLAYER) {
+        //   console.log('⏸️ AudioPlayer: Přeskakuji synchronizaci - právě probíhá transition', {
+        //     currentKey,
+        //     targetShaderKey,
+        //     isCurrentlyTransitioning
+        //   });
+        // }
       }
     }
   }, [selectedShader, selectedColor, sectionKey, startTransition, transitionState]);

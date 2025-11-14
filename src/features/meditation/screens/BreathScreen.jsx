@@ -100,7 +100,9 @@ const BreathScreen = ({
 
   // Handler pro play/pause s podporou přípravného času
   const handlePlayPause = () => {
-    console.log('🔊 handlePlayPause called', { isBreathing, currentIsPreparing, preparationTime });
+    // Debug logy deaktivovány - příliš mnoho výpisů
+    // const DEBUG_BREATH_SCREEN = false;
+    // if (DEBUG_BREATH_SCREEN) console.log('🔊 handlePlayPause called', { isBreathing, currentIsPreparing, preparationTime });
 
     // Pokud už dýchání probíhá, zastav ho
     if (isBreathing) {
@@ -127,14 +129,14 @@ const BreathScreen = ({
 
     // Pokud je nastaven čas přípravy a dýchání neprobíhá, spusť přípravu
     if (preparationTime > 0 && !isBreathing && !currentIsPreparing) {
-      console.log('🔄 Starting preparation', preparationTime);
+      // if (DEBUG_BREATH_SCREEN) console.log('🔄 Starting preparation', preparationTime);
       setLocalIsPreparing(true);
       setLocalPreparationCountdown(preparationTime);
       return;
     }
 
     // Jinak spusť dýchání přímo (pokud není příprava nebo je preparationTime 0)
-    console.log('▶️ Starting breathing directly');
+    // if (DEBUG_BREATH_SCREEN) console.log('▶️ Starting breathing directly');
     if (breathTime <= 0) {
       const newTime = breathDuration * 60;
       setBreathTime(newTime);

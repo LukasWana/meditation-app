@@ -6,7 +6,7 @@ import { useAudioAnalysis } from '@contexts/AudioAnalysisContext';
 import { usePlayback } from '@contexts/ShaderPlaybackContext';
 import { shouldUseDarkMode } from '@utils/colorUtils';
 
-const DEBUG_AUDIO_PLAYER_LOGS = false;
+const DEBUG_AUDIO_PLAYER_LOGS = false; // Debug logy deaktivovány - příliš mnoho výpisů
 
 const AudioPlayerHudbaScreen = ({
   onNavigateToScreen,
@@ -191,24 +191,24 @@ const AudioPlayerHudbaScreen = ({
     }
   }, [activeAudio, onNavigateToScreen, getPreviousScreen, onPlayerStateChange]);
 
-  // Debug: Zkontroluj, co se zobrazuje (hook musí být před podmíněným returnem)
-  React.useEffect(() => {
-    if (!DEBUG_AUDIO_PLAYER_LOGS) {
-      return;
-    }
-    console.log('🎨 AudioPlayerHudbaScreen: Shader info', {
-      currentShader,
-      isColorMode,
-      backgroundColor,
-      overlayColor,
-      transitionStateKey: transitionState?.toShaderKey,
-      shaderFromSettings: getShaderForSection('hudba'),
-      colorFromSettings: getColorForSection('hudba'),
-      willShowShader: !isColorMode,
-      willShowColor: isColorMode,
-      opacity: 1.0
-    });
-  }, [currentShader, isColorMode, backgroundColor, overlayColor, transitionState, getShaderForSection, getColorForSection]);
+  // Debug: Zkontroluj, co se zobrazuje (hook musí být před podmíněným returnem) - deaktivováno
+  // React.useEffect(() => {
+  //   if (!DEBUG_AUDIO_PLAYER_LOGS) {
+  //     return;
+  //   }
+  //   if (DEBUG_AUDIO_PLAYER_LOGS) console.log('🎨 AudioPlayerHudbaScreen: Shader info', {
+  //     currentShader,
+  //     isColorMode,
+  //     backgroundColor,
+  //     overlayColor,
+  //     transitionStateKey: transitionState?.toShaderKey,
+  //     shaderFromSettings: getShaderForSection('hudba'),
+  //     colorFromSettings: getColorForSection('hudba'),
+  //     willShowShader: !isColorMode,
+  //     willShowColor: isColorMode,
+  //     opacity: 1.0
+  //   });
+  // }, [currentShader, isColorMode, backgroundColor, overlayColor, transitionState, getShaderForSection, getColorForSection]);
 
   // Pokud není načteno žádné audio, nezobrazuj nic
   if (!activeAudio) {

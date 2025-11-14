@@ -19,15 +19,17 @@ export const useFinalSound = (breathFinalSound, isBreathing) => {
 
   // Funkce pro přehrání finálního zvuku
   const playFinalSound = useCallback(async () => {
-    console.log('🔊 playFinalSound called', { breathFinalSound, alreadyPlayed: finalSoundPlayedRef.current });
+    // Debug logy deaktivovány - příliš mnoho výpisů
+    // const DEBUG_FINAL_SOUND = false;
+    // if (DEBUG_FINAL_SOUND) console.log('🔊 playFinalSound called', { breathFinalSound, alreadyPlayed: finalSoundPlayedRef.current });
 
     if (!breathFinalSound || breathFinalSound === 'none') {
-      console.log('⚠️ No final sound configured');
+      // if (DEBUG_FINAL_SOUND) console.log('⚠️ No final sound configured');
       return;
     }
 
     if (finalSoundPlayedRef.current) {
-      console.log('⚠️ Final sound already played');
+      // if (DEBUG_FINAL_SOUND) console.log('⚠️ Final sound already played');
       return;
     }
 
@@ -35,7 +37,7 @@ export const useFinalSound = (breathFinalSound, isBreathing) => {
     finalSoundPlayedRef.current = true;
 
     try {
-      console.log('🔍 Loading final sound metadata:', breathFinalSound);
+      // if (DEBUG_FINAL_SOUND) console.log('🔍 Loading final sound metadata:', breathFinalSound);
       const { realtimeMetadataService } = await import('@services/realtimeMetadataService');
       const { ref, getDownloadURL } = await import('firebase/storage');
       const { storage } = await import('@services/firebase');
@@ -44,18 +46,18 @@ export const useFinalSound = (breathFinalSound, isBreathing) => {
 
       // Zkus načíst z metadata
       const metadata = await realtimeMetadataService.getFileMetadata(breathFinalSound);
-      console.log('📦 Final sound metadata:', metadata);
+      // if (DEBUG_FINAL_SOUND) console.log('📦 Final sound metadata:', metadata);
 
       if (metadata && (metadata.downloadURL || metadata.audioSrc)) {
         url = metadata.downloadURL || metadata.audioSrc;
-        console.log('✅ Found URL in metadata:', url);
+        // if (DEBUG_FINAL_SOUND) console.log('✅ Found URL in metadata:', url);
       } else {
         // Pokud není v metadata, zkus načíst přímo z Firebase Storage (fallback)
-        console.log('⚠️ Metadata missing, trying Firebase Storage directly');
+        // if (DEBUG_FINAL_SOUND) console.log('⚠️ Metadata missing, trying Firebase Storage directly');
         try {
           const audioRef = ref(storage, breathFinalSound);
           url = await getDownloadURL(audioRef);
-          console.log('✅ Found URL from Firebase Storage:', url);
+          // if (DEBUG_FINAL_SOUND) console.log('✅ Found URL from Firebase Storage:', url);
         } catch (storageError) {
           console.error('❌ Failed to load final sound from Firebase Storage:', storageError);
           finalSoundPlayedRef.current = false;
@@ -64,7 +66,7 @@ export const useFinalSound = (breathFinalSound, isBreathing) => {
       }
 
       if (url) {
-        console.log('▶️ Playing final sound from URL:', url);
+        // if (DEBUG_FINAL_SOUND) console.log('▶️ Playing final sound from URL:', url);
         const audio = new Audio(url);
         audio.volume = 1;
         audio.play().catch((error) => {
@@ -72,9 +74,9 @@ export const useFinalSound = (breathFinalSound, isBreathing) => {
           // Resetuj flag při chybě, aby se mohl zkusit znovu
           finalSoundPlayedRef.current = false;
         });
-        console.log('✅ Final sound playback started');
+        // if (DEBUG_FINAL_SOUND) console.log('✅ Final sound playback started');
       } else {
-        console.warn('⚠️ No download URL found');
+        // if (DEBUG_FINAL_SOUND) console.warn('⚠️ No download URL found');
         finalSoundPlayedRef.current = false;
       }
     } catch (error) {

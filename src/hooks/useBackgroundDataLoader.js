@@ -20,22 +20,24 @@ export const useBackgroundDataLoader = (showIntro) => {
           const uiDataService = (await import('@services/uiDataService')).default;
 
           // Načti UI data (texty, překlady, konfigurace) z Realtime Database
-          console.log('🔄 Loading UI data from Realtime Database...');
+          // Debug logy deaktivovány - příliš mnoho výpisů
+          // const DEBUG_BACKGROUND_LOADER = false;
+          // if (DEBUG_BACKGROUND_LOADER) console.log('🔄 Loading UI data from Realtime Database...');
           try {
             await uiDataService.loadUIData();
-            console.log('✅ UI data loaded successfully');
+            // if (DEBUG_BACKGROUND_LOADER) console.log('✅ UI data loaded successfully');
           } catch (uiError) {
             console.warn('⚠️ Failed to load UI data:', uiError.message);
             // Pokračuj i když UI data selžou
           }
 
-          console.log('🔄 Loading metadata from Realtime Database...');
+          // if (DEBUG_BACKGROUND_LOADER) console.log('🔄 Loading metadata from Realtime Database...');
 
           // Nejdříve zkus Realtime Database (nejrychlejší)
           try {
             const realtimeMetadata = await realtimeMetadataService.getAllMetadata();
             if (realtimeMetadata && Object.keys(realtimeMetadata).length > 0) {
-              console.log(`✅ Loaded ${Object.keys(realtimeMetadata).length} metadata entries from Realtime Database`);
+              // if (DEBUG_BACKGROUND_LOADER) console.log(`✅ Loaded ${Object.keys(realtimeMetadata).length} metadata entries from Realtime Database`);
 
               // Ulož do cache pro rychlý přístup
               const cacheServiceInstance = cacheService;
@@ -43,7 +45,7 @@ export const useBackgroundDataLoader = (showIntro) => {
                 cacheServiceInstance.setMetadata(key, value);
               });
 
-              console.log('✅ Realtime Database metadata cached successfully');
+              // if (DEBUG_BACKGROUND_LOADER) console.log('✅ Realtime Database metadata cached successfully');
             } else {
               throw new Error('No metadata in Realtime Database');
             }
@@ -55,26 +57,26 @@ export const useBackgroundDataLoader = (showIntro) => {
           }
 
           // Inicializuj fast metadata service (struktura + názvy)
-          console.log('🔄 Initializing fast metadata service in background...');
+          // if (DEBUG_BACKGROUND_LOADER) console.log('🔄 Initializing fast metadata service in background...');
           await fastMetadataService.initialize();
-          console.log('✅ Fast metadata service initialized');
+          // if (DEBUG_BACKGROUND_LOADER) console.log('✅ Fast metadata service initialized');
 
           // Inicializuj globální metadata preloader (skutečné délky MP3)
-          console.log('🔄 Initializing global MP3 metadata preloader in background...');
+          // if (DEBUG_BACKGROUND_LOADER) console.log('🔄 Initializing global MP3 metadata preloader in background...');
           await globalMetadataPreloader.initialize();
-          console.log('✅ Global MP3 metadata preloader initialized');
+          // if (DEBUG_BACKGROUND_LOADER) console.log('✅ Global MP3 metadata preloader initialized');
 
           // Inicializuj data meditací (předpřipravené filtrované data)
-          console.log('🔄 Initializing meditace data service in background...');
+          // if (DEBUG_BACKGROUND_LOADER) console.log('🔄 Initializing meditace data service in background...');
           const { meditaceDataService } = await import('@services/meditaceDataService');
           await meditaceDataService.initialize();
-          console.log('✅ Meditace data service initialized');
+          // if (DEBUG_BACKGROUND_LOADER) console.log('✅ Meditace data service initialized');
 
           // Preload kritická metadata
           await cacheService.preloadCriticalData();
 
           // Nastav real-time listener pro aktualizace
-          console.log('🔄 Setting up real-time metadata listener...');
+          // if (DEBUG_BACKGROUND_LOADER) console.log('🔄 Setting up real-time metadata listener...');
           let lastUpdateTime = 0;
           let isProcessingUpdate = false;
 
@@ -82,24 +84,24 @@ export const useBackgroundDataLoader = (showIntro) => {
             // Debounce: aktualizuj maximálně jednou za 2 sekundy
             const now = Date.now();
             if (now - lastUpdateTime < 2000) {
-              console.debug('⏭️ Skipping real-time update (debounce)');
+              // if (DEBUG_BACKGROUND_LOADER) console.debug('⏭️ Skipping real-time update (debounce)');
               return;
             }
 
             // Pokud už probíhá aktualizace, přeskoč
             if (isProcessingUpdate) {
-              console.debug('⏭️ Skipping real-time update (already processing)');
+              // if (DEBUG_BACKGROUND_LOADER) console.debug('⏭️ Skipping real-time update (already processing)');
               return;
             }
 
             lastUpdateTime = now;
             isProcessingUpdate = true;
 
-            console.log('📡 Real-time metadata update received:', {
-              hasFiles: !!data.files,
-              filesCount: data.files ? data.files.length : 0,
-              lastSync: data.lastSync
-            });
+            // if (DEBUG_BACKGROUND_LOADER) console.log('📡 Real-time metadata update received:', {
+            //   hasFiles: !!data.files,
+            //   filesCount: data.files ? data.files.length : 0,
+            //   lastSync: data.lastSync
+            // });
 
             // Debounce aktualizaci o 500ms
             if (updateTimeout) {
@@ -116,11 +118,11 @@ export const useBackgroundDataLoader = (showIntro) => {
                   }
                 });
 
-                console.log(`✅ Updated cache with ${data.files.length} files from real-time update`);
+                // if (DEBUG_BACKGROUND_LOADER) console.log(`✅ Updated cache with ${data.files.length} files from real-time update`);
 
                 // Aktualizuj fast metadata service (bez force reload)
                 fastMetadataService.initialize(false).then(() => {
-                  console.log('✅ Fast metadata service updated from real-time data');
+                  // if (DEBUG_BACKGROUND_LOADER) console.log('✅ Fast metadata service updated from real-time data');
                   isProcessingUpdate = false;
                 }).catch(err => {
                   console.warn('⚠️ Failed to update fast metadata service:', err);
@@ -129,7 +131,7 @@ export const useBackgroundDataLoader = (showIntro) => {
 
                 // Aktualizuj meditace data service
                 meditaceDataService.initialize().then(() => {
-                  console.log('✅ Meditace data service updated from real-time data');
+                  // if (DEBUG_BACKGROUND_LOADER) console.log('✅ Meditace data service updated from real-time data');
                 }).catch(err => {
                   console.warn('⚠️ Failed to update meditace data service:', err);
                 });
@@ -160,7 +162,7 @@ export const useBackgroundDataLoader = (showIntro) => {
           clearTimeout(updateTimeout);
         }
         if (stopWatching) {
-          console.log('🔄 Cleaning up real-time metadata listener...');
+          // if (DEBUG_BACKGROUND_LOADER) console.log('🔄 Cleaning up real-time metadata listener...');
           stopWatching();
         }
       };

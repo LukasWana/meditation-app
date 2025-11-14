@@ -240,18 +240,19 @@ export async function progressiveLoadMetadata(
  */
 export function cleanupExpiredCache() {
   const now = Date.now();
-  let removed = 0;
+  // let removed = 0; // Nevyužíváno - logy deaktivovány
 
   requestCache.forEach((value, key) => {
     if (now > value.expiresAt) {
       requestCache.delete(key);
-      removed++;
+      // removed++; // Nevyužíváno - logy deaktivovány
     }
   });
 
-  if (removed > 0) {
-    console.log(`🧹 cleanupExpiredCache: Vyčištěno ${removed} request cache položek`);
-  }
+  // Debug log deaktivován - příliš mnoho výpisů
+  // if (removed > 0) {
+  //   console.log(`🧹 cleanupExpiredCache: Vyčištěno ${removed} request cache položek`);
+  // }
 }
 
 /**
@@ -264,7 +265,8 @@ export function clearCache() {
   stats.deduplicatedRequests = 0;
   stats.cacheHits = 0;
   stats.cacheMisses = 0;
-  console.log('🧹 clearCache: Request cache vyčištěna');
+  // Debug log deaktivován - příliš mnoho výpisů
+  // console.log('🧹 clearCache: Request cache vyčištěna');
 }
 
 /**

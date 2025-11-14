@@ -53,7 +53,7 @@ export const useFirebaseAudio = (audioFileName) => {
         // Zkontroluj offline cache PRVNÍ - šetří mobilní data
         const offlineUrl = await enhancedOfflineCacheService.getOfflineUrl(audioFileName);
         if (offlineUrl) {
-          console.log('🔗 Using offline URL for:', audioFileName, '(saving mobile data)');
+          // if (DEBUG_FIREBASE_AUDIO) console.log('🔗 Using offline URL for:', audioFileName, '(saving mobile data)');
           setAudioUrl(mapUrlForDevProxy(offlineUrl));
           setCurrentFileName(audioFileName);
           setDataSource('cache');
@@ -64,7 +64,7 @@ export const useFirebaseAudio = (audioFileName) => {
         // Zkontroluj cache druhé
         const cachedUrl = cacheService.getAudioUrl(audioFileName);
         if (cachedUrl) {
-          console.log('🔗 Using cached URL for:', audioFileName);
+          // if (DEBUG_FIREBASE_AUDIO) console.log('🔗 Using cached URL for:', audioFileName);
           setAudioUrl(mapUrlForDevProxy(cachedUrl));
           setCurrentFileName(audioFileName);
           setDataSource('cache');
@@ -76,9 +76,11 @@ export const useFirebaseAudio = (audioFileName) => {
         const audioRef = ref(storage, audioFileName);
 
         // Získání download URL - Service Worker se postará o cache
-        console.log('🔗 Fetching download URL for:', audioFileName);
+        // Debug logy deaktivovány - příliš mnoho výpisů
+        // const DEBUG_FIREBASE_AUDIO = false;
+        // if (DEBUG_FIREBASE_AUDIO) console.log('🔗 Fetching download URL for:', audioFileName);
         const url = await getDownloadURL(audioRef);
-        console.log('🔗 Download URL obtained:', url);
+        // if (DEBUG_FIREBASE_AUDIO) console.log('🔗 Download URL obtained:', url);
 
         // Ověř, že URL je platné
         if (!url || !url.startsWith('http')) {
@@ -103,11 +105,11 @@ export const useFirebaseAudio = (audioFileName) => {
 
         // Fallback mechanismus - zkus lokální soubor
         if (!fallbackUsed) {
-          console.log('🔗 Attempting fallback for:', audioFileName);
+          // if (DEBUG_FIREBASE_AUDIO) console.log('🔗 Attempting fallback for:', audioFileName);
 
           // Zkus fallback URL (např. z public/media)
           const fallbackUrl = `/media/${audioFileName}`;
-          console.log('🔗 Using fallback URL:', fallbackUrl);
+          // if (DEBUG_FIREBASE_AUDIO) console.log('🔗 Using fallback URL:', fallbackUrl);
 
           setAudioUrl(mapUrlForDevProxy(fallbackUrl));
           setCurrentFileName(audioFileName);

@@ -58,10 +58,11 @@ export const db = getFirestore(app);
 export const auth = getAuth(app);
 
 // Inicializace Firebase App Check pro ochranu proti abuse
-let appCheck = null;
+// AppCheck je inicializován, ale proměnná není použita (pouze pro inicializaci)
 if (import.meta.env.VITE_RECAPTCHA_SITE_KEY) {
   try {
-    appCheck = initializeAppCheck(app, {
+    // eslint-disable-next-line no-unused-vars
+    const appCheck = initializeAppCheck(app, {
       provider: new ReCaptchaV3Provider(import.meta.env.VITE_RECAPTCHA_SITE_KEY),
       isTokenAutoRefreshEnabled: true
     });
@@ -74,9 +75,10 @@ if (import.meta.env.VITE_RECAPTCHA_SITE_KEY) {
     console.warn('   App Check je volitelný, ale doporučený pro produkci');
   }
 } else {
-  if (import.meta.env.MODE === 'development') {
-    console.log('ℹ️ App Check je vypnutý - můžete nastavit VITE_RECAPTCHA_SITE_KEY pro aktivaci');
-  }
+  // App Check logy deaktivovány
+  // if (import.meta.env.MODE === 'development') {
+  //   console.log('ℹ️ App Check je vypnutý - můžete nastavit VITE_RECAPTCHA_SITE_KEY pro aktivaci');
+  // }
 }
 
 // Realtime Database - respektuj konfigurované prostředí
@@ -91,28 +93,32 @@ try {
 
   database = getDatabase(app, resolvedUrl);
 
-  if (import.meta.env.MODE === 'development') {
-    console.log('🗄️ Realtime Database: Using URL', resolvedUrl);
-    if (!databaseUrl) {
-      console.log('ℹ️ No VITE_FIREBASE_DATABASE_URL provided, using regional fallback');
-    }
-  }
+  // Database URL logy deaktivovány
+  // if (import.meta.env.MODE === 'development') {
+  //   console.log('🗄️ Realtime Database: Using URL', resolvedUrl);
+  //   if (!databaseUrl) {
+  //     console.log('ℹ️ No VITE_FIREBASE_DATABASE_URL provided, using regional fallback');
+  //   }
+  // }
 } catch (error) {
   console.error('❌ Chyba při inicializaci Realtime Database:', error);
   // Fallback na default databázi
   database = getDatabase(app);
-  if (import.meta.env.MODE === 'development') {
-    console.log('🗄️ Realtime Database: Using default database after fallback');
-  }
+  // Database fallback logy deaktivovány
+  // if (import.meta.env.MODE === 'development') {
+  //   console.log('🗄️ Realtime Database: Using default database after fallback');
+  // }
 }
 export { database };
 
 // Debug Firebase připojení - pouze v development módu a bez citlivých dat
-if (import.meta.env.MODE === 'development') {
-  console.log('🔥 Firebase initialized successfully');
-  console.log('📁 Project ID:', firebaseConfig.projectId);
-  console.log('📦 Storage Bucket:', firebaseConfig.storageBucket);
-  console.log('🗄️ Realtime Database URL:', database.app.options.databaseURL);
-  console.log('🛡️ App Check:', appCheck ? 'Active' : 'Disabled');
-  // Nezobrazujeme API klíče ani jiné citlivé údaje
-}
+  // Firebase inicializační logy deaktivovány - příliš mnoho výpisů
+  // Použij pouze pro skutečné chyby
+  // if (import.meta.env.MODE === 'development') {
+  //   console.log('🔥 Firebase initialized successfully');
+  //   console.log('📁 Project ID:', firebaseConfig.projectId);
+  //   console.log('📦 Storage Bucket:', firebaseConfig.storageBucket);
+  //   console.log('🗄️ Realtime Database URL:', database.app.options.databaseURL);
+  //   console.log('🛡️ App Check:', appCheck ? 'Active' : 'Disabled');
+  //   // Nezobrazujeme API klíče ani jiné citlivé údaje
+  // }

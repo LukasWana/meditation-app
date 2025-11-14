@@ -163,7 +163,8 @@ export function getWebGLContext(canvas, options = {}) {
   });
 
   canvas.addEventListener('webglcontextrestored', () => {
-    console.log('✅ WebGL context restored:', canvas);
+    // Debug log deaktivován - příliš mnoho výpisů
+    // console.log('✅ WebGL context restored:', canvas);
     handleContextRestored(glContext);
   });
 
@@ -202,7 +203,8 @@ export function releaseWebGLContext(glContext) {
     }
   }
 
-  console.log('✅ WebGL context released');
+  // Debug log deaktivován - příliš mnoho výpisů
+  // console.log('✅ WebGL context released');
 }
 
 /**
@@ -270,9 +272,10 @@ export function cleanupInactiveContexts(maxAge = 2 * 1000) {
     releaseWebGLContext(glContext);
   });
 
-  if (contextsToRelease.length > 0) {
-    console.log(`🧹 cleanupInactiveContexts: Vyčištěno ${contextsToRelease.length} neaktivních kontextů`);
-  }
+  // Debug log deaktivován - příliš mnoho výpisů
+  // if (contextsToRelease.length > 0) {
+  //   console.log(`🧹 cleanupInactiveContexts: Vyčištěno ${contextsToRelease.length} neaktivních kontextů`);
+  // }
 }
 
 /**
@@ -302,7 +305,8 @@ function handleContextLost(glContext) {
 function handleContextRestored(glContext) {
   const contextInfo = activeContexts.get(glContext);
   if (contextInfo) {
-    console.log('✅ WebGL context restored:', glContext);
+    // Debug log deaktivován - příliš mnoho výpisů
+    // console.log('✅ WebGL context restored:', glContext);
     contextInfo.lost = false;
     contextInfo.restoredAt = Date.now();
     contextInfo.lastUsed = Date.now();

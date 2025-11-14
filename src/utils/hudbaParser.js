@@ -24,7 +24,8 @@ export const parseHudbaFileName = (fileName) => {
     console.error(`Chyba při parsování hudebního souboru ${fileName}:`, error);
     return null;
   }
-};
+};
+
 export const parseAlbumFileName = (fileName) => {
   if (!fileName || typeof fileName !== 'string') {
     return null;
@@ -36,7 +37,11 @@ export const parseAlbumFileName = (fileName) => {
 
     if (match) {
       const [, albumName, trackNumber, trackName] = match;
-      console.log(`🎵 Parsed album file: ${fileName} -> Album: "${albumName.trim()}", Track: ${trackNumber}, Name: "${trackName.trim()}"`);
+      // Debug log deaktivován - příliš mnoho výpisů (voláno pro každý soubor)
+      // const DEBUG_HUDBA_PARSER = false;
+      // if (DEBUG_HUDBA_PARSER) {
+      //   console.log(`🎵 Parsed album file: ${fileName} -> Album: "${albumName.trim()}", Track: ${trackNumber}, Name: "${trackName.trim()}"`);
+      // }
 
       return {
         originalFileName: fileName,
@@ -55,7 +60,8 @@ export const parseAlbumFileName = (fileName) => {
     console.error(`Chyba při parsování album souboru ${fileName}:`, error);
     return null;
   }
-};
+};
+
 export const parseSlovaFileName = (fileName) => {
   if (!fileName || typeof fileName !== 'string') {
     return null;
@@ -100,7 +106,8 @@ export const parseSlovaFileName = (fileName) => {
     console.warn(`Chyba při parsování slova souboru: ${fileName}`, error);
     return null;
   }
-};
+};
+
 export const parseAudioFileName = (fileName) => {
   if (!fileName || typeof fileName !== 'string') {
     return null;
@@ -129,7 +136,10 @@ export const parseAudioFileName = (fileName) => {
   const albumMatch = fileName.match(/^(.+?)\s*-\s*(\d+)\s+(.+?)\.mp3$/i);
   if (albumMatch) {
     const [, albumName, trackNumber, trackName] = albumMatch;
-    console.log(`🎵 Parsed album track: ${fileName} -> Album: "${albumName.trim()}", Track: ${trackNumber}, Name: "${trackName.trim()}"`);
+      // Debug log deaktivován - příliš mnoho výpisů
+      // if (DEBUG_HUDBA_PARSER) {
+      //   console.log(`🎵 Parsed album track: ${fileName} -> Album: "${albumName.trim()}", Track: ${trackNumber}, Name: "${trackName.trim()}"`);
+      // }
     return {
       originalFileName: fileName,
       name: trackName.trim(),

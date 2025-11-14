@@ -119,7 +119,7 @@ function MeditationApp() {
     // Načti database viewer pro development
     if (import.meta.env.MODE === 'development') {
       import('./scripts/consoleDbViewer.js').then(() => {
-        console.log('🔍 Database viewer je k dispozici v konzoli');
+        // console.log('🔍 Database viewer je k dispozici v konzoli');
       });
 
       // Debug funkce pro slova soubory
@@ -248,13 +248,17 @@ function MeditationApp() {
       }
     });
 
-    console.log('🔍 Debug funkce dostupné v konzoli:');
-    console.log('  - showDatabaseData() - zobrazí database viewer');
-    console.log('  - debugSlovaFiles() - zobrazí slova soubory v Realtime Database');
-    console.log('  - debugCache() - zobrazí detaily cache');
-    console.log('  - clearCache() - vymaže cache');
-    console.log('  - testAudioPlayback(fileName) - otestuje přehrávání konkrétního souboru');
-    console.log("  - setLogLevel(level) - nastaví úroveň logování (např. setLogLevel('silent') nebo setLogLevel(logLevels.silent))");
+    // Debug funkce logy deaktivovány - příliš mnoho výpisů
+    // const DEBUG_APP = false;
+    // if (DEBUG_APP) {
+    //   console.log('🔍 Debug funkce dostupné v konzoli:');
+    //   console.log('  - showDatabaseData() - zobrazí database viewer');
+    //   console.log('  - debugSlovaFiles() - zobrazí slova soubory v Realtime Database');
+    //   console.log('  - debugCache() - zobrazí detaily cache');
+    //   console.log('  - clearCache() - vymaže cache');
+    //   console.log('  - testAudioPlayback(fileName) - otestuje přehrávání konkrétního souboru');
+    //   console.log("  - setLogLevel(level) - nastaví úroveň logování (např. setLogLevel('silent') nebo setLogLevel(logLevels.silent))");
+    // }
     }
   }, []);
 
