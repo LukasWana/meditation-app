@@ -1,4 +1,5 @@
-import { useState, useEffect, useMemo } from 'react';
+// eslint-disable-next-line no-unused-vars
+import React, { useState, useEffect, useMemo } from 'react';
 import { meditaceDataService } from '@services/meditaceDataService';
 import log from '@services/logger';
 

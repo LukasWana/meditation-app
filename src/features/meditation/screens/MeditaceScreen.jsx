@@ -1,7 +1,7 @@
 import React, { useMemo, useEffect } from 'react';
 import { FramerButton, FramerSection, FramerPageTransition, BackButton, BackgroundShader } from '@components';
 import { useLanguage } from '@contexts/LanguageContext';
-import { useRealtimeMeditaceFilter } from '@hooks/useRealtimeMeditaceFilter';
+import { useRealtimeMeditaceFilter } from '@hooks';
 import { useShaderSettings } from '@contexts/ShaderSettingsContext';
 import { usePlayback } from '@contexts/ShaderPlaybackContext';
 import { useAdaptiveTextColors } from '@hooks';
