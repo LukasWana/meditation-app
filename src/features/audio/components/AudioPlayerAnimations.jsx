@@ -8,10 +8,14 @@ export const AudioPlayerAnimations = ({
   className = "",
   sectionKey = null // Klíč sekce - album cover se zobrazuje pouze v sekci 'hudba'
 }) => {
-  // Overlay pozadí - pokud je barva, úplně transparentní, jinak velmi průhledné, aby shader prosvítal
-  const overlayBackgroundStyle = backgroundColor
-    ? { backgroundColor: 'rgba(0, 0, 0, 0.0)' } // Úplně transparentní overlay, pokud je barva
-    : { backgroundColor: 'rgba(0, 0, 0, 0.02)' }; // Velmi průhledné pozadí (sníženo z 0.05 na 0.02), aby shader více prosvítal
+  // Zkontroluj, zda má být zobrazeno album cover
+  const hasAlbumCover = albumCover && sectionKey === 'hudba' && typeof albumCover === 'string' && albumCover.trim() !== '';
+
+  // Overlay pozadí - pokud je barva nebo album cover, úplně transparentní, jinak velmi průhledné, aby shader prosvítal
+  // Stejně jako v MeditaceScreen - pouze minimální průhlednost pro lepší viditelnost shaderu
+  const overlayBackgroundStyle = backgroundColor || hasAlbumCover
+    ? { backgroundColor: 'rgba(0, 0, 0, 0.0)' } // Úplně transparentní overlay, pokud je barva nebo album cover
+    : { backgroundColor: 'rgba(0, 0, 0, 0.02)' }; // Velmi průhledné pozadí (stejně jako původně), aby shader více prosvítal
 
   return (
     <>
@@ -24,7 +28,7 @@ export const AudioPlayerAnimations = ({
             left: 0,
             right: 0,
             bottom: 0,
-            zIndex: 7000, // Pod shaderem (zIndex 8000), ale nad základním pozadím (zIndex 0)
+            zIndex: 7000, // Pod shaderem (zIndex 2), ale nad základním pozadím (zIndex 0)
             backgroundColor: backgroundColor,
             opacity: 0.5, // Průhlednost, aby shader více prosvítal (sníženo z 0.7 na 0.5)
             pointerEvents: 'none'

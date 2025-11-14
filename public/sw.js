@@ -205,9 +205,20 @@ async function cacheFirst(request, cacheName) {
       const networkResponse = await fetch(request);
       if (networkResponse.ok) {
         console.log(`🖼️ Network success for image: ${request.url}`);
-        // Ulož do cache
-        const cache = await caches.open(cacheName);
-        cache.put(request, networkResponse.clone());
+        // POZOR: Nelze cachovat částečné odpovědi (status 206) - Cache API to nepodporuje
+        // Status 206 se používá pro range requesty (streamování audia/videa)
+        if (networkResponse.status !== 206) {
+          try {
+            // Ulož do cache
+            const cache = await caches.open(cacheName);
+            await cache.put(request, networkResponse.clone());
+          } catch (cacheError) {
+            console.warn('⚠️ Service Worker: Failed to cache image', cacheError, {
+              url: request.url,
+              status: networkResponse.status
+            });
+          }
+        }
         return networkResponse;
       } else {
         console.warn(`🖼️ Network failed for image: ${request.url} - ${networkResponse.status}`);
@@ -336,8 +347,19 @@ async function staleWhileRevalidate(request, cacheName) {
   const cachedResponse = await cache.match(request);
 
   const fetchPromise = fetch(request).then((networkResponse) => {
-    if (networkResponse.ok) {
-      cache.put(request, networkResponse.clone());
+    // POZOR: Nelze cachovat částečné odpovědi (status 206) - Cache API to nepodporuje
+    // Status 206 se používá pro range requesty (streamování audia/videa)
+    if (networkResponse.ok && networkResponse.status !== 206) {
+      try {
+        cache.put(request, networkResponse.clone()).catch(err => {
+          console.warn('⚠️ Service Worker: Failed to cache in staleWhileRevalidate', err, {
+            url: request.url,
+            status: networkResponse.status
+          });
+        });
+      } catch (cacheError) {
+        console.warn('⚠️ Service Worker: Failed to cache in staleWhileRevalidate', cacheError);
+      }
     }
     return networkResponse;
   }).catch(() => cachedResponse);
@@ -351,9 +373,21 @@ async function networkFirst(request, cacheName) {
     const networkResponse = await fetch(request);
 
     // Cache pouze GET requesty (POST, PUT, DELETE nelze cachovat)
-    if (networkResponse.ok && request.method === 'GET') {
-      const cache = await caches.open(cacheName);
-      cache.put(request, networkResponse.clone());
+    // POZOR: Nelze cachovat částečné odpovědi (status 206) - Cache API to nepodporuje
+    // Status 206 se používá pro range requesty (streamování audia/videa)
+    if (networkResponse.ok &&
+        networkResponse.status !== 206 && // Přeskoč částečné odpovědi
+        request.method === 'GET') {
+      try {
+        const cache = await caches.open(cacheName);
+        await cache.put(request, networkResponse.clone());
+      } catch (cacheError) {
+        // Pokud selže cache (např. 206 status nebo jiný problém), loguj ale nepřerušuj
+        console.warn('⚠️ Service Worker: Failed to cache response', cacheError, {
+          url: request.url,
+          status: networkResponse.status
+        });
+      }
     }
 
     return networkResponse;

@@ -85,15 +85,19 @@ const DychaniScreen = ({
   const { t } = useLanguage();
   const {
     shaderSettings,
-    getShaderForSection,
     getColorForSection,
     getOverlaySettings
   } = useShaderSettings();
 
   // Získej shader pro sekci dýchání - reaguje na změny v nastavení
   const breathShader = useMemo(() => {
-    return getShaderForSection('dychani') || shaderSettings?.dychani || 'dychani';
-  }, [shaderSettings, getShaderForSection]);
+    // Použij přímo shaderSettings místo getShaderForSection, aby se shader načetl hned při prvním renderu
+    const shader = shaderSettings?.dychani;
+    if (shader === null) {
+      return null; // Barva má prioritu
+    }
+    return shader || 'dychani';
+  }, [shaderSettings]);
 
   const [showGallery, setShowGallery] = useState(false);
   const [showDurationPicker, setShowDurationPicker] = useState(false);
@@ -664,6 +668,35 @@ const DychaniScreen = ({
               </div>
             </div>
           </FramerSection>
+
+          {/* Info o délce dýchání a rytmu - zobraz při přehrávání */}
+          {isPlaying && (
+            <FramerSection
+              className="mb-12"
+              animationType="fadeIn"
+              delay={0.3}
+            >
+              <div className="flex justify-center items-start gap-8 md:gap-12 mb-4">
+                <div className="flex flex-col items-center">
+                  <div className={`text-4xl md:text-5xl font-sans font-medium ${textColors.secondary} mb-1`}>
+                    {selectedDuration}
+                  </div>
+                  <span className={`text-base md:text-lg font-serif ${textColors.secondary} font-light`}>
+                    {t('dlzkaDychania') || 'délka'}
+                  </span>
+                </div>
+
+                <div className="flex flex-col items-center">
+                  <div className={`text-4xl md:text-5xl font-sans font-medium ${textColors.secondary} mb-1`}>
+                    {breathInDuration} : {breathOutDuration}
+                  </div>
+                  <span className={`text-base md:text-lg font-serif ${textColors.secondary} font-light`}>
+                    {t('rytmus') || 'rytmus'}
+                  </span>
+                </div>
+              </div>
+            </FramerSection>
+          )}
 
           {!isPlaying && (
             <FramerSection

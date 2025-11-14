@@ -1,13 +1,11 @@
-import React, { useState, useMemo } from 'react';
-import { AnimatePresence } from 'framer-motion';
+import React, { useMemo } from 'react';
 import { FramerButton, FramerSection, FramerPageTransition, BackButton, BackgroundShader } from '@components';
-import { AudioPlayer } from '@features/audio';
 import { useFirebaseHudbaFilter } from '@features/audio/hooks/useFirebaseHudbaFilter';
 import { useShaderSettings } from '@contexts/ShaderSettingsContext';
-import { useAudioAnalysis } from '@contexts/AudioAnalysisContext';
 import { usePlayback } from '@contexts/ShaderPlaybackContext';
 import { useLanguage } from '@contexts/LanguageContext';
-import { shouldUseDarkMode } from '@utils/colorUtils';
+
+const STORAGE_KEY = 'meditation-app-active-audio-hudba';
 
 const HudbaScreen = ({
   onNavigateToScreen,
@@ -16,70 +14,112 @@ const HudbaScreen = ({
   onTouchEnd,
   onPlayerStateChange
 }) => {
-  const [activeAudio, setActiveAudio] = useState(null);
   const { t } = useLanguage();
 
   // Použij hudební filtrovací systém
   const { hudbaItems, isLoading, isLoadingCovers, error } = useFirebaseHudbaFilter();
 
   // Shader settings pro pozadí přehrávače
-  const { getShaderForSection, getColorForSection } = useShaderSettings();
-  const { audioData } = useAudioAnalysis();
+  const { shaderSettings, getColorForSection, getOverlaySettings } = useShaderSettings();
   const { transitionState } = usePlayback();
+
+  const colorOverride = getColorForSection('hudba');
+  const overlayConfig = getOverlaySettings('hudba') || {};
+  const shaderOpacity = Math.min(Math.max(overlayConfig.opacity ?? 0.75, 0), 1);
+  const shaderIntensity = Math.min(Math.max(overlayConfig.intensity ?? 0.8, 0), 1);
+  const blendMode = overlayConfig.blendMode || 'normal';
 
   // Urči, jaký shader/barva se má zobrazit
   const currentShader = useMemo(() => {
-    // Prioritizace: 1. transitionState (aktivní přehrávání), 2. shader z settings, 3. barva z settings
+    // Prioritizace: 1. transitionState (aktivní přehrávání), 2. shader z settings
     if (transitionState?.toShaderKey && transitionState.toShaderKey !== '__BLACK__') {
-      const transitionKey = transitionState.toShaderKey;
-      if (transitionKey.startsWith('__COLOR__')) {
-        const shader = getShaderForSection('hudba');
-        if (shader && shader !== 'default') {
-          return shader;
-        }
-      }
-      return transitionKey;
+      return transitionState.toShaderKey;
     }
 
-    const shader = getShaderForSection('hudba');
-    if (shader) {
-      return shader;
+    // Použij přímo shaderSettings místo getShaderForSection, aby se shader načetl hned při prvním renderu
+    const shader = shaderSettings?.hudba;
+    if (shader === null) {
+      return null; // Barva má prioritu
     }
+    return shader || 'hudba';
+  }, [transitionState, shaderSettings]);
 
-    const color = getColorForSection('hudba');
-    if (color) {
-      return `__COLOR__${color}`;
+  // Získej barvu pro pozadí
+  const baseBackgroundColor = colorOverride || '#f4ddc4';
+
+  // Overlay pro sjednocení s UI
+  const BLEND_MODE_TO_CSS = {
+    normal: 'normal',
+    overlay: 'overlay',
+    multiply: 'multiply',
+    shines: 'screen',
+    light: 'lighten',
+    dark: 'darken'
+  };
+
+  const hexToRgba = (hex, alpha = 1) => {
+    if (!hex) {
+      return `rgba(244, 221, 196, ${alpha})`;
     }
+    let normalized = hex.trim();
+    if (normalized.startsWith('#')) {
+      normalized = normalized.slice(1);
+    }
+    if (normalized.length === 3) {
+      normalized = normalized.split('').map(char => `${char}${char}`).join('');
+    }
+    const bigint = Number.parseInt(normalized, 16);
+    const r = (bigint >> 16) & 255;
+    const g = (bigint >> 8) & 255;
+    const b = bigint & 255;
+    return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+  };
 
-    return 'default';
-  }, [transitionState, getShaderForSection, getColorForSection]);
-
-  const backgroundColor = getColorForSection('hudba');
-  const isColorMode = currentShader?.startsWith('__COLOR__');
-  const isDarkMode = shouldUseDarkMode(currentShader, backgroundColor);
+  const overlayBlendMode = BLEND_MODE_TO_CSS[blendMode] || 'normal';
+  const overlayAlpha = blendMode === 'normal' ? 0.55 : 0.6;
+  const overlayBackground = hexToRgba(baseBackgroundColor, overlayAlpha);
 
   const handleItemClick = (item) => {
     // Pokud je to album, použij první track
     if (item.type === 'album' && item.tracks && item.tracks.length > 0) {
       const firstTrack = item.tracks[0];
-      setActiveAudio({
+      const payload = {
         ...firstTrack,
         title: `${item.title} - ${firstTrack.trackName}`,
         albumCover: item.coverImage || null, // Předaj obrázek alba pro pozadí přehrávače
         albumTracks: item.tracks, // Předaj všechny tracky pro možnost přepínání
         currentTrackIndex: 0
-      });
+      };
+
+      try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(payload));
+        localStorage.setItem('meditation-app-previous-screen', 'hudba');
+        localStorage.setItem('meditation-app-before-player-screen', 'hudba');
+      } catch (e) {
+        console.error('❌ HudbaScreen: Failed to persist active audio', e);
+      }
+
       onPlayerStateChange?.(true);
+      onNavigateToScreen('audio-player-hudba');
     } else if (item.audioSrc) {
       // Samostatná skladba
-      setActiveAudio(item);
-      onPlayerStateChange?.(true);
-    }
-  };
+      const payload = {
+        ...item,
+        albumTracks: [item],
+        currentTrackIndex: 0
+      };
 
-  const handleCloseAudio = () => {
-    setActiveAudio(null);
-    onPlayerStateChange?.(false);
+      try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(payload));
+        localStorage.setItem('meditation-app-previous-screen', 'hudba');
+        localStorage.setItem('meditation-app-before-player-screen', 'hudba');
+      } catch (e) {
+        console.error('❌ HudbaScreen: Failed to persist active audio', e);
+      }
+
+      onPlayerStateChange?.(true);
+      onNavigateToScreen('audio-player-hudba');
+    }
   };
 
   // Loading state
@@ -114,19 +154,58 @@ const HudbaScreen = ({
 
   return (
     <FramerPageTransition screenKey="hudba">
+      {/* Pozadí stránky - pod shaderem */}
       <div
-        className={`min-h-screen w-full max-w-full bg-[#f4ddc4] flex flex-col items-center justify-center p-2 sm:p-8 pb-20 overflow-x-hidden relative ${
-          activeAudio ? 'pointer-events-none' : ''
-        }`}
-        onTouchStart={activeAudio ? undefined : onTouchStart}
-        onTouchMove={activeAudio ? undefined : onTouchMove}
-        onTouchEnd={activeAudio ? undefined : onTouchEnd}
+        className="fixed max-w-full"
+        style={{
+          zIndex: 0,
+          backgroundColor: baseBackgroundColor,
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: '-20px',
+          height: 'calc(100dvh + 20px)'
+        }}
+      />
+
+      {/* BackgroundShader - stejně jako v MeditaceScreen */}
+      <BackgroundShader
+        variant={currentShader}
+        intensity={shaderIntensity}
+        enabled={true}
+        opacity={shaderOpacity}
+        forceSquare={currentShader?.startsWith('shader-') ? true : null}
+        zIndex={2}
+      />
+
+      {/* Jemný barevný overlay pro sjednocení se zbytkem UI - stejně jako v MeditaceScreen */}
+      {/* Zobraz VŽDY, stejně jako v MeditaceScreen */}
+      <div
+        className="fixed pointer-events-none"
+        style={{
+          zIndex: 3,
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: '-20px',
+          height: 'calc(100dvh + 20px)',
+          background: overlayBackground,
+          mixBlendMode: overlayBlendMode,
+          transition: 'background 0.6s ease, mix-blend-mode 0.6s ease'
+        }}
+      />
+
+      {/* Hlavní obsah stránky - nad shaderem - průhledné pozadí, aby shader prosvítal */}
+      <div
+        className="min-h-screen w-full max-w-full flex flex-col items-center justify-center p-2 sm:p-8 pb-20 overflow-x-hidden relative"
+        style={{ position: 'relative', zIndex: 10, backgroundColor: 'transparent' }}
+        onTouchStart={onTouchStart}
+        onTouchMove={onTouchMove}
+        onTouchEnd={onTouchEnd}
       >
-        {!activeAudio && (
-          <BackButton
-            onClick={() => onNavigateToScreen('home')}
-          />
-        )}
+        <BackButton
+          onClick={() => onNavigateToScreen('home')}
+        />
 
         <div className="max-w-md w-full mt-16">
           <FramerSection
@@ -154,10 +233,8 @@ const HudbaScreen = ({
                 >
                   <FramerButton
                     variant="ghost"
-                    className={`w-full p-6 text-left bg-white/50 backdrop-blur rounded-none border border-black/10 ${
-                      activeAudio ? 'pointer-events-none opacity-50' : ''
-                    }`}
-                    onClick={activeAudio ? undefined : () => handleItemClick(item)}
+                    className="w-full p-6 text-left bg-white/50 backdrop-blur rounded-none border border-black/10"
+                    onClick={() => handleItemClick(item)}
                   >
                     <div className="flex items-center justify-between">
                       <div className="flex items-center space-x-3">
@@ -214,54 +291,6 @@ const HudbaScreen = ({
           </div>
 
         </div>
-
-        {/* BackgroundShader - zobraz pouze když je aktivní přehrávač */}
-        {activeAudio && (
-          <BackgroundShader
-            variant={currentShader}
-            intensity={0.8}
-            enabled={true}
-            opacity={isColorMode ? 1.0 : 1.0}
-            audioData={audioData}
-            forceSquare={currentShader?.startsWith('shader-') ? true : null}
-            zIndex={5}
-          />
-        )}
-
-        {/* Pozadí stránky - průhledné, aby shader prosvítal */}
-        {activeAudio && (
-          <div
-            className="fixed max-w-full bg-[#f4ddc4]"
-            style={{
-              zIndex: 0,
-              top: 0,
-              left: 0,
-              right: 0,
-              bottom: '-20px',
-              height: 'calc(100dvh + 20px)',
-              opacity: isColorMode ? 1 : 0.3
-            }}
-          />
-        )}
-
-        {/* Audio Player Modal */}
-        <AnimatePresence>
-          {activeAudio && (
-            <AudioPlayer
-              key="audio-player"
-              sectionKey="hudba"
-              audioSrc={activeAudio.audioSrc}
-              title={activeAudio.title}
-              onClose={handleCloseAudio}
-              albumCover={activeAudio.albumCover || null}
-              albumTracks={activeAudio.albumTracks || null}
-              currentTrackIndex={activeAudio.currentTrackIndex || 0}
-              onNavigateToScreen={onNavigateToScreen}
-              isDarkMode={isDarkMode}
-              backgroundColor={backgroundColor || undefined}
-            />
-          )}
-        </AnimatePresence>
       </div>
     </FramerPageTransition>
   );
