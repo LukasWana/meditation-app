@@ -1,5 +1,7 @@
 import React from 'react';
 import { motion } from 'framer-motion';
+import { useAnimationConfig } from '@hooks/useAnimationConfig';
+import { useAnimationControl } from '@contexts/AnimationContext';
 
 export const AudioPlayerAnimations = ({
   children,
@@ -8,6 +10,9 @@ export const AudioPlayerAnimations = ({
   className = "",
   sectionKey = null // Klíč sekce - album cover se zobrazuje pouze v sekci 'hudba'
 }) => {
+  const config = useAnimationConfig();
+  const { isActive } = useAnimationControl();
+
   // Zkontroluj, zda má být zobrazeno album cover
   const hasAlbumCover = albumCover && sectionKey === 'hudba' && typeof albumCover === 'string' && albumCover.trim() !== '';
 
@@ -16,6 +21,13 @@ export const AudioPlayerAnimations = ({
   const overlayBackgroundStyle = backgroundColor || hasAlbumCover
     ? { backgroundColor: 'rgba(0, 0, 0, 0.0)' } // Úplně transparentní overlay, pokud je barva nebo album cover
     : { backgroundColor: 'rgba(0, 0, 0, 0.02)' }; // Velmi průhledné pozadí (stejně jako původně), aby shader více prosvítal
+
+  const overlayAnim = config.audioPlayerAnimations.overlay;
+  const containerAnim = config.audioPlayerAnimations.container;
+
+  // Pokud jsou animace deaktivovány, použij instant transition
+  const overlayTransition = isActive ? overlayAnim.transition : { duration: 0 };
+  const containerTransition = isActive ? containerAnim.transition : { duration: 0 };
 
   return (
     <>
@@ -38,10 +50,10 @@ export const AudioPlayerAnimations = ({
 
       <motion.div
         className={`fixed inset-0 ${backgroundColor ? '' : ''} flex items-center justify-center z-50 pointer-events-auto ${className}`}
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        exit={{ opacity: 0 }}
-        transition={{ duration: 0.3, ease: "easeOut" }}
+        initial={isActive ? overlayAnim.initial : {}}
+        animate={isActive ? overlayAnim.animate : {}}
+        exit={isActive ? overlayAnim.exit : {}}
+        transition={overlayTransition}
         style={{
           position: 'fixed',
           top: 0,
@@ -57,17 +69,11 @@ export const AudioPlayerAnimations = ({
         <motion.div
           className="w-full h-full flex flex-col items-center justify-center relative overflow-hidden"
           style={{ backgroundColor: 'transparent' }} // Kontejner je průhledný, barva je v samostatném divu
-        initial={{ scale: 0.95, opacity: 0 }}
-        animate={{ scale: 1, opacity: 1 }}
-        exit={{ scale: 0.95, opacity: 0 }}
-        transition={{
-          duration: 0.4,
-          ease: "easeOut",
-          type: "spring",
-          stiffness: 200,
-          damping: 25
-        }}
-      >
+          initial={isActive ? containerAnim.initial : {}}
+          animate={isActive ? containerAnim.animate : {}}
+          exit={isActive ? containerAnim.exit : {}}
+          transition={containerTransition}
+        >
         {/* Album cover background - zobraz POUZE v sekci hudba */}
         {albumCover && sectionKey === 'hudba' && typeof albumCover === 'string' && albumCover.trim() !== '' && (
           <div

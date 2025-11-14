@@ -1,5 +1,7 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { motion } from 'framer-motion';
+import { useAnimationConfig } from '@hooks/useAnimationConfig';
+import { useAnimationControl } from '@contexts/AnimationContext';
 
 const AnimatedText = ({
   children,
@@ -7,23 +9,29 @@ const AnimatedText = ({
   className = '',
   style = {}
 }) => {
+  const config = useAnimationConfig();
+  const { isActive } = useAnimationControl();
+
+  const animation = useMemo(() => {
+    const baseAnim = config.textAnimations.default;
+    return {
+      ...baseAnim,
+      animate: {
+        ...baseAnim.animate,
+        transition: {
+          ...baseAnim.animate.transition,
+          delay: delay + baseAnim.animate.transition.delay,
+        },
+      },
+    };
+  }, [config.textAnimations, delay]);
+
   return (
     <motion.div
       className={`${className} py-4 leading-loose`}
       style={style}
-      initial={{ opacity: 0, y: 20, scale: 0.95 }}
-      animate={{
-        opacity: 1,
-        y: 0,
-        scale: 1,
-        transition: {
-          delay: delay + 0.3, // Text sa zobrazí po tom, čo sekcia sadne
-          duration: 0.8,
-          type: "spring",
-          stiffness: 120,
-          damping: 20
-        }
-      }}
+      initial={isActive ? animation.initial : {}}
+      animate={isActive ? animation.animate : {}}
     >
       {children}
     </motion.div>

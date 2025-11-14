@@ -8,6 +8,7 @@ import { UIConfigProvider } from '@contexts/UIConfigContext';
 import { ShaderSettingsProvider } from '@contexts/ShaderSettingsContext';
 import { AudioAnalysisProvider } from '@contexts/AudioAnalysisContext';
 import { ShaderPlaybackProvider } from '@contexts/ShaderPlaybackContext';
+import { AnimationProvider } from '@contexts/AnimationContext';
 import MonitoringDashboard from '@components/MonitoringDashboard';
 
 import ErrorBoundary from '@components/ErrorBoundary';
@@ -270,11 +271,12 @@ function MeditationApp() {
 
   return (
     <ErrorBoundary>
-      <LanguageProvider>
-        <UIConfigProvider>
-          <ShaderSettingsProvider>
-            <ShaderPlaybackProvider>
-              <AudioAnalysisProvider>
+      <AnimationProvider>
+        <LanguageProvider>
+          <UIConfigProvider>
+            <ShaderSettingsProvider>
+              <ShaderPlaybackProvider>
+                <AudioAnalysisProvider>
                 <div className="min-h-screen w-full bg-[#f4ddc4] overflow-x-hidden relative">
       {/* Intro animace s písmem "Meditácia" */}
       {showIntro && (
@@ -343,11 +345,12 @@ function MeditationApp() {
       {/* Offline Indicator - ZAKOMENTOVÁNO */}
 
       </div>
-              </AudioAnalysisProvider>
-            </ShaderPlaybackProvider>
-          </ShaderSettingsProvider>
-        </UIConfigProvider>
-      </LanguageProvider>
+                </AudioAnalysisProvider>
+              </ShaderPlaybackProvider>
+            </ShaderSettingsProvider>
+          </UIConfigProvider>
+        </LanguageProvider>
+      </AnimationProvider>
     </ErrorBoundary>
   );
 }
@@ -359,7 +362,8 @@ export function AdminApp() {
 
   return (
     <ErrorBoundary>
-      <LanguageProvider>
+      <AnimationProvider>
+        <LanguageProvider>
         <Suspense fallback={
           <div className="flex items-center justify-center min-h-screen">
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-gray-600"></div>
@@ -383,7 +387,8 @@ export function AdminApp() {
             />
           </>
         )}
-      </LanguageProvider>
+        </LanguageProvider>
+      </AnimationProvider>
     </ErrorBoundary>
   );
 }

@@ -1,5 +1,7 @@
 import React, { useMemo } from 'react';
 import { motion } from 'framer-motion';
+import { useAnimationConfig } from '@hooks/useAnimationConfig';
+import { useAnimationControl } from '@contexts/AnimationContext';
 
 const FramerSection = ({
   children,
@@ -9,100 +11,55 @@ const FramerSection = ({
   delay = 0,
   ...props
 }) => {
+  const config = useAnimationConfig();
+  const { isActive } = useAnimationControl();
+
   const variants = useMemo(() => {
-    switch (animationType) {
-      case 'fadeIn':
-        return {
-          initial: { opacity: 0, y: 30 },
-          animate: { opacity: 1, y: 0 },
-          exit: { opacity: 0, y: -30 }
-        };
-      case 'slideInLeft':
-        return {
-          initial: { opacity: 0, x: -100 },
-          animate: { opacity: 1, x: 0 },
-          exit: { opacity: 0, x: -100 }
-        };
-      case 'slideInUp':
-        return {
-          initial: { opacity: 0, y: 100 },
-          animate: { opacity: 1, y: 0 },
-          exit: { opacity: 0, y: 100 }
-        };
-      case 'scaleIn':
-        return {
-          initial: { opacity: 0, scale: 0.8 },
-          animate: { opacity: 1, scale: 1 },
-          exit: { opacity: 0, scale: 0.8 }
-        };
-      case 'slideInTop':
-        return {
-          initial: { opacity: 0, y: -250, scale: 0.7, rotateX: -20 },
-          animate: {
-            opacity: 1,
-            y: 0,
-            scale: 1,
-            rotateX: 0,
-            transition: {
-              type: "spring",
-              stiffness: 160,
-              damping: 10,
-              mass: 1.0,
-              bounce: 0.6
-            }
-          },
-          exit: { opacity: 0, y: -250, scale: 0.7, rotateX: -20 }
-        };
-      default:
-        return {
-          initial: { opacity: 0, y: 30 },
-          animate: { opacity: 1, y: 0 },
-          exit: { opacity: 0, y: -30 }
-        };
-    }
-  }, [animationType]);
+    // Mapování názvů animací na klíče v konfiguraci
+    const variantMap = {
+      'fadeIn': 'fadeIn',
+      'slideInLeft': 'slideInLeft',
+      'slideInUp': 'slideInUp',
+      'scaleIn': 'scaleIn',
+      'slideInTop': 'slideInTop',
+    };
+    const variantKey = variantMap[animationType] || 'fadeIn';
+    return config.sectionVariants[variantKey] || config.sectionVariants.fadeIn;
+  }, [animationType, config.sectionVariants]);
 
   const transition = useMemo(() => {
     if (animationType === 'slideInTop') {
       return {
         delay: delay,
-        type: "spring",
-        stiffness: 160,
-        damping: 10,
-        mass: 1.0,
-        bounce: 0.6
+        ...config.sectionTransitions.slideInTop,
       };
     }
 
     return {
-      duration: 0.6,
+      ...config.sectionTransitions.default,
       delay: delay,
-      ease: [0.4, 0, 0.2, 1],
-      type: "spring",
-      stiffness: 100,
-      damping: 20
     };
-  }, [delay, animationType]);
+  }, [delay, animationType, config.sectionTransitions]);
+
+  // Pokud jsou animace deaktivovány, použij instant transition
+  const finalTransition = isActive ? transition : { duration: 0 };
+  const finalVariants = isActive ? variants : {
+    initial: {},
+    animate: {},
+    exit: {},
+  };
 
   return (
     <motion.div
       className={`${className} max-w-full overflow-x-hidden`}
       onClick={onClick}
-      initial="initial"
-      animate="animate"
-      exit="exit"
-      variants={variants}
-      transition={transition}
-      whileHover={onClick ? {
-        scale: 1.03,
-        y: -5,
-        transition: { type: "spring", stiffness: 400, damping: 25 }
-      } : {}}
-      whileTap={onClick ? {
-        scale: 0.97,
-        y: 2,
-        transition: { type: "spring", stiffness: 500, damping: 30 }
-      } : {}}
+      initial={isActive ? "initial" : false}
+      animate={isActive ? "animate" : false}
+      exit={isActive ? "exit" : false}
+      variants={finalVariants}
+      transition={finalTransition}
+      whileHover={onClick && isActive ? config.sectionInteractions.hover : {}}
+      whileTap={onClick && isActive ? config.sectionInteractions.tap : {}}
       {...props}
     >
       {children}

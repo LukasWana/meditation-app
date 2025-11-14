@@ -1,5 +1,7 @@
 import React from 'react';
 import { motion } from 'framer-motion';
+import { useAnimationConfig } from '@hooks/useAnimationConfig';
+import { useAnimationControl } from '@contexts/AnimationContext';
 
 const FramerButton = ({
   children,
@@ -9,6 +11,9 @@ const FramerButton = ({
   disabled = false,
   ...props
 }) => {
+  const config = useAnimationConfig();
+  const { isActive } = useAnimationControl();
+
   const getVariantClasses = () => {
     switch (variant) {
       case 'primary':
@@ -31,25 +36,16 @@ const FramerButton = ({
         px-4 py-5
         leading-loose
         min-h-[3rem]
-        transition-colors duration-200 ease-out
+        ${config.buttonAnimations.cssTransition}
         ${getVariantClasses()}
         ${disabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}
         ${className}
       `}
       disabled={disabled}
       onClick={onClick}
-      whileHover={!disabled ? {
-        scale: 0.95,
-        transition: { type: "spring", stiffness: 300, damping: 20 }
-      } : {}}
-      whileTap={!disabled ? {
-        scale: 0.9,
-        transition: { type: "spring", stiffness: 400, damping: 25 }
-      } : {}}
-      animate={!disabled ? {
-        scale: 1,
-        transition: { type: "spring", stiffness: 600, damping: 35 }
-      } : {}}
+      whileHover={!disabled && isActive ? config.buttonAnimations.hover : {}}
+      whileTap={!disabled && isActive ? config.buttonAnimations.tap : {}}
+      animate={!disabled && isActive ? config.buttonAnimations.animate : {}}
       {...props}
     >
       {children}

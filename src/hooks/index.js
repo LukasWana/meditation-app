@@ -11,4 +11,5 @@ export { useFirebaseCDNScanner } from './useFirebaseCDNScanner';
 export { useFirebaseHudbaScanner } from './useFirebaseHudbaScanner';
 export { useCountdownSound } from './useCountdownSound';
 export { useFinalSound } from './useFinalSound';
+export { useAnimationConfig, useAnimationConfigValue } from './useAnimationConfig';
 

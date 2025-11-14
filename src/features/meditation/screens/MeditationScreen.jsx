@@ -5,6 +5,8 @@ import { FramerButton, FramerSection, FramerPageTransition, BackButton, Backgrou
 import { useLanguage } from '@contexts/LanguageContext';
 import { useShaderSettings } from '@contexts/ShaderSettingsContext';
 import { useBreathSounds, useAdaptiveTextColors, useCountdownSound, useFinalSound } from '@hooks';
+import { useAnimationConfig } from '@hooks/useAnimationConfig';
+import { useAnimationControl } from '@contexts/AnimationContext';
 import BackgroundSettingsControls from '@features/meditation/components/BackgroundSettingsControls';
 import MeditationTimer, { MeditationTimeDisplay } from '@features/meditation/components/MeditationTimer';
 import MeditationControls from '@features/meditation/components/MeditationControls';
@@ -78,6 +80,8 @@ const DychaniScreen = ({
     getColorForSection,
     getOverlaySettings
   } = useShaderSettings();
+  const config = useAnimationConfig();
+  const { isActive } = useAnimationControl();
 
   // Získej shader pro sekci dýchání - reaguje na změny v nastavení
   const breathShader = useMemo(() => {
@@ -304,10 +308,10 @@ const DychaniScreen = ({
                   <motion.div
                     key={preparationCountdown}
                     className={`text-6xl font-light ${textColors.primary}`}
-                    initial={{ opacity: 0, scale: 0.8 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    exit={{ opacity: 0, scale: 0.8 }}
-                    transition={{ duration: 0.3 }}
+                    initial={isActive ? { opacity: 0, scale: 0.8 } : {}}
+                    animate={isActive ? { opacity: 1, scale: 1 } : {}}
+                    exit={isActive ? { opacity: 0, scale: 0.8 } : {}}
+                    transition={isActive ? { duration: config.durations.normal, ease: config.easings.easeOut } : { duration: 0 }}
                   >
                     {preparationCountdown}
                   </motion.div>

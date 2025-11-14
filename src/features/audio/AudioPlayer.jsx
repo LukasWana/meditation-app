@@ -8,6 +8,8 @@ import {
   ShaderSelector
 } from './components';
 import { FramerButton } from '@components';
+import { useAnimationConfig } from '@hooks/useAnimationConfig';
+import { useAnimationControl } from '@contexts/AnimationContext';
 import { useAudioAnalysis as useAudioAnalysisHook } from '@hooks/useAudioAnalysis';
 import { useAudioAnalysis as useAudioAnalysisContext } from '@contexts/AudioAnalysisContext';
 import { useShaderSettings } from '@contexts/ShaderSettingsContext';
@@ -31,6 +33,9 @@ const AudioPlayer = ({
   isDarkMode = false, // Dark mode pro tmavé shadery/barvy
   backgroundColor = null // Barva pozadí přehrávače (může být kombinována se shaderem)
 }) => {
+  const config = useAnimationConfig();
+  const { isActive } = useAnimationControl();
+
   // Hlavní logika komponenty
   const {
     audioUrl,
@@ -176,9 +181,9 @@ const AudioPlayer = ({
         {/* Back Button - Top Left */}
         <div className="absolute top-4 left-4 z-[100] pointer-events-auto">
           <motion.div
-            initial={{ opacity: 0, x: -20 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ duration: 0.5, delay: 0.2 }}
+            initial={isActive ? { opacity: 0, x: -20 } : {}}
+            animate={isActive ? { opacity: 1, x: 0 } : {}}
+            transition={isActive ? { duration: config.durations.medium, delay: 0.2, ease: config.easings.easeOut } : { duration: 0 }}
           >
             <FramerButton
               onClick={() => fadeOutAndClose(onClose, 3000)}
