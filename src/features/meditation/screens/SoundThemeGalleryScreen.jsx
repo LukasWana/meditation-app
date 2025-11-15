@@ -4,6 +4,7 @@ import { ArrowDown, ArrowUp, MousePointerClick, CheckCircle, Play, Pause, Clock 
 import { FramerPageTransition, BackButton, FramerSection, BackgroundShader } from '@components';
 import { useLanguage } from '@contexts/LanguageContext';
 import { realtimeMetadataService } from '@services/realtimeMetadataService';
+import { sanitizeFileName } from '@utils/validation';
 import Waveform from '@components/Waveform';
 
 const SoundThemeGalleryScreen = ({
@@ -711,11 +712,11 @@ const SoundThemeGalleryScreen = ({
                   {/* Název a popisek */}
                   <div className="mb-2">
                     <div className="text-sm font-medium text-gray-800 mb-1 line-clamp-1">
-                      {file.name}
+                      {sanitizeFileName(file.name)}
                     </div>
                     {file.description && (
                       <div className="text-xs text-gray-600 line-clamp-2">
-                        {file.description}
+                        {sanitizeFileName(file.description)}
                       </div>
                     )}
                   </div>
