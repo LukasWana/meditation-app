@@ -13,12 +13,8 @@ export const useCountdownSound = (breathCountdownSound, isPreparing, preparation
   const previousCountdownRef = useRef(null);
 
   // Načtení URL pro countdown zvuk
-  // Debug logy deaktivovány - příliš mnoho výpisů
-  // const DEBUG_COUNTDOWN_SOUND = false;
   useEffect(() => {
-    // if (DEBUG_COUNTDOWN_SOUND) console.log('🔊 Loading countdown sound:', breathCountdownSound);
     if (breathCountdownSound === 'none' || !breathCountdownSound) {
-      // if (DEBUG_COUNTDOWN_SOUND) console.log('🔊 Countdown sound is "none" or empty, setting URL to null');
       setCountdownSoundUrl(null);
       return;
     }
@@ -30,18 +26,14 @@ export const useCountdownSound = (breathCountdownSound, isPreparing, preparation
         const { storage } = await import('@services/firebase');
 
         const metadata = await realtimeMetadataService.getFileMetadata(breathCountdownSound);
-        // if (DEBUG_COUNTDOWN_SOUND) console.log('🔊 Countdown sound metadata:', metadata);
         if (metadata && (metadata.downloadURL || metadata.audioSrc)) {
           const url = metadata.downloadURL || metadata.audioSrc;
-          // if (DEBUG_COUNTDOWN_SOUND) console.log('🔊 Setting countdown sound URL:', url);
           setCountdownSoundUrl(url);
         } else {
           // Pokud není v metadata, zkus načíst přímo z Firebase Storage
-          // if (DEBUG_COUNTDOWN_SOUND) console.log('🔊 Metadata missing URL, trying Firebase Storage directly');
           try {
             const audioRef = ref(storage, breathCountdownSound);
             const url = await getDownloadURL(audioRef);
-            // if (DEBUG_COUNTDOWN_SOUND) console.log('🔊 Setting countdown sound URL from Firebase Storage:', url);
             setCountdownSoundUrl(url);
           } catch (storageError) {
             console.warn('⚠️ Failed to load countdown sound from Firebase Storage:', storageError);
@@ -59,15 +51,6 @@ export const useCountdownSound = (breathCountdownSound, isPreparing, preparation
 
   // Přehrání countdown zvuku při změně odpočítávání
   useEffect(() => {
-    // Debug logování deaktivováno - příliš mnoho výpisů
-    // if (DEBUG_COUNTDOWN_SOUND) console.log('🔊 Countdown sound effect:', {
-    //   isPreparing,
-    //   countdownSoundUrl,
-    //   preparationCountdown,
-    //   breathCountdownSound,
-    //   previousCountdown: previousCountdownRef.current
-    // });
-
     // Reset previousCountdownRef když se příprava zastaví
     if (!isPreparing) {
       previousCountdownRef.current = null;
@@ -89,8 +72,6 @@ export const useCountdownSound = (breathCountdownSound, isPreparing, preparation
     if (isPreparing && preparationCountdown > 0 && countdownSoundUrl) {
       // Přehrát zvuk pouze když se countdown změní (ne při každém renderu)
       if (previousCountdownRef.current !== preparationCountdown) {
-        // if (DEBUG_COUNTDOWN_SOUND) console.log('🔊 Playing countdown sound for countdown:', preparationCountdown);
-
         // Vytvoř nový audio element pro každé přehrání (podobně jako finální zvuk)
         // Zastav předchozí přehrávání, pokud běží
         if (countdownSoundRef.current) {
@@ -163,13 +144,6 @@ export const useCountdownSound = (breathCountdownSound, isPreparing, preparation
         }
 
         previousCountdownRef.current = preparationCountdown;
-      }
-    } else {
-      // Debug proč se zvuk nepřehrává
-      if (isPreparing && preparationCountdown > 0) {
-        if (!countdownSoundUrl) {
-          // if (DEBUG_COUNTDOWN_SOUND) console.log('⚠️ Countdown sound not playing: no sound URL (breathCountdownSound:', breathCountdownSound, ')');
-        }
       }
     }
   }, [isPreparing, preparationCountdown, countdownSoundUrl, breathCountdownSound]);

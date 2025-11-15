@@ -60,9 +60,6 @@ export const useAudioAnalysis = (audioRef, isPlaying) => {
           if (!sourceRef.current.isConnected) {
             sourceRef.current.connect(analyser);
           }
-          // Debug log deaktivován - příliš mnoho výpisů
-          // const DEBUG_AUDIO_ANALYSIS = false;
-          // if (DEBUG_AUDIO_ANALYSIS) console.log('✅ Audio analýza: Použito existující MediaElementSource');
         } else {
           // Vytvoř nový MediaElementSource z audio elementu
           const source = audioContext.createMediaElementSource(audio);
@@ -70,7 +67,6 @@ export const useAudioAnalysis = (audioRef, isPlaying) => {
           analyser.connect(audioContext.destination); // Připoj zpět k výstupu
           sourceRef.current = source;
           audio._mediaElementSource = source; // Ulož reference pro další použití
-          // if (DEBUG_AUDIO_ANALYSIS) console.log('✅ Audio analýza: Vytvořen nový MediaElementSource');
         }
       } catch (error) {
         console.warn('⚠️ Audio analýza: Chyba při připojování audio:', error);
