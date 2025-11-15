@@ -99,14 +99,14 @@ const HomeScreen = ({
   return (
     <FramerPageTransition screenKey="home">
       <motion.div
-        className="min-h-screen w-full max-w-full flex flex-col overflow-x-hidden overflow-y-auto"
+        className="h-screen w-full max-w-full flex flex-col overflow-hidden"
         onTouchStart={onTouchStart}
         onTouchMove={onTouchMove}
         onTouchEnd={onTouchEnd}
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ duration: 0.3, ease: "easeOut" }}
-        style={{ minHeight: '100vh' }}
+        style={{ height: '100dvh' }}
       >
         {/* Sekce Meditace */}
         <motion.div
