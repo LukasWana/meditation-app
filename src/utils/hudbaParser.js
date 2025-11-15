@@ -37,11 +37,6 @@ export const parseAlbumFileName = (fileName) => {
 
     if (match) {
       const [, albumName, trackNumber, trackName] = match;
-      // Debug log deaktivován - příliš mnoho výpisů (voláno pro každý soubor)
-      // const DEBUG_HUDBA_PARSER = false;
-      // if (DEBUG_HUDBA_PARSER) {
-      //   console.log(`🎵 Parsed album file: ${fileName} -> Album: "${albumName.trim()}", Track: ${trackNumber}, Name: "${trackName.trim()}"`);
-      // }
 
       return {
         originalFileName: fileName,
