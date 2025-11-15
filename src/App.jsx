@@ -205,6 +205,7 @@ function MeditationApp() {
           return false;
         }
       };
+    }
 
     // Funkce pro testování přehrávání
     window.testAudioPlayback = async (fileName) => {
@@ -250,19 +251,6 @@ function MeditationApp() {
         window[key] = value;
       }
     });
-
-    // Debug funkce logy deaktivovány - příliš mnoho výpisů
-    // const DEBUG_APP = false;
-    // if (DEBUG_APP) {
-    //   console.log('🔍 Debug funkce dostupné v konzoli:');
-    //   console.log('  - showDatabaseData() - zobrazí database viewer');
-    //   console.log('  - debugSlovaFiles() - zobrazí slova soubory v Realtime Database');
-    //   console.log('  - debugCache() - zobrazí detaily cache');
-    //   console.log('  - clearCache() - vymaže cache');
-    //   console.log('  - testAudioPlayback(fileName) - otestuje přehrávání konkrétního souboru');
-    //   console.log("  - setLogLevel(level) - nastaví úroveň logování (např. setLogLevel('silent') nebo setLogLevel(logLevels.silent))");
-    // }
-    }
   }, []);
 
   // Intro completion handler
