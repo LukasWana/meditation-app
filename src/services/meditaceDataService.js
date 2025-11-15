@@ -8,6 +8,7 @@ class MeditaceDataService {
       en: { male: [], female: [], all: [] }
     };
     this.isInitialized = false;
+    this.isLoading = false;
   }
 
   // Helper funkce pro extrakci tématu z názvu souboru
@@ -75,11 +76,36 @@ class MeditaceDataService {
       return;
     }
 
+    if (this.isLoading) {
+      log.debug('MeditaceDataService already loading, waiting...');
+      // Počkej na dokončení probíhající inicializace
+      while (this.isLoading) {
+        await new Promise(resolve => setTimeout(resolve, 100));
+      }
+      return;
+    }
+
+    this.isLoading = true;
+
     try {
       log.info('Initializing meditace data service...');
 
       // Import realtime metadata service
       const { realtimeMetadataService } = await import('./realtimeMetadataService');
+
+      // POČKEJ na inicializaci realtimeMetadataService před použitím
+      try {
+        log.debug('⏳ Waiting for realtimeMetadataService initialization (meditace)...');
+        const initialized = await realtimeMetadataService.waitForInitialization(10000);
+        if (!initialized) {
+          log.warn('⚠️ RealtimeMetadataService initialization timeout (meditace)');
+        } else {
+          log.debug('✅ RealtimeMetadataService is ready (meditace)');
+        }
+      } catch (err) {
+        log.debug('RealtimeMetadataService wait error:', err);
+      }
+
       const allMetadata = await realtimeMetadataService.getAllMetadata();
       const metadataObject = (allMetadata && typeof allMetadata === 'object') ? allMetadata : {};
 
@@ -212,7 +238,32 @@ class MeditaceDataService {
 
     } catch (error) {
       log.error('Failed to initialize meditace data service:', error);
+    } finally {
+      this.isLoading = false;
     }
+  }
+
+  /**
+   * Počká na dokončení inicializace (pokud probíhá) nebo vrátí okamžitě, pokud je už inicializován
+   */
+  async waitForInitialization(maxWait = 10000) {
+    if (this.isInitialized) {
+      return true;
+    }
+
+    const startTime = Date.now();
+    while (!this.isInitialized && (Date.now() - startTime) < maxWait) {
+      if (!this.isLoading) {
+        // Pokud není inicializován a není v procesu načítání, zkus inicializovat
+        await this.initialize();
+        if (this.isInitialized) {
+          return true;
+        }
+      }
+      await new Promise(resolve => setTimeout(resolve, 100));
+    }
+
+    return this.isInitialized;
   }
 
   // Filtruj meditace položky podle pohlaví a jazyka
@@ -324,27 +375,11 @@ class MeditaceDataService {
       return [];
     }
 
-    // Debug logy deaktivovány - příliš mnoho výpisů (voláno velmi často)
-    // const DEBUG_MEDITACE_DATA = false;
-    // if (DEBUG_MEDITACE_DATA) {
-    //   console.log(`🔍 getMeditaceData called: userGender=${userGender}, userLanguage=${userLanguage}`);
-    // }
-
     // Získej všechny meditace soubory pro daný jazyk
     const allMeditaceFiles = this.getAllMeditaceFilesForLanguage(userLanguage);
 
-    // if (DEBUG_MEDITACE_DATA) {
-    //   console.log(`🔍 allMeditaceFiles count: ${allMeditaceFiles.length}`);
-    //   if (allMeditaceFiles.length > 0) {
-    //     console.log(`🔍 Sample file names:`, allMeditaceFiles.slice(0, 3).map(f => f.fileName));
-    //   }
-    // }
-
     // Filtruj podle pohlaví
     const filtered = this.filterMeditaceItems(allMeditaceFiles, userGender, userLanguage);
-    // if (DEBUG_MEDITACE_DATA) {
-    //   console.log(`🔍 After filtering: ${filtered.length} items`);
-    // }
 
     return filtered;
   }
@@ -354,14 +389,6 @@ class MeditaceDataService {
     const langKey = userLanguage.toLowerCase();
     const allFiles = [];
 
-    // Debug: zobraz strukturu dat - deaktivováno (příliš mnoho výpisů)
-    // const DEBUG_MEDITACE_DATA = false;
-    // if (DEBUG_MEDITACE_DATA) {
-    //   console.log(`🔍 getAllMeditaceFilesForLanguage: langKey=${langKey}`);
-    //   console.log(`🔍 this.meditaceData[${langKey}]:`, this.meditaceData[langKey]);
-    //   console.log(`🔍 Available languages:`, Object.keys(this.meditaceData));
-    // }
-
     if (!this.meditaceData[langKey]) {
       log.warn(`Meditace data for language "${langKey}" not available`);
       return [];
@@ -370,11 +397,9 @@ class MeditaceDataService {
     // Získej všechny soubory pro daný jazyk (male, female, all)
     ['male', 'female', 'all'].forEach(gender => {
       const files = this.meditaceData[langKey]?.[gender] || [];
-      // if (DEBUG_MEDITACE_DATA) console.log(`🔍 ${langKey}.${gender}: ${files.length} files`);
       allFiles.push(...files);
     });
 
-    // if (DEBUG_MEDITACE_DATA) console.log(`🔍 Total files for ${langKey}: ${allFiles.length}`);
     return allFiles;
   }
 
