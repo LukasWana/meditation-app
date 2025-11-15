@@ -26,14 +26,14 @@ const HomeScreen = ({
   return (
     <FramerPageTransition screenKey="home">
       <motion.div
-        className="min-h-screen w-full max-w-full bg-[#f4ddc4] flex flex-col overflow-x-hidden"
+        className="min-h-screen w-full max-w-full bg-[#f4ddc4] flex flex-col overflow-x-hidden overflow-y-auto"
         onTouchStart={onTouchStart}
         onTouchMove={onTouchMove}
         onTouchEnd={onTouchEnd}
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ duration: 0.3, ease: "easeOut" }}
-        style={{ height: '100vh' }}
+        style={{ minHeight: '100vh' }}
       >
         <motion.div
           className="flex-1 flex items-center justify-center bg-[#f4ddc4] cursor-pointer relative"
@@ -82,6 +82,9 @@ const HomeScreen = ({
         <motion.div
           className="flex-1 flex items-center justify-center bg-[#f4ddc4] cursor-pointer"
           onClick={() => onNavigateToScreen('dychani')}
+          onTouchStart={onTouchStart}
+          onTouchMove={onTouchMove}
+          onTouchEnd={onTouchEnd}
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ duration: 0.3, ease: "easeOut" }}
@@ -93,7 +96,7 @@ const HomeScreen = ({
             transition={{ duration: 0.3, ease: "easeOut" }}
           >
             <div
-              className="text-5xl font-light tracking-wide mb-4 py-4 leading-loose"
+              className="text-5xl font-light tracking-wide py-4 leading-loose"
             >
               {t('dychani') || t('dychanie') || 'dýchání'}
             </div>
