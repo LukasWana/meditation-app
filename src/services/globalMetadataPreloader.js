@@ -1,7 +1,7 @@
 import log from './logger';
 import mp3MetadataExtractor from './mp3MetadataExtractor';
-import { storage } from './firebase';
-import { ref, listAll, getDownloadURL } from 'firebase/storage';
+import { storage, app } from './firebase';
+import { ref, listAll, getDownloadURL, getStorage } from 'firebase/storage';
 
 class GlobalMetadataPreloader {
   constructor() {
@@ -48,8 +48,9 @@ class GlobalMetadataPreloader {
         return false;
       }
 
-      // Načti metadata pro všechny soubory
-      const metadataResults = await mp3MetadataExtractor.loadMetadataBatch(allAudioFiles, 2);
+      // Načti metadata pro všechny soubory s optimalizovaným batch processing
+      // Zvýšený batch size pro lepší výkon (3-5 paralelních requestů)
+      const metadataResults = await mp3MetadataExtractor.loadMetadataBatch(allAudioFiles, 5);
 
       // Ulož metadata do mapy
       metadataResults.forEach((metadata, index) => {
@@ -110,30 +111,77 @@ class GlobalMetadataPreloader {
     const files = [];
 
     try {
-      const folderRef = ref(storage, folderName);
+      // Získej storage instance - použij importovaný nebo vytvoř nový
+      let storageInstance = storage;
+
+      // Pokud storage není inicializován, zkus ho získat z app
+      if (!storageInstance) {
+        if (!app) {
+          log.error(`❌ Firebase app is not initialized. Cannot scan folder: ${folderName}`);
+          return files;
+        }
+        try {
+          storageInstance = getStorage(app);
+          if (!storageInstance) {
+            log.error(`❌ Failed to get storage instance from app. Cannot scan folder: ${folderName}`);
+            return files;
+          }
+        } catch (error) {
+          log.error(`❌ Failed to get storage instance:`, error);
+          return files;
+        }
+      }
+
+      // Ověř, že storage instance má potřebné metody
+      if (typeof storageInstance !== 'object' || !storageInstance._delegate) {
+        log.error(`❌ Storage instance is invalid. Cannot scan folder: ${folderName}`);
+        return files;
+      }
+
+      const folderRef = ref(storageInstance, folderName);
+      if (!folderRef) {
+        log.error(`❌ Failed to create reference for folder: ${folderName}`);
+        return files;
+      }
+
       const result = await listAll(folderRef);
 
+      if (!result) {
+        log.error(`❌ listAll returned null/undefined for folder: ${folderName}`);
+        return files;
+      }
+
       // Zpracuj soubory přímo ve složce
-      for (const item of result.items) {
-        if (item.name.endsWith('.mp3')) {
-          try {
-            const downloadURL = await getDownloadURL(item);
-            files.push({
-              fileName: `${folderName}/${item.name}`,
-              downloadURL,
-              folder: folderName,
-              subFolder: null
-            });
-          } catch (error) {
-            log.warn(`⚠️ Failed to get download URL for ${item.name}:`, error.message);
+      if (result.items && Array.isArray(result.items)) {
+        for (const item of result.items) {
+          if (item && item.name && item.name.endsWith('.mp3')) {
+            try {
+              const downloadURL = await getDownloadURL(item);
+              files.push({
+                fileName: `${folderName}/${item.name}`,
+                downloadURL,
+                folder: folderName,
+                subFolder: null
+              });
+            } catch (error) {
+              log.warn(`⚠️ Failed to get download URL for ${item.name}:`, error.message);
+            }
           }
         }
       }
 
       // Zpracuj podsložky
-      for (const prefix of result.prefixes) {
-        const subFolderFiles = await this._scanSubFolder(folderName, prefix.name);
-        files.push(...subFolderFiles);
+      if (result.prefixes && Array.isArray(result.prefixes)) {
+        for (const prefix of result.prefixes) {
+          if (prefix && prefix.name) {
+            try {
+              const subFolderFiles = await this._scanSubFolder(folderName, prefix.name);
+              files.push(...subFolderFiles);
+            } catch (error) {
+              log.warn(`⚠️ Failed to scan subfolder ${folderName}/${prefix.name}:`, error.message);
+            }
+          }
+        }
       }
 
     } catch (error) {
@@ -147,21 +195,60 @@ class GlobalMetadataPreloader {
     const files = [];
 
     try {
-      const subFolderRef = ref(storage, `${folderName}/${subFolderName}`);
+      // Získej storage instance - použij importovaný nebo vytvoř nový
+      let storageInstance = storage;
+
+      // Pokud storage není inicializován, zkus ho získat z app
+      if (!storageInstance) {
+        if (!app) {
+          log.error(`❌ Firebase app is not initialized. Cannot scan subfolder: ${folderName}/${subFolderName}`);
+          return files;
+        }
+        try {
+          storageInstance = getStorage(app);
+          if (!storageInstance) {
+            log.error(`❌ Failed to get storage instance from app. Cannot scan subfolder: ${folderName}/${subFolderName}`);
+            return files;
+          }
+        } catch (error) {
+          log.error(`❌ Failed to get storage instance:`, error);
+          return files;
+        }
+      }
+
+      // Ověř, že storage instance má potřebné metody
+      if (typeof storageInstance !== 'object' || !storageInstance._delegate) {
+        log.error(`❌ Storage instance is invalid. Cannot scan subfolder: ${folderName}/${subFolderName}`);
+        return files;
+      }
+
+      const subFolderRef = ref(storageInstance, `${folderName}/${subFolderName}`);
+      if (!subFolderRef) {
+        log.error(`❌ Failed to create reference for subfolder: ${folderName}/${subFolderName}`);
+        return files;
+      }
+
       const result = await listAll(subFolderRef);
 
-      for (const item of result.items) {
-        if (item.name.endsWith('.mp3')) {
-          try {
-            const downloadURL = await getDownloadURL(item);
-            files.push({
-              fileName: `${folderName}/${subFolderName}/${item.name}`,
-              downloadURL,
-              folder: folderName,
-              subFolder: subFolderName
-            });
-          } catch (error) {
-            log.warn(`⚠️ Failed to get download URL for ${subFolderName}/${item.name}:`, error.message);
+      if (!result) {
+        log.error(`❌ listAll returned null/undefined for subfolder: ${folderName}/${subFolderName}`);
+        return files;
+      }
+
+      if (result.items && Array.isArray(result.items)) {
+        for (const item of result.items) {
+          if (item && item.name && item.name.endsWith('.mp3')) {
+            try {
+              const downloadURL = await getDownloadURL(item);
+              files.push({
+                fileName: `${folderName}/${subFolderName}/${item.name}`,
+                downloadURL,
+                folder: folderName,
+                subFolder: subFolderName
+              });
+            } catch (error) {
+              log.warn(`⚠️ Failed to get download URL for ${subFolderName}/${item.name}:`, error.message);
+            }
           }
         }
       }
