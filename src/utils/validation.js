@@ -20,6 +20,36 @@ export const sanitizeHtml = (input) => {
 };
 
 /**
+ * Sanitizuje název souboru pro bezpečné zobrazení v DOM (XSS prevence)
+ * Odstraňuje potenciálně nebezpečné znaky a HTML entity
+ * @param {string} fileName - Název souboru
+ * @returns {string} - Sanitizovaný název souboru
+ */
+export const sanitizeFileName = (fileName) => {
+  if (!fileName || typeof fileName !== 'string') return '';
+
+  return fileName
+    // Odstraň HTML tagy
+    .replace(/<[^>]*>/g, '')
+    // Odstraň JavaScript event handlery
+    .replace(/on\w+\s*=/gi, '')
+    // Odstraň javascript: protokol
+    .replace(/javascript:/gi, '')
+    // Odstraň data: protokol (může obsahovat base64)
+    .replace(/data:/gi, '')
+    // Escape HTML entity (pro jistotu)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#x27;')
+    // Odstraň kontrolní znaky
+    // eslint-disable-next-line no-control-regex
+    .replace(/[\x00-\x1F\x7F]/g, '')
+    .trim();
+};
+
+/**
  * Validuje email adresu
  * @param {string} email - Email adresa
  * @returns {boolean} - True pokud je email platný
@@ -365,6 +395,7 @@ export const validateInput = (input, schema) => {
 
 export default {
   sanitizeHtml,
+  sanitizeFileName,
   validateEmail,
   validatePassword,
   validateFileName,

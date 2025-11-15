@@ -14,7 +14,12 @@ export default defineConfig({
       }
     })
   ],
+  optimizeDeps: {
+    include: ['react', 'react-dom', 'react/jsx-runtime'],
+    force: true
+  },
   resolve: {
+    dedupe: ['react', 'react-dom'],
     alias: {
       '@': fileURLToPath(new URL('./src', import.meta.url)),
       '@components': fileURLToPath(new URL('./src/components', import.meta.url)),
