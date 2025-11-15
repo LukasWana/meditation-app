@@ -1,5 +1,3 @@
-
-
 import { ref, getDownloadURL } from 'firebase/storage';
 import { storage } from './firebase';
 import log from './logger';
@@ -8,14 +6,16 @@ import { realtimeMetadataService } from './realtimeMetadataService';
 import { staticMetadataService } from './staticMetadataService';
 import errorHandler from '@utils/error-handler';
 import { deduplicateRequest } from '@utils/metadataRequestManager';
+import { BaseMetadataService } from './metadata/BaseMetadataService.js';
 
-class FastMetadataService {
+class FastMetadataService extends BaseMetadataService {
   constructor() {
-    this.metadata = new Map();
-    this.isLoading = false;
+    super({
+      localStorageKey: 'fast-metadata-cache-v2',
+      cacheExpiry: 7 * 24 * 60 * 60 * 1000 // 7 dní - delší cache pro lepší performance
+    });
+    this.metadata = this.cache; // Použij cache z base class jako metadata Map
     this.lastUpdate = null;
-    this.cacheKey = 'fast-metadata-cache-v2';
-    this.cacheExpiry = 7 * 24 * 60 * 60 * 1000; // 7 dní - delší cache pro lepší performance
 
     try {
       if (typeof window !== 'undefined' && window.localStorage) {
@@ -61,38 +61,42 @@ class FastMetadataService {
     return normalized;
   }
 
-  loadFromCache() {
-    try {
-      const cached = localStorage.getItem(this.cacheKey);
-      if (cached) {
-        const { data, timestamp } = JSON.parse(cached);
-        const now = Date.now();
+  loadFromLocalCache() {
+    const result = super.loadFromLocalCache();
+    if (result) {
+      // Normalizuj načtená data
+      const normalizedEntries = Array.from(this.cache.entries()).map(([key, value]) => {
+        const normalizedValue = this.normalizeMetadataEntry(value);
+        const normalizedKey = this.normalizeStoragePath(key);
+        return [normalizedKey || key, normalizedValue];
+      });
+      this.cache.clear();
+      normalizedEntries.forEach(([key, value]) => {
+        this.cache.set(key, value);
+      });
+      this.metadata = this.cache; // Synchronizuj reference
 
-        if (now - timestamp < this.cacheExpiry) {
-          log.info(`⚡ Fast load: ${Object.keys(data).length} metadata records from cache`);
-          const normalizedEntries = Object.entries(data).map(([key, value]) => {
-            const normalizedValue = this.normalizeMetadataEntry(value);
-            const normalizedKey = this.normalizeStoragePath(key);
-            return [normalizedKey || key, normalizedValue];
-          });
-
-          this.metadata = new Map(normalizedEntries);
+      // Získej timestamp z localStorage
+      try {
+        const cached = localStorage.getItem(this.localStorageKey);
+        if (cached) {
+          const { timestamp } = JSON.parse(cached);
           this.lastUpdate = new Date(timestamp);
-          return true;
-        } else {
-          localStorage.removeItem(this.cacheKey);
         }
+      } catch (error) {
+        // Ignore
       }
-    } catch (error) {
-      log.warn('Failed to load from cache:', error);
+
+      log.info(`⚡ Fast load: ${this.cache.size} metadata records from cache`);
     }
-    return false;
+    return result;
   }
 
-  saveToCache() {
+  saveToLocalCache() {
     try {
+      // Normalizuj data před uložením
       const data = Object.fromEntries(
-        Array.from(this.metadata.entries()).map(([key, value]) => {
+        Array.from(this.cache.entries()).map(([key, value]) => {
           const normalizedKey = this.normalizeStoragePath(key);
           const normalizedValue = this.normalizeMetadataEntry(value);
           return [normalizedKey || key, normalizedValue];
@@ -102,7 +106,7 @@ class FastMetadataService {
         data,
         timestamp: Date.now()
       };
-      localStorage.setItem(this.cacheKey, JSON.stringify(cacheData));
+      localStorage.setItem(this.localStorageKey, JSON.stringify(cacheData));
       log.info('Metadata saved to cache');
     } catch (error) {
       log.warn('Failed to save to cache:', error);
@@ -110,28 +114,14 @@ class FastMetadataService {
   }
 
   clearCache() {
-    try {
-      localStorage.removeItem(this.cacheKey);
-      this.metadata.clear();
-      this.lastUpdate = null;
-      log.info('Cache cleared - will reload from Firebase');
-    } catch (error) {
-      log.warn('Failed to clear cache:', error);
-    }
+    super.clearCache();
+    this.metadata = this.cache; // Synchronizuj reference
+    this.lastUpdate = null;
+    log.info('Cache cleared - will reload from Firebase');
   }
 
   isCacheValid() {
-    try {
-      const cached = localStorage.getItem(this.cacheKey);
-      if (cached) {
-        const { timestamp } = JSON.parse(cached);
-        const now = Date.now();
-        return (now - timestamp) < this.cacheExpiry;
-      }
-    } catch (error) {
-      log.warn('Failed to check cache validity:', error);
-    }
-    return false;
+    return super.isCacheValid();
   }
 
   async loadAllMetadata() {
@@ -143,7 +133,7 @@ class FastMetadataService {
 
     try {
       // Pokud cache obsahuje platná data, použij ji hned (nejrychlejší varianta)
-      if (this.loadFromCache()) {
+      if (this.loadFromLocalCache()) {
         log.success(`✅ Metadata loaded from cache (${this.metadata.size} records)`);
         return this.metadata;
       }
@@ -181,7 +171,7 @@ class FastMetadataService {
       }
 
       this.lastUpdate = new Date();
-      this.saveToCache();
+      this.saveToLocalCache();
 
       return this.metadata;
     } catch (error) {
@@ -760,95 +750,161 @@ class FastMetadataService {
   }
 
   async initialize(forceReload = false) {
-    log.info('Initializing FastMetadataService...');
-
-    if (forceReload) {
-      log.info('Force reloading metadata from Firebase...');
-      this.metadata.clear();
-      localStorage.removeItem(this.cacheKey);
-    }
-
-    // Nejdříve zkus načíst z Realtime Database (nejrychlejší a nejaktuálnější)
-    try {
-      log.info('🔄 Trying to load metadata from Realtime Database...');
-      const realtimeMetadata = await realtimeMetadataService.getAllMetadata();
-
-      if (realtimeMetadata && Object.keys(realtimeMetadata).length > 0) {
-        log.success(`✅ Loaded ${Object.keys(realtimeMetadata).length} metadata records from Realtime Database`);
-
-        // Převeď na Map a normalizuj data do správného formátu
-        this.metadata.clear();
-        Object.entries(realtimeMetadata).forEach(([key, value]) => {
-          // Normalizuj data z Realtime Database do formátu, který očekává filtr
-          const normalized = this.normalizeRealtimeMetadata(value);
-          if (normalized) {
-            // Použij fileName jako klíč, nebo key pokud fileName není
-            const metadataKey = normalized.fileName || key;
-            this.metadata.set(metadataKey, normalized);
-          }
-        });
-
-        // Ulož do cache
-        this.saveToCache();
-        log.success(`✅ FastMetadataService initialized from Realtime Database (${this.metadata.size} records)`);
-
-        // Načti cover obrázky z Firebase Storage (pokud nejsou v Realtime Database)
-        const coverImagesCount = Array.from(this.metadata.values()).filter(m => m.type === 'image' && m.isCover).length;
-        if (coverImagesCount === 0) {
-          log.info('🖼️ No cover images in Realtime Database, loading from Firebase Storage...');
-          await this.loadCoverImagesFromStorage();
-        } else {
-          log.success(`✅ Found ${coverImagesCount} cover images in Realtime Database`);
-        }
-
-        return;
-      } else {
-        log.warn('⚠️ Realtime Database is empty, trying cache...');
-      }
-    } catch (error) {
-      log.warn('⚠️ Failed to load from Realtime Database, trying cache:', error.message);
-    }
-
-    // Pokud Realtime Database neobsahuje data, zkus cache (pokud není forceReload)
-    if (!forceReload && this.loadFromCache()) {
-      const cachedCount = this.metadata.size;
-      log.success(`✅ Metadata loaded from cache (${cachedCount} records)`);
-
-      // Pokud máme méně než 10 souborů v cache, zkus načíst z Realtime Database znovu
-      if (cachedCount < 10) {
-        log.warn('⚠️ Cache contains very few files, trying Realtime Database again...');
-        try {
-          const realtimeMetadata = await realtimeMetadataService.getAllMetadata();
-          if (realtimeMetadata && Object.keys(realtimeMetadata).length > cachedCount) {
-            log.success(`✅ Found ${Object.keys(realtimeMetadata).length} records in Realtime Database (more than cache)`);
-            this.metadata.clear();
-            Object.entries(realtimeMetadata).forEach(([key, value]) => {
-              this.metadata.set(key, value);
-            });
-            this.saveToCache();
-            return;
-          }
-        } catch (error) {
-          log.warn('⚠️ Failed to reload from Realtime Database:', error.message);
-        }
-      }
-
+    if (this.isInitialized && !forceReload) {
+      log.debug('FastMetadataService already initialized');
       return;
     }
 
-    // Fallback na Firebase Storage, pokud Realtime Database ani cache neobsahují data
+    if (this.isLoading) {
+      log.debug('FastMetadataService already loading, waiting...');
+      // Počkej na dokončení probíhající inicializace
+      while (this.isLoading) {
+        await new Promise(resolve => setTimeout(resolve, 100));
+      }
+      return;
+    }
+
+    this.isLoading = true;
+    log.info('Initializing FastMetadataService...');
+
     try {
-      log.info('🔄 Loading metadata from Firebase Storage...');
-      await this.loadAllMetadata();
-      log.success('✅ FastMetadataService initialized from Firebase Storage');
-    } catch (error) {
-      log.warn('❌ Failed to initialize metadata service:', error);
+      if (forceReload) {
+        log.info('Force reloading metadata from Firebase...');
+        this.metadata.clear();
+        localStorage.removeItem(this.localStorageKey);
+      }
+
+      // Nejdříve zkus načíst z Realtime Database (nejrychlejší a nejaktuálnější)
+      try {
+        log.info('🔄 Trying to load metadata from Realtime Database...');
+
+        // POČKEJ na inicializaci realtimeMetadataService před použitím
+        try {
+          const initialized = await realtimeMetadataService.waitForInitialization(10000);
+          if (!initialized) {
+            log.warn('⚠️ RealtimeMetadataService initialization timeout');
+          }
+        } catch (err) {
+          log.debug('RealtimeMetadataService wait error:', err);
+        }
+
+        const realtimeMetadata = await realtimeMetadataService.getAllMetadata();
+
+        if (realtimeMetadata && Object.keys(realtimeMetadata).length > 0) {
+          log.success(`✅ Loaded ${Object.keys(realtimeMetadata).length} metadata records from Realtime Database`);
+
+          // Převeď na Map a normalizuj data do správného formátu
+          this.metadata.clear();
+          Object.entries(realtimeMetadata).forEach(([key, value]) => {
+            // Normalizuj data z Realtime Database do formátu, který očekává filtr
+            const normalized = this.normalizeRealtimeMetadata(value);
+            if (normalized) {
+              // Použij fileName jako klíč, nebo key pokud fileName není
+              const metadataKey = normalized.fileName || key;
+              this.metadata.set(metadataKey, normalized);
+            }
+          });
+
+          // Ulož do cache
+          this.saveToLocalCache();
+          this.isInitialized = true;
+          log.success(`✅ FastMetadataService initialized from Realtime Database (${this.metadata.size} records)`);
+
+          // Načti cover obrázky z Firebase Storage (pokud nejsou v Realtime Database)
+          const coverImagesCount = Array.from(this.metadata.values()).filter(m => m.type === 'image' && m.isCover).length;
+          if (coverImagesCount === 0) {
+            log.info('🖼️ No cover images in Realtime Database, loading from Firebase Storage...');
+            await this.loadCoverImagesFromStorage();
+          } else {
+            log.success(`✅ Found ${coverImagesCount} cover images in Realtime Database`);
+          }
+
+          return;
+        } else {
+          log.warn('⚠️ Realtime Database is empty, trying cache...');
+        }
+      } catch (error) {
+        log.warn('⚠️ Failed to load from Realtime Database, trying cache:', error.message);
+      }
+
+      // Pokud Realtime Database neobsahuje data, zkus cache (pokud není forceReload)
+      if (!forceReload && this.loadFromLocalCache()) {
+        const cachedCount = this.metadata.size;
+        log.success(`✅ Metadata loaded from cache (${cachedCount} records)`);
+        this.isInitialized = true;
+
+        // Pokud máme méně než 10 souborů v cache, zkus načíst z Realtime Database znovu
+        if (cachedCount < 10) {
+          log.warn('⚠️ Cache contains very few files, trying Realtime Database again...');
+          try {
+            // POČKEJ na inicializaci realtimeMetadataService před použitím
+            try {
+              await realtimeMetadataService.waitForInitialization(10000);
+            } catch (err) {
+              log.debug('RealtimeMetadataService wait error:', err);
+            }
+
+            const realtimeMetadata = await realtimeMetadataService.getAllMetadata();
+            if (realtimeMetadata && Object.keys(realtimeMetadata).length > cachedCount) {
+              log.success(`✅ Found ${Object.keys(realtimeMetadata).length} records in Realtime Database (more than cache)`);
+              this.metadata.clear();
+              Object.entries(realtimeMetadata).forEach(([key, value]) => {
+                const normalized = this.normalizeRealtimeMetadata(value);
+                if (normalized) {
+                  const metadataKey = normalized.fileName || key;
+                  this.metadata.set(metadataKey, normalized);
+                }
+              });
+              this.saveToLocalCache();
+              return;
+            }
+          } catch (error) {
+            log.warn('⚠️ Failed to reload from Realtime Database:', error.message);
+          }
+        }
+
+        return;
+      }
+
+      // Fallback na Firebase Storage, pokud Realtime Database ani cache neobsahují data
+      try {
+        log.info('🔄 Loading metadata from Firebase Storage...');
+        await this.loadAllMetadata();
+        this.isInitialized = true;
+        log.success('✅ FastMetadataService initialized from Firebase Storage');
+      } catch (error) {
+        log.warn('❌ Failed to initialize metadata service:', error);
+      }
+    } finally {
+      this.isLoading = false;
     }
   }
 
+  /**
+   * Počká na dokončení inicializace (pokud probíhá) nebo vrátí okamžitě, pokud je už inicializován
+   */
+  async waitForInitialization(maxWait = 10000) {
+    if (this.isInitialized) {
+      return true;
+    }
+
+    const startTime = Date.now();
+    while (!this.isInitialized && (Date.now() - startTime) < maxWait) {
+      if (!this.isLoading) {
+        // Pokud není inicializován a není v procesu načítání, zkus inicializovat
+        await this.initialize();
+        if (this.isInitialized) {
+          return true;
+        }
+      }
+      await new Promise(resolve => setTimeout(resolve, 100));
+    }
+
+    return this.isInitialized;
+  }
+
   async refresh() {
-    this.metadata.clear();
-    localStorage.removeItem(this.cacheKey);
+    this.clearCache();
     await this.loadAllMetadata();
   }
 
@@ -918,7 +974,7 @@ class FastMetadataService {
             log.success(`✅ Cover image loaded for album: ${albumName} from ${imagePath}`);
 
             // Ulož do cache
-            this.saveToCache();
+            this.saveToLocalCache();
             break; // Našli jsme cover, nemusíme zkoušet další cesty
           } catch (error) {
             // Obrázek na této cestě neexistuje, zkus další
