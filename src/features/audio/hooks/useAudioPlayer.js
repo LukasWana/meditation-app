@@ -10,28 +10,55 @@ export const useAudioPlayer = (audioUrl, albumTracks = null, currentTrackIndex =
 
   // Pomocná funkce pro extrakci názvu souboru z URL
   const extractFileNameFromUrl = (url) => {
-    if (!url || typeof url !== 'string') return null;
+    // Přísné null/undefined checks
+    if (url === null || url === undefined) {
+      log.warn('extractFileNameFromUrl: url is null or undefined');
+      return null;
+    }
+
+    if (typeof url !== 'string') {
+      log.warn('extractFileNameFromUrl: url is not a string', typeof url);
+      return null;
+    }
+
+    // Prázdný string check
+    const trimmedUrl = url.trim();
+    if (trimmedUrl.length === 0) {
+      log.warn('extractFileNameFromUrl: url is empty string');
+      return null;
+    }
 
     // Pokud už je to název souboru (ne URL), vrať ho
-    if (!url.startsWith('http')) {
-      return url; // Vrať celou cestu, ne jen název souboru
+    if (!trimmedUrl.startsWith('http')) {
+      return trimmedUrl; // Vrať celou cestu, ne jen název souboru
     }
 
     try {
       // Pro Firebase Storage URL: https://firebasestorage.googleapis.com/v0/b/.../o/filename.mp3?alt=media
-      const match = url.match(/\/o\/([^?]+)/);
-      if (match) {
-        const fullPath = decodeURIComponent(match[1]);
-        // Vrať celou cestu k souboru (např. "hudba/ambient-journey/filename.mp3")
-        return fullPath;
+      const match = trimmedUrl.match(/\/o\/([^?]+)/);
+      if (match && match[1]) {
+        try {
+          const fullPath = decodeURIComponent(match[1]);
+          // Vrať celou cestu k souboru (např. "hudba/ambient-journey/filename.mp3")
+          return fullPath;
+        } catch (decodeError) {
+          log.warn('extractFileNameFromUrl: failed to decode URI component', decodeError);
+          return match[1]; // Vrať ne-dekódovanou verzi jako fallback
+        }
       }
 
       // Fallback pro běžné URL
-      const pathname = new URL(url).pathname;
-      return pathname.startsWith('/') ? pathname.substring(1) : pathname;
+      const urlObj = new URL(trimmedUrl);
+      const pathname = urlObj.pathname;
+      if (pathname) {
+        return pathname.startsWith('/') ? pathname.substring(1) : pathname;
+      }
+
+      return null;
     } catch (error) {
       // Pokud to není validní URL, zkusíme to jako název souboru
-      return url.includes('/') ? url : url;
+      log.debug('extractFileNameFromUrl: URL parsing failed, treating as file path', error.message);
+      return trimmedUrl.includes('/') ? trimmedUrl : trimmedUrl;
     }
   };
 
@@ -165,13 +192,8 @@ export const useAudioPlayer = (audioUrl, albumTracks = null, currentTrackIndex =
     audio.currentTime = 0;
     audio.volume = 1; // Reset volume na normální hodnotu
 
-    // Vyčisti všechny event listeners před reloadem
-    audio.removeEventListener('timeupdate', () => {});
-    audio.removeEventListener('loadedmetadata', () => {});
-    audio.removeEventListener('loadeddata', () => {});
-    audio.removeEventListener('ended', () => {});
-    audio.removeEventListener('error', () => {});
-    audio.removeEventListener('canplay', () => {});
+    // Poznámka: Event listenery se správně odstraňují v cleanup funkci useEffect
+    // Tady pouze zastavíme přehrávání a resetujeme stav
 
     audio.load(); // Force reload of audio element
 
@@ -398,11 +420,7 @@ export const useAudioPlayer = (audioUrl, albumTracks = null, currentTrackIndex =
              }
 
              if (audioContext.state === 'suspended') {
-               // Debug log deaktivován - příliš mnoho výpisů
-               // const DEBUG_AUDIO_PLAYER = false;
-               // if (DEBUG_AUDIO_PLAYER) console.log('🎵 AUTOPLAY: AudioContext suspended, attempting resume');
               audioContext.resume().then(() => {
-                // if (DEBUG_AUDIO_PLAYER) console.log('🎵 AUTOPLAY: AudioContext resumed, proceeding with autoplay');
                 window.audioActivated = true;
                 proceedWithAutoplay();
               }).catch((error) => {
@@ -410,12 +428,10 @@ export const useAudioPlayer = (audioUrl, albumTracks = null, currentTrackIndex =
                 proceedWithAutoplay();
               });
              } else {
-               // if (DEBUG_AUDIO_PLAYER) console.log('🎵 AUTOPLAY: AudioContext is active, proceeding with autoplay');
                window.audioActivated = true;
                proceedWithAutoplay();
              }
            } catch (error) {
-             // if (DEBUG_AUDIO_PLAYER) console.log('🎵 AUTOPLAY: No AudioContext available, proceeding with autoplay');
              proceedWithAutoplay();
            }
          } else {
@@ -477,20 +493,16 @@ export const useAudioPlayer = (audioUrl, albumTracks = null, currentTrackIndex =
   }, [playbackState.wasPlayingBeforeSwitch, playbackState.shouldAutoplay, autoplayEnabled, audioUrl, albumTracks, currentTrackIndex, onTrackChange, audioState.hasInteracted]);
 
   // Autoplay při změně tracku - pouze pokud uživatel už jednou klikl na play
-  // Debug flag deaktivován - logy jsou zakomentovány
-  // const DEBUG_AUDIO_PLAYER = false;
   useEffect(() => {
     if (albumTracks && albumTracks.length > 1 && currentTrackIndex > 0 && audioState.hasInteracted) {
         // Pokud se mění track a uživatel už jednou klikl na play, spusť autoplay
         // Bez ohledu na aktuální stav přehrávání (isPlaying)
         setPlaybackState(prev => ({ ...prev, shouldAutoplay: true, wasPlayingBeforeSwitch: true }));
-        // if (DEBUG_AUDIO_PLAYER) console.log('🎵 Track changed - autoplay enabled for next track');
     }
 
     // Resetuj userPaused flag při změně tracku (dříve než se spustí autoplay)
     if (currentTrackIndex > 0) {
       setAudioState(prev => ({ ...prev, userPaused: false }));
-      // if (DEBUG_AUDIO_PLAYER) console.log('🎵 Track changed - userPaused flag reset');
     }
   }, [currentTrackIndex, albumTracks, audioState.hasInteracted]);
 
@@ -616,7 +628,6 @@ export const useAudioPlayer = (audioUrl, albumTracks = null, currentTrackIndex =
 
       // Zastav autoplay pro album
       setPlaybackState(prev => ({ ...prev, shouldAutoplay: false, wasPlayingBeforeSwitch: false }));
-      // if (DEBUG_AUDIO_PLAYER) console.log('🎵 Audio paused by user - autoplay disabled');
     } else {
       // Fade in při spuštění
       log.audio('🎵 Playing audio with fade in');
@@ -629,9 +640,7 @@ export const useAudioPlayer = (audioUrl, albumTracks = null, currentTrackIndex =
           setAudioState(prev => ({ ...prev, hasInteracted: true }));
           audio.play().then(() => {
             setAudioState(prev => ({ ...prev, isPlaying: true, userPaused: false }));
-            // if (DEBUG_AUDIO_PLAYER) console.log('🎵 User interaction recorded - autoplay now enabled');
           }).catch(() => {
-            // if (DEBUG_AUDIO_PLAYER) console.log('🎵 Audio play failed');
             setAudioState(prev => ({ ...prev, isPlaying: false }));
           });
           return;
@@ -650,33 +659,27 @@ export const useAudioPlayer = (audioUrl, albumTracks = null, currentTrackIndex =
 
           if (audioContext.state === 'suspended') {
             audioContext.resume().then(() => {
-              // if (DEBUG_AUDIO_PLAYER) console.log('🎵 Audio aktivován automaticky, pokračuji s přehráváním...');
               setAudioState(prev => ({ ...prev, hasInteracted: true }));
               window.audioActivated = true;
               audio.play().then(() => {
                 setAudioState(prev => ({ ...prev, isPlaying: true, userPaused: false }));
-                // if (DEBUG_AUDIO_PLAYER) console.log('🎵 User interaction recorded - autoplay now enabled');
               }).catch(() => {
-                // if (DEBUG_AUDIO_PLAYER) console.log('🎵 Audio play failed');
                 setAudioState(prev => ({ ...prev, isPlaying: false }));
               });
             }).catch(() => {
-              // if (DEBUG_AUDIO_PLAYER) console.log('🎵 PRVNÍ SPUŠTĚNÍ: Automatická aktivace selhala');
+              // Audio activation failed
             });
           } else {
-            // if (DEBUG_AUDIO_PLAYER) console.log('🎵 Audio už je aktivní, pokračuji s přehráváním...');
             setAudioState(prev => ({ ...prev, hasInteracted: true }));
             window.audioActivated = true;
             audio.play().then(() => {
               setAudioState(prev => ({ ...prev, isPlaying: true, userPaused: false }));
-              // if (DEBUG_AUDIO_PLAYER) console.log('🎵 User interaction recorded - autoplay now enabled');
             }).catch(() => {
-              // if (DEBUG_AUDIO_PLAYER) console.log('🎵 Audio play failed');
               setAudioState(prev => ({ ...prev, isPlaying: false }));
             });
           }
         } catch {
-          // if (DEBUG_AUDIO_PLAYER) console.log('🎵 PRVNÍ SPUŠTĚNÍ: Chyba při aktivaci');
+          // Audio activation error
         }
         return;
       }
@@ -686,7 +689,6 @@ export const useAudioPlayer = (audioUrl, albumTracks = null, currentTrackIndex =
       // Zjednodušený play - jen spusť audio
       audio.play().then(() => {
         setAudioState(prev => ({ ...prev, isPlaying: true, userPaused: false }));
-        // if (DEBUG_AUDIO_PLAYER) console.log('🎵 User interaction recorded - autoplay now enabled');
       }).catch((err) => {
         log.error('❌ Audio play failed during togglePlayPause:', err);
         setAudioState(prev => ({ ...prev, isPlaying: false }));
