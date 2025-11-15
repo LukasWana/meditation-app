@@ -59,6 +59,13 @@ const DataStorageCharts = () => {
 
       // Test Realtime Database
       try {
+        // POČKEJ na inicializaci realtimeMetadataService před použitím
+        try {
+          await realtimeMetadataService.waitForInitialization(10000);
+        } catch (err) {
+          console.debug('RealtimeMetadataService wait error:', err);
+        }
+
         const realtimeData = await realtimeMetadataService.getAllMetadata();
         data.realtime = {
           status: 'available',

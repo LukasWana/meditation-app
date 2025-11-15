@@ -4,7 +4,84 @@ import { X, ArrowDown, ArrowUp, MousePointerClick, CheckCircle, Play, Pause, Clo
 import { useLanguage } from '@contexts/LanguageContext';
 import { realtimeMetadataService } from '@services/realtimeMetadataService';
 import { useTheme, getCardClasses, getToggleButtonClasses, getOverlayColor } from '@hooks/useTheme';
+import { sanitizeFileName } from '@utils/validation';
 import Waveform from './Waveform';
+
+// Memoizovaná komponenta pro file item - snižuje re-rendery
+const SoundFileItem = React.memo(({ file, playingPreview, onPreview }) => {
+  const handlePreviewClick = React.useCallback((e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    onPreview(file);
+  }, [file, onPreview]);
+
+  const isPlaying = playingPreview === file.fileName;
+  const sanitizedName = React.useMemo(() => sanitizeFileName(file.name), [file.name]);
+  const sanitizedDescription = React.useMemo(() => file.description ? sanitizeFileName(file.description) : null, [file.description]);
+
+  return (
+    <motion.div
+      className="bg-white/50 backdrop-blur rounded-lg border border-black/10 p-3 hover:bg-white/70 transition-colors flex flex-col"
+      whileHover={{ scale: 1.02 }}
+      whileTap={{ scale: 0.98 }}
+    >
+      {/* Název a popisek */}
+      <div className="mb-2">
+        <div className="text-sm font-medium text-gray-800 mb-1 line-clamp-1">
+          {sanitizedName}
+        </div>
+        {sanitizedDescription && (
+          <div className="text-xs text-gray-600 line-clamp-2">
+            {sanitizedDescription}
+          </div>
+        )}
+      </div>
+
+      {/* Waveforma a preview tlačítko */}
+      <div className="w-full mb-2 flex items-center justify-between gap-2">
+        {/* Waveforma - vyplní zbytek prostoru */}
+        <div className="flex-1 min-w-0">
+          <Waveform
+            key={`${file.fileName}-${file.globalMax || 'no-globalMax'}`}
+            audioUrl={file.downloadURL}
+            waveformData={file.waveformData}
+            globalMax={file.globalMax}
+            width="100%"
+            height={50}
+            color="#6b7280"
+          />
+        </div>
+        {/* Preview tlačítko - zarovnané doprava */}
+        <button
+          onClick={handlePreviewClick}
+          className={`p-2 rounded-full transition-colors flex items-center justify-center flex-shrink-0 ${
+            isPlaying
+              ? 'bg-black text-white hover:bg-gray-800'
+              : 'bg-white/70 hover:bg-white text-gray-700 border border-black/10'
+          }`}
+          title={isPlaying ? 'Zastavit' : 'Přehrát'}
+          type="button"
+        >
+          {isPlaying ? (
+            <Pause size={16} />
+          ) : (
+            <Play size={16} />
+          )}
+        </button>
+      </div>
+    </motion.div>
+  );
+}, (prevProps, nextProps) => {
+  // Custom comparison pro lepší memoizaci
+  return (
+    prevProps.file.id === nextProps.file.id &&
+    prevProps.playingPreview === nextProps.playingPreview &&
+    prevProps.file.fileName === nextProps.file.fileName &&
+    prevProps.file.downloadURL === nextProps.file.downloadURL
+  );
+});
+
+SoundFileItem.displayName = 'SoundFileItem';
 
 const SoundThemeGallery = ({ isOpen, onClose, onSelectSound, selectedInSound, selectedOutSound, selectedClickSound, selectedFinalSound, selectedCountdownSound }) => {
   // Fallback pro undefined hodnoty
@@ -71,31 +148,7 @@ const SoundThemeGallery = ({ isOpen, onClose, onSelectSound, selectedInSound, se
     return null;
   };
 
-  // Funkce pro zjištění, zda je zvuk krátký (<= 1 sekunda)
-  const isShortSound = (duration) => {
-    const seconds = parseDurationToSeconds(duration);
-    return seconds !== null && seconds <= 1;
-  };
 
-  // Debug logging pro kontrolu props - deaktivováno
-  // const DEBUG_SOUND_THEME_GALLERY = false;
-  // useEffect(() => {
-  //   if (isOpen) {
-  //     if (DEBUG_SOUND_THEME_GALLERY) console.log('🔍 SoundThemeGallery props changed:', {
-  //       selectedInSound,
-  //       selectedOutSound,
-  //       selectedClickSound,
-  //       selectedFinalSound,
-  //       selectedCountdownSound,
-  //       safeSelectedInSound,
-  //       safeSelectedOutSound,
-  //       safeSelectedClickSound,
-  //       safeSelectedFinalSound,
-  //       safeSelectedCountdownSound,
-  //       onSelectSound: typeof onSelectSound
-  //     });
-  //   }
-  // }, [isOpen, selectedInSound, selectedOutSound, selectedClickSound, selectedFinalSound, selectedCountdownSound, safeSelectedInSound, safeSelectedOutSound, safeSelectedClickSound, safeSelectedFinalSound, safeSelectedCountdownSound]);
   const [audioFiles, setAudioFiles] = useState([]);
   const [loading, setLoading] = useState(true);
   const [playingPreview, setPlayingPreview] = useState(null); // Aktuálně přehrávaný soubor
@@ -273,23 +326,18 @@ const SoundThemeGallery = ({ isOpen, onClose, onSelectSound, selectedInSound, se
   const loadMusicFiles = async () => {
     try {
       setLoading(true);
+
+      // POČKEJ na inicializaci realtimeMetadataService před použitím
+      try {
+        const initialized = await realtimeMetadataService.waitForInitialization(10000);
+        if (!initialized) {
+          console.warn('⚠️ RealtimeMetadataService initialization timeout');
+        }
+      } catch (err) {
+        console.debug('RealtimeMetadataService wait error:', err);
+      }
+
       const allMetadata = await realtimeMetadataService.getAllMetadata();
-
-      // Debug logy deaktivovány - příliš mnoho výpisů
-      // const DEBUG_SOUND_THEME_GALLERY = false;
-      // if (DEBUG_SOUND_THEME_GALLERY) console.log('🔍 SoundThemeGallery: Načteno metadata:', Object.keys(allMetadata).length);
-
-      // Debug: zobraz všechny soubory s "dychani" v názvu - deaktivováno
-      // const allDychaniFiles = Object.values(allMetadata).filter(file => {
-      //   const fileName = (file.fileName || '').toLowerCase();
-      //   return fileName.includes('dychani') || fileName.includes('dychanie');
-      // });
-      // if (DEBUG_SOUND_THEME_GALLERY) console.log('🫁 SoundThemeGallery: Všechny soubory s "dychani":', allDychaniFiles.length);
-      // if (DEBUG_SOUND_THEME_GALLERY) console.log('🫁 Sample dychani files:', allDychaniFiles.slice(0, 5).map(f => ({
-      //   fileName: f.fileName,
-      //   folder: f.folder,
-      //   hasDownloadURL: !!(f.downloadURL || f.audioSrc)
-      // })));
 
       // Filtruj pouze soubory z kategorie "dychani" (OGG formát)
       const dychaniFiles = Object.values(allMetadata).filter(file => {
@@ -299,14 +347,8 @@ const SoundThemeGallery = ({ isOpen, onClose, onSelectSound, selectedInSound, se
         const isMp3File = fileName.endsWith('.mp3'); // Fallback pro MP3
 
         const matches = isInDychaniFolder && (isOggFile || isMp3File);
-        // if (DEBUG_SOUND_THEME_GALLERY && isInDychaniFolder) {
-        //   console.log(`🫁 Soubor dychani: ${fileName}, isOgg: ${isOggFile}, isMp3: ${isMp3File}, matches: ${matches}`);
-        // }
-
         return matches;
       });
-
-      // if (DEBUG_SOUND_THEME_GALLERY) console.log('🫁 SoundThemeGallery: Filtrováno dychani souborů:', dychaniFiles.length);
 
       // KROK 1: Mapuj na formát pro galerii a získej absolutní hodnoty
       const mappedFiles = dychaniFiles.map(file => {
@@ -316,30 +358,6 @@ const SoundThemeGallery = ({ isOpen, onClose, onSelectSound, selectedInSound, se
         // Získej waveform data (mohou být absolutní hodnoty 0-32768 nebo normalizované 0-1)
         const waveformData = file.waveformData || file.waveform || null;
         const waveformMax = file.waveformMax || null; // Metadata pro globální normalizaci
-
-        // ✅ DEBUG: Ověř, zda má každý soubor unikátní data - deaktivováno (proměnné nevyužívány)
-        // if (waveformData && Array.isArray(waveformData) && waveformData.length > 0) {
-        //   const first5 = waveformData.slice(0, 5);
-        //   const last5 = waveformData.slice(-5);
-        //   const maxVal = Math.max(...waveformData);
-        //   const minVal = Math.min(...waveformData);
-        //   const avgVal = waveformData.reduce((a, b) => a + b, 0) / waveformData.length;
-        //
-        //   if (DEBUG_SOUND_THEME_GALLERY) console.log(`🔍 ${file.fileName}:`, {
-        //     samples: waveformData.length,
-        //     first5: first5.map(v => v.toFixed(2)),
-        //     last5: last5.map(v => v.toFixed(2)),
-        //     min: minVal.toFixed(2),
-        //     max: maxVal.toFixed(2),
-        //     avg: avgVal.toFixed(2),
-        //     isAbsolute: maxVal > 1,
-        //     // Zkontroluj, zda jsou data stejná jako u předchozího souboru
-        //     firstValue: waveformData[0]?.toFixed(4),
-        //     lastValue: waveformData[waveformData.length - 1]?.toFixed(4)
-        //   });
-        // } else {
-        //   if (DEBUG_SOUND_THEME_GALLERY) console.warn(`⚠️ ${file.fileName}: NEMÁ waveformData!`);
-        // }
 
         // Generuj popisek, pokud není v metadatech
         const description = file.description || generateDescription(file.fileName, name);
@@ -397,21 +415,7 @@ const SoundThemeGallery = ({ isOpen, onClose, onSelectSound, selectedInSound, se
         file.globalMax = globalMax > 0 ? globalMax : 1; // Ulož globální maximum do každého souboru
       });
 
-      // ✅ DEBUG: Zobraz globální maximum a hodnoty pro každý soubor - deaktivováno
-      // if (DEBUG_SOUND_THEME_GALLERY) console.log(`🌊 Globální maximum pro normalizaci: ${globalMax.toFixed(4)}`);
-      // mappedFiles.slice(0, 3).forEach(file => {
-      //   if (file.waveformData && Array.isArray(file.waveformData) && file.waveformData.length > 0) {
-      //     const maxValue = Math.max(...file.waveformData);
-      //     const avgValue = file.waveformData.reduce((a, b) => a + b, 0) / file.waveformData.length;
-      //     const first5 = file.waveformData.slice(0, 5);
-      //     console.log(`📊 ${file.fileName}: max=${maxValue.toFixed(4)}, avg=${avgValue.toFixed(4)}, globalMax=${file.globalMax?.toFixed(4)}, first5=${first5.map(v => v.toFixed(2)).join(',')}`);
-      //   }
-      // });
-
       if (hasAbsoluteValues) {
-        // if (DEBUG_SOUND_THEME_GALLERY) console.log(`🌊 Nalezeno absolutních hodnot - globální maximum: ${globalMax.toFixed(2)}`);
-        // if (DEBUG_SOUND_THEME_GALLERY) console.log(`🌊 Použijeme globální normalizaci pro zachování rozdílů mezi soubory`);
-
         mappedFiles.forEach(file => {
           if (file.waveformData && Array.isArray(file.waveformData) && file.waveformData.length > 0) {
             const maxValue = Math.max(...file.waveformData);
@@ -421,19 +425,11 @@ const SoundThemeGallery = ({ isOpen, onClose, onSelectSound, selectedInSound, se
             if (maxValue > 1) {
               // Absolutní hodnoty - ZACHOVÁME je tak jak jsou!
               // Normalizace bude provedena v drawWaveformFromData podle vlastního maxima
-              // if (DEBUG_SOUND_THEME_GALLERY) console.log(`✅ Zachováno ${file.fileName}: min=${minValue.toFixed(2)}, max=${maxValue.toFixed(2)}, avg=${avgValue.toFixed(2)} (absolutní hodnoty)`);
-            } else {
-              // Stará normalizovaná data (0-1) - potřebují být znovu vygenerována
-              // if (DEBUG_SOUND_THEME_GALLERY) console.warn(`⚠️ ${file.fileName} má stará normalizovaná data (0-1) - potřebuje být znovu vygenerován s absolutními hodnotami`);
             }
           }
         });
-      } else {
-        // if (DEBUG_SOUND_THEME_GALLERY) console.warn('⚠️ Nenašli jsme absolutní hodnoty - možná jsou všechna data stále normalizovaná na 0-1');
-        // if (DEBUG_SOUND_THEME_GALLERY) console.warn('⚠️ Pro správné zobrazení je potřeba znovu vygenerovat waveformy pomocí "🚀 Automatická synchronizace všech souborů"');
       }
 
-      // if (DEBUG_SOUND_THEME_GALLERY) console.log('🫁 SoundThemeGallery: Zmapováno souborů:', mappedFiles.length);
       setAudioFiles(mappedFiles);
       setLoading(false);
     } catch (error) {
@@ -492,14 +488,12 @@ const SoundThemeGallery = ({ isOpen, onClose, onSelectSound, selectedInSound, se
   if (!isOpen) return null;
 
   const handleFileSelect = (type, fileName) => {
-    // if (DEBUG_SOUND_THEME_GALLERY) console.log('🔊 SoundThemeGallery: handleFileSelect called', { type, fileName, onSelectSound: typeof onSelectSound });
     if (!onSelectSound) {
       console.error('❌ SoundThemeGallery: onSelectSound is not defined!');
       return;
     }
     try {
       onSelectSound(type, fileName);
-      // if (DEBUG_SOUND_THEME_GALLERY) console.log('✅ SoundThemeGallery: onSelectSound called successfully', { type, fileName });
     } catch (error) {
       console.error('❌ SoundThemeGallery: Error calling onSelectSound:', error);
     }
@@ -849,178 +843,12 @@ const SoundThemeGallery = ({ isOpen, onClose, onSelectSound, selectedInSound, se
             {!loading && (
               <div className="grid grid-cols-2 gap-3 w-full">
                 {currentPageFiles.map((file) => (
-                  <motion.div
+                  <SoundFileItem
                     key={file.id}
-                    className="bg-white/50 backdrop-blur rounded-lg border border-black/10 p-3 hover:bg-white/70 transition-colors flex flex-col"
-                    whileHover={{ scale: 1.02 }}
-                    whileTap={{ scale: 0.98 }}
-                  >
-                    {/* Název a popisek */}
-                    <div className="mb-2">
-                      <div className="text-sm font-medium text-gray-800 mb-1 line-clamp-1">
-                        {file.name}
-                      </div>
-                      {file.description && (
-                        <div className="text-xs text-gray-600 line-clamp-2">
-                          {file.description}
-                        </div>
-                      )}
-                    </div>
-
-                    {/* Waveforma a preview tlačítko */}
-                    <div className="w-full mb-2 flex items-center justify-between gap-2">
-                      {/* Waveforma - vyplní zbytek prostoru */}
-                      <div className="flex-1 min-w-0">
-                        <Waveform
-                          key={`${file.fileName}-${file.globalMax || 'no-globalMax'}`} // ✅ KEY: Force re-render when globalMax changes
-                          audioUrl={file.downloadURL}
-                          waveformData={file.waveformData}
-                          globalMax={file.globalMax} // ✅ Přidej globální maximum pro globální normalizaci
-                          width="100%"
-                          height={50}
-                          color="#6b7280"
-                        />
-                      </div>
-                      {/* Preview tlačítko - zarovnané doprava */}
-                      <button
-                        onClick={(e) => {
-                          e.preventDefault();
-                          e.stopPropagation();
-                          handlePreview(file);
-                        }}
-                        className={`p-2 rounded-full transition-colors flex items-center justify-center flex-shrink-0 ${
-                          playingPreview === file.fileName
-                            ? 'bg-black text-white hover:bg-gray-800'
-                            : 'bg-white/70 hover:bg-white text-gray-700 border border-black/10'
-                        }`}
-                        title={playingPreview === file.fileName ? 'Zastavit' : 'Přehrát'}
-                        type="button"
-                      >
-                        {playingPreview === file.fileName ? (
-                          <Pause size={16} />
-                        ) : (
-                          <Play size={16} />
-                        )}
-                      </button>
-                    </div>
-
-                    {/* 4 ikonky pro přiřazení zvuku - pod waveformou */}
-                    <div className="flex flex-wrap gap-1.5 mt-2">
-                      {/* Zkontroluj, zda je zvuk krátký (<= 1s) */}
-                      {isShortSound(file.duration) ? (
-                        <>
-                          {/* Pro krátké zvuky: countdown tlačítko místo nádech/výdech */}
-                          <button
-                            onClick={(e) => {
-                              e.preventDefault();
-                              e.stopPropagation();
-                              // if (DEBUG_SOUND_THEME_GALLERY) console.log('🔊 Clicked COUNTDOWN button for:', file.fileName, 'Current selected:', safeSelectedCountdownSound);
-                              handleFileSelect('countdown', file.fileName);
-                            }}
-                            className={`flex-1 min-w-[60px] p-2 rounded transition-colors flex items-center justify-center cursor-pointer ${
-                              safeSelectedCountdownSound === file.fileName
-                                ? 'bg-black text-white hover:bg-gray-800'
-                                : 'bg-white/70 hover:bg-white text-gray-700 border border-black/10'
-                            }`}
-                            title={t('zvolteZvukOdpocitavani') || 'Odpočítávání'}
-                            type="button"
-                          >
-                            <Clock size={16} />
-                          </button>
-
-                          {/* Nádech a výdech jsou zakázané pro krátké zvuky */}
-                          <div className="flex-1 min-w-[60px] p-2 rounded flex items-center justify-center opacity-30 cursor-not-allowed">
-                            <ArrowDown size={16} className="text-gray-400" />
-                          </div>
-                          <div className="flex-1 min-w-[60px] p-2 rounded flex items-center justify-center opacity-30 cursor-not-allowed">
-                            <ArrowUp size={16} className="text-gray-400" />
-                          </div>
-                        </>
-                      ) : (
-                        <>
-                          {/* Pro dlouhé zvuky: normální tlačítka nádech/výdech (countdown není dostupné) */}
-                          <button
-                            onClick={(e) => {
-                              e.preventDefault();
-                              e.stopPropagation();
-                              // if (DEBUG_SOUND_THEME_GALLERY) console.log('🔊 Clicked IN button for:', file.fileName, 'Current selected:', safeSelectedInSound);
-                              handleFileSelect('in', file.fileName);
-                            }}
-                            className={`flex-1 min-w-[60px] p-2 rounded transition-colors flex items-center justify-center cursor-pointer ${
-                              safeSelectedInSound === file.fileName
-                                ? 'bg-black text-white hover:bg-gray-800'
-                                : 'bg-white/70 hover:bg-white text-gray-700 border border-black/10'
-                            }`}
-                            title={t('zvolteZvukNadech') || 'Nádech'}
-                            type="button"
-                          >
-                            <ArrowDown size={16} />
-                          </button>
-
-                          <button
-                            onClick={(e) => {
-                              e.preventDefault();
-                              e.stopPropagation();
-                              // if (DEBUG_SOUND_THEME_GALLERY) console.log('🔊 Clicked OUT button for:', file.fileName, 'Current selected:', safeSelectedOutSound);
-                              handleFileSelect('out', file.fileName);
-                            }}
-                            className={`flex-1 min-w-[60px] p-2 rounded transition-colors flex items-center justify-center cursor-pointer ${
-                              safeSelectedOutSound === file.fileName
-                                ? 'bg-black text-white hover:bg-gray-800'
-                                : 'bg-white/70 hover:bg-white text-gray-700 border border-black/10'
-                            }`}
-                            title={t('zvolteZvukVydech') || 'Výdech'}
-                            type="button"
-                          >
-                            <ArrowUp size={16} />
-                          </button>
-
-                          {/* Countdown není dostupné pro dlouhé zvuky - zobrazíme ho jako disabled */}
-                          <div className="flex-1 min-w-[60px] p-2 rounded flex items-center justify-center opacity-30 cursor-not-allowed" title="Dostupné pouze pro krátké zvuky (≤1s)">
-                            <Clock size={16} className="text-gray-400" />
-                          </div>
-                        </>
-                      )}
-
-                      {/* Tlačítko kliknutí - ikona myš (pro všechny zvuky) */}
-                      <button
-                        onClick={(e) => {
-                          e.preventDefault();
-                          e.stopPropagation();
-                          // if (DEBUG_SOUND_THEME_GALLERY) console.log('🔊 Clicked CLICK button for:', file.fileName, 'Current selected:', safeSelectedClickSound);
-                          handleFileSelect('click', file.fileName);
-                        }}
-                        className={`flex-1 min-w-[60px] p-2 rounded transition-colors flex items-center justify-center cursor-pointer ${
-                          safeSelectedClickSound === file.fileName
-                            ? 'bg-black text-white hover:bg-gray-800'
-                            : 'bg-white/70 hover:bg-white text-gray-700 border border-black/10'
-                        }`}
-                        title={t('zvolteZvukKliknuti') || 'Kliknutí'}
-                        type="button"
-                      >
-                        <MousePointerClick size={16} />
-                      </button>
-
-                      {/* Tlačítko finální zvuk - ikona check (pro všechny zvuky) */}
-                      <button
-                        onClick={(e) => {
-                          e.preventDefault();
-                          e.stopPropagation();
-                          // if (DEBUG_SOUND_THEME_GALLERY) console.log('🔊 Clicked FINAL button for:', file.fileName, 'Current selected:', safeSelectedFinalSound);
-                          handleFileSelect('final', file.fileName);
-                        }}
-                        className={`flex-1 min-w-[60px] p-2 rounded transition-colors flex items-center justify-center cursor-pointer ${
-                          safeSelectedFinalSound === file.fileName
-                            ? 'bg-black text-white hover:bg-gray-800'
-                            : 'bg-white/70 hover:bg-white text-gray-700 border border-black/10'
-                        }`}
-                        title={t('zvolteZvukFinalni') || 'Finální'}
-                        type="button"
-                      >
-                        <CheckCircle size={16} />
-                      </button>
-                    </div>
-                  </motion.div>
+                    file={file}
+                    playingPreview={playingPreview}
+                    onPreview={handlePreview}
+                  />
                 ))}
               </div>
             )}

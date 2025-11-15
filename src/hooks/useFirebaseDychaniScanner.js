@@ -162,6 +162,19 @@ export const useFirebaseDychaniScanner = () => {
         return;
       }
 
+      // POČKEJ na inicializaci fastMetadataService před pokusem o načtení dat
+      try {
+        log.debug('⏳ Waiting for fastMetadataService initialization (dychani)...');
+        const initialized = await fastMetadataService.waitForInitialization(10000);
+        if (!initialized) {
+          log.warn('⚠️ FastMetadataService initialization timeout, trying cache...');
+        } else {
+          log.debug('✅ FastMetadataService is ready (dychani)');
+        }
+      } catch (err) {
+        log.debug('FastMetadataService wait error:', err);
+      }
+
       // Zkontroluj fast metadata service (data z Realtime DB)
       try {
         const fastMetadata = fastMetadataService.getAllMetadata();
