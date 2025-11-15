@@ -115,3 +115,5 @@ export function showDebugPanel(shaderInfo, errorInfo = null) {
   console.groupEnd();
 }
 
+
+
