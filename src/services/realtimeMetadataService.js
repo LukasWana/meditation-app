@@ -1,14 +1,28 @@
-
-
 import { database } from './firebase';
 import { ref, get, onValue, off } from 'firebase/database';
 import log from './logger';
 import { deduplicateRequest } from '@utils/metadataRequestManager';
+import { BaseMetadataService } from './metadata/BaseMetadataService.js';
 
-class RealtimeMetadataService {
+class RealtimeMetadataService extends BaseMetadataService {
   constructor() {
+    // Realtime service nemá localStorage cache - data jsou real-time
+    // Ale má memory cache pro rychlý přístup
+    super({
+      localStorageKey: null, // Žádná localStorage cache
+      cacheExpiry: 0 // Žádná expirace - data jsou vždy fresh z DB
+    });
     this.database = database;
     this.listeners = new Map();
+  }
+
+  // Override - Realtime service nepoužívá localStorage
+  loadFromLocalCache() {
+    return false; // Vždy false - žádná localStorage cache
+  }
+
+  saveToLocalCache() {
+    // No-op - Realtime service neukládá do localStorage
   }
 
   sanitizePath(path) {
@@ -22,13 +36,18 @@ class RealtimeMetadataService {
       .replace(/\\/g, '_BACKSLASH_'); // \ -> _BACKSLASH_
   }
 
-  async getFileMetadata(filePath) {
+  async getMetadata(fileName) {
+    // Zkus memory cache
+    if (this.cache.has(fileName)) {
+      return this.cache.get(fileName);
+    }
+
     // Použij deduplication pro jednotlivé soubory
-    return deduplicateRequest(
-      filePath,
+    const metadata = await deduplicateRequest(
+      fileName,
       async () => {
         try {
-          const safePath = this.sanitizePath(filePath);
+          const safePath = this.sanitizePath(fileName);
           const metadataRef = ref(this.database, `audio-metadata/${safePath}`);
           const snapshot = await get(metadataRef);
 
@@ -41,21 +60,36 @@ class RealtimeMetadataService {
               data.waveformData = this.normalizeWaveformData(data.waveformData);
             }
 
+            // Ulož do memory cache
+            this.setCachedMetadata(fileName, data);
             return data;
           } else {
-            log.debug(`📭 No metadata found for: ${filePath}`);
+            log.debug(`📭 No metadata found for: ${fileName}`);
             return null;
           }
         } catch (error) {
-          log.error(`❌ Failed to load metadata for ${filePath}:`, error);
+          log.error(`❌ Failed to load metadata for ${fileName}:`, error);
           return null;
         }
       },
       'realtime'
     );
+
+    return metadata;
   }
 
-  async getAllMetadata() {
+  // Alias pro kompatibilitu
+  async getFileMetadata(filePath) {
+    return this.getMetadata(filePath);
+  }
+
+  async loadAllMetadata() {
+    if (this.isLoading) {
+      return Object.fromEntries(this.cache);
+    }
+
+    this.isLoading = true;
+
     try {
       const metadataRef = ref(this.database, 'audio-metadata');
       const snapshot = await get(metadataRef);
@@ -108,6 +142,11 @@ class RealtimeMetadataService {
             folder: f.folder,
             hasDownloadURL: !!(f.downloadURL || f.audioSrc)
           })));
+
+          // Ulož do memory cache
+          Object.entries(metadataObject).forEach(([key, value]) => {
+            this.setCachedMetadata(key, value);
+          });
 
           return metadataObject;
         } else {
@@ -168,6 +207,11 @@ class RealtimeMetadataService {
             })));
           }
 
+          // Ulož do memory cache
+          Object.entries(metadataObject).forEach(([key, value]) => {
+            this.setCachedMetadata(key, value);
+          });
+
           return metadataObject;
         }
       } else {
@@ -184,7 +228,14 @@ class RealtimeMetadataService {
       }
 
       return {};
+    } finally {
+      this.isLoading = false;
     }
+  }
+
+  // Alias pro kompatibilitu
+  async getAllMetadata() {
+    return this.loadAllMetadata();
   }
 
   async getFolderMetadata(folder) {
@@ -388,6 +439,65 @@ class RealtimeMetadataService {
       console.error('❌ Failed to decode base64 waveform:', error);
       return null;
     }
+  }
+
+  async initialize() {
+    if (this.isInitialized) return;
+    if (this.isLoading) return;
+
+    this.isLoading = true;
+    try {
+      await this.loadAllMetadata();
+      this.isInitialized = true;
+    } catch (error) {
+      log.warn('Failed to initialize RealtimeMetadataService:', error);
+    } finally {
+      this.isLoading = false;
+    }
+  }
+
+  /**
+   * Počká na dokončení inicializace (pokud probíhá) nebo vrátí okamžitě, pokud je už inicializován
+   */
+  async waitForInitialization(maxWait = 10000) {
+    if (this.isInitialized) {
+      return true;
+    }
+
+    const startTime = Date.now();
+
+    // Pokud už probíhá inicializace, počkej na ni
+    if (this.isLoading) {
+      while (this.isLoading && !this.isInitialized && (Date.now() - startTime) < maxWait) {
+        await new Promise(resolve => setTimeout(resolve, 100));
+      }
+      return this.isInitialized;
+    }
+
+    // Pokud není v procesu načítání, zkus inicializovat
+    // (může se stát, že useBackgroundDataLoader ještě nezačal kvůli delay)
+    try {
+      await this.initialize();
+      if (this.isInitialized) {
+        return true;
+      }
+    } catch (error) {
+      log.warn('Failed to initialize in waitForInitialization:', error);
+    }
+
+    // Pokud inicializace selhala nebo ještě probíhá, počkej
+    while (!this.isInitialized && (Date.now() - startTime) < maxWait) {
+      if (this.isLoading) {
+        // Pokud teď probíhá inicializace, počkej na ni
+        while (this.isLoading && !this.isInitialized && (Date.now() - startTime) < maxWait) {
+          await new Promise(resolve => setTimeout(resolve, 100));
+        }
+        return this.isInitialized;
+      }
+      await new Promise(resolve => setTimeout(resolve, 100));
+    }
+
+    return this.isInitialized;
   }
 }
 
