@@ -203,9 +203,7 @@ const HudbaScreen = ({
         onTouchMove={onTouchMove}
         onTouchEnd={onTouchEnd}
       >
-        <BackButton
-          onClick={() => onNavigateToScreen('home')}
-        />
+        <BackButton onClick={() => onNavigateToScreen('home')} />
 
         <div className="max-w-md w-full mt-16">
           <FramerSection

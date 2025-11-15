@@ -270,12 +270,12 @@ const DychaniScreen = ({
           className="min-h-screen w-full max-w-full flex flex-col items-center justify-start p-2 sm:p-8 pb-20 overflow-x-hidden relative"
           style={{ position: 'relative', zIndex: 10, backgroundColor: 'transparent' }}
           onTouchStart={onTouchStart}
-          onTouchMove={onTouchMove}
-          onTouchEnd={onTouchEnd}
-        >
-          <BackButton onClick={() => onNavigateToScreen('home')} />
+        onTouchMove={onTouchMove}
+        onTouchEnd={onTouchEnd}
+      >
+        <BackButton onClick={() => onNavigateToScreen('home')} />
 
-          <div className="max-w-md w-full" style={{ marginTop: '4rem', paddingTop: 0, position: 'relative', display: 'flex', flexDirection: 'column', alignItems: 'stretch' }}>
+        <div className="max-w-md w-full" style={{ marginTop: '4rem', paddingTop: 0, position: 'relative', display: 'flex', flexDirection: 'column', alignItems: 'stretch' }}>
             <FramerSection
               className="text-center mb-6"
               animationType="fadeIn"

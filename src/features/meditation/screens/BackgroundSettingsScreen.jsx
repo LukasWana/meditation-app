@@ -345,7 +345,11 @@ const BackgroundSettingsScreen = ({
                       </FramerButton>
                     ))}
                   </div>
-                  <Suspense fallback={null}>
+                  <Suspense fallback={
+                    <div className={`text-center py-8 ${textColors.muted} text-sm`}>
+                      Načítání shaderů...
+                    </div>
+                  }>
                     <ShaderGallery
                       selectedVariant={selectedShader}
                       onSelect={handleShaderSelect}

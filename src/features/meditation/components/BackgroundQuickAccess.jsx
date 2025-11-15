@@ -69,12 +69,14 @@ const BackgroundQuickAccess = ({ section, className = '', onNavigateToScreen }) 
       try {
         const currentScreen = localStorage.getItem('meditation-app-current-screen') || '';
         localStorage.setItem('meditation-app-previous-screen', currentScreen);
+        // Ulož section do localStorage pro BackgroundSettingsScreen
+        localStorage.setItem('meditation-app-background-settings-section', section);
       } catch (e) {
         console.error('Failed to save previous screen to localStorage:', e);
       }
       onNavigateToScreen('background-settings');
     }
-  }, [onNavigateToScreen]);
+  }, [onNavigateToScreen, section]);
 
   const triggerRenderer = useCallback(
     () => (

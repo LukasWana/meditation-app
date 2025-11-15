@@ -469,21 +469,28 @@ const PageManager = ({
         case 'section':
           // Mapování aktuální obrazovky na sekci pro shader a background settings
           if (screenKey === 'shader-selection' || screenKey === 'background-settings') {
-            // Urči sekci na základě předchozí obrazovky
-            // Pokud jsme přišli z hudba -> section = 'hudba'
-            // Pokud jsme přišli z meditace -> section = 'meditace'
-            // Pokud jsme přišli z breath/dychani -> section = 'dychani'
-            const sectionMap = {
-              'hudba': 'hudba',
-              'meditace': 'meditace',
-              'breath': 'dychani',
-              'dychani': 'dychani',
-              'audio-player-hudba': 'hudba',
-              'audio-player-meditace': 'meditace'
-            };
-            // Zkus získat z localStorage nebo použij currentScreen jako fallback
-            const previousScreen = localStorage.getItem('meditation-app-previous-screen') || currentScreen;
-            props.section = sectionMap[previousScreen] || 'hudba';
+            // Zkus získat section přímo z localStorage (uloženo BackgroundQuickAccess)
+            const savedSection = localStorage.getItem('meditation-app-background-settings-section');
+            if (savedSection) {
+              props.section = savedSection;
+            } else {
+              // Urči sekci na základě předchozí obrazovky
+              // Pokud jsme přišli z hudba -> section = 'hudba'
+              // Pokud jsme přišli z meditace -> section = 'meditace'
+              // Pokud jsme přišli z breath/dychani -> section = 'dychani'
+              const sectionMap = {
+                'hudba': 'hudba',
+                'meditace': 'meditace',
+                'breath': 'dychani',
+                'dychani': 'dychani',
+                'settings': 'settings',
+                'audio-player-hudba': 'hudba',
+                'audio-player-meditace': 'meditace'
+              };
+              // Zkus získat z localStorage nebo použij currentScreen jako fallback
+              const previousScreen = localStorage.getItem('meditation-app-previous-screen') || currentScreen;
+              props.section = sectionMap[previousScreen] || 'hudba';
+            }
           }
           break;
         default:
