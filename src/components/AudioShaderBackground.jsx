@@ -87,22 +87,16 @@ const AudioShaderBackground = ({
   `;
 
   // Inicializace WebGL - inicializuj hned když je canvas ready
-  // Debug flag deaktivován - logy jsou zakomentovány
-  // const DEBUG_AUDIO_SHADER = false;
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) {
-      // if (DEBUG_AUDIO_SHADER) console.log('⏳ AudioShaderBackground: Čekám na canvas...');
       return;
     }
 
     // Pokud už máme WebGL kontext, neinicializuj znovu
     if (isInitializedRef.current || (gl && shaderProgram)) {
-      // if (DEBUG_AUDIO_SHADER) console.log('✅ AudioShaderBackground: WebGL už je inicializován');
       return;
     }
-
-    // if (DEBUG_AUDIO_SHADER) console.log('🎨 AudioShaderBackground: Canvas nalezen, inicializuji WebGL...');
 
     // Použij getWebGLContext() pro optimalizované nastavení (Android optimalizace)
     let glContext = getWebGLContext(canvas, {
@@ -117,9 +111,6 @@ const AudioShaderBackground = ({
       console.warn('⚠️ WebGL není podporován');
       return;
     }
-    // if (DEBUG_AUDIO_SHADER) console.log('✅ AudioShaderBackground: WebGL verze:', glContext.getParameter(glContext.VERSION));
-
-    // if (DEBUG_AUDIO_SHADER) console.log('✅ AudioShaderBackground: WebGL kontext vytvořen');
 
     // Nastav velikost canvasu - použij fullscreen velikost s optimalizovaným DPR
     // Na mobilních zařízeních max 1.5x DPR pro lepší výkon
@@ -134,7 +125,6 @@ const AudioShaderBackground = ({
       canvas.style.width = `${width}px`;
       canvas.style.height = `${height}px`;
       glContext.viewport(0, 0, canvas.width, canvas.height);
-      // if (DEBUG_AUDIO_SHADER) console.log('📐 AudioShaderBackground: Canvas velikost:', canvas.width, 'x', canvas.height, 'CSS:', width, 'x', height, 'DPR:', dpr);
     };
 
     resizeCanvas();
@@ -197,7 +187,6 @@ const AudioShaderBackground = ({
     setGl(glContext);
     setShaderProgram(program);
     isInitializedRef.current = true;
-    // if (DEBUG_AUDIO_SHADER) console.log('✅ Shader program vytvořen');
 
     return () => {
       window.removeEventListener('resize', resizeCanvas);
@@ -218,8 +207,6 @@ const AudioShaderBackground = ({
 
   // Render loop
   useEffect(() => {
-    // if (DEBUG_AUDIO_SHADER) console.log('🔄 Render loop check:', { hasGl: !!gl, hasShader: !!shaderProgram, isPlaying: isActuallyPlaying });
-
     if (!gl || !shaderProgram || !isActuallyPlaying) {
       if (animationFrameRef.current) {
         cancelAnimationFrame(animationFrameRef.current);
@@ -227,8 +214,6 @@ const AudioShaderBackground = ({
       }
       return;
     }
-
-    // if (DEBUG_AUDIO_SHADER) console.log('✅ Spouštím render loop');
 
     const render = (currentTime) => {
       // Kontrola, zda je WebGL kontext stále platný

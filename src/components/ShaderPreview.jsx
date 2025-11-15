@@ -556,14 +556,9 @@ void main() {
         }
 
         // Pokus se o automatickou opravu, pokud je to možné
-        // Debug logy deaktivovány - příliš mnoho výpisů
-        // const DEBUG_SHADER_PREVIEW = false;
         if (errorInfo.canRecover && errorInfo.recoveryStrategy) {
-          // if (DEBUG_SHADER_PREVIEW) console.log('Attempting automatic error recovery...', errorInfo.recoveryStrategy);
           const recovery = attemptErrorRecovery(sanitizedSource, errorInfo.errors, isWebGL2);
           if (recovery.fixed && recovery.appliedFixes.length > 0) {
-            // if (DEBUG_SHADER_PREVIEW) console.log('Applied fixes:', recovery.appliedFixes);
-
             // Zaznamenej pokus o recovery
             recordRecoveryAttempt(shaderPath, false, recovery.appliedFixes);
 
@@ -572,7 +567,6 @@ void main() {
             glContext.shaderSource(retryShader, recovery.fixedCode);
             glContext.compileShader(retryShader);
             if (glContext.getShaderParameter(retryShader, glContext.COMPILE_STATUS)) {
-              // if (DEBUG_SHADER_PREVIEW) console.log('Shader compilation successful after recovery!');
 
               // Zaznamenej úspěšný recovery
               recordRecoveryAttempt(shaderPath, true, recovery.appliedFixes);
@@ -725,7 +719,6 @@ void main() {
       }
       fragmentShader = fallbackResult.shader;
       setIsUsingFallback(true);
-      // if (DEBUG_SHADER_PREVIEW) console.log('✅ Using fallback fragment shader (original shader compilation failed)');
       console.warn('⚠️ Shader preview is using fallback shader - original shader had compilation errors');
     } else {
       setIsUsingFallback(false);
