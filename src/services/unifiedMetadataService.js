@@ -2,13 +2,15 @@ import { collection, doc, getDoc, getDocs, setDoc, query, orderBy } from 'fireba
 import { ref, getDownloadURL } from 'firebase/storage';
 import { db, storage } from './firebase';
 import log from './logger';
+import { BaseMetadataService } from './metadata/BaseMetadataService.js';
 
-class UnifiedMetadataService {
+class UnifiedMetadataService extends BaseMetadataService {
   constructor() {
+    super({
+      localStorageKey: 'unified-metadata-cache',
+      cacheExpiry: 24 * 60 * 60 * 1000 // 24 hodin
+    });
     this.collectionName = 'audio-metadata';
-    this.cache = new Map();
-    this.localStorageKey = 'unified-metadata-cache';
-    this.cacheExpiry = 24 * 60 * 60 * 1000; // 24 hodin
 
     // Monitoring
     this.metrics = {
@@ -19,41 +21,32 @@ class UnifiedMetadataService {
       errors: 0,
       lastUpdate: null
     };
-
-    this.isInitialized = false;
-    this.isLoading = false;
   }
 
   async getMetadata(fileName) {
     try {
-      // 1. Zkus memory cache
-      if (this.cache.has(fileName)) {
+      // 1. Zkus cache (memory + localStorage)
+      const cached = this.getCachedMetadata(fileName);
+      if (cached) {
         this.metrics.cacheHits++;
-        log.debug(`✅ Memory cache hit for ${fileName}`);
-        return this.cache.get(fileName);
+        log.debug(`✅ Cache hit for ${fileName}`);
+        return cached;
       }
 
-      // 2. Zkus localStorage cache
-      if (this.loadFromLocalCache() && this.cache.has(fileName)) {
-        this.metrics.cacheHits++;
-        log.debug(`✅ LocalStorage cache hit for ${fileName}`);
-        return this.cache.get(fileName);
-      }
-
-      // 3. Zkus Firestore
+      // 2. Zkus Firestore
       const firestoreMetadata = await this.getFromFirestore(fileName);
       if (firestoreMetadata) {
         this.metrics.firestoreHits++;
-        this.cache.set(fileName, firestoreMetadata);
+        this.setCachedMetadata(fileName, firestoreMetadata);
         log.debug(`✅ Firestore hit for ${fileName}`);
         return firestoreMetadata;
       }
 
-      // 4. Extrahuj z MP3 (lazy loading)
+      // 3. Extrahuj z MP3 (lazy loading)
       const mp3Metadata = await this.extractMP3MetadataLazy(fileName);
       if (mp3Metadata) {
         this.metrics.mp3Extractions++;
-        this.cache.set(fileName, mp3Metadata);
+        this.setCachedMetadata(fileName, mp3Metadata);
         // Nepokoušej se ukládat do Firestore - pouze čti
         log.debug(`✅ MP3 extraction for ${fileName}`);
         return mp3Metadata;
@@ -227,41 +220,6 @@ class UnifiedMetadataService {
     return `${mins}:${secs.toString().padStart(2, '0')}`;
   }
 
-  loadFromLocalCache() {
-    try {
-      const cached = localStorage.getItem(this.localStorageKey);
-      if (cached) {
-        const { data, timestamp } = JSON.parse(cached);
-        const now = Date.now();
-
-        if (now - timestamp < this.cacheExpiry) {
-          this.cache = new Map(Object.entries(data));
-          log.debug('✅ Loaded from localStorage cache');
-          return true;
-        } else {
-          localStorage.removeItem(this.localStorageKey);
-        }
-      }
-    } catch (error) {
-      log.warn('Failed to load from localStorage:', error);
-    }
-    return false;
-  }
-
-  saveToLocalCache() {
-    try {
-      const data = Object.fromEntries(this.cache);
-      const cacheData = {
-        data,
-        timestamp: Date.now()
-      };
-      localStorage.setItem(this.localStorageKey, JSON.stringify(cacheData));
-      log.debug('✅ Saved to localStorage cache');
-    } catch (error) {
-      log.warn('Failed to save to localStorage:', error);
-    }
-  }
-
   async initialize() {
     if (this.isInitialized) return;
     if (this.isLoading) return;
@@ -321,8 +279,7 @@ class UnifiedMetadataService {
   }
 
   clearCache() {
-    this.cache.clear();
-    localStorage.removeItem(this.localStorageKey);
+    super.clearCache();
     this.metrics = {
       cacheHits: 0,
       cacheMisses: 0,
@@ -334,13 +291,6 @@ class UnifiedMetadataService {
     log.info('🧹 UnifiedMetadataService cache cleared');
   }
 
-  isReady() {
-    return this.isInitialized && !this.isLoading;
-  }
-
-  getCachedMetadata(fileName) {
-    return this.cache.get(fileName) || null;
-  }
 }
 
 // Singleton instance

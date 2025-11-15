@@ -35,48 +35,83 @@ class OfflineCacheService {
     }
   }
 
-  // Zkontroluj, jestli je soubor v cache
-  async isFileCached(fileName) {
+  // Zkontroluj, jestli je soubor dostupný offline (vylepšená verze)
+  async isFileAvailableOffline(fileName) {
     if (!this.isInitialized) return false;
 
     try {
       // Extrahuj jen jméno souboru z cesty
       const justFileName = fileName.split('/').pop();
 
-      // Zkus najít podle relativní cesty s jen jménem souboru (nezávisle na portu)
-      const relativePath = `/audio/${justFileName}`;
-      const allKeys = await this.cache.keys();
-      const matchingKey = allKeys.find(key => key.url.endsWith(relativePath));
-
-      if (matchingKey) {
-        log.debug(`🔍 Cache result for ${fileName}: FOUND with key ${matchingKey.url}`);
-        return true;
-      }
-
-      // Zkus různé varianty klíčů
-      const possibleKeys = [
+      const cacheKeys = [
         `/audio/${justFileName}`,
-        `https://firebasestorage.googleapis.com/v0/b/meditations-audio.firebasestorage.app/o/${encodeURIComponent(justFileName)}?alt=media`,
-        justFileName,
+        `/audio/${fileName}`,
         fileName,
-        // Zkus i s původní cestou
-        `/audio/${fileName}`
+        justFileName,
+        `https://firebasestorage.googleapis.com/v0/b/meditations-audio.firebasestorage.app/o/${encodeURIComponent(justFileName)}?alt=media`,
+        // Přidej i lokální cesty pro obrázky a SVG
+        `/${justFileName}`,
+        `/assets/${justFileName}`,
+        `/public/${justFileName}`
       ];
 
-      for (const cacheKey of possibleKeys) {
-        log.debug(`🔍 Checking cache for key: ${cacheKey}`);
-        const response = await this.cache.match(cacheKey);
-        if (response) {
-          log.debug(`🔍 Cache result for ${fileName}: FOUND with key ${cacheKey}`);
+      for (const key of cacheKeys) {
+        const cachedResponse = await this.cache.match(key);
+        if (cachedResponse && (cachedResponse.ok || cachedResponse.type === 'opaque')) {
           return true;
         }
       }
-
-      log.debug(`🔍 Cache result for ${fileName}: NOT FOUND`);
       return false;
     } catch (error) {
-      log.error(`❌ Error checking cache for ${fileName}:`, error);
+      log.error('❌ Error checking offline availability:', error);
       return false;
+    }
+  }
+
+  // Zkontroluj, jestli je soubor v cache (použij vylepšenou verzi)
+  async isFileCached(fileName) {
+    return await this.isFileAvailableOffline(fileName);
+  }
+
+  // Získej offline URL pro soubor (vylepšená verze z enhancedOfflineCacheService)
+  async getOfflineUrl(fileName) {
+    if (!this.isInitialized) return null;
+
+    try {
+      // Extrahuj jen jméno souboru z cesty
+      const justFileName = fileName.split('/').pop();
+
+      const cacheKeys = [
+        `/audio/${justFileName}`,
+        `/audio/${fileName}`,
+        fileName,
+        justFileName,
+        `https://firebasestorage.googleapis.com/v0/b/meditations-audio.firebasestorage.app/o/${encodeURIComponent(justFileName)}?alt=media`,
+        // Přidej i lokální cesty pro obrázky a SVG
+        `/${justFileName}`,
+        `/assets/${justFileName}`,
+        `/public/${justFileName}`
+      ];
+
+      for (const key of cacheKeys) {
+        const cachedResponse = await this.cache.match(key);
+        if (cachedResponse && (cachedResponse.ok || cachedResponse.type === 'opaque')) {
+          // Pro opaque response nemůžeme vytvořit blob URL
+          if (cachedResponse.type === 'opaque') {
+            log.debug(`🎵 Found opaque response for: ${fileName}, using cache key: ${key}`);
+            // Vrať cache key místo blob URL
+            return key;
+          } else {
+            // Vytvoř blob URL z cached response
+            const blob = await cachedResponse.blob();
+            return URL.createObjectURL(blob);
+          }
+        }
+      }
+      return null;
+    } catch (error) {
+      log.error('❌ Error getting offline URL:', error);
+      return null;
     }
   }
 
@@ -876,39 +911,41 @@ class OfflineCacheService {
     return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
   }
 
-  // Získej URL pro přehrávání (z cache nebo originál)
-  async getAudioUrl(fileName, originalUrl) {
-    if (!this.isInitialized) return originalUrl;
+  // Fallback strategie pro načítání audio souboru - OFFLINE-FIRST pro šetření mobilních dat
+  async getAudioUrl(fileName, onlineUrl) {
+    if (!fileName) return null;
 
     try {
-      const cachedResponse = await this.getCachedFile(fileName);
-      if (cachedResponse) {
-        // Pro opaque responses nemůžeme vytvořit blob URL
-        // Vraťme originál URL - Service Worker to vyřeší
-        if (cachedResponse.type === 'opaque') {
-          log.audio(`🎵 Using original URL for opaque cached file: ${fileName}`);
-          return originalUrl;
+      // 1. Zkus offline cache PRVNÍ - šetří mobilní data
+      const offlineUrl = await this.getOfflineUrl(fileName);
+      if (offlineUrl) {
+        log.debug(`🎵 Using offline URL for: ${fileName} (saving mobile data)`);
+        // Pokud je to cache key (pro opaque responses), vrať ho přímo
+        if (offlineUrl.startsWith('/audio/') || offlineUrl.includes('firebasestorage')) {
+          return offlineUrl;
         }
-
-        // Pro normální responses vytvoř blob URL
-        try {
-          const blob = await cachedResponse.blob();
-          const blobUrl = URL.createObjectURL(blob);
-          log.audio(`🎵 Using blob URL for cached file: ${fileName}`);
-          return blobUrl;
-        } catch (blobError) {
-          log.error(`❌ Error creating blob URL for ${fileName}:`, blobError);
-          return originalUrl;
-        }
-      } else {
-        log.audio(`❌ Not in cache: ${fileName}`);
+        return offlineUrl;
       }
-    } catch (error) {
-      log.error(`❌ Error getting cached URL for ${fileName}:`, error);
-    }
 
-    log.audio(`🎵 Using original audio: ${originalUrl}`);
-    return originalUrl;
+      // 2. Zkontroluj, jestli je uživatel offline
+      if (!navigator.onLine) {
+        log.warn(`⚠️ Offline and no cached version for: ${fileName}`);
+        return null;
+      }
+
+      // 3. Pokud je online a není offline cache, vrať online URL (Service Worker se postará o cache)
+      if (onlineUrl) {
+        log.debug(`🎵 Using online URL for: ${fileName} (Service Worker will handle caching)`);
+        return onlineUrl;
+      }
+
+      // 4. Pokud není ani online ani offline, vrať null
+      log.warn(`⚠️ No URL available for: ${fileName}`);
+      return null;
+    } catch (error) {
+      log.error('❌ Error getting audio URL:', error);
+      return null;
+    }
   }
 }
 

@@ -1,54 +1,26 @@
 import { collection, doc, getDoc, getDocs, setDoc, query, orderBy } from 'firebase/firestore';
 import { db } from './firebase';
+import { BaseMetadataService } from './metadata/BaseMetadataService.js';
+import log from './logger';
 
-class FirestoreMetadataService {
+class FirestoreMetadataService extends BaseMetadataService {
   constructor() {
+    super({
+      localStorageKey: 'audio-metadata-cache',
+      cacheExpiry: 24 * 60 * 60 * 1000 // 24 hodin
+    });
     this.collectionName = 'audio-metadata';
-    this.cache = new Map();
-    this.localStorageKey = 'audio-metadata-cache';
-    this.cacheExpiry = 24 * 60 * 60 * 1000; // 24 hodin
-  }
-
-  loadFromLocalCache() {
-    try {
-      const cached = localStorage.getItem(this.localStorageKey);
-      if (cached) {
-        const { data, timestamp } = JSON.parse(cached);
-        const now = Date.now();
-
-        // Zkontroluj, jestli cache není starší než 24 hodin
-        if (now - timestamp < this.cacheExpiry) {
-          console.log('Loading metadata from local cache');
-          this.cache = new Map(Object.entries(data));
-          return true;
-        } else {
-          console.log('Local cache expired, clearing');
-          localStorage.removeItem(this.localStorageKey);
-        }
-      }
-    } catch (error) {
-      console.warn('Failed to load from local cache:', error);
-    }
-    return false;
-  }
-
-  saveToLocalCache() {
-    try {
-      const data = Object.fromEntries(this.cache);
-      const cacheData = {
-        data,
-        timestamp: Date.now()
-      };
-      localStorage.setItem(this.localStorageKey, JSON.stringify(cacheData));
-      console.log('Metadata saved to local cache');
-    } catch (error) {
-      console.warn('Failed to save to local cache:', error);
-    }
   }
 
   async loadAllMetadata() {
+    if (this.isLoading) {
+      return Object.fromEntries(this.cache);
+    }
+
+    this.isLoading = true;
+
     try {
-      console.log('Loading metadata from Firestore...');
+      log.info('Loading metadata from Firestore...');
 
       const metadataCollection = collection(db, this.collectionName);
       const q = query(metadataCollection, orderBy('fileName'));
@@ -73,14 +45,14 @@ class FirestoreMetadataService {
         this.cache.set(data.fileName, metadata[data.fileName]);
       });
 
-      console.log(`Loaded ${Object.keys(metadata).length} metadata records from Firestore`);
+      log.success(`Loaded ${Object.keys(metadata).length} metadata records from Firestore`);
 
       // Ulož do localStorage pro offline použití
       this.saveToLocalCache();
 
       return metadata;
     } catch (error) {
-      console.error('Failed to load metadata from Firestore:', error);
+      log.error('Failed to load metadata from Firestore:', error);
 
       // Fallback na local cache
       if (this.loadFromLocalCache()) {
@@ -88,18 +60,16 @@ class FirestoreMetadataService {
       }
 
       throw error;
+    } finally {
+      this.isLoading = false;
     }
   }
 
   async getMetadata(fileName) {
-    // Nejdříve zkontroluj memory cache
-    if (this.cache.has(fileName)) {
-      return this.cache.get(fileName);
-    }
-
-    // Zkontroluj localStorage cache
-    if (this.loadFromLocalCache() && this.cache.has(fileName)) {
-      return this.cache.get(fileName);
+    // Zkus cache (memory + localStorage)
+    const cached = this.getCachedMetadata(fileName);
+    if (cached) {
+      return cached;
     }
 
     try {
@@ -110,14 +80,14 @@ class FirestoreMetadataService {
 
       if (docSnap.exists()) {
         const metadata = docSnap.data();
-        this.cache.set(fileName, metadata);
+        this.setCachedMetadata(fileName, metadata);
         return metadata;
       } else {
-        console.warn(`No metadata found for ${fileName}`);
+        log.warn(`No metadata found for ${fileName}`);
         return null;
       }
     } catch (error) {
-      console.error(`Failed to get metadata for ${fileName}:`, error);
+      log.error(`Failed to get metadata for ${fileName}:`, error);
       return null;
     }
   }
@@ -136,9 +106,9 @@ class FirestoreMetadataService {
       await setDoc(docRef, metadataDoc);
 
       // Aktualizuj cache
-      this.cache.set(fileName, metadataDoc);
+      this.setCachedMetadata(fileName, metadataDoc);
 
-      console.log(`Metadata saved for ${fileName}`);
+      log.debug(`Metadata saved for ${fileName}`);
       return metadataDoc;
     } catch (error) {
       console.error(`Failed to save metadata for ${fileName}:`, error);
@@ -167,9 +137,7 @@ class FirestoreMetadataService {
   }
 
   clearCache() {
-    this.cache.clear();
-    localStorage.removeItem(this.localStorageKey);
-    console.log('Metadata cache cleared');
+    super.clearCache();
   }
 
   getAllFromCache() {
@@ -181,19 +149,24 @@ class FirestoreMetadataService {
   }
 
   async initialize() {
-    console.log('Initializing FirestoreMetadataService...');
+    if (this.isInitialized) return;
+    if (this.isLoading) return;
+
+    log.info('Initializing FirestoreMetadataService...');
 
     // Nejdříve zkus načíst z localStorage
     if (this.loadFromLocalCache()) {
-      console.log('Metadata loaded from local cache');
+      this.isInitialized = true;
+      log.debug('Metadata loaded from local cache');
       return;
     }
 
     // Pokud není v localStorage, načti z Firestore
     try {
       await this.loadAllMetadata();
+      this.isInitialized = true;
     } catch (error) {
-      console.warn('Failed to initialize metadata service:', error);
+      log.warn('Failed to initialize metadata service:', error);
     }
   }
 }
