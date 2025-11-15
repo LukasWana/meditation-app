@@ -16,11 +16,19 @@ export default defineConfig({
   ],
   optimizeDeps: {
     include: ['react', 'react-dom', 'react/jsx-runtime'],
-    force: true
+    // NEPOUŽÍVEJ force: true - může způsobit problémy při prvním načtení
+    // force: true,
+    esbuildOptions: {
+      // Zajisti, že React je správně zpracován
+      jsx: 'automatic'
+    }
   },
   resolve: {
     dedupe: ['react', 'react-dom'],
     alias: {
+      // Explicitní aliasy pro React, aby se vždy použila stejná kopie
+      'react': path.resolve(__dirname, 'node_modules/react'),
+      'react-dom': path.resolve(__dirname, 'node_modules/react-dom'),
       '@': fileURLToPath(new URL('./src', import.meta.url)),
       '@components': fileURLToPath(new URL('./src/components', import.meta.url)),
       '@features': fileURLToPath(new URL('./src/features', import.meta.url)),

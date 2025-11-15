@@ -506,12 +506,27 @@ const PageManager = ({
   // Renderování stránky
   const renderScreen = useCallback(() => {
     if (!currentScreenConfig) {
-      console.warn(`Stránka '${currentScreen}' nebyla nalezena v registru`);
+      console.warn(`⚠️ Stránka '${currentScreen}' nebyla nalezena v registru`);
       return null;
+    }
+
+    // Diagnostika pro dychani sekci
+    if (currentScreen === 'dychani') {
+      console.log('🔍 Rendering dychani screen:', {
+        component: currentScreenConfig.component,
+        hasProps: !!getScreenProps,
+        config: currentScreenConfig
+      });
     }
 
     const Component = currentScreenConfig.component;
     const props = getScreenProps(currentScreen);
+
+    // Diagnostika props pro dychani
+    if (currentScreen === 'dychani') {
+      console.log('🔍 Dychani props:', Object.keys(props || {}));
+    }
+
     const transition = currentScreenConfig.transition;
     const variants = getTransitionVariants(); // Všechny přechody jsou fade
 
@@ -519,6 +534,65 @@ const PageManager = ({
     const transitionConfig = {
       duration: transition.duration || 0.3,
       ease: [0.4, 0, 0.2, 1]
+    };
+
+    // Loading fallback pro Suspense
+    const SuspenseFallback = () => {
+      if (currentScreen === 'dychani') {
+        console.log('⏳ Loading dychani screen...');
+      }
+      return (
+        <div className="flex items-center justify-center h-full min-h-[400px]">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-gray-600"></div>
+        </div>
+      );
+    };
+
+    // Error boundary pro lazy loaded komponenty
+    const LazyComponentWrapper = ({ Component, props }) => {
+      React.useEffect(() => {
+        if (currentScreen === 'dychani') {
+          console.log('✅ Dychani component loaded successfully');
+        }
+      }, [currentScreen]);
+
+      if (!Component) {
+        console.error(`❌ Component is null for screen '${currentScreen}'`);
+        return (
+          <div className="flex items-center justify-center h-full min-h-[400px] p-8">
+            <div className="text-center">
+              <h2 className="text-xl font-semibold mb-4">Chyba: Komponenta není načtená</h2>
+              <p className="text-gray-600 mb-4">Screen: {currentScreen}</p>
+              <button
+                onClick={() => window.location.reload()}
+                className="px-4 py-2 bg-gray-800 text-white rounded hover:bg-gray-700"
+              >
+                Obnovit stránku
+              </button>
+            </div>
+          </div>
+        );
+      }
+
+      try {
+        return <Component {...props} />;
+      } catch (error) {
+        console.error(`❌ Error rendering component for screen '${currentScreen}':`, error);
+        return (
+          <div className="flex items-center justify-center h-full min-h-[400px] p-8">
+            <div className="text-center">
+              <h2 className="text-xl font-semibold mb-4">Chyba při načítání sekce</h2>
+              <p className="text-gray-600 mb-4">{error.message}</p>
+              <button
+                onClick={() => window.location.reload()}
+                className="px-4 py-2 bg-gray-800 text-white rounded hover:bg-gray-700"
+              >
+                Obnovit stránku
+              </button>
+            </div>
+          </div>
+        );
+      }
     };
 
     const screenElement = (
@@ -531,8 +605,8 @@ const PageManager = ({
         transition={transitionConfig}
         className="w-full h-full max-w-full overflow-x-hidden"
       >
-        <Suspense fallback={<div className="flex items-center justify-center h-full"></div>}>
-          <Component {...props} />
+        <Suspense fallback={<SuspenseFallback />}>
+          <LazyComponentWrapper Component={Component} props={props} />
         </Suspense>
       </motion.div>
     );

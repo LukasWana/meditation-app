@@ -71,13 +71,65 @@ const AudioPlayerMeditaceScreen = ({
     try {
       const saved = localStorage.getItem(STORAGE_KEY);
       if (saved) {
-        return JSON.parse(saved);
+        const parsed = JSON.parse(saved);
+        console.log('🎵 AudioPlayerMeditaceScreen: Loaded activeAudio from localStorage:', parsed);
+        return parsed;
       }
     } catch (e) {
-      console.error('Failed to load activeAudio for meditace from localStorage:', e);
+      console.error('❌ Failed to load activeAudio for meditace from localStorage:', e);
     }
     return null;
   });
+
+  // Sleduj změny v localStorage pro activeAudio
+  useEffect(() => {
+    const loadActiveAudio = () => {
+      try {
+        const saved = localStorage.getItem(STORAGE_KEY);
+        if (saved) {
+          const parsed = JSON.parse(saved);
+          console.log('🎵 AudioPlayerMeditaceScreen: Updating activeAudio from localStorage:', parsed);
+          setActiveAudio(parsed);
+        } else {
+          // Pokud není v localStorage, zkus to znovu za chvíli (pro race condition)
+          if (!activeAudio) {
+            setTimeout(() => {
+              const retry = localStorage.getItem(STORAGE_KEY);
+              if (retry) {
+                const parsed = JSON.parse(retry);
+                console.log('🎵 AudioPlayerMeditaceScreen: Retry loaded activeAudio:', parsed);
+                setActiveAudio(parsed);
+              }
+            }, 100);
+          }
+        }
+      } catch (e) {
+        console.error('❌ Failed to load activeAudio for meditace from localStorage:', e);
+      }
+    };
+
+    // Načti activeAudio při mount a při změně screen
+    loadActiveAudio();
+
+    // Sleduj změny v localStorage (pomocí storage event)
+    const handleStorageChange = (e) => {
+      if (e.key === STORAGE_KEY && e.newValue) {
+        try {
+          const parsed = JSON.parse(e.newValue);
+          console.log('🎵 AudioPlayerMeditaceScreen: Storage event - updating activeAudio:', parsed);
+          setActiveAudio(parsed);
+        } catch (error) {
+          console.error('❌ Failed to parse activeAudio from storage event:', error);
+        }
+      }
+    };
+
+    window.addEventListener('storage', handleStorageChange);
+
+    return () => {
+      window.removeEventListener('storage', handleStorageChange);
+    };
+  }, []); // Prázdné dependency array - spustí se jen při mount
 
   useEffect(() => {
     try {
@@ -87,7 +139,10 @@ const AudioPlayerMeditaceScreen = ({
     }
 
     if (activeAudio) {
+      console.log('✅ AudioPlayerMeditaceScreen: activeAudio is set, notifying player state');
       onPlayerStateChange?.(true);
+    } else {
+      console.warn('⚠️ AudioPlayerMeditaceScreen: activeAudio is null');
     }
   }, [activeAudio, onPlayerStateChange]);
 
