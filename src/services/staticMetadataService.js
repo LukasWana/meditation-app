@@ -1,57 +1,24 @@
+import { BaseMetadataService } from './metadata/BaseMetadataService.js';
 
-
-class StaticMetadataService {
+class StaticMetadataService extends BaseMetadataService {
   constructor() {
+    super({
+      localStorageKey: 'audio-metadata-cache',
+      cacheExpiry: 48 * 60 * 60 * 1000 // 48 hodin (prodlouženo)
+    });
     this.metadata = null;
-    this.isLoading = false;
-    this.cache = new Map();
-    this.localStorageKey = 'audio-metadata-cache';
-    this.cacheExpiry = 24 * 60 * 60 * 1000; // 24 hodin
   }
 
   loadFromLocalCache() {
-    try {
-      const cached = localStorage.getItem(this.localStorageKey);
-      if (cached) {
-        const { data, timestamp } = JSON.parse(cached);
-        const now = Date.now();
-
-        // Zkontroluj, jestli cache není starší než 48 hodin (prodlouženo)
-        if (now - timestamp < (48 * 60 * 60 * 1000)) {
-          // Debug log deaktivován - příliš mnoho výpisů
-          // const DEBUG_STATIC_METADATA = false;
-          // if (DEBUG_STATIC_METADATA) console.log(`⚡ Fast load: ${Object.keys(data).length} metadata records from localStorage cache`);
-          this.metadata = data;
-          this.cache = new Map(Object.entries(data));
-          return true;
-        } else {
-          // if (DEBUG_STATIC_METADATA) console.log('Local cache expired, clearing');
-          localStorage.removeItem(this.localStorageKey);
-        }
-      }
-    } catch (error) {
-      // Log pouze skutečné chyby
-      // console.warn('Failed to load from local cache:', error);
+    const result = super.loadFromLocalCache();
+    if (result) {
+      // Synchronizuj metadata property s cache
+      this.metadata = Object.fromEntries(this.cache);
     }
-    return false;
+    return result;
   }
 
-  saveToLocalCache() {
-    try {
-      const data = Object.fromEntries(this.cache);
-      const cacheData = {
-        data,
-        timestamp: Date.now()
-      };
-      localStorage.setItem(this.localStorageKey, JSON.stringify(cacheData));
-      // if (DEBUG_STATIC_METADATA) console.log('Metadata saved to local cache');
-    } catch (error) {
-      // Log pouze skutečné chyby
-      // console.warn('Failed to save to local cache:', error);
-    }
-  }
-
-  async loadMetadata() {
+  async loadAllMetadata() {
     if (this.isLoading) {
       return this.metadata;
     }
@@ -59,8 +26,6 @@ class StaticMetadataService {
     this.isLoading = true;
 
     try {
-      // if (DEBUG_STATIC_METADATA) console.log('Loading metadata from JSON file (non-blocking)...');
-
       // Použij AbortController pro možnost zrušení requestu
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), 10000); // 10s timeout
@@ -80,8 +45,6 @@ class StaticMetadataService {
 
       this.metadata = metadata;
       this.cache = new Map(Object.entries(metadata));
-
-      // if (DEBUG_STATIC_METADATA) console.log(`✅ Loaded ${Object.keys(metadata).length} metadata records from JSON`);
 
       // Ulož do localStorage asynchronně v pozadí
       if (window.requestIdleCallback) {
@@ -107,18 +70,9 @@ class StaticMetadataService {
     }
   }
 
-  getMetadata(fileName) {
-    // Nejdříve zkontroluj memory cache
-    if (this.cache.has(fileName)) {
-      return this.cache.get(fileName);
-    }
-
-    // Zkontroluj localStorage cache
-    if (this.loadFromLocalCache() && this.cache.has(fileName)) {
-      return this.cache.get(fileName);
-    }
-
-    return null;
+  async getMetadata(fileName) {
+    // Použij base class metodu pro cache lookup
+    return this.getCachedMetadata(fileName);
   }
 
   getAllFromCache() {
@@ -130,24 +84,24 @@ class StaticMetadataService {
   }
 
   clearCache() {
-    this.cache.clear();
+    super.clearCache();
     this.metadata = null;
-    localStorage.removeItem(this.localStorageKey);
-    // if (DEBUG_STATIC_METADATA) console.log('Metadata cache cleared');
   }
 
   async initialize() {
-    // if (DEBUG_STATIC_METADATA) console.log('Initializing StaticMetadataService...');
+    if (this.isInitialized) return;
+    if (this.isLoading) return;
 
     // Nejdříve zkus načíst z localStorage
     if (this.loadFromLocalCache()) {
-      // if (DEBUG_STATIC_METADATA) console.log('Metadata loaded from local cache');
+      this.isInitialized = true;
       return;
     }
 
     // Pokud není v localStorage, načti z JSON souboru
     try {
-      await this.loadMetadata();
+      await this.loadAllMetadata();
+      this.isInitialized = true;
     } catch (error) {
       console.warn('Failed to initialize metadata service:', error);
     }
