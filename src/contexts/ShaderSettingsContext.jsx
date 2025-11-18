@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect, useRef } from 'react';
 
 const ShaderSettingsContext = createContext();
 
@@ -11,6 +11,14 @@ export const useShaderSettings = () => {
 };
 
 export const ShaderSettingsProvider = ({ children }) => {
+  // Výchozí shader nastavení pro všechny sekce
+  const defaultShaderSettings = {
+    meditace: 'meditace',
+    dychani: 'dychani',
+    hudba: 'hudba',
+    settings: 'settings'
+  };
+
   const [shaderSettings, setShaderSettings] = useState(() => {
     // Načti z localStorage
     try {
@@ -42,50 +50,135 @@ export const ShaderSettingsProvider = ({ children }) => {
           }
           delete parsed.meditacia;
         }
-        return parsed;
+        // Zajisti, že všechny sekce mají výchozí hodnoty, pokud chybí
+        const merged = { ...defaultShaderSettings, ...parsed };
+        return merged;
       }
     } catch (e) {
       console.error('Failed to load shader settings:', e);
     }
     // Výchozí hodnoty - podle názvů v menu
-    return {
-      meditace: 'meditace',
-      dychani: 'dychani',
-      hudba: 'hudba',
-      settings: 'settings'
-    };
+    return { ...defaultShaderSettings };
   });
 
   // Barvy pro každou sekci (místo shaderu)
+  // Výchozí barvy pro každou sekci
+  const defaultColors = {
+    meditace: '#f4ddc4',
+    hudba: '#f4ddc4',
+    dychani: '#f4ddc4',
+    settings: '#f4ddc4'
+  };
+
   const [colorSettings, setColorSettings] = useState(() => {
     try {
       const saved = localStorage.getItem('meditation-app-color-settings');
       if (saved) {
-        return JSON.parse(saved);
+        const parsed = JSON.parse(saved);
+        // Zajisti, že všechny sekce mají výchozí barvu, pokud není nastavena
+        const merged = { ...defaultColors, ...parsed };
+        return merged;
       }
     } catch (e) {
       console.error('Failed to load color settings:', e);
     }
-    return {};
+    // Vrátit výchozí barvy pro všechny sekce
+    return { ...defaultColors };
   });
 
-  const [overlaySettings, setOverlaySettings] = useState(() => {
-    try {
-      const saved = localStorage.getItem('meditation-app-shader-overlay-settings');
-      if (saved) {
-        return JSON.parse(saved);
-      }
-    } catch (e) {
-      console.error('Failed to load shader overlay settings:', e);
-    }
-    return {};
-  });
-
+  // Výchozí overlay nastavení pro každou sekci
   const defaultOverlay = {
     opacity: 0.75,
     intensity: 0.8,
     blendMode: 'normal'
   };
+
+  const defaultOverlays = {
+    meditace: { ...defaultOverlay },
+    hudba: { ...defaultOverlay },
+    dychani: { ...defaultOverlay },
+    settings: { ...defaultOverlay }
+  };
+
+  const [overlaySettings, setOverlaySettings] = useState(() => {
+    try {
+      const saved = localStorage.getItem('meditation-app-shader-overlay-settings');
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        // Zajisti, že všechny sekce mají výchozí overlay nastavení, pokud není nastaveno
+        const merged = {};
+        Object.keys(defaultOverlays).forEach(section => {
+          merged[section] = {
+            ...defaultOverlay,
+            ...(parsed[section] || {})
+          };
+        });
+        return merged;
+      }
+    } catch (e) {
+      console.error('Failed to load shader overlay settings:', e);
+    }
+    // Vrátit výchozí overlay nastavení pro všechny sekce
+    return { ...defaultOverlays };
+  });
+
+  // Ref pro sledování, jestli už byly výchozí hodnoty aplikovány
+  const defaultsAppliedRef = useRef(false);
+
+  // Při prvním načtení zajisti, že všechny sekce mají výchozí hodnoty a ulož je do localStorage
+  useEffect(() => {
+    if (defaultsAppliedRef.current) return;
+    defaultsAppliedRef.current = true;
+
+    // Zkontroluj a doplň chybějící sekce pro shader settings
+    const hasAllShaderSections = Object.keys(defaultShaderSettings).every(
+      key => Object.prototype.hasOwnProperty.call(shaderSettings, key)
+    );
+    if (!hasAllShaderSections) {
+      const mergedShaderSettings = { ...defaultShaderSettings, ...shaderSettings };
+      setShaderSettings(mergedShaderSettings);
+      try {
+        localStorage.setItem('meditation-app-shader-settings', JSON.stringify(mergedShaderSettings));
+      } catch (e) {
+        console.error('Failed to save shader settings:', e);
+      }
+    }
+
+    // Zkontroluj a doplň chybějící sekce pro color settings
+    const hasAllColorSections = Object.keys(defaultColors).every(
+      key => Object.prototype.hasOwnProperty.call(colorSettings, key)
+    );
+    if (!hasAllColorSections) {
+      const mergedColorSettings = { ...defaultColors, ...colorSettings };
+      setColorSettings(mergedColorSettings);
+      try {
+        localStorage.setItem('meditation-app-color-settings', JSON.stringify(mergedColorSettings));
+      } catch (e) {
+        console.error('Failed to save color settings:', e);
+      }
+    }
+
+    // Zkontroluj a doplň chybějící sekce pro overlay settings
+    const hasAllOverlaySections = Object.keys(defaultOverlays).every(
+      key => Object.prototype.hasOwnProperty.call(overlaySettings, key)
+    );
+    if (!hasAllOverlaySections) {
+      const mergedOverlaySettings = {};
+      Object.keys(defaultOverlays).forEach(section => {
+        mergedOverlaySettings[section] = {
+          ...defaultOverlay,
+          ...(overlaySettings[section] || {})
+        };
+      });
+      setOverlaySettings(mergedOverlaySettings);
+      try {
+        localStorage.setItem('meditation-app-shader-overlay-settings', JSON.stringify(mergedOverlaySettings));
+      } catch (e) {
+        console.error('Failed to save shader overlay settings:', e);
+      }
+    }
+    // eslint-disable-next-line
+  }, []); // Spustí se pouze jednou při mountu
 
   // Ulož do localStorage při změně
   useEffect(() => {
@@ -105,6 +198,7 @@ export const ShaderSettingsProvider = ({ children }) => {
     }
   }, [colorSettings]);
 
+  // Ulož overlay nastavení do localStorage při změně
   useEffect(() => {
     try {
       localStorage.setItem('meditation-app-shader-overlay-settings', JSON.stringify(overlaySettings));
@@ -132,7 +226,8 @@ export const ShaderSettingsProvider = ({ children }) => {
   const clearColorForSection = (section) => {
     setColorSettings(prev => {
       const newSettings = { ...prev };
-      delete newSettings[section];
+      // Při vymazání nastav výchozí barvu pro sekci
+      newSettings[section] = defaultColors[section];
       return newSettings;
     });
   };
@@ -150,7 +245,8 @@ export const ShaderSettingsProvider = ({ children }) => {
   };
 
   const getColorForSection = (section) => {
-    return colorSettings[section] || null;
+    // Vrátit barvu z nastavení nebo výchozí barvu pro sekci
+    return colorSettings[section] || defaultColors[section] || null;
   };
 
   const getOverlaySettings = (section) => {
@@ -178,7 +274,8 @@ export const ShaderSettingsProvider = ({ children }) => {
   const clearOverlaySettings = (section) => {
     setOverlaySettings(prev => {
       const next = { ...prev };
-      delete next[section];
+      // Při vymazání nastav výchozí overlay nastavení pro sekci
+      next[section] = { ...defaultOverlay };
       return next;
     });
   };

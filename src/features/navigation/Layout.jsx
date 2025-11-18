@@ -57,8 +57,11 @@ const Layout = ({
 
 
 
+  // Pro HomeScreen použij h-screen místo min-h-screen, aby se zabránilo scrollování
+  const isHomeScreen = currentScreen === 'home';
+
   return (
-    <div className={`relative min-h-screen ${className}`}>
+    <div className={`relative ${isHomeScreen ? 'h-screen overflow-hidden' : 'min-h-screen'} ${className}`} style={isHomeScreen ? { height: '100dvh', maxHeight: '100dvh' } : {}}>
       {/* Hlavní obsah */}
       {children}
 

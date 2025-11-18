@@ -96,6 +96,26 @@ const HomeScreen = ({
   const dychaniTextColors = useAdaptiveTextColors(dychaniBg.backgroundColorForText, dychaniBg.selectedShader);
   const settingsTextColors = useAdaptiveTextColors(settingsBg.backgroundColorForText, settingsBg.selectedShader);
 
+  // Zablokuj scrollování na body a html když je HomeScreen aktivní
+  useEffect(() => {
+    const originalBodyOverflow = document.body.style.overflow;
+    const originalHtmlOverflow = document.documentElement.style.overflow;
+    const originalBodyHeight = document.body.style.height;
+    const originalHtmlHeight = document.documentElement.style.height;
+
+    document.body.style.overflow = 'hidden';
+    document.body.style.height = '100dvh';
+    document.documentElement.style.overflow = 'hidden';
+    document.documentElement.style.height = '100dvh';
+
+    return () => {
+      document.body.style.overflow = originalBodyOverflow;
+      document.body.style.height = originalBodyHeight;
+      document.documentElement.style.overflow = originalHtmlOverflow;
+      document.documentElement.style.height = originalHtmlHeight;
+    };
+  }, []);
+
   return (
     <FramerPageTransition screenKey="home">
       <motion.div
@@ -106,7 +126,13 @@ const HomeScreen = ({
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ duration: 0.3, ease: "easeOut" }}
-        style={{ height: '100dvh' }}
+        style={{
+          height: '100dvh',
+          maxHeight: '100dvh',
+          overflow: 'hidden',
+          width: '100%',
+          position: 'relative'
+        }}
       >
         {/* Sekce Meditace */}
         <motion.div

@@ -610,7 +610,10 @@ const PageManager = ({
         exit="out"
         variants={variants}
         transition={transitionConfig}
-        className="w-full h-full max-w-full overflow-x-hidden"
+        className={`w-full max-w-full overflow-x-hidden ${
+          currentScreen === 'home' ? 'h-screen overflow-hidden' : 'h-full'
+        }`}
+        style={currentScreen === 'home' ? { height: '100dvh', maxHeight: '100dvh' } : {}}
       >
         <Suspense fallback={<SuspenseFallback />}>
           <LazyComponentWrapper Component={Component} props={props} />
