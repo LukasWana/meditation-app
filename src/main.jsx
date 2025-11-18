@@ -60,35 +60,56 @@ function isReactDispatcherReady() {
 // Vytvoř root instance
 const root = ReactDOM.createRoot(rootElement);
 
-// Funkce pro bezpečné renderování aplikace
-async function renderApp() {
-  // Načti App dynamicky, aby měl Vite čas dokončit pre-bundling
-  const { default: App } = await import('./App.jsx');
-  const { default: ErrorBoundary } = await import('./components/ErrorBoundary.jsx');
+// Funkce pro bezpečné renderování aplikace s retry logikou
+async function renderApp(retryCount = 0) {
+  const maxRetries = 3;
+  const retryDelay = 1000; // 1 sekunda
 
   try {
+    // Načti App dynamicky, aby měl Vite čas dokončit pre-bundling
+    const { default: App } = await import('./App.jsx');
+    const { default: ErrorBoundary } = await import('./components/ErrorBoundary.jsx');
+
     root.render(
       <ErrorBoundary>
         <App />
       </ErrorBoundary>
     );
   } catch (error) {
-    console.error('❌ Error rendering app:', error);
-    // Zkus znovu po krátké době
+    console.error(`❌ Error rendering app (attempt ${retryCount + 1}/${maxRetries + 1}):`, error);
+
+    // Pokud je to chyba s dynamickým importem a máme ještě pokusy, zkus znovu
+    if (retryCount < maxRetries && (
+      error.message.includes('Failed to fetch dynamically imported module') ||
+      error.message.includes('Outdated Optimize Dep') ||
+      error.name === 'TypeError'
+    )) {
+      console.log(`⏳ Retrying in ${retryDelay}ms... (Vite may still be optimizing dependencies)`);
+      await new Promise(resolve => setTimeout(resolve, retryDelay));
+      return renderApp(retryCount + 1);
+    }
+
+    // Pokud už nejsou pokusy nebo je to jiná chyba, zkus znovu po krátké době jako fallback
     setTimeout(() => {
       try {
-        root.render(
-          <ErrorBoundary>
-            <App />
-          </ErrorBoundary>
-        );
+        // Zkus načíst znovu bez retry logiky
+        import('./App.jsx').then(({ default: App }) => {
+          import('./components/ErrorBoundary.jsx').then(({ default: ErrorBoundary }) => {
+            root.render(
+              <ErrorBoundary>
+                <App />
+              </ErrorBoundary>
+            );
+          });
+        });
       } catch (retryError) {
-        console.error('❌ Error on retry:', retryError);
+        console.error('❌ Error on final retry:', retryError);
         rootElement.innerHTML = `
           <div style="display: flex; align-items: center; justify-content: center; min-height: 100vh; background: #f4ddc4; padding: 20px; text-align: center;">
             <div>
               <h1 style="color: #d32f2f; margin-bottom: 16px;">Chyba při načítání aplikace</h1>
               <p style="color: #666; margin-bottom: 24px;">Zkuste obnovit stránku (F5 nebo Ctrl+R)</p>
+              <p style="color: #999; margin-bottom: 24px; font-size: 14px;">Chyba: ${error.message}</p>
               <button onclick="window.location.reload()" style="padding: 12px 24px; background: #333; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 16px;">
                 Obnovit stránku
               </button>
@@ -97,6 +118,33 @@ async function renderApp() {
         `;
       }
     }, 500);
+  }
+}
+
+// Funkce pro čekání na Vite ready state (pre-bundling dokončen)
+async function waitForViteReady() {
+  // Pokud je Vite dev server, počkej na připravenost
+  if (import.meta.env.DEV) {
+    // Počkej na dokončení pre-bundling
+    await new Promise(resolve => setTimeout(resolve, 100));
+
+    // Zkus načíst jeden Firebase modul pro ověření, že je připravený
+    try {
+      await import('firebase/app');
+      console.log('✅ Firebase modules are ready');
+    } catch (error) {
+      console.warn('⚠️ Firebase modules not ready yet, waiting...', error.message);
+      // Počkej dalších 500ms pro dokončení pre-bundling
+      await new Promise(resolve => setTimeout(resolve, 500));
+
+      // Zkus znovu
+      try {
+        await import('firebase/app');
+        console.log('✅ Firebase modules are ready after wait');
+      } catch (retryError) {
+        console.warn('⚠️ Firebase modules may still be optimizing, continuing anyway...');
+      }
+    }
   }
 }
 
@@ -138,6 +186,9 @@ async function waitForReactReady() {
   try {
     // Počkej na připravenost React dispatcheru
     await waitForReactReady();
+
+    // Počkej na připravenost Vite (pre-bundling dokončen)
+    await waitForViteReady();
 
     // Renderuj aplikaci
     await renderApp();

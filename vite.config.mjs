@@ -15,7 +15,18 @@ export default defineConfig({
     })
   ],
   optimizeDeps: {
-    include: ['react', 'react-dom', 'react/jsx-runtime'],
+    include: [
+      'react',
+      'react-dom',
+      'react/jsx-runtime',
+      // Firebase moduly - přidat pro pre-bundling a vyřešení 504 chyb
+      'firebase/app',
+      'firebase/storage',
+      'firebase/firestore',
+      'firebase/database',
+      'firebase/auth',
+      'firebase/app-check'
+    ],
     // NEPOUŽÍVEJ force: true - může způsobit problémy při prvním načtení
     // force: true,
     esbuildOptions: {
@@ -98,8 +109,7 @@ export default defineConfig({
             return 'vendor';
           }
         },
-        chunkFileNames: (chunkInfo) => {
-          const facadeModuleId = chunkInfo.facadeModuleId ? chunkInfo.facadeModuleId.split('/').pop().replace('.jsx', '').replace('.js', '') : 'chunk';
+        chunkFileNames: () => {
           return `assets/[name]-[hash].js`;
         },
         entryFileNames: 'assets/[name]-[hash].js',
