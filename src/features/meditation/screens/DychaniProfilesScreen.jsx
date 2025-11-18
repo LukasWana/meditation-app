@@ -3,9 +3,9 @@ import { motion } from 'framer-motion';
 import { Trash2, Plus, Play, Download, Upload } from 'lucide-react';
 import { FramerSection, FramerPageTransition, BackButton, BackgroundShader } from '@components';
 import { useLanguage } from '@contexts/LanguageContext';
-import breathProfilesService from '@services/breathProfilesService';
+import dychaniProfilesService from '@services/dychaniProfilesService';
 
-const BreathProfilesScreen = ({
+const DychaniProfilesScreen = ({
   onNavigateToScreen,
   onTouchStart = () => {},
   onTouchMove = () => {},
@@ -46,7 +46,7 @@ const BreathProfilesScreen = ({
     try {
       setLoading(true);
       console.log('🔄 Loading profiles...');
-      const loadedProfiles = await breathProfilesService.getAllProfiles();
+      const loadedProfiles = await dychaniProfilesService.getAllProfiles();
       console.log('✅ Loaded profiles:', loadedProfiles);
       setProfiles(loadedProfiles);
       if (loadedProfiles.length === 0) {
@@ -85,7 +85,7 @@ const BreathProfilesScreen = ({
       };
 
       console.log('📋 Profile data:', profile);
-      const profileId = await breathProfilesService.saveProfile(profile);
+      const profileId = await dychaniProfilesService.saveProfile(profile);
       console.log('✅ Profile saved with ID:', profileId);
       setNewProfileName('');
       setShowNameInput(false);
@@ -131,7 +131,7 @@ const BreathProfilesScreen = ({
     e.stopPropagation(); // Zabraň spuštění načtení profilu při kliknutí na smazat
     if (window.confirm(t('opravduSmazatProfil') || 'Opravdu chcete smazat tento profil?')) {
       try {
-        await breathProfilesService.deleteProfile(profileId);
+        await dychaniProfilesService.deleteProfile(profileId);
         await loadProfiles();
       } catch (error) {
         console.error('Failed to delete profile:', error);
@@ -144,7 +144,7 @@ const BreathProfilesScreen = ({
   const handleExportProfile = async (profile, e) => {
     e.stopPropagation();
     try {
-      await breathProfilesService.downloadProfileAsJSON(profile);
+      await dychaniProfilesService.downloadProfileAsJSON(profile);
       alert(t('profilExportovan') || 'Profil byl exportován');
     } catch (error) {
       console.error('Failed to export profile:', error);
@@ -159,7 +159,7 @@ const BreathProfilesScreen = ({
 
     try {
       setImporting(true);
-      const importedProfile = await breathProfilesService.importProfileFromFile(file);
+      const importedProfile = await dychaniProfilesService.importProfileFromFile(file);
 
       // Zeptej se uživatele, zda chce uložit importovaný profil
       const saveProfile = window.confirm(
@@ -167,7 +167,7 @@ const BreathProfilesScreen = ({
       );
 
       if (saveProfile) {
-        await breathProfilesService.saveProfile(importedProfile);
+        await dychaniProfilesService.saveProfile(importedProfile);
         await loadProfiles();
         alert(t('profilImportovanAUlozen') || 'Profil byl importován a uložen');
       } else {
@@ -395,6 +395,6 @@ const BreathProfilesScreen = ({
   );
 };
 
-export default BreathProfilesScreen;
+export default DychaniProfilesScreen;
 
 

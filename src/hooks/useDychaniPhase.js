@@ -1,7 +1,7 @@
 
 import { useEffect, useRef } from 'react';
 
-export const useBreathPhase = (isPlaying, time, setBreathPhase, breathInDuration, breathOutDuration) => {
+export const useDychaniPhase = (isPlaying, time, setBreathPhase, breathInDuration, breathOutDuration) => {
   const phaseRef = useRef('in');
   const timeoutRef = useRef(null);
   const isInitializedRef = useRef(false);

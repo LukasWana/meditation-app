@@ -1,20 +1,19 @@
-import React, { useState } from 'react';
-import { AnimatePresence } from 'framer-motion';
-import { FramerPageTransition, BackButton, BackgroundShader } from '@components';
+import React, { useState, useCallback, useMemo } from 'react';
+import { BackButton, BackgroundShader } from '@components';
 import { useLanguage } from '@contexts/LanguageContext';
 import { useShaderSettings } from '@contexts/ShaderSettingsContext';
 import { useTheme } from '@hooks/useTheme';
-import { useBreathSounds } from '@hooks';
-import { useBreathPhase } from '@hooks/useBreathPhase';
+import { useDychaniSounds } from '@hooks';
+import { useDychaniPhase } from '@hooks/useDychaniPhase';
 import { useCountdownSound } from '@hooks/useCountdownSound';
 import { useFinalSound } from '@hooks/useFinalSound';
-import { useBreathTimer } from '@hooks/useBreathTimer';
+import { useDychaniTimer } from '@hooks/useDychaniTimer';
 import { usePreparationTimer } from '@hooks/usePreparationTimer';
 import PreparationSection from '@features/meditation/components/PreparationSection';
-import BreathingSection from '@features/meditation/components/BreathingSection';
-import BreathModals from '@features/meditation/components/BreathModals';
+import DychaniSection from '@features/meditation/components/DychaniSection';
+import DychaniModals from '@features/meditation/components/DychaniModals';
 
-const BreathScreen = ({
+const DychaniScreen2 = ({
   breathPhase,
   setBreathPhase,
   onNavigateToScreen,
@@ -42,20 +41,23 @@ const BreathScreen = ({
   const { t } = useLanguage();
   const theme = useTheme();
   const { getShaderForSection } = useShaderSettings();
+
+  // Memoizovat backgroundColor, aby se nevytvářel nový objekt při každém renderu
+  const backgroundColor = useMemo(() => theme.colors.background, [theme.colors.background]);
   const [showPreparationPicker, setShowPreparationPicker] = useState(false);
   const [showDurationPicker, setShowDurationPicker] = useState(false);
   const [showRhythmPicker, setShowRhythmPicker] = useState(false);
 
-  // Lokální state pro přípravný čas (vždy používáme lokální state pro BreathScreen)
+  // Lokální state pro přípravný čas (vždy používáme lokální state pro DychaniScreen2)
   const [localIsPreparing, setLocalIsPreparing] = useState(false);
   const [localPreparationCountdown, setLocalPreparationCountdown] = useState(0);
 
-  // Pro BreathScreen vždy používáme lokální state (protože globální state z useAppState je pro meditaci)
+  // Pro DychaniScreen2 vždy používáme lokální state (protože globální state z useAppState je pro meditaci)
   const currentIsPreparing = localIsPreparing;
   const currentPreparationCountdown = localPreparationCountdown;
 
   // Použij hook pro přehrávání zvuků dýchání
-  useBreathSounds(
+  useDychaniSounds(
     isBreathing,
     breathPhase,
     breathInSound || 'none',
@@ -67,7 +69,7 @@ const BreathScreen = ({
   );
 
   // Použij hook pro správu fází dýchání
-  useBreathPhase(isBreathing, breathTime, setBreathPhase, breathInDuration, breathOutDuration);
+  useDychaniPhase(isBreathing, breathTime, setBreathPhase, breathInDuration, breathOutDuration);
 
   // Použij hook pro countdown zvuk
   useCountdownSound(breathCountdownSound, currentIsPreparing, currentPreparationCountdown);
@@ -76,7 +78,7 @@ const BreathScreen = ({
   const playFinalSound = useFinalSound(breathFinalSound, isBreathing);
 
   // Použij hook pro timer dýchání
-  const { waitingForCycleCompletionRef, completionTimeoutRef } = useBreathTimer(
+  const { waitingForCycleCompletionRef, completionTimeoutRef } = useDychaniTimer(
     isBreathing,
     breathTime,
     setBreathTime,
@@ -100,8 +102,8 @@ const BreathScreen = ({
     setIsBreathing
   );
 
-  // Handler pro play/pause s podporou přípravného času
-  const handlePlayPause = () => {
+  // Handler pro play/pause s podporou přípravného času - memoizovaný
+  const handlePlayPause = useCallback(() => {
     // Pokud už dýchání probíhá, zastav ho
     if (isBreathing) {
       // Vyčisti timeout a flagy, pokud čekáme na dokončení cyklu
@@ -138,35 +140,64 @@ const BreathScreen = ({
       setBreathTime(newTime);
     }
     setIsBreathing(true);
-  };
+  }, [isBreathing, currentIsPreparing, preparationTime, breathTime, breathDuration, waitingForCycleCompletionRef, completionTimeoutRef, setIsBreathing, setBreathTime]);
 
 
   // Handler pro reset
-  const handleReset = () => {
+  const handleReset = useCallback(() => {
     setIsBreathing(false);
     setBreathTime(breathDuration * 60);
-  };
+  }, [breathDuration, setIsBreathing, setBreathTime]);
 
   // Vypočítat progress pro CircularProgress (0-100)
-  const totalTime = breathDuration * 60; // v sekundách
-  const progress = totalTime > 0 ? ((totalTime - breathTime) / totalTime) * 100 : 0;
+  const totalTime = useMemo(() => breathDuration * 60, [breathDuration]); // v sekundách
+  const progress = useMemo(() => {
+    return totalTime > 0 ? ((totalTime - breathTime) / totalTime) * 100 : 0;
+  }, [totalTime, breathTime]);
 
-  // Formátování času (mm:ss)
-  const formatTime = (seconds) => {
+  // Formátování času (mm:ss) - memoizované, aby se nevytvářela nová funkce při každém renderu
+  const formatTime = useCallback((seconds) => {
     const mins = Math.floor(seconds / 60);
     const secs = Math.floor(seconds % 60);
     return `${mins}:${secs.toString().padStart(2, '0')}`;
-  };
+  }, []);
 
-  // Formátování času přípravy (v sekundách -> mm:ss)
-  const formatPreparationTime = (seconds) => {
+  // Formátování času přípravy (v sekundách -> mm:ss) - memoizované
+  const formatPreparationTime = useCallback((seconds) => {
     const mins = Math.floor(seconds / 60);
     const secs = seconds % 60;
     return `${mins}:${secs.toString().padStart(2, '0')}`;
-  };
+  }, []);
+
+  // Handler funkce pro modaly - memoizované
+  const handlePreparationClick = useCallback(() => {
+    setShowDurationPicker(false);
+    setShowRhythmPicker(false);
+    setShowPreparationPicker(true);
+  }, []);
+
+  const handleDurationClick = useCallback(() => {
+    setShowPreparationPicker(false);
+    setShowRhythmPicker(false);
+    setShowDurationPicker(true);
+  }, []);
+
+  const handleRhythmClick = useCallback(() => {
+    setShowPreparationPicker(false);
+    setShowDurationPicker(false);
+    setShowRhythmPicker(true);
+  }, []);
+
+  const handleGalleryClick = useCallback(() => {
+    onNavigateToScreen('sound-theme-gallery');
+  }, [onNavigateToScreen]);
+
+  const handleProfilesClick = useCallback(() => {
+    onNavigateToScreen('breath-profiles');
+  }, [onNavigateToScreen]);
 
   return (
-    <FramerPageTransition screenKey="breath">
+    <div className="w-full h-full max-w-full overflow-x-hidden">
       {/* Vrstvení:
           - Pozadí (bg-[#f4ddc4]): zIndex 0 (nejnižší)
           - BackgroundShader: zIndex 1 (nad pozadím, pod obsahem)
@@ -182,7 +213,7 @@ const BreathScreen = ({
           right: 0,
           bottom: '-20px',
           height: 'calc(100dvh + 20px)',
-          backgroundColor: theme.colors.background
+          backgroundColor: backgroundColor
         }}
       />
 
@@ -201,7 +232,7 @@ const BreathScreen = ({
       {/* Hlavní obsah */}
       <div
         className="min-h-screen w-full max-w-full flex flex-col items-center justify-start px-4 sm:px-6 pb-16 pt-12 overflow-x-hidden overflow-y-auto"
-        style={{ position: 'relative', zIndex: 10, backgroundColor: theme.colors.background }}
+        style={{ position: 'relative', zIndex: 10, backgroundColor: backgroundColor }}
         onTouchStart={onTouchStart}
         onTouchMove={onTouchMove}
         onTouchEnd={onTouchEnd}
@@ -209,61 +240,49 @@ const BreathScreen = ({
         <BackButton onClick={() => onNavigateToScreen('home')} />
 
         <div className="w-full max-w-md mt-12 md:mt-16 pb-10 relative flex flex-col items-stretch">
-          <AnimatePresence>
-            {/* Sekce přípravy */}
-            {currentIsPreparing && (
-              <PreparationSection
-                preparationCountdown={currentPreparationCountdown}
-                preparationTime={preparationTime}
-                onStop={handlePlayPause}
-                onGalleryClick={() => onNavigateToScreen('sound-theme-gallery')}
-                onProfilesClick={() => onNavigateToScreen('breath-profiles')}
-                formatTime={formatTime}
-                t={t}
-              />
-            )}
+          {/* Sekce přípravy */}
+          {currentIsPreparing && (
+            <PreparationSection
+              key="preparation-section"
+              preparationCountdown={currentPreparationCountdown}
+              preparationTime={preparationTime}
+              onStop={handlePlayPause}
+              onGalleryClick={handleGalleryClick}
+              onProfilesClick={handleProfilesClick}
+              formatTime={formatTime}
+              t={t}
+            />
+          )}
 
-            {/* Sekce dýchání */}
-            {!currentIsPreparing && (
-              <BreathingSection
-                isBreathing={isBreathing}
-                breathPhase={breathPhase}
-                breathTime={breathTime}
-                totalTime={totalTime}
-                progress={progress}
-                preparationTime={preparationTime}
-                breathDuration={breathDuration}
-                breathInDuration={breathInDuration}
-                breathOutDuration={breathOutDuration}
-                onPlayPause={handlePlayPause}
-                onReset={handleReset}
-                onPreparationClick={() => {
-                  setShowDurationPicker(false);
-                  setShowRhythmPicker(false);
-                  setShowPreparationPicker(true);
-                }}
-                onDurationClick={() => {
-                  setShowPreparationPicker(false);
-                  setShowRhythmPicker(false);
-                  setShowDurationPicker(true);
-                }}
-                onRhythmClick={() => {
-                  setShowPreparationPicker(false);
-                  setShowDurationPicker(false);
-                  setShowRhythmPicker(true);
-                }}
-                onGalleryClick={() => onNavigateToScreen('sound-theme-gallery')}
-                onProfilesClick={() => onNavigateToScreen('breath-profiles')}
-                formatTime={formatTime}
-                formatPreparationTime={formatPreparationTime}
-                t={t}
-              />
-            )}
-          </AnimatePresence>
+          {/* Sekce dýchání */}
+          {!currentIsPreparing && (
+            <DychaniSection
+              key="breathing-section"
+              isBreathing={isBreathing}
+              breathPhase={breathPhase}
+              breathTime={breathTime}
+              totalTime={totalTime}
+              progress={progress}
+              preparationTime={preparationTime}
+              breathDuration={breathDuration}
+              breathInDuration={breathInDuration}
+              breathOutDuration={breathOutDuration}
+              onPlayPause={handlePlayPause}
+              onReset={handleReset}
+              onPreparationClick={handlePreparationClick}
+              onDurationClick={handleDurationClick}
+              onRhythmClick={handleRhythmClick}
+              onGalleryClick={handleGalleryClick}
+              onProfilesClick={handleProfilesClick}
+              formatTime={formatTime}
+              formatPreparationTime={formatPreparationTime}
+              t={t}
+            />
+          )}
         </div>
 
         {/* Modaly */}
-        <BreathModals
+        <DychaniModals
           showPreparationPicker={showPreparationPicker}
           showDurationPicker={showDurationPicker}
           showRhythmPicker={showRhythmPicker}
@@ -271,21 +290,21 @@ const BreathScreen = ({
           breathDuration={breathDuration}
           breathInDuration={breathInDuration}
           breathOutDuration={breathOutDuration}
-          onClosePreparation={() => setShowPreparationPicker(false)}
-          onCloseDuration={() => setShowDurationPicker(false)}
-          onCloseRhythm={() => setShowRhythmPicker(false)}
+          onClosePreparation={useCallback(() => setShowPreparationPicker(false), [])}
+          onCloseDuration={useCallback(() => setShowDurationPicker(false), [])}
+          onCloseRhythm={useCallback(() => setShowRhythmPicker(false), [])}
           onPreparationChange={onPreparationTimeChange}
-          onDurationChange={(duration) => {
+          onDurationChange={useCallback((duration) => {
             onBreathDurationChange(duration);
             setBreathTime(duration * 60);
-          }}
+          }, [onBreathDurationChange, setBreathTime])}
           onRhythmChange={onBreathRhythmChange}
-          onSoundButtonClick={() => onNavigateToScreen('sound-theme-gallery')}
+          onSoundButtonClick={handleGalleryClick}
           t={t}
         />
       </div>
-    </FramerPageTransition>
+    </div>
   );
 };
 
-export default BreathScreen;
+export default DychaniScreen2;

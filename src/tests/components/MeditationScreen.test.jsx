@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen } from '@testing-library/react';
-import MeditationScreen from '@features/meditation/screens/MeditationScreen';
+import DychaniScreen from '@features/meditation/screens/DychaniScreen';
 
 // Mock dependencies
 vi.mock('@contexts/LanguageContext', () => ({
@@ -18,7 +18,7 @@ vi.mock('@contexts/ShaderSettingsContext', () => ({
 }));
 
 vi.mock('@hooks', () => ({
-  useBreathSounds: vi.fn(),
+  useDychaniSounds: vi.fn(),
   useAdaptiveTextColors: vi.fn(() => ({
     heading: 'text-gray-900',
     primary: 'text-gray-800',
@@ -33,21 +33,21 @@ vi.mock('@features/meditation/components/BackgroundSettingsControls', () => ({
   default: () => <div data-testid="background-settings" />
 }));
 
-vi.mock('@features/meditation/components/MeditationTimer', () => ({
+vi.mock('@features/meditation/components/DychaniTimer', () => ({
   default: () => <div data-testid="meditation-timer" />,
-  MeditationTimeDisplay: () => <div data-testid="time-display" />
+  DychaniTimeDisplay: () => <div data-testid="time-display" />
 }));
 
-vi.mock('@features/meditation/components/MeditationControls', () => ({
+vi.mock('@features/meditation/components/DychaniControls', () => ({
   default: () => <div data-testid="meditation-controls" />
 }));
 
-vi.mock('@features/meditation/components/MeditationSettings', () => ({
+vi.mock('@features/meditation/components/DychaniSettings', () => ({
   default: () => <div data-testid="meditation-settings" />
 }));
 
-vi.mock('@features/meditation/hooks/useMeditationState', () => ({
-  useMeditationState: vi.fn(() => ({
+vi.mock('@features/meditation/hooks/useDychaniState', () => ({
+  useDychaniState: vi.fn(() => ({
     showGallery: false,
     setShowGallery: vi.fn(),
     showDurationPicker: false,
@@ -107,7 +107,7 @@ describe('MeditationScreen (DychaniScreen)', () => {
   });
 
   it('should render with required props', () => {
-    render(<MeditationScreen {...defaultProps} />);
+    render(<DychaniScreen {...defaultProps} />);
 
     expect(screen.getByTestId('meditation-timer')).toBeInTheDocument();
     expect(screen.getByTestId('meditation-controls')).toBeInTheDocument();
@@ -115,13 +115,13 @@ describe('MeditationScreen (DychaniScreen)', () => {
   });
 
   it('should display title', () => {
-    render(<MeditationScreen {...defaultProps} />);
+    render(<DychaniScreen {...defaultProps} />);
 
     expect(screen.getByText('dychani')).toBeInTheDocument();
   });
 
   it('should render background shader', () => {
-    render(<MeditationScreen {...defaultProps} />);
+    render(<DychaniScreen {...defaultProps} />);
 
     expect(screen.getByTestId('background-shader')).toBeInTheDocument();
   });

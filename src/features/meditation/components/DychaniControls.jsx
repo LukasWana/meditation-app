@@ -5,7 +5,7 @@ import PlayPauseButton from '@features/audio/components/PlayPauseButton';
  * Komponenta pro ovládací prvky meditace
  * Zobrazuje Play/Pause tlačítko
  */
-const MeditationControls = ({
+const DychaniControls = ({
   isPlaying,
   onPlayPause,
   textColors
@@ -32,5 +32,5 @@ const MeditationControls = ({
   );
 };
 
-export default MeditationControls;
+export default DychaniControls;
 

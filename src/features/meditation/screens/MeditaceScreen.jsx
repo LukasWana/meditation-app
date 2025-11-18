@@ -79,7 +79,7 @@ const MeditaceScreen = ({
 
   const meditaceShader = useMemo(() => {
     return getShaderForSection('meditace') || 'meditace';
-  }, [getShaderForSection, transitionState?.toShaderKey]);
+  }, [getShaderForSection, transitionState?.toShaderKey]); // getShaderForSection je stabilní funkce z contextu
 
   // Získej barvu pro pozadí (pokud je shader barva, použij ji, jinak použij baseBackgroundColor)
   const backgroundColorForText = useMemo(() => {

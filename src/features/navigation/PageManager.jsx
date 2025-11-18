@@ -5,8 +5,8 @@ import Layout from './Layout';
 // Lazy loading pro lepší performance
 const IntroScreen = lazy(() => import('@features/meditation/screens/IntroScreen'));
 const HomeScreen = lazy(() => import('@features/meditation/screens/HomeScreen'));
-const DychaniScreen = lazy(() => import('@features/meditation/screens/MeditationScreen'));
-const BreathScreen = lazy(() => import('@features/meditation/screens/BreathScreen'));
+const DychaniScreen = lazy(() => import('@features/meditation/screens/DychaniScreen'));
+const BreathScreen = lazy(() => import('@features/meditation/screens/DychaniScreen2'));
 const SettingsScreen = lazy(() => import('@features/meditation/screens/SettingsScreen'));
 const HelpScreen = lazy(() => import('@features/meditation/screens/HelpScreen'));
 const HudbaScreen = lazy(() => import('@features/meditation/screens/HudbaScreen'));
@@ -15,7 +15,7 @@ const AlbumDetailScreen = lazy(() => import('@features/meditation/screens/AlbumD
 const AudioPlayer = lazy(() => import('@features/audio/AudioPlayer'));
 const SimpleAdminScreen = lazy(() => import('@features/meditation/screens/SimpleAdminScreen'));
 const SoundThemeGalleryScreen = lazy(() => import('@features/meditation/screens/SoundThemeGalleryScreen'));
-const BreathProfilesScreen = lazy(() => import('@features/meditation/screens/BreathProfilesScreen'));
+const BreathProfilesScreen = lazy(() => import('@features/meditation/screens/DychaniProfilesScreen'));
 const ShaderSelectionScreen = lazy(() => import('@features/meditation/screens/ShaderSelectionScreen'));
 const AudioPlayerHudbaScreen = lazy(() => import('@features/meditation/screens/AudioPlayerHudbaScreen'));
 const AudioPlayerMeditaceScreen = lazy(() => import('@features/meditation/screens/AudioPlayerMeditaceScreen'));
@@ -313,7 +313,197 @@ const PageManager = ({
   }, []);
 
   // Vytvoření props pro komponentu
+  // Memoizovat props pro 'breath' screen - ignorovat změny breathTime a preparationCountdown
+  // protože ty se mění každou sekundu a nezpůsobují změnu struktury
+  const breathScreenProps = useMemo(() => {
+    const config = SCREEN_REGISTRY['breath'];
+    if (!config) return {};
+
+    const props = {};
+
+    // Mapování props podle konfigurace
+    config.props.forEach(propName => {
+      switch (propName) {
+        case 'onNavigateToScreen':
+          props.onNavigateToScreen = onNavigateToScreen;
+          break;
+        case 'onTouchStart':
+          props.onTouchStart = onTouchStart;
+          break;
+        case 'onTouchMove':
+          props.onTouchMove = onTouchMove;
+          break;
+        case 'onTouchEnd':
+          props.onTouchEnd = onTouchEnd;
+          break;
+        case 'gender':
+          props.gender = gender;
+          break;
+        case 'onPlayerStateChange':
+          props.onPlayerStateChange = onPlayerStateChange;
+          break;
+        case 'onGenderChange':
+          props.onGenderChange = onGenderChange;
+          break;
+        case 'onAlbumSelect':
+          props.onAlbumSelect = onAlbumSelect;
+          break;
+        case 'album':
+          props.album = selectedAlbum;
+          break;
+        case 'time':
+          props.time = time;
+          break;
+        case 'selectedDuration':
+          props.selectedDuration = selectedDuration;
+          break;
+        case 'isPlaying':
+          props.isPlaying = isPlaying;
+          break;
+        case 'onDurationChange':
+          props.onDurationChange = onDurationChange;
+          break;
+        case 'onPlayPause':
+          props.onPlayPause = onPlayPause;
+          break;
+        case 'onReset':
+          props.onReset = onReset;
+          break;
+        case 'breathPhase':
+          props.breathPhase = breathPhase;
+          break;
+        case 'setBreathPhase':
+          props.setBreathPhase = setBreathPhase;
+          break;
+        case 'breathInDuration':
+          props.breathInDuration = breathInDuration;
+          break;
+        case 'breathOutDuration':
+          props.breathOutDuration = breathOutDuration;
+          break;
+        case 'breathInSound':
+          props.breathInSound = breathInSound;
+          break;
+        case 'breathOutSound':
+          props.breathOutSound = breathOutSound;
+          break;
+        case 'breathClickSound':
+          props.breathClickSound = breathClickSound;
+          break;
+        case 'breathFinalSound':
+          props.breathFinalSound = breathFinalSound;
+          break;
+        case 'breathCountdownSound':
+          props.breathCountdownSound = breathCountdownSound;
+          break;
+        case 'breathSoundFadeEnabled':
+          props.breathSoundFadeEnabled = breathSoundFadeEnabled;
+          break;
+        case 'onBreathSoundChange':
+          props.onBreathSoundChange = onBreathSoundChange;
+          break;
+        case 'onBreathRhythmChange':
+          props.onBreathRhythmChange = onBreathRhythmChange;
+          break;
+        case 'preparationTime':
+          props.preparationTime = preparationTime;
+          break;
+        case 'onPreparationTimeChange':
+          props.onPreparationTimeChange = onPreparationTimeChange;
+          break;
+        case 'isPreparing':
+          props.isPreparing = isPreparing;
+          break;
+        case 'preparationCountdown':
+          props.preparationCountdown = preparationCountdown;
+          break;
+        case 'breathDuration':
+          props.breathDuration = breathDuration;
+          break;
+        case 'breathTime':
+          props.breathTime = breathTime;
+          break;
+        case 'setBreathTime':
+          props.setBreathTime = setBreathTime;
+          break;
+        case 'isBreathing':
+          props.isBreathing = isBreathing;
+          break;
+        case 'setIsBreathing':
+          props.setIsBreathing = setIsBreathing;
+          break;
+        case 'onBreathDurationChange':
+          props.onBreathDurationChange = onBreathDurationChange;
+          break;
+        case 'onIntroComplete':
+          props.onIntroComplete = () => onNavigateToScreen('home');
+          break;
+        case 'audioSrc':
+          props.audioSrc = activeAudio?.audioSrc;
+          break;
+        case 'title':
+          props.title = activeAudio?.title;
+          break;
+        case 'onClose':
+          props.onClose = onCloseAudio;
+          break;
+        case 'onSelectSound':
+          props.onSelectSound = onBreathSoundChange;
+          break;
+        case 'selectedInSound':
+          props.selectedInSound = breathInSound;
+          break;
+        case 'selectedOutSound':
+          props.selectedOutSound = breathOutSound;
+          break;
+        case 'selectedClickSound':
+          props.selectedClickSound = breathClickSound;
+          break;
+        case 'selectedFinalSound':
+          props.selectedFinalSound = breathFinalSound;
+          break;
+        case 'selectedCountdownSound':
+          props.selectedCountdownSound = breathCountdownSound;
+          break;
+        case 'onBreathSoundFadeChange':
+          props.onBreathSoundFadeChange = onBreathSoundFadeChange;
+          break;
+        case 'section':
+          // Section prop není potřeba pro breath screen
+          break;
+        default:
+          break;
+      }
+    });
+
+    return props;
+  }, [
+    // Pro 'breath' screen ignorujeme breathTime a preparationCountdown v dependencies
+    // protože se mění každou sekundu a nezpůsobují změnu struktury
+    onNavigateToScreen, onTouchStart, onTouchMove, onTouchEnd,
+    breathPhase, setBreathPhase, breathInDuration, breathOutDuration, breathInSound, breathOutSound, breathClickSound, breathFinalSound, breathCountdownSound, breathSoundFadeEnabled, onBreathRhythmChange,
+    preparationTime, onPreparationTimeChange, onBreathSoundChange, onBreathSoundFadeChange,
+    isPreparing, // preparationCountdown - ignorujeme
+    breathDuration, // breathTime - ignorujeme, přidáme přímo do props
+    setBreathTime, isBreathing, setIsBreathing, onBreathDurationChange,
+    onReset
+  ]);
+
+  // Použít useMemo pro props objekt s aktuálními hodnotami breathTime a preparationCountdown
+  // Toto zajistí, že se objekt vytvoří jen když se skutečně změní breathTime nebo preparationCountdown
+  // breathScreenProps je memoizovaný a ignoruje breathTime/preparationCountdown v dependencies,
+  // takže se nemění každou sekundu. breathScreenPropsWithTime se změní jen když se změní
+  // breathTime nebo preparationCountdown, což je v pořádku - tyto hodnoty se předávají do komponenty.
+  const breathScreenPropsWithTime = useMemo(() => {
+    return { ...breathScreenProps, breathTime, preparationCountdown };
+  }, [breathScreenProps, breathTime, preparationCountdown]);
+
   const getScreenProps = useCallback((screenKey) => {
+    // Pro 'breath' screen použij memoizované props s časem
+    if (screenKey === 'breath') {
+      return breathScreenPropsWithTime; // Použít memoizovaný objekt místo vytváření nového
+    }
+
     const config = SCREEN_REGISTRY[screenKey];
     if (!config) return {};
 
@@ -475,9 +665,6 @@ const PageManager = ({
               props.section = savedSection;
             } else {
               // Urči sekci na základě předchozí obrazovky
-              // Pokud jsme přišli z hudba -> section = 'hudba'
-              // Pokud jsme přišli z meditace -> section = 'meditace'
-              // Pokud jsme přišli z breath/dychani -> section = 'dychani'
               const sectionMap = {
                 'hudba': 'hudba',
                 'meditace': 'meditace',
@@ -487,7 +674,6 @@ const PageManager = ({
                 'audio-player-hudba': 'hudba',
                 'audio-player-meditace': 'meditace'
               };
-              // Zkus získat z localStorage nebo použij currentScreen jako fallback
               const previousScreen = localStorage.getItem('meditation-app-previous-screen') || currentScreen;
               props.section = sectionMap[previousScreen] || 'hudba';
             }
@@ -500,6 +686,7 @@ const PageManager = ({
 
     return props;
   }, [
+    // Pro ostatní screens použijeme všechny dependencies
     onNavigateToScreen, onTouchStart, onTouchMove, onTouchEnd,
     gender, onPlayerStateChange, onGenderChange, time, selectedDuration, isPlaying,
     onDurationChange, onPlayPause, onReset, breathPhase, setBreathPhase, breathInDuration, breathOutDuration, breathInSound, breathOutSound, breathClickSound, breathFinalSound, breathCountdownSound, breathSoundFadeEnabled, onBreathRhythmChange,
@@ -507,7 +694,7 @@ const PageManager = ({
     isPreparing, preparationCountdown,
     breathDuration, breathTime, setBreathTime, isBreathing, setIsBreathing, onBreathDurationChange,
     activeAudio, onCloseAudio, selectedAlbum, onAlbumSelect, onAlbumClose,
-    currentScreen
+    currentScreen, breathScreenPropsWithTime // Změna: použít breathScreenPropsWithTime místo breathScreenProps
   ]);
 
   // Renderování stránky

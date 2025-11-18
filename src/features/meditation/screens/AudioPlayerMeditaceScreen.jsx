@@ -92,16 +92,14 @@ const AudioPlayerMeditaceScreen = ({
           setActiveAudio(parsed);
         } else {
           // Pokud není v localStorage, zkus to znovu za chvíli (pro race condition)
-          if (!activeAudio) {
-            setTimeout(() => {
-              const retry = localStorage.getItem(STORAGE_KEY);
-              if (retry) {
-                const parsed = JSON.parse(retry);
-                console.log('🎵 AudioPlayerMeditaceScreen: Retry loaded activeAudio:', parsed);
-                setActiveAudio(parsed);
-              }
-            }, 100);
-          }
+          setTimeout(() => {
+            const retry = localStorage.getItem(STORAGE_KEY);
+            if (retry) {
+              const parsed = JSON.parse(retry);
+              console.log('🎵 AudioPlayerMeditaceScreen: Retry loaded activeAudio:', parsed);
+              setActiveAudio(parsed);
+            }
+          }, 100);
         }
       } catch (e) {
         console.error('❌ Failed to load activeAudio for meditace from localStorage:', e);
@@ -298,9 +296,11 @@ const AudioPlayerMeditaceScreen = ({
   useEffect(() => {
     if (!activeAudio) {
       onPlayerStateChange?.(false);
-      onNavigateToScreen(getPreviousScreen());
+      // Použij getPreviousScreen() přímo, ne jako dependency
+      const previousScreen = getPreviousScreen();
+      onNavigateToScreen(previousScreen);
     }
-  }, [activeAudio, onNavigateToScreen, getPreviousScreen, onPlayerStateChange]);
+  }, [activeAudio, onNavigateToScreen, onPlayerStateChange]); // getPreviousScreen je useCallback bez dependencies, takže je stabilní
 
   if (!activeAudio) {
     return null;

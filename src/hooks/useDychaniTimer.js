@@ -13,7 +13,7 @@ import { useEffect, useRef } from 'react';
  * @param {Function} playFinalSound - Funkce pro přehrání finálního zvuku
  * @param {Function} setIsBreathing - Funkce pro zastavení dýchání
  */
-export const useBreathTimer = (
+export const useDychaniTimer = (
   isBreathing,
   breathTime,
   setBreathTime,

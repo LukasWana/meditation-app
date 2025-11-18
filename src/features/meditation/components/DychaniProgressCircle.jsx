@@ -1,7 +1,7 @@
 import React from 'react';
 import CircularProgress from '@features/audio/components/CircularProgress';
 import PlayPauseButton from '@features/audio/components/PlayPauseButton';
-import BreathingAnimation from './BreathingAnimation';
+import DychaniAnimation from './DychaniAnimation';
 
 /**
  * Komponenta pro kruhový progress s play button a animací dýchání
@@ -13,7 +13,7 @@ import BreathingAnimation from './BreathingAnimation';
  * @param {number} breathOutDuration - Délka výdechu v sekundách
  * @param {Function} onPlayPause - Handler pro play/pause
  */
-const BreathProgressCircle = ({
+const DychaniProgressCircle = ({
   progress,
   isBreathing,
   breathPhase,
@@ -24,7 +24,7 @@ const BreathProgressCircle = ({
   return (
     <div className="relative flex-shrink-0" style={{ isolation: 'isolate' }}>
       {/* Dýchací animace během dýchání - pod kruhem a tlačítkem, pod shaderem */}
-      <BreathingAnimation
+      <DychaniAnimation
         isBreathing={isBreathing}
         breathPhase={breathPhase}
         breathInDuration={breathInDuration}
@@ -52,5 +52,5 @@ const BreathProgressCircle = ({
   );
 };
 
-export default BreathProgressCircle;
+export default DychaniProgressCircle;
 

@@ -9,7 +9,7 @@ import log from './logger';
  * Ukládá profily do Firebase Realtime Database (pokud je uživatel přihlášen)
  * nebo do localStorage (pokud není přihlášen)
  */
-class BreathProfilesService {
+class DychaniProfilesService {
   constructor() {
     this.localStorageKey = 'meditation-app-breath-profiles';
   }
@@ -531,8 +531,8 @@ class BreathProfilesService {
 }
 
 // Singleton instance
-const breathProfilesService = new BreathProfilesService();
+const dychaniProfilesService = new DychaniProfilesService();
 
-export default breathProfilesService;
+export default dychaniProfilesService;
 
 

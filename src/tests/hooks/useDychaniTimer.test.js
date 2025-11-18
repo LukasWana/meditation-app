@@ -1,8 +1,8 @@
 import { renderHook, act } from '@testing-library/react';
 import { vi, describe, it, expect, beforeEach, afterEach } from 'vitest';
-import { useBreathTimer } from '@hooks/useBreathTimer';
+import { useDychaniTimer } from '@hooks/useDychaniTimer';
 
-describe('useBreathTimer', () => {
+describe('useDychaniTimer', () => {
   const mockSetBreathTime = vi.fn();
   const mockPlayFinalSound = vi.fn();
   const mockSetIsBreathing = vi.fn();
@@ -18,7 +18,7 @@ describe('useBreathTimer', () => {
 
   it('should initialize without errors', () => {
     renderHook(() =>
-      useBreathTimer(
+      useDychaniTimer(
         false,
         60,
         mockSetBreathTime,
@@ -36,7 +36,7 @@ describe('useBreathTimer', () => {
 
   it('should countdown time when breathing', () => {
     renderHook(() =>
-      useBreathTimer(
+      useDychaniTimer(
         true,
         60,
         mockSetBreathTime,
@@ -58,7 +58,7 @@ describe('useBreathTimer', () => {
 
   it('should stop breathing when time reaches zero', () => {
     renderHook(() =>
-      useBreathTimer(
+      useDychaniTimer(
         true,
         1,
         mockSetBreathTime,
@@ -82,7 +82,7 @@ describe('useBreathTimer', () => {
   it('should not countdown when not breathing', () => {
     const initialTime = 60;
     renderHook(() =>
-      useBreathTimer(
+      useDychaniTimer(
         false,
         initialTime,
         mockSetBreathTime,

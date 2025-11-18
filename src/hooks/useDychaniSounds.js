@@ -7,7 +7,7 @@ import { storage } from '@services/firebase';
  * Hook pro přehrávání zvuků dýchání s fade in/out efekty
  * Používá MP3 soubory z kategorie "hudba" z Firebase
  */
-export const useBreathSounds = (
+export const useDychaniSounds = (
   isPlaying,
   breathPhase,
   breathInSound,

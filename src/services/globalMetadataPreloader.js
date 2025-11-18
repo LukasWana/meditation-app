@@ -132,8 +132,8 @@ class GlobalMetadataPreloader {
         }
       }
 
-      // Ověř, že storage instance má potřebné metody
-      if (typeof storageInstance !== 'object' || !storageInstance._delegate) {
+      // Ověř, že storage instance je objekt
+      if (!storageInstance || typeof storageInstance !== 'object') {
         log.error(`❌ Storage instance is invalid. Cannot scan folder: ${folderName}`);
         return files;
       }
@@ -216,8 +216,8 @@ class GlobalMetadataPreloader {
         }
       }
 
-      // Ověř, že storage instance má potřebné metody
-      if (typeof storageInstance !== 'object' || !storageInstance._delegate) {
+      // Ověř, že storage instance je objekt
+      if (!storageInstance || typeof storageInstance !== 'object') {
         log.error(`❌ Storage instance is invalid. Cannot scan subfolder: ${folderName}/${subFolderName}`);
         return files;
       }

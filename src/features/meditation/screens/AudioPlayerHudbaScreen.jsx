@@ -186,12 +186,13 @@ const AudioPlayerHudbaScreen = ({
   // Pokud není načteno žádné audio, vrať se zpět
   useEffect(() => {
     if (!activeAudio) {
-      const previousScreen = getPreviousScreen();
       onPlayerStateChange?.(false);
+      // Použij getPreviousScreen() přímo, ne jako dependency
+      const previousScreen = getPreviousScreen();
       localStorage.setItem('meditation-app-previous-screen', previousScreen);
       onNavigateToScreen(previousScreen);
     }
-  }, [activeAudio, onNavigateToScreen, getPreviousScreen, onPlayerStateChange]);
+  }, [activeAudio, onNavigateToScreen, onPlayerStateChange]); // getPreviousScreen je useCallback bez dependencies, takže je stabilní
 
   // Pokud není načteno žádné audio, nezobrazuj nic
   if (!activeAudio) {

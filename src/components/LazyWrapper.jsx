@@ -16,8 +16,8 @@ const LazyWrapper = ({ children, fallback = null }) => {
 
 export const LazyIntroScreen = lazy(() => import('@features/meditation/screens/IntroScreen'));
 export const LazyHomeScreen = lazy(() => import('@features/meditation/screens/HomeScreen'));
-export const LazyDychaniScreen = lazy(() => import('@features/meditation/screens/MeditationScreen'));
-export const LazyBreathScreen = lazy(() => import('@features/meditation/screens/BreathScreen'));
+export const LazyDychaniScreen = lazy(() => import('@features/meditation/screens/DychaniScreen'));
+export const LazyBreathScreen = lazy(() => import('@features/meditation/screens/DychaniScreen2'));
 export const LazyHudbaScreen = lazy(() => import('@features/meditation/screens/HudbaScreen'));
 export const LazyMeditaceScreen = lazy(() => import('@features/meditation/screens/MeditaceScreen'));
 export const LazyAudioPlayerMeditaceScreen = lazy(() => import('@features/meditation/screens/AudioPlayerMeditaceScreen'));

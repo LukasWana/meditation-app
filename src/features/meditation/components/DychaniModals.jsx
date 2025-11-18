@@ -23,7 +23,7 @@ const DualWheelPickerModal = lazy(() => import('@components/TimePickerModal').th
  * @param {Function} onSoundButtonClick - Handler pro kliknutí na tlačítko zvuku
  * @param {Function} t - Funkce pro překlad
  */
-const BreathModals = ({
+const DychaniModals = ({
   showPreparationPicker,
   showDurationPicker,
   showRhythmPicker,
@@ -99,5 +99,5 @@ const BreathModals = ({
   );
 };
 
-export default BreathModals;
+export default DychaniModals;
 

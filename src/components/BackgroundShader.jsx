@@ -41,6 +41,11 @@ const BackgroundShader = ({
   const lastFrameTimeRef = useRef(0);
   const frameIntervalRef = useRef(1000 / getOptimalFPS()); // Frame interval v ms
 
+  // Ref pro breathPhase - zabraňuje restartu render loopu při změně fáze
+  const breathPhaseRef = useRef(breathPhase);
+  const breathInDurationRef = useRef(breathInDuration);
+  const breathOutDurationRef = useRef(breathOutDuration);
+
   // Zkus použít přehrávání shaderů z kontextu (pokud je k dispozici)
   // Použijeme useContext přímo, aby to fungovalo i když kontext není k dispozici
   const playbackContext = useContext(PlaybackContext);
@@ -91,13 +96,17 @@ const BackgroundShader = ({
     };
   }, [gl]);
 
-  // Aktualizuj čas začátku fáze při změně breathPhase
+  // Aktualizuj čas začátku fáze při změně breathPhase a refs pro render loop
   useEffect(() => {
+    breathPhaseRef.current = breathPhase;
+    breathInDurationRef.current = breathInDuration;
+    breathOutDurationRef.current = breathOutDuration;
+
     if (breathPhase && breathPhase !== previousPhaseRef.current) {
       phaseStartTimeRef.current = Date.now();
       previousPhaseRef.current = breathPhase;
     }
-  }, [breathPhase]);
+  }, [breathPhase, breathInDuration, breathOutDuration]);
 
   // Vertex shader - jednoduchý fullscreen quad
   // Verze se přidá dynamicky podle WebGL verze
@@ -889,22 +898,24 @@ void main() {
         gl.uniform1f(programInfo.uniforms.u_audioTreble, treble);
       }
 
-      // Parametry dýchání pro synchronizaci animace
+      // Parametry dýchání pro synchronizaci animace - použij refs místo props
       if (programInfo.uniforms.u_breathPhase !== undefined && programInfo.uniforms.u_breathPhase !== null) {
         // Vypočti hodnotu fáze dýchání: -1 = žádné dýchání, 0 = nádech, 1 = výdech
         let breathPhaseValue = -1.0;
-        if (breathPhase && enabled) {
-          breathPhaseValue = breathPhase === 'in' ? 0.0 : 1.0;
+        const currentBreathPhase = breathPhaseRef.current;
+        if (currentBreathPhase && enabled) {
+          breathPhaseValue = currentBreathPhase === 'in' ? 0.0 : 1.0;
         }
         gl.uniform1f(programInfo.uniforms.u_breathPhase, breathPhaseValue);
       }
       if (programInfo.uniforms.u_breathProgress !== undefined && programInfo.uniforms.u_breathProgress !== null) {
         // Vypočti progress aktuální fáze dýchání (0.0 - 1.0)
         let breathProgressValue = 0.0;
-        if (breathPhase && enabled) {
+        const currentBreathPhase = breathPhaseRef.current;
+        if (currentBreathPhase && enabled) {
           const now = Date.now();
           const elapsed = (now - phaseStartTimeRef.current) / 1000; // sekundy
-          const phaseDuration = breathPhase === 'in' ? breathInDuration : breathOutDuration;
+          const phaseDuration = currentBreathPhase === 'in' ? breathInDurationRef.current : breathOutDurationRef.current;
           breathProgressValue = Math.min(elapsed / phaseDuration, 1.0);
         }
         gl.uniform1f(programInfo.uniforms.u_breathProgress, breathProgressValue);
@@ -972,7 +983,7 @@ void main() {
         animationFrameRef.current = null;
       }
     };
-  }, [gl, programInfo, enabled, intensity, breathPhase, breathInDuration, breathOutDuration, opacity, isColorMode, effectiveVariant]);
+  }, [gl, programInfo, enabled, intensity, opacity, isColorMode, effectiveVariant]); // Odstranil jsem breathPhase, breathInDuration, breathOutDuration - používají se přes refs
 
   // Page Visibility API - pause rendering když je stránka skrytá
   // Pouze pause/resume pomocí ref, render loop se restartuje v hlavním useEffect

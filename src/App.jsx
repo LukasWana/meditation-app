@@ -1,7 +1,7 @@
 import React, { useState, Suspense, lazy } from 'react';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { PageManager } from '@features/navigation';
-import { useNavigation, useTouchNavigation, useAppState, useBackgroundDataLoader, useTimer, useBreathPhase } from '@hooks';
+import { useNavigation, useTouchNavigation, useAppState, useBackgroundDataLoader, useTimer, useDychaniPhase } from '@hooks';
 import { LazyIntroScreen } from '@components/LazyWrapper';
 import { LanguageProvider } from '@contexts/LanguageContext';
 import { UIConfigProvider } from '@contexts/UIConfigContext';
@@ -103,11 +103,13 @@ function MeditationApp() {
   });
 
 
-  // Timer logika
-  useTimer(isPlaying, time, setTime, setIsPlaying);
+  // Timer logika - zastav timer, když nejsme na sekci dychani
+  const shouldRunTimer = currentScreen === 'dychani' && isPlaying;
+  useTimer(shouldRunTimer, time, setTime, setIsPlaying);
 
-  // Breath phase logika
-  useBreathPhase(isPlaying, time, setBreathPhase, breathInDuration, breathOutDuration);
+  // Breath phase logika - zastav breath phase, když nejsme na sekci dychani
+  const shouldRunBreathPhase = currentScreen === 'dychani' && isPlaying;
+  useDychaniPhase(shouldRunBreathPhase, time, setBreathPhase, breathInDuration, breathOutDuration);
 
   // Načti data v pozadí během intro animace
   useBackgroundDataLoader(showIntro);

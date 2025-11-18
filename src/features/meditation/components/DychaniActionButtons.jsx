@@ -10,7 +10,7 @@ import { FramerSection } from '@components';
  * @param {Function} onProfilesClick - Handler pro otevření profilů
  * @param {Function} t - Funkce pro překlad
  */
-const BreathActionButtons = ({
+const DychaniActionButtons = ({
   onReset,
   onGalleryClick,
   onProfilesClick,
@@ -49,5 +49,5 @@ const BreathActionButtons = ({
   );
 };
 
-export default BreathActionButtons;
+export default DychaniActionButtons;
 

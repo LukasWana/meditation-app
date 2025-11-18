@@ -4,14 +4,14 @@ import { RotateCcw, Image as ImageIcon } from 'lucide-react';
 import { FramerButton, FramerSection, FramerPageTransition, BackButton, BackgroundShader } from '@components';
 import { useLanguage } from '@contexts/LanguageContext';
 import { useShaderSettings } from '@contexts/ShaderSettingsContext';
-import { useBreathSounds, useAdaptiveTextColors, useCountdownSound, useFinalSound } from '@hooks';
+import { useDychaniSounds, useAdaptiveTextColors, useCountdownSound, useFinalSound } from '@hooks';
 import { useAnimationConfig } from '@hooks/useAnimationConfig';
 import { useAnimationControl } from '@contexts/AnimationContext';
 import BackgroundSettingsControls from '@features/meditation/components/BackgroundSettingsControls';
-import MeditationTimer, { MeditationTimeDisplay } from '@features/meditation/components/MeditationTimer';
-import MeditationControls from '@features/meditation/components/MeditationControls';
-import MeditationSettings from '@features/meditation/components/MeditationSettings';
-import { useMeditationState } from '@features/meditation/hooks/useMeditationState';
+import DychaniTimer, { DychaniTimeDisplay } from '@features/meditation/components/DychaniTimer';
+import DychaniControls from '@features/meditation/components/DychaniControls';
+import DychaniSettings from '@features/meditation/components/DychaniSettings';
+import { useDychaniState } from '@features/meditation/hooks/useDychaniState';
 import CircularProgress from '@features/audio/components/CircularProgress';
 
 // Lazy loading modálů pro lepší performance
@@ -77,8 +77,8 @@ const DychaniScreen = ({
   const { t } = useLanguage();
   const {
     shaderSettings,
-    getColorForSection,
-    getOverlaySettings
+    overlaySettings: overlaySettingsFromContext,
+    getColorForSection
   } = useShaderSettings();
   const config = useAnimationConfig();
   const { isActive } = useAnimationControl();
@@ -94,7 +94,7 @@ const DychaniScreen = ({
   }, [shaderSettings]);
 
   // Použij custom hook pro state management
-  const meditationState = useMeditationState({
+  const meditationState = useDychaniState({
     isPlaying,
     breathPhase,
     breathInDuration,
@@ -129,7 +129,7 @@ const DychaniScreen = ({
   }, []);
 
   // Použij hook pro přehrávání zvuků dýchání
-  useBreathSounds(
+  useDychaniSounds(
     isPlaying,
     breathPhase,
     breathInSound || 'none',
@@ -181,18 +181,54 @@ const DychaniScreen = ({
   const totalTime = selectedDuration * 60; // v sekundách
   const progress = totalTime > 0 ? ((totalTime - time) / totalTime) * 100 : 0;
 
-  const colorOverride = getColorForSection('dychani');
-  const overlayConfig = getOverlaySettings('dychani') || {};
-  const shaderOpacity = Math.min(Math.max(overlayConfig.opacity ?? 0.75, 0), 1);
-  const shaderIntensity = Math.min(Math.max(overlayConfig.intensity ?? 0.8, 0), 1);
-  const blendMode = overlayConfig.blendMode || 'normal';
-  const overlayBlendMode = BLEND_MODE_TO_CSS[blendMode] || 'normal';
-  const baseBackgroundColor = colorOverride || '#f4ddc4';
-  const overlayAlpha =
-    blendMode === 'normal'
+  // Optimalizace: použij useMemo pro všechny hodnoty, které se počítají při každém renderu
+  // Použij přímo overlaySettings z contextu místo getOverlaySettings, které vrací nový objekt
+  const colorOverride = useMemo(() => getColorForSection('dychani'), [getColorForSection]);
+
+  // Získej overlay settings přímo z contextu a memoizuj jednotlivé hodnoty
+  const dychaniOverlay = overlaySettingsFromContext?.dychani;
+  const overlayOpacity = useMemo(() => {
+    return dychaniOverlay?.opacity ?? 0.75;
+  }, [dychaniOverlay?.opacity]);
+
+  const overlayIntensity = useMemo(() => {
+    return dychaniOverlay?.intensity ?? 0.8;
+  }, [dychaniOverlay?.intensity]);
+
+  const overlayBlendModeRaw = useMemo(() => {
+    return dychaniOverlay?.blendMode || 'normal';
+  }, [dychaniOverlay?.blendMode]);
+
+  const shaderOpacity = useMemo(() => {
+    return Math.min(Math.max(overlayOpacity, 0), 1);
+  }, [overlayOpacity]);
+
+  const shaderIntensity = useMemo(() => {
+    return Math.min(Math.max(overlayIntensity, 0), 1);
+  }, [overlayIntensity]);
+
+  const blendMode = useMemo(() => {
+    return overlayBlendModeRaw;
+  }, [overlayBlendModeRaw]);
+
+  const overlayBlendMode = useMemo(() => {
+    return BLEND_MODE_TO_CSS[blendMode] || 'normal';
+  }, [blendMode]);
+
+  const baseBackgroundColor = useMemo(() => {
+    return colorOverride || '#f4ddc4';
+  }, [colorOverride]);
+
+  // Použij useMemo pro overlayAlpha, aby se nepřepočítávalo při každém renderu
+  const overlayAlpha = useMemo(() => {
+    return blendMode === 'normal'
       ? (isPlaying ? 0.45 : 0.55)
       : 0.6;
-  const overlayBackground = hexToRgba(baseBackgroundColor, overlayAlpha);
+  }, [blendMode, isPlaying]);
+
+  const overlayBackground = useMemo(() => {
+    return hexToRgba(baseBackgroundColor, overlayAlpha);
+  }, [baseBackgroundColor, overlayAlpha]);
 
   // Získej barvu pro pozadí (pokud je shader barva, použij ji, jinak použij baseBackgroundColor)
   const backgroundColorForText = useMemo(() => {
@@ -202,7 +238,7 @@ const DychaniScreen = ({
     return baseBackgroundColor;
   }, [breathShader, baseBackgroundColor]);
 
-  // Použij adaptivní barvy textů
+  // Použij adaptivní barvy textů - hook už vrací memoizovaný objekt
   const textColors = useAdaptiveTextColors(backgroundColorForText, breathShader);
 
   // Debug logování - deaktivováno pro produkci (příliš mnoho výpisů)
@@ -223,127 +259,7 @@ const DychaniScreen = ({
     }
   }, [isPlaying, breathPhase, breathCycleTime, breathRhythmProgress, inPhaseProgress, breathInDuration, breathOutDuration]);
 
-  // Pokud probíhá příprava, zobraz odpočítávání přípravy
-  if (isPreparing) {
-    return (
-      <FramerPageTransition screenKey="dychani">
-        <div
-          className="fixed max-w-full"
-          style={{
-            zIndex: 0,
-            backgroundColor: baseBackgroundColor,
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: '-20px',
-            height: 'calc(100dvh + 20px)'
-          }}
-        />
-
-        <BackgroundShader
-          variant={breathShader}
-          intensity={shaderIntensity}
-          enabled={true}
-          opacity={shaderOpacity}
-          breathPhase={null}
-          breathInDuration={breathInDuration}
-          breathOutDuration={breathOutDuration}
-          zIndex={2}
-        />
-
-        <div
-          className="fixed pointer-events-none"
-          style={{
-            zIndex: 3,
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: '-20px',
-            height: 'calc(100dvh + 20px)',
-            background: overlayBackground,
-            mixBlendMode: overlayBlendMode,
-            transition: 'background 0.6s ease, mix-blend-mode 0.6s ease'
-          }}
-        />
-
-        <div
-          className="min-h-screen w-full max-w-full flex flex-col items-center justify-start p-2 sm:p-8 pb-20 overflow-x-hidden relative"
-          style={{ position: 'relative', zIndex: 10, backgroundColor: 'transparent' }}
-          onTouchStart={onTouchStart}
-        onTouchMove={onTouchMove}
-        onTouchEnd={onTouchEnd}
-      >
-        <BackButton onClick={() => onNavigateToScreen('home')} />
-
-        <div className="max-w-md w-full" style={{ marginTop: '4rem', paddingTop: 0, position: 'relative', display: 'flex', flexDirection: 'column', alignItems: 'stretch' }}>
-            <FramerSection
-              className="text-center mb-6"
-              animationType="fadeIn"
-              delay={0.1}
-            >
-              <div style={{ height: '3.5rem', display: 'flex', flexDirection: 'column', justifyContent: 'flex-start', alignItems: 'center', marginBottom: '0.5rem' }}>
-                <h1 className={`text-4xl font-light ${textColors.heading}`} style={{ minHeight: '2.5rem', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                  {t('priprava')}
-                </h1>
-              </div>
-            </FramerSection>
-
-            <FramerSection
-              className="mb-12"
-              animationType="scaleIn"
-              delay={0.2}
-            >
-              {/* CircularProgress pro přípravu - stejné rozměry jako hlavní kruh */}
-              <div className="relative flex-shrink-0 flex items-center justify-center" style={{ width: '50vw', height: '50vw', maxWidth: '400px', maxHeight: '400px', minWidth: '250px', minHeight: '250px', margin: '0 auto' }}>
-                <div className="absolute inset-0 flex items-center justify-center">
-                  <CircularProgress
-                    progress={preparationCountdown > 0 && preparationTime > 0 ? ((preparationTime - preparationCountdown) / preparationTime) * 100 : 0}
-                    onSeek={null}
-                    className="w-[50vw] h-[50vw] max-w-[400px] max-h-[400px] min-w-[250px] min-h-[250px]"
-                  />
-                </div>
-
-                {/* Odpočítávání v centru */}
-                <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
-                  <motion.div
-                    key={preparationCountdown}
-                    className={`text-6xl font-light ${textColors.primary}`}
-                    initial={isActive ? { opacity: 0 } : {}}
-                    animate={isActive ? { opacity: 1 } : {}}
-                    exit={isActive ? { opacity: 0 } : {}}
-                    transition={isActive ? { duration: config.durations.normal, ease: config.easings.easeOut } : { duration: 0 }}
-                  >
-                    {preparationCountdown}
-                  </motion.div>
-                </div>
-              </div>
-
-              {/* Text pod odpočítáváním */}
-              <div className="mt-6 text-center">
-                <div className={`${textColors.primary} font-medium text-xl`}>
-                  {t('pripravaNaDychanie')}
-                </div>
-              </div>
-            </FramerSection>
-
-            <FramerSection
-              className="flex justify-center gap-6 mb-6"
-              animationType="fadeIn"
-              delay={0.3}
-            >
-              <FramerButton
-                onClick={onPlayPause}
-                variant="secondary"
-                className="w-20 h-20 rounded-full flex items-center justify-center p-0"
-              >
-                <RotateCcw size={28} />
-              </FramerButton>
-            </FramerSection>
-          </div>
-        </div>
-      </FramerPageTransition>
-    );
-  }
+  // Jeden return s podmíněným renderováním - zabraňuje unmount/remount a blikání
   return (
     <FramerPageTransition screenKey="dychani">
       {/* Vrstvení:
@@ -404,15 +320,84 @@ const DychaniScreen = ({
         <BackButton onClick={() => onNavigateToScreen('home')} />
 
         <div className="max-w-md w-full" style={{ marginTop: '4rem', paddingTop: 0, position: 'relative', display: 'flex', flexDirection: 'column', alignItems: 'stretch' }}>
-          <FramerSection
-            className="text-center mb-6"
-            animationType="fadeIn"
-            delay={0.1}
-          >
-            <h1 className={`text-5xl font-light tracking-wide ${textColors.heading} sm:text-6xl`}>
-              {t('dychani')}
-            </h1>
-          </FramerSection>
+          {/* Pokud probíhá příprava, zobraz odpočítávání přípravy */}
+          {isPreparing ? (
+            <>
+              <FramerSection
+                className="text-center mb-6"
+                animationType="fadeIn"
+                delay={0.1}
+              >
+                <div style={{ height: '3.5rem', display: 'flex', flexDirection: 'column', justifyContent: 'flex-start', alignItems: 'center', marginBottom: '0.5rem' }}>
+                  <h1 className={`text-4xl font-light ${textColors.heading}`} style={{ minHeight: '2.5rem', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                    {t('priprava')}
+                  </h1>
+                </div>
+              </FramerSection>
+
+              <FramerSection
+                className="mb-12"
+                animationType="scaleIn"
+                delay={0.2}
+              >
+                {/* CircularProgress pro přípravu - stejné rozměry jako hlavní kruh */}
+                <div className="relative flex-shrink-0 flex items-center justify-center" style={{ width: '50vw', height: '50vw', maxWidth: '400px', maxHeight: '400px', minWidth: '250px', minHeight: '250px', margin: '0 auto' }}>
+                  <div className="absolute inset-0 flex items-center justify-center">
+                    <CircularProgress
+                      progress={preparationCountdown > 0 && preparationTime > 0 ? ((preparationTime - preparationCountdown) / preparationTime) * 100 : 0}
+                      onSeek={null}
+                      className="w-[50vw] h-[50vw] max-w-[400px] max-h-[400px] min-w-[250px] min-h-[250px]"
+                    />
+                  </div>
+
+                  {/* Odpočítávání v centru */}
+                  <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
+                    <motion.div
+                      key={preparationCountdown}
+                      className={`text-6xl font-light ${textColors.primary}`}
+                      initial={isActive ? { opacity: 0 } : {}}
+                      animate={isActive ? { opacity: 1 } : {}}
+                      exit={isActive ? { opacity: 0 } : {}}
+                      transition={isActive ? { duration: config.durations.normal, ease: config.easings.easeOut } : { duration: 0 }}
+                    >
+                      {preparationCountdown}
+                    </motion.div>
+                  </div>
+                </div>
+
+                {/* Text pod odpočítáváním */}
+                <div className="mt-6 text-center">
+                  <div className={`${textColors.primary} font-medium text-xl`}>
+                    {t('pripravaNaDychanie')}
+                  </div>
+                </div>
+              </FramerSection>
+
+              <FramerSection
+                className="flex justify-center gap-6 mb-6"
+                animationType="fadeIn"
+                delay={0.3}
+              >
+                <FramerButton
+                  onClick={onPlayPause}
+                  variant="secondary"
+                  className="w-20 h-20 rounded-full flex items-center justify-center p-0"
+                >
+                  <RotateCcw size={28} />
+                </FramerButton>
+              </FramerSection>
+            </>
+          ) : (
+            <>
+              <FramerSection
+                className="text-center mb-6"
+                animationType="fadeIn"
+                delay={0.1}
+              >
+                <h1 className={`text-5xl font-light tracking-wide ${textColors.heading} sm:text-6xl`}>
+                  {t('dychani')}
+                </h1>
+              </FramerSection>
 
           <FramerSection
             className="mb-12"
@@ -420,7 +405,7 @@ const DychaniScreen = ({
             delay={0.2}
           >
             <div className="relative flex-shrink-0 flex items-center justify-center" style={{ isolation: 'isolate', overflow: 'visible', width: '50vw', height: '50vw', maxWidth: '400px', maxHeight: '400px', minWidth: '250px', minHeight: '250px', margin: '0 auto' }}>
-              <MeditationTimer
+              <DychaniTimer
                 time={time}
                 selectedDuration={selectedDuration}
                 isPlaying={isPlaying}
@@ -437,13 +422,13 @@ const DychaniScreen = ({
                 maxScale={maxScale}
                 textColors={textColors}
               />
-              <MeditationControls
+              <DychaniControls
                 isPlaying={isPlaying}
                 onPlayPause={onPlayPause}
                 textColors={textColors}
               />
             </div>
-            <MeditationTimeDisplay time={time} textColors={textColors} />
+            <DychaniTimeDisplay time={time} textColors={textColors} />
           </FramerSection>
 
           {/* Tlačítka Reset a Gallery - zobraz pouze když NEPROBÍHÁ přehrávání */}
@@ -470,34 +455,36 @@ const DychaniScreen = ({
             </FramerSection>
           )}
 
-          <MeditationSettings
-            isPlaying={isPlaying}
-            selectedDuration={selectedDuration}
-            breathInDuration={breathInDuration}
-            breathOutDuration={breathOutDuration}
-            preparationTime={preparationTime}
-            showDurationPicker={showDurationPicker}
-            showPreparationPicker={showPreparationPicker}
-            showRhythmPicker={showRhythmPicker}
-            onShowDurationPicker={() => setShowDurationPicker(true)}
-            onShowPreparationPicker={() => setShowPreparationPicker(true)}
-            onShowRhythmPicker={() => setShowRhythmPicker(true)}
-            onHideDurationPicker={() => setShowDurationPicker(false)}
-            onHidePreparationPicker={() => setShowPreparationPicker(false)}
-            onHideRhythmPicker={() => setShowRhythmPicker(false)}
-            onDurationChange={onDurationChange}
-            onBreathRhythmChange={onBreathRhythmChange}
-            onPreparationTimeChange={onPreparationTimeChange}
-            textColors={textColors}
-          />
+              <DychaniSettings
+                isPlaying={isPlaying}
+                selectedDuration={selectedDuration}
+                breathInDuration={breathInDuration}
+                breathOutDuration={breathOutDuration}
+                preparationTime={preparationTime}
+                showDurationPicker={showDurationPicker}
+                showPreparationPicker={showPreparationPicker}
+                showRhythmPicker={showRhythmPicker}
+                onShowDurationPicker={() => setShowDurationPicker(true)}
+                onShowPreparationPicker={() => setShowPreparationPicker(true)}
+                onShowRhythmPicker={() => setShowRhythmPicker(true)}
+                onHideDurationPicker={() => setShowDurationPicker(false)}
+                onHidePreparationPicker={() => setShowPreparationPicker(false)}
+                onHideRhythmPicker={() => setShowRhythmPicker(false)}
+                onDurationChange={onDurationChange}
+                onBreathRhythmChange={onBreathRhythmChange}
+                onPreparationTimeChange={onPreparationTimeChange}
+                textColors={textColors}
+              />
 
-          <FramerSection
-            className="w-full flex justify-center mt-10 mb-6"
-            animationType="fadeIn"
-            delay={0.45}
-          >
-            <BackgroundSettingsControls section="dychani" />
-          </FramerSection>
+              <FramerSection
+                className="w-full flex justify-center mt-10 mb-6"
+                animationType="fadeIn"
+                delay={0.45}
+              >
+                <BackgroundSettingsControls section="dychani" />
+              </FramerSection>
+            </>
+          )}
 
         </div>
 

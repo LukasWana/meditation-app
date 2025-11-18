@@ -15,7 +15,7 @@ function formatPreparationTime(seconds) {
  * Komponenta pro nastavení meditace
  * Zobrazuje a umožňuje změnu délky, rytmu a přípravy
  */
-const MeditationSettings = ({
+const DychaniSettings = ({
   isPlaying,
   selectedDuration,
   breathInDuration,
@@ -172,5 +172,5 @@ const MeditationSettings = ({
   );
 };
 
-export default MeditationSettings;
+export default DychaniSettings;
 

@@ -4,7 +4,7 @@ import { useState, useEffect, useRef, useMemo } from 'react';
  * Custom hook pro state management meditace
  * Spravuje lokální state pro DychaniScreen komponentu
  */
-export const useMeditationState = ({
+export const useDychaniState = ({
   isPlaying,
   breathPhase,
   breathInDuration,
@@ -54,9 +54,9 @@ export const useMeditationState = ({
       }
     }
 
+    // Pokud už interval běží, neruš ho - jen aktualizuj refs
     if (intervalRef.current) {
-      clearInterval(intervalRef.current);
-      intervalRef.current = null;
+      return;
     }
 
     const cycleDuration = breathInDuration + breathOutDuration;
@@ -73,10 +73,7 @@ export const useMeditationState = ({
         } else {
           setBreathCycleTime(cycleDuration);
         }
-        if (intervalRef.current) {
-          clearInterval(intervalRef.current);
-          intervalRef.current = null;
-        }
+        // Nevyčišťuj interval tady - nech ho běžet, dokud se nezmění fáze
         return;
       }
 

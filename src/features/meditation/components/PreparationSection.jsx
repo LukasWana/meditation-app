@@ -1,9 +1,9 @@
-import React from 'react';
-import { motion } from 'framer-motion';
+import React, { useMemo, memo } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { FramerSection } from '@components';
 import CircularProgress from '@features/audio/components/CircularProgress';
 import CurrentTimeDisplay from '@features/audio/components/CurrentTimeDisplay';
-import BreathActionButtons from './BreathActionButtons';
+import DychaniActionButtons from './DychaniActionButtons';
 
 /**
  * Komponenta pro sekci přípravy
@@ -25,34 +25,25 @@ const PreparationSection = ({
   formatTime,
   t
 }) => {
-  const progress = preparationCountdown > 0 && preparationTime > 0
-    ? ((preparationTime - preparationCountdown) / preparationTime) * 100
-    : 0;
+  const progress = useMemo(() => {
+    return preparationCountdown > 0 && preparationTime > 0
+      ? ((preparationTime - preparationCountdown) / preparationTime) * 100
+      : 0;
+  }, [preparationCountdown, preparationTime]);
 
   return (
-    <motion.div
-      key="preparation"
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      exit={{ opacity: 0 }}
-      transition={{ duration: 0.2, ease: 'easeInOut' }}
-      style={{ position: 'absolute', top: 0, left: 0, right: 0, width: '100%', paddingBottom: '2rem', minHeight: '100%' }}
-    >
+    <div style={{ width: '100%' }}>
       {/* Nadpis - přesně stejná struktura jako obrazovka dýchání */}
       <div
         className="text-center flex flex-col justify-start"
         style={{ height: 'calc(3.5rem + clamp(32px, 3.5vw, 40px) + 1rem + 0.5rem)', paddingTop: 0, paddingBottom: 0, marginTop: 0, marginBottom: '1.5rem', position: 'relative', top: 0 }}
       >
-        <motion.h1
+        <h1
           className="text-4xl font-serif text-gray-800 leading-normal overflow-visible"
           style={{ height: '3.5rem', minHeight: '3.5rem', maxHeight: '3.5rem', display: 'flex', alignItems: 'center', justifyContent: 'center', lineHeight: '1.2', marginTop: 0, paddingTop: 0, paddingBottom: 0, marginBottom: 0 }}
-          initial={{ opacity: 0, y: -10 }}
-          animate={{ opacity: 1, y: 0 }}
-          exit={{ opacity: 0, y: 10 }}
-          transition={{ duration: 0.3 }}
         >
           {t('priprava') || 'příprava'}
-        </motion.h1>
+        </h1>
         {/* Current Time Display - pod nadpisem - stejná struktura jako na obrazovce dýchání, ale skryté */}
         <div className="flex items-center justify-center mt-4 mb-2 pointer-events-auto w-full gap-4" style={{ height: 'clamp(32px, 3.5vw, 40px)', minHeight: 'clamp(32px, 3.5vw, 40px)', maxHeight: 'clamp(32px, 3.5vw, 40px)' }}>
           <div className="pointer-events-none z-10 text-center" style={{ display: 'flex', alignItems: 'center', height: '100%' }}>
@@ -81,16 +72,18 @@ const PreparationSection = ({
 
           {/* Odpočítávání v centru - stejná struktura jako Play/Pause tlačítko na obrazovce dýchání */}
           <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-            <motion.div
-              key={preparationCountdown}
-              className="text-6xl font-light text-black"
-              initial={{ opacity: 0, scale: 0.8 }}
-              animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0, scale: 0.8 }}
-              transition={{ duration: 0.3 }}
-            >
-              {preparationCountdown}
-            </motion.div>
+            <AnimatePresence mode="wait">
+              <motion.div
+                key={preparationCountdown}
+                className="text-6xl font-light text-black"
+                initial={{ opacity: 0, scale: 0.8 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.8 }}
+                transition={{ duration: 0.2 }}
+              >
+                {preparationCountdown}
+              </motion.div>
+            </AnimatePresence>
           </div>
         </div>
       </div>
@@ -135,15 +128,15 @@ const PreparationSection = ({
       </FramerSection>
 
       {/* Reset tlačítko, tlačítko pro zvukovou galerii a tlačítko pro profily - vedle sebe - stejná struktura jako na stránce dýchání */}
-      <BreathActionButtons
+      <DychaniActionButtons
         onReset={onStop}
         onGalleryClick={onGalleryClick}
         onProfilesClick={onProfilesClick}
         t={t}
       />
-    </motion.div>
+    </div>
   );
 };
 
-export default PreparationSection;
+export default memo(PreparationSection);
 

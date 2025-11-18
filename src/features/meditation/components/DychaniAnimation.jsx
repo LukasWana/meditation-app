@@ -9,7 +9,7 @@ import { motion } from 'framer-motion';
  * @param {number} breathInDuration - Délka nádechu v sekundách
  * @param {number} breathOutDuration - Délka výdechu v sekundách
  */
-const BreathingAnimation = ({
+const DychaniAnimation = ({
   isBreathing,
   breathPhase,
   breathInDuration,
@@ -66,5 +66,5 @@ const BreathingAnimation = ({
   );
 };
 
-export default BreathingAnimation;
+export default DychaniAnimation;
 

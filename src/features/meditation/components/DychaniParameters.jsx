@@ -15,7 +15,7 @@ import { FramerSection } from '@components';
  * @param {Function} formatPreparationTime - Funkce pro formátování času přípravy
  * @param {Function} t - Funkce pro překlad
  */
-const BreathParameters = ({
+const DychaniParameters = ({
   preparationTime,
   breathDuration,
   breathInDuration,
@@ -76,5 +76,5 @@ const BreathParameters = ({
   );
 };
 
-export default BreathParameters;
+export default DychaniParameters;
 
