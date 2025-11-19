@@ -305,7 +305,7 @@ const DychaniScreen2 = ({
         onTouchMove={onTouchMove}
         onTouchEnd={onTouchEnd}
       >
-        <BackButton onClick={() => onNavigateToScreen('home')} />
+        <BackButton onClick={useCallback(() => onNavigateToScreen('home'), [onNavigateToScreen])} />
 
         <div className="w-full max-w-md mt-12 md:mt-16 pb-10 relative flex flex-col items-stretch">
           {/* Sekce přípravy a dýchání s okamžitým přepnutím - bez transition pro prevenci blikání */}

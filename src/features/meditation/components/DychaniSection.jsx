@@ -1,4 +1,4 @@
-import React, { memo } from 'react';
+import React, { memo, useMemo } from 'react';
 import DychaniHeader from './DychaniHeader';
 import DychaniProgressCircle from './DychaniProgressCircle';
 import DychaniParameters from './DychaniParameters';
@@ -48,13 +48,18 @@ const DychaniSection = ({
   formatPreparationTime,
   t
 }) => {
+  // Vypočítat aktuální uplynulý čas - memoizované pro správnou aktualizaci
+  const currentTime = useMemo(() => {
+    return Math.max(0, totalTime - breathTime);
+  }, [totalTime, breathTime]);
+
   return (
     <div style={{ width: '100%' }}>
       {/* Nadpis a zobrazení času */}
       <DychaniHeader
         isBreathing={isBreathing}
         breathPhase={breathPhase}
-        currentTime={totalTime - breathTime}
+        currentTime={currentTime}
         totalTime={totalTime}
         formatTime={formatTime}
         t={t}

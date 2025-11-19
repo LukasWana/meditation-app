@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { memo, useCallback } from 'react';
 import { ArrowLeft } from 'lucide-react';
 import { motion } from 'framer-motion';
 import FramerButton from './FramerButton';
@@ -9,11 +9,23 @@ const BackButton = ({ onClick, className = '' }) => {
   const theme = useTheme();
   const config = useAnimationConfig();
 
+  const handleMouseEnter = useCallback((e) => {
+    if (e.currentTarget) {
+      e.currentTarget.style.backgroundColor = theme.colors.overlay.white30;
+    }
+  }, [theme.colors.overlay.white30]);
+
+  const handleMouseLeave = useCallback((e) => {
+    if (e.currentTarget) {
+      e.currentTarget.style.backgroundColor = theme.colors.overlay.white20;
+    }
+  }, [theme.colors.overlay.white20]);
+
   return (
     <motion.div
       className={`absolute top-6 left-6 ${className}`}
       style={{ zIndex: theme.zIndex.fixed }}
-      initial={{ opacity: 0 }}
+      initial={false}
       animate={{ opacity: 1 }}
       transition={{ duration: config.durations.medium, ease: config.easings.easeOut }}
     >
@@ -25,16 +37,8 @@ const BackButton = ({ onClick, className = '' }) => {
           backgroundColor: theme.colors.overlay.white20,
           borderColor: theme.colors.overlay.black10,
         }}
-        onMouseEnter={(e) => {
-          if (e.currentTarget) {
-            e.currentTarget.style.backgroundColor = theme.colors.overlay.white30;
-          }
-        }}
-        onMouseLeave={(e) => {
-          if (e.currentTarget) {
-            e.currentTarget.style.backgroundColor = theme.colors.overlay.white20;
-          }
-        }}
+        onMouseEnter={handleMouseEnter}
+        onMouseLeave={handleMouseLeave}
       >
         <ArrowLeft size={theme.sizes.icon.md} />
       </FramerButton>
@@ -42,4 +46,4 @@ const BackButton = ({ onClick, className = '' }) => {
   );
 };
 
-export default BackButton;
+export default memo(BackButton);
