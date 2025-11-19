@@ -1,5 +1,4 @@
 import React, { useMemo, memo } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
 import { FramerSection } from '@components';
 import CircularProgress from '@features/audio/components/CircularProgress';
 import CurrentTimeDisplay from '@features/audio/components/CurrentTimeDisplay';
@@ -72,18 +71,12 @@ const PreparationSection = ({
 
           {/* Odpočítávání v centru - stejná struktura jako Play/Pause tlačítko na obrazovce dýchání */}
           <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-            <AnimatePresence mode="wait">
-              <motion.div
-                key={preparationCountdown}
-                className="text-6xl font-light text-black"
-                initial={{ opacity: 0, scale: 0.8 }}
-                animate={{ opacity: 1, scale: 1 }}
-                exit={{ opacity: 0, scale: 0.8 }}
-                transition={{ duration: 0.2 }}
-              >
-                {preparationCountdown}
-              </motion.div>
-            </AnimatePresence>
+            <span
+              className="text-6xl font-light text-black"
+              style={{ transition: 'opacity 0.1s ease-in-out' }}
+            >
+              {preparationCountdown}
+            </span>
           </div>
         </div>
       </div>

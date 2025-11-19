@@ -1,4 +1,5 @@
 import { useEffect } from 'react';
+import { startTransition } from 'react';
 
 /**
  * Hook pro timer přípravy - odpočítávání času a spuštění dýchání po dokončení
@@ -30,15 +31,15 @@ export const usePreparationTimer = (
         setPreparationCountdown(prev => {
           const newCountdown = prev - 1;
           if (newCountdown <= 0) {
-            // Po dokončení přípravy spusť dýchání - použij setTimeout, aby se to nestalo během renderu
-            setTimeout(() => {
+            // Po dokončení přípravy spusť dýchání - použij startTransition pro batchování změn
+            startTransition(() => {
               setIsPreparing(false);
               if (breathTime <= 0) {
                 const newTime = breathDuration * 60;
                 setBreathTime(newTime);
               }
               setIsBreathing(true);
-            }, 0);
+            });
             return 0;
           }
           return newCountdown;
