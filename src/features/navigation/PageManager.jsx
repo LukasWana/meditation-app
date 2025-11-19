@@ -498,10 +498,123 @@ const PageManager = ({
     return { ...breathScreenProps, breathTime, preparationCountdown };
   }, [breathScreenProps, breathTime, preparationCountdown]);
 
+  // Memoizovat props pro 'dychani' screen - ignorovat změny time
+  // protože se mění každou sekundu a způsobuje zbytečný re-render celého PageManager
+  const dychaniScreenProps = useMemo(() => {
+    const config = SCREEN_REGISTRY['dychani'];
+    if (!config) return {};
+
+    const props = {};
+
+    // Mapování props podle konfigurace (bez time, to přidáme později)
+    config.props.forEach(propName => {
+      switch (propName) {
+        case 'time':
+          // Ignoruj time v dependencies - přidáme ho později
+          break;
+        case 'onNavigateToScreen':
+          props.onNavigateToScreen = onNavigateToScreen;
+          break;
+        case 'onTouchStart':
+          props.onTouchStart = onTouchStart;
+          break;
+        case 'onTouchMove':
+          props.onTouchMove = onTouchMove;
+          break;
+        case 'onTouchEnd':
+          props.onTouchEnd = onTouchEnd;
+          break;
+        case 'selectedDuration':
+          props.selectedDuration = selectedDuration;
+          break;
+        case 'isPlaying':
+          props.isPlaying = isPlaying;
+          break;
+        case 'onDurationChange':
+          props.onDurationChange = onDurationChange;
+          break;
+        case 'onPlayPause':
+          props.onPlayPause = onPlayPause;
+          break;
+        case 'onReset':
+          props.onReset = onReset;
+          break;
+        case 'breathPhase':
+          props.breathPhase = breathPhase;
+          break;
+        case 'breathInDuration':
+          props.breathInDuration = breathInDuration;
+          break;
+        case 'breathOutDuration':
+          props.breathOutDuration = breathOutDuration;
+          break;
+        case 'breathInSound':
+          props.breathInSound = breathInSound;
+          break;
+        case 'breathOutSound':
+          props.breathOutSound = breathOutSound;
+          break;
+        case 'breathClickSound':
+          props.breathClickSound = breathClickSound;
+          break;
+        case 'breathFinalSound':
+          props.breathFinalSound = breathFinalSound;
+          break;
+        case 'breathCountdownSound':
+          props.breathCountdownSound = breathCountdownSound;
+          break;
+        case 'breathSoundFadeEnabled':
+          props.breathSoundFadeEnabled = breathSoundFadeEnabled;
+          break;
+        case 'onBreathSoundChange':
+          props.onBreathSoundChange = onBreathSoundChange;
+          break;
+        case 'onBreathRhythmChange':
+          props.onBreathRhythmChange = onBreathRhythmChange;
+          break;
+        case 'preparationTime':
+          props.preparationTime = preparationTime;
+          break;
+        case 'onPreparationTimeChange':
+          props.onPreparationTimeChange = onPreparationTimeChange;
+          break;
+        case 'isPreparing':
+          props.isPreparing = isPreparing;
+          break;
+        case 'preparationCountdown':
+          props.preparationCountdown = preparationCountdown;
+          break;
+        default:
+          break;
+      }
+    });
+
+    return props;
+  }, [
+    // Ignorujeme 'time' v dependencies - přidáme ho později v dychaniScreenPropsWithTime
+    onNavigateToScreen, onTouchStart, onTouchMove, onTouchEnd,
+    selectedDuration, isPlaying, onDurationChange, onPlayPause, onReset,
+    breathPhase, breathInDuration, breathOutDuration,
+    breathInSound, breathOutSound, breathClickSound, breathFinalSound, breathCountdownSound,
+    breathSoundFadeEnabled, onBreathSoundChange, onBreathRhythmChange,
+    preparationTime, onPreparationTimeChange, isPreparing, preparationCountdown
+  ]);
+
+  // Vytvoř finální props objekt s time hodnotou
+  const dychaniScreenPropsWithTime = useMemo(() => {
+    return { ...dychaniScreenProps, time };
+  }, [dychaniScreenProps, time]);
+
+
   const getScreenProps = useCallback((screenKey) => {
     // Pro 'breath' screen použij memoizované props s časem
     if (screenKey === 'breath') {
       return breathScreenPropsWithTime; // Použít memoizovaný objekt místo vytváření nového
+    }
+
+    // Pro 'dychani' screen použij memoizované props s časem
+    if (screenKey === 'dychani') {
+      return dychaniScreenPropsWithTime;
     }
 
     const config = SCREEN_REGISTRY[screenKey];
@@ -687,14 +800,15 @@ const PageManager = ({
     return props;
   }, [
     // Pro ostatní screens použijeme všechny dependencies
+    // POZNÁMKA: time je ODSTRANĚNO z dependencies protože je teď součástí dychaniScreenPropsWithTime
     onNavigateToScreen, onTouchStart, onTouchMove, onTouchEnd,
-    gender, onPlayerStateChange, onGenderChange, time, selectedDuration, isPlaying,
+    gender, onPlayerStateChange, onGenderChange, selectedDuration, isPlaying,
     onDurationChange, onPlayPause, onReset, breathPhase, setBreathPhase, breathInDuration, breathOutDuration, breathInSound, breathOutSound, breathClickSound, breathFinalSound, breathCountdownSound, breathSoundFadeEnabled, onBreathRhythmChange,
     preparationTime, onPreparationTimeChange, onBreathSoundChange, onBreathSoundFadeChange,
     isPreparing, preparationCountdown,
     breathDuration, breathTime, setBreathTime, isBreathing, setIsBreathing, onBreathDurationChange,
     activeAudio, onCloseAudio, selectedAlbum, onAlbumSelect, onAlbumClose,
-    currentScreen, breathScreenPropsWithTime // Změna: použít breathScreenPropsWithTime místo breathScreenProps
+    currentScreen, breathScreenPropsWithTime, dychaniScreenPropsWithTime // Přidány memoizované props
   ]);
 
   // Renderování stránky
@@ -704,37 +818,42 @@ const PageManager = ({
       return null;
     }
 
-    // Diagnostika pro dychani sekci
-    if (currentScreen === 'dychani') {
-      console.log('🔍 Rendering dychani screen:', {
-        component: currentScreenConfig.component,
-        hasProps: !!getScreenProps,
-        config: currentScreenConfig
-      });
-    }
+    // Diagnostika pro dychani sekci - ZAKOMENTOVÁNO (způsobovalo matoucí logy)
+    // if (currentScreen === 'dychani') {
+    //   console.log('🔍 Rendering dychani screen:', {
+    //     component: currentScreenConfig.component,
+    //     hasProps: !!getScreenProps,
+    //     config: currentScreenConfig
+    //   });
+    // }
 
     const Component = currentScreenConfig.component;
     const props = getScreenProps(currentScreen);
 
-    // Diagnostika props pro dychani
-    if (currentScreen === 'dychani') {
-      console.log('🔍 Dychani props:', Object.keys(props || {}));
-    }
+    // Diagnostika props pro dychani - ZAKOMENTOVÁNO
+    // if (currentScreen === 'dychani') {
+    //   console.log('🔍 Dychani props:', Object.keys(props || {}));
+    // }
 
     const transition = currentScreenConfig.transition;
     const variants = getTransitionVariants(); // Všechny přechody jsou fade
 
+    // Pro obrazovky 'breath' a 'dychani' deaktivujeme animace - mají vlastní logiku pro přepínání sekcí
+    // aby se předešlo konfliktům a blikání pozadí při změnách breathPhase
+    const isBreathScreen = currentScreen === 'breath' || currentScreen === 'dychani';
+
     // Všechny přechody jsou jen fade (prolnutí) bez pohybu
     const transitionConfig = {
-      duration: transition.duration || 0.3,
+      duration: isBreathScreen ? 0 : (transition.duration || 0.3), // Instant transition pro breath screen
       ease: [0.4, 0, 0.2, 1]
     };
 
     // Loading fallback pro Suspense
     const SuspenseFallback = () => {
-      if (currentScreen === 'dychani') {
-        console.log('⏳ Loading dychani screen...');
-      }
+      // Debug log zakomentován - způsoboval matoucí logy
+      // if (currentScreen === 'dychani') {
+      //   console.log('⏳ Loading dychani screen...');
+      // }
       return (
         <div className="flex items-center justify-center h-full min-h-[400px]">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-gray-600"></div>
@@ -745,10 +864,11 @@ const PageManager = ({
     // Error boundary pro lazy loaded komponenty
     const LazyComponentWrapper = ({ Component, props }) => {
       React.useEffect(() => {
-        if (currentScreen === 'dychani') {
-          console.log('✅ Dychani component loaded successfully');
-        }
-      }, [currentScreen]);
+        // Debug log zakomentován
+        // if (currentScreen === 'dychani') {
+        //   console.log('✅ Dychani component loaded successfully');
+        // }
+      }, []);
 
       if (!Component) {
         console.error(`❌ Component is null for screen '${currentScreen}'`);
@@ -792,14 +912,13 @@ const PageManager = ({
     const screenElement = (
       <motion.div
         key={currentScreen}
-        initial="initial"
-        animate="in"
-        exit="out"
+        initial={isBreathScreen ? false : "initial"} // Deaktivovat initial animaci pro breath screen
+        animate={isBreathScreen ? false : "in"} // Deaktivovat animate pro breath screen
+        exit={isBreathScreen ? false : "out"} // Deaktivovat exit animaci pro breath screen
         variants={variants}
         transition={transitionConfig}
-        className={`w-full max-w-full overflow-x-hidden ${
-          currentScreen === 'home' ? 'h-screen overflow-hidden' : 'h-full'
-        }`}
+        className={`w-full max-w-full overflow-x-hidden ${currentScreen === 'home' ? 'h-screen overflow-hidden' : 'h-full'
+          }`}
         style={currentScreen === 'home' ? { height: '100dvh', maxHeight: '100dvh' } : {}}
       >
         <Suspense fallback={<SuspenseFallback />}>
@@ -835,4 +954,44 @@ const PageManager = ({
   );
 };
 
-export default PageManager;
+// Memoizovat PageManager s custom comparison funkcí
+// Tato funkce určuje, kdy se má PageManager re-renderovat
+export default React.memo(PageManager, (prevProps, nextProps) => {
+  // Seznam props, které by měly vyvolat re-render když se změní
+  const criticalProps = [
+    'currentScreen',
+    'gender',
+    'voicePreference',
+    'isPlayerActive',
+    'selectedDuration',
+    'isPlaying',
+    'breathPhase',
+    'breathInDuration',
+    'breathOutDuration',
+    'preparationTime',
+    'breathInSound',
+    'breathOutSound',
+    'breathClickSound',
+    'breathFinalSound',
+    'breathCountdownSound',
+    'breathSoundFadeEnabled',
+    'isPreparing',
+    // preparationCountdown - VYNECHÁNO (mění se každou vteřinu)
+    'breathDuration',
+    // breathTime - VYNECHÁNO (mění se každou vteřinu)
+    'isBreathing',
+    'selectedAlbum'
+  ];
+
+  // Porovnej pouze kritické props
+  // Pokud se některý změnil, vrať false (provést re-render)
+  for (const prop of criticalProps) {
+    if (prevProps[prop] !== nextProps[prop]) {
+      return false; // Props se změnil, provést re-render
+    }
+  }
+
+  // Všechny kritické props jsou stejné, NEPROVÁDĚT re-render
+  // Poznámka: 'time' není v seznamu, takže jeho změny nezpůsobí re-render
+  return true;
+});
