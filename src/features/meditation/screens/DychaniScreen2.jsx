@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useMemo } from 'react';
+import React, { useState, useCallback, useMemo, useRef, useEffect, startTransition } from 'react';
 import { BackButton, BackgroundShader } from '@components';
 import { useLanguage } from '@contexts/LanguageContext';
 import { useShaderSettings } from '@contexts/ShaderSettingsContext';
@@ -40,10 +40,32 @@ const DychaniScreen2 = ({
 }) => {
   const { t } = useLanguage();
   const theme = useTheme();
-  const { getShaderForSection } = useShaderSettings();
+  const { getShaderForSection, getColorForSection } = useShaderSettings();
 
-  // Memoizovat backgroundColor, aby se nevytvářel nový objekt při každém renderu
-  const backgroundColor = useMemo(() => theme.colors.background, [theme.colors.background]);
+  // Stabilizovat backgroundColor pomocí useRef - zabrání překreslování při změnách stavu
+  // backgroundColor se změní pouze když se skutečně změní barva sekce, ne při každém renderu
+  const backgroundColorRef = useRef(null);
+  const currentSectionColor = getColorForSection('dychani');
+  const fallbackColor = theme.colors.background;
+  const targetColor = currentSectionColor || fallbackColor;
+
+  // Inicializuj ref při prvním renderu
+  useEffect(() => {
+    if (backgroundColorRef.current === null) {
+      backgroundColorRef.current = targetColor;
+    }
+  }, []);
+
+  // Aktualizuj pouze když se skutečně změní barva
+  useEffect(() => {
+    if (backgroundColorRef.current !== targetColor) {
+      backgroundColorRef.current = targetColor;
+    }
+  }, [targetColor]);
+
+  // Použij ref hodnotu pro stabilní backgroundColor
+  const backgroundColor = backgroundColorRef.current || targetColor;
+
   const [showPreparationPicker, setShowPreparationPicker] = useState(false);
   const [showDurationPicker, setShowDurationPicker] = useState(false);
   const [showRhythmPicker, setShowRhythmPicker] = useState(false);
@@ -55,6 +77,30 @@ const DychaniScreen2 = ({
   // Pro DychaniScreen2 vždy používáme lokální state (protože globální state z useAppState je pro meditaci)
   const currentIsPreparing = localIsPreparing;
   const currentPreparationCountdown = localPreparationCountdown;
+
+  // Stabilizovat opacity BackgroundShader pomocí debounced state pro prevenci blikání
+  const [shaderOpacity, setShaderOpacity] = useState(0.0);
+  const shaderOpacityTimeoutRef = useRef(null);
+
+  useEffect(() => {
+    const targetOpacity = isBreathing && !currentIsPreparing ? 0.6 : 0.0;
+
+    // Vyčisti předchozí timeout
+    if (shaderOpacityTimeoutRef.current) {
+      clearTimeout(shaderOpacityTimeoutRef.current);
+    }
+
+    // Debounce změny opacity - minimálně 100ms zpoždění pro prevenci blikání
+    shaderOpacityTimeoutRef.current = setTimeout(() => {
+      setShaderOpacity(targetOpacity);
+    }, 100);
+
+    return () => {
+      if (shaderOpacityTimeoutRef.current) {
+        clearTimeout(shaderOpacityTimeoutRef.current);
+      }
+    };
+  }, [isBreathing, currentIsPreparing]);
 
   // Použij hook pro přehrávání zvuků dýchání
   useDychaniSounds(
@@ -114,32 +160,41 @@ const DychaniScreen2 = ({
         clearTimeout(completionTimeoutRef.current);
         completionTimeoutRef.current = null;
       }
-      setIsBreathing(false);
-      setLocalIsPreparing(false);
-      setLocalPreparationCountdown(0);
+      // Batchovat state změny pomocí startTransition
+      startTransition(() => {
+        setIsBreathing(false);
+        setLocalIsPreparing(false);
+        setLocalPreparationCountdown(0);
+      });
       return;
     }
 
     // Pokud probíhá příprava, zastav ji
     if (currentIsPreparing) {
-      setLocalIsPreparing(false);
-      setLocalPreparationCountdown(0);
+      startTransition(() => {
+        setLocalIsPreparing(false);
+        setLocalPreparationCountdown(0);
+      });
       return;
     }
 
     // Pokud je nastaven čas přípravy a dýchání neprobíhá, spusť přípravu
     if (preparationTime > 0 && !isBreathing && !currentIsPreparing) {
-      setLocalIsPreparing(true);
-      setLocalPreparationCountdown(preparationTime);
+      startTransition(() => {
+        setLocalIsPreparing(true);
+        setLocalPreparationCountdown(preparationTime);
+      });
       return;
     }
 
     // Jinak spusť dýchání přímo (pokud není příprava nebo je preparationTime 0)
-    if (breathTime <= 0) {
-      const newTime = breathDuration * 60;
-      setBreathTime(newTime);
-    }
-    setIsBreathing(true);
+    startTransition(() => {
+      if (breathTime <= 0) {
+        const newTime = breathDuration * 60;
+        setBreathTime(newTime);
+      }
+      setIsBreathing(true);
+    });
   }, [isBreathing, currentIsPreparing, preparationTime, breathTime, breathDuration, waitingForCycleCompletionRef, completionTimeoutRef, setIsBreathing, setBreathTime]);
 
 
@@ -213,17 +268,23 @@ const DychaniScreen2 = ({
           right: 0,
           bottom: '-20px',
           height: 'calc(100dvh + 20px)',
-          backgroundColor: backgroundColor
+          backgroundColor: backgroundColor,
+          transform: 'translateZ(0)',
+          backfaceVisibility: 'hidden',
+          WebkitBackfaceVisibility: 'hidden',
+          contain: 'layout style paint',
+          isolation: 'isolate'
         }}
       />
 
       {/* BackgroundShader - zobraz pouze při dýchání s plynulým prolnutím */}
+      {/* Stabilizujeme opacity pomocí debounced state pro prevenci blikání */}
       <BackgroundShader
         variant={getShaderForSection('dychani')}
         intensity={0.4}
         enabled={true}
-        opacity={isBreathing ? 0.6 : 0.0}
-        breathPhase={isBreathing ? breathPhase : null}
+        opacity={shaderOpacity}
+        breathPhase={isBreathing && !currentIsPreparing ? breathPhase : null}
         breathInDuration={breathInDuration}
         breathOutDuration={breathOutDuration}
         zIndex={2}
@@ -232,7 +293,14 @@ const DychaniScreen2 = ({
       {/* Hlavní obsah */}
       <div
         className="min-h-screen w-full max-w-full flex flex-col items-center justify-start px-4 sm:px-6 pb-16 pt-12 overflow-x-hidden overflow-y-auto"
-        style={{ position: 'relative', zIndex: 10, backgroundColor: backgroundColor }}
+        style={{
+          position: 'relative',
+          zIndex: 10,
+          backgroundColor: 'transparent',
+          transform: 'translateZ(0)',
+          backfaceVisibility: 'hidden',
+          WebkitBackfaceVisibility: 'hidden'
+        }}
         onTouchStart={onTouchStart}
         onTouchMove={onTouchMove}
         onTouchEnd={onTouchEnd}
@@ -240,45 +308,60 @@ const DychaniScreen2 = ({
         <BackButton onClick={() => onNavigateToScreen('home')} />
 
         <div className="w-full max-w-md mt-12 md:mt-16 pb-10 relative flex flex-col items-stretch">
-          {/* Sekce přípravy */}
-          {currentIsPreparing && (
-            <PreparationSection
-              key="preparation-section"
-              preparationCountdown={currentPreparationCountdown}
-              preparationTime={preparationTime}
-              onStop={handlePlayPause}
-              onGalleryClick={handleGalleryClick}
-              onProfilesClick={handleProfilesClick}
-              formatTime={formatTime}
-              t={t}
-            />
-          )}
+          {/* Sekce přípravy a dýchání s okamžitým přepnutím - bez transition pro prevenci blikání */}
+          <div className="relative" style={{ width: '100%', minHeight: '600px', willChange: 'opacity', contain: 'layout style paint', isolation: 'isolate' }}>
+            <div
+              className="absolute inset-0"
+              style={{
+                opacity: currentIsPreparing ? 1 : 0,
+                pointerEvents: currentIsPreparing ? 'auto' : 'none',
+                zIndex: currentIsPreparing ? 2 : 1,
+                visibility: currentIsPreparing ? 'visible' : 'hidden'
+              }}
+            >
+              <PreparationSection
+                preparationCountdown={currentPreparationCountdown}
+                preparationTime={preparationTime}
+                onStop={handlePlayPause}
+                onGalleryClick={handleGalleryClick}
+                onProfilesClick={handleProfilesClick}
+                formatTime={formatTime}
+                t={t}
+              />
+            </div>
 
-          {/* Sekce dýchání */}
-          {!currentIsPreparing && (
-            <DychaniSection
-              key="breathing-section"
-              isBreathing={isBreathing}
-              breathPhase={breathPhase}
-              breathTime={breathTime}
-              totalTime={totalTime}
-              progress={progress}
-              preparationTime={preparationTime}
-              breathDuration={breathDuration}
-              breathInDuration={breathInDuration}
-              breathOutDuration={breathOutDuration}
-              onPlayPause={handlePlayPause}
-              onReset={handleReset}
-              onPreparationClick={handlePreparationClick}
-              onDurationClick={handleDurationClick}
-              onRhythmClick={handleRhythmClick}
-              onGalleryClick={handleGalleryClick}
-              onProfilesClick={handleProfilesClick}
-              formatTime={formatTime}
-              formatPreparationTime={formatPreparationTime}
-              t={t}
-            />
-          )}
+            <div
+              className="absolute inset-0"
+              style={{
+                opacity: !currentIsPreparing ? 1 : 0,
+                pointerEvents: !currentIsPreparing ? 'auto' : 'none',
+                zIndex: !currentIsPreparing ? 2 : 1,
+                visibility: !currentIsPreparing ? 'visible' : 'hidden'
+              }}
+            >
+              <DychaniSection
+                isBreathing={isBreathing}
+                breathPhase={breathPhase}
+                breathTime={breathTime}
+                totalTime={totalTime}
+                progress={progress}
+                preparationTime={preparationTime}
+                breathDuration={breathDuration}
+                breathInDuration={breathInDuration}
+                breathOutDuration={breathOutDuration}
+                onPlayPause={handlePlayPause}
+                onReset={handleReset}
+                onPreparationClick={handlePreparationClick}
+                onDurationClick={handleDurationClick}
+                onRhythmClick={handleRhythmClick}
+                onGalleryClick={handleGalleryClick}
+                onProfilesClick={handleProfilesClick}
+                formatTime={formatTime}
+                formatPreparationTime={formatPreparationTime}
+                t={t}
+              />
+            </div>
+          </div>
         </div>
 
         {/* Modaly */}
