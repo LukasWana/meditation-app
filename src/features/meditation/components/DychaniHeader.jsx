@@ -1,5 +1,4 @@
 import React, { memo } from 'react';
-import { AnimatePresence, motion } from 'framer-motion';
 import CurrentTimeDisplay from '@features/audio/components/CurrentTimeDisplay';
 
 /**
@@ -34,20 +33,14 @@ const DychaniHeader = ({
           formatTime={formatTime}
           className="text-2xl font-medium text-gray-900"
         />
-        <AnimatePresence mode="wait">
-          {phaseLabel && (
-            <motion.span
-              key={phaseLabel}
-              className="text-sm uppercase tracking-[0.3em] text-gray-500"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              transition={{ duration: 0.2 }}
-            >
-              {phaseLabel}
-            </motion.span>
-          )}
-        </AnimatePresence>
+        {phaseLabel && (
+          <span
+            className="text-sm uppercase tracking-[0.3em] text-gray-500 transition-opacity duration-200 ease-in-out"
+            style={{ opacity: phaseLabel ? 1 : 0 }}
+          >
+            {phaseLabel}
+          </span>
+        )}
       </div>
     </div>
   );

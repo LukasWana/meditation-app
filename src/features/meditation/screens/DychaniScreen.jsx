@@ -220,11 +220,12 @@ const DychaniScreen = ({
   }, [colorOverride]);
 
   // Použij useMemo pro overlayAlpha, aby se nepřepočítávalo při každém renderu
+  // ODSTRANĚNO isPlaying z dependencies - způsobovalo blikání při play/pause
   const overlayAlpha = useMemo(() => {
     return blendMode === 'normal'
-      ? (isPlaying ? 0.45 : 0.55)
+      ? 0.5  // Střední hodnota místo přepínání mezi 0.45 a 0.55 - zabraňuje blikání
       : 0.6;
-  }, [blendMode, isPlaying]);
+  }, [blendMode]);
 
   const overlayBackground = useMemo(() => {
     return hexToRgba(baseBackgroundColor, overlayAlpha);
@@ -510,4 +511,5 @@ const DychaniScreen = ({
   );
 };
 
-export default DychaniScreen;
+// Memoizovat komponentu pro prevenci zbytečných re-renderů při změně breathPhase
+export default React.memo(DychaniScreen);

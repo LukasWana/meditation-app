@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { memo } from 'react';
 import CircularProgress from '@features/audio/components/CircularProgress';
 import PlayPauseButton from '@features/audio/components/PlayPauseButton';
 import DychaniAnimation from './DychaniAnimation';
@@ -52,5 +52,5 @@ const DychaniProgressCircle = ({
   );
 };
 
-export default DychaniProgressCircle;
+export default memo(DychaniProgressCircle);
 

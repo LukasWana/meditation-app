@@ -16,6 +16,17 @@ const FramerPageTransition = ({
   // Pokud jsou animace deaktivovány, použij instant transition
   const finalTransition = isActive ? transition : { duration: 0 };
 
+  // Pro dýchací obrazovku deaktivuj AnimatePresence a animace - zabraňuje blikání při změně breathPhase
+  const isDychaniScreen = screenKey === 'dychani';
+
+  if (isDychaniScreen) {
+    return (
+      <div className="w-full h-full max-w-full overflow-x-hidden">
+        {children}
+      </div>
+    );
+  }
+
   return (
     <AnimatePresence mode="wait">
       <motion.div

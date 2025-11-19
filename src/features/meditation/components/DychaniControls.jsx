@@ -32,5 +32,5 @@ const DychaniControls = ({
   );
 };
 
-export default DychaniControls;
+export default React.memo(DychaniControls);
 

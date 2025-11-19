@@ -46,7 +46,6 @@ const DychaniTimer = ({
         {/* Textový indikátor fáze dýchání */}
         {isPlaying && (
           <motion.p
-            key={breathPhase}
             className="text-2xl font-light"
             style={{
               color: typeof colors.secondary === 'string' && colors.secondary.startsWith('text-')
@@ -54,10 +53,8 @@ const DychaniTimer = ({
                 : colors.secondary || theme.colors.gray[700],
               fontWeight: theme.typography.fontWeight.light
             }}
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -10 }}
-            transition={{ duration: 0.3 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 0.15, ease: 'easeOut' }}
           >
             {breathPhase === 'in' ? t('nadech') : t('vydech')}
           </motion.p>
@@ -203,5 +200,5 @@ export const DychaniTimeDisplay = ({ time, textColors }) => {
   );
 };
 
-export default DychaniTimer;
+export default React.memo(DychaniTimer);
 

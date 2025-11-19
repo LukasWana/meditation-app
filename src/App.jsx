@@ -33,7 +33,6 @@ export default function App() {
 
 // Meditační aplikace
 function MeditationApp() {
-  const theme = useTheme();
   // Intro state
   const [showIntro, setShowIntro] = useState(true);
 
@@ -271,7 +270,7 @@ function MeditationApp() {
                 <AudioAnalysisProvider>
                 <div
                   className="min-h-screen w-full overflow-x-hidden relative"
-                  style={{ backgroundColor: theme.colors.background }}
+                  style={{ backgroundColor: 'transparent' }}
                 >
       {/* Intro animace s písmem "Meditácia" */}
       {showIntro && (
