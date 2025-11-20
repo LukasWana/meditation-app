@@ -22,7 +22,7 @@ const DychaniProgressCircle = ({
   onPlayPause
 }) => {
   return (
-    <div className="relative flex-shrink-0" style={{ isolation: 'isolate' }}>
+    <div className="relative flex-shrink-0" style={{ isolation: 'isolate', pointerEvents: 'none' }}>
       {/* Dýchací animace během dýchání - pod kruhem a tlačítkem, pod shaderem */}
       <DychaniAnimation
         isBreathing={isBreathing}

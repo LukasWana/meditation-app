@@ -21,27 +21,66 @@ const DychaniActionButtons = ({
       className="flex justify-center gap-5 md:gap-8"
       animationType="fadeIn"
       delay={0.35}
+      style={{ position: 'relative', zIndex: 100, pointerEvents: 'auto' }}
     >
       <button
-        onClick={onReset}
-        className="w-16 h-16 md:w-20 md:h-20 rounded-full bg-white border border-black/10 flex items-center justify-center shadow-sm hover:shadow-md transition-all cursor-pointer"
+        onClick={(e) => {
+          e.stopPropagation();
+          e.preventDefault();
+          if (onReset) {
+            onReset();
+          }
+        }}
+        onMouseDown={(e) => {
+          // Záložní handler pro případ, že onClick nefunguje kvůli překrývání
+          e.stopPropagation();
+          e.preventDefault();
+          if (onReset) {
+            onReset();
+          }
+        }}
+        onTouchStart={(e) => {
+          // Handler pro touch zařízení
+          e.stopPropagation();
+          e.preventDefault();
+          if (onReset) {
+            onReset();
+          }
+        }}
+        className="w-16 h-16 md:w-20 md:h-20 rounded-full bg-white border border-black/10 flex items-center justify-center shadow-sm hover:shadow-md transition-all cursor-pointer active:scale-95"
         title={t('reset') || 'Reset'}
+        style={{ position: 'relative', zIndex: 101, pointerEvents: 'auto', touchAction: 'manipulation' }}
+        type="button"
       >
-        <RotateCcw size={24} className="text-gray-800" />
+        <RotateCcw size={24} className="text-gray-800" style={{ pointerEvents: 'none' }} />
       </button>
 
       <button
-        onClick={onGalleryClick}
+        onClick={(e) => {
+          e.stopPropagation();
+          e.preventDefault();
+          if (onGalleryClick) {
+            onGalleryClick();
+          }
+        }}
         className="w-16 h-16 md:w-20 md:h-20 rounded-full bg-white border border-black/10 flex items-center justify-center shadow-sm hover:shadow-md transition-all cursor-pointer"
         title={t('zvukovaGalerie') || 'Zvuková galerie'}
+        style={{ position: 'relative', zIndex: 101, pointerEvents: 'auto' }}
       >
         <Music2 size={24} className="text-gray-800" />
       </button>
 
       <button
-        onClick={onProfilesClick}
+        onClick={(e) => {
+          e.stopPropagation();
+          e.preventDefault();
+          if (onProfilesClick) {
+            onProfilesClick();
+          }
+        }}
         className="w-16 h-16 md:w-20 md:h-20 rounded-full bg-white border border-black/10 flex items-center justify-center shadow-sm hover:shadow-md transition-all cursor-pointer"
         title={t('profilyDychani') || 'Profily dýchání'}
+        style={{ position: 'relative', zIndex: 101, pointerEvents: 'auto' }}
       >
         <Bookmark size={24} className="text-gray-800" />
       </button>

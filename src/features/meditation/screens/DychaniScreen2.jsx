@@ -11,6 +11,7 @@ import { useDychaniTimer } from '@hooks/useDychaniTimer';
 import { usePreparationTimer } from '@hooks/usePreparationTimer';
 import PreparationSection from '@features/meditation/components/PreparationSection';
 import DychaniSection from '@features/meditation/components/DychaniSection';
+import DychaniActionButtons from '@features/meditation/components/DychaniActionButtons';
 import DychaniModals from '@features/meditation/components/DychaniModals';
 
 const DychaniScreen2 = ({
@@ -198,11 +199,25 @@ const DychaniScreen2 = ({
   }, [isBreathing, currentIsPreparing, preparationTime, breathTime, breathDuration, waitingForCycleCompletionRef, completionTimeoutRef, setIsBreathing, setBreathTime]);
 
 
-  // Handler pro reset
+  // Handler pro reset - resetuje vše na výchozí hodnoty
   const handleReset = useCallback(() => {
-    setIsBreathing(false);
-    setBreathTime(breathDuration * 60);
-  }, [breathDuration, setIsBreathing, setBreathTime]);
+    // Vyčisti timeout a flagy, pokud čekáme na dokončení cyklu
+    if (waitingForCycleCompletionRef?.current) {
+      waitingForCycleCompletionRef.current = false;
+    }
+    if (completionTimeoutRef?.current) {
+      clearTimeout(completionTimeoutRef.current);
+      completionTimeoutRef.current = null;
+    }
+    // Batchovat state změny pomocí startTransition
+    startTransition(() => {
+      setIsBreathing(false);
+      setLocalIsPreparing(false);
+      setLocalPreparationCountdown(0);
+      setBreathTime(breathDuration * 60); // Resetovat čas na výchozí hodnotu (breathDuration v minutách * 60)
+      setBreathPhase('in'); // Resetovat fázi na nádech
+    });
+  }, [breathDuration, setIsBreathing, setBreathTime, setBreathPhase, waitingForCycleCompletionRef, completionTimeoutRef]);
 
   // Vypočítat progress pro CircularProgress (0-100)
   const totalTime = useMemo(() => breathDuration * 60, [breathDuration]); // v sekundách
@@ -309,7 +324,7 @@ const DychaniScreen2 = ({
 
         <div className="w-full max-w-md mt-12 md:mt-16 pb-10 relative flex flex-col items-stretch">
           {/* Sekce přípravy a dýchání s okamžitým přepnutím - bez transition pro prevenci blikání */}
-          <div className="relative" style={{ width: '100%', minHeight: '600px', willChange: 'opacity', contain: 'layout style paint', isolation: 'isolate' }}>
+          <div className="relative" style={{ width: '100%', minHeight: '600px', willChange: 'opacity', contain: 'layout style paint' }}>
             <div
               className="absolute inset-0"
               style={{
@@ -361,6 +376,16 @@ const DychaniScreen2 = ({
                 t={t}
               />
             </div>
+          </div>
+
+          {/* Reset tlačítko, tlačítko pro zvukovou galerii a tlačítko pro profily - mimo absolutně pozicovaný kontejner */}
+          <div style={{ position: 'relative', zIndex: 200, pointerEvents: 'auto', marginTop: '1rem' }}>
+            <DychaniActionButtons
+              onReset={handleReset}
+              onGalleryClick={handleGalleryClick}
+              onProfilesClick={handleProfilesClick}
+              t={t}
+            />
           </div>
         </div>
 

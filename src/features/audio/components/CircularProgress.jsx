@@ -173,14 +173,21 @@ const CircularProgress = ({
   return (
     <svg
       ref={svgRef}
-      className={`${className} transform -rotate-90 cursor-pointer select-none circular-element`}
+      className={`${className} transform -rotate-90 ${onSeek ? 'cursor-pointer' : ''} select-none circular-element`}
       onClick={handleClick}
       onMouseDown={handleMouseDown}
       onMouseMove={handleMouseMove}
       onMouseUp={handleMouseUp}
       onMouseLeave={handleMouseUp}
       viewBox="0 0 450 450"
-      style={{ aspectRatio: '1/1', userSelect: 'none', position: 'relative', zIndex: 10, isolation: 'isolate' }}
+      style={{
+        aspectRatio: '1/1',
+        userSelect: 'none',
+        position: 'relative',
+        zIndex: 10,
+        isolation: 'isolate',
+        pointerEvents: onSeek ? 'auto' : 'none'
+      }}
     >
       {/* Background Circle */}
       <circle
