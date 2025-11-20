@@ -2,7 +2,6 @@ import React, { memo, useMemo } from 'react';
 import DychaniHeader from './DychaniHeader';
 import DychaniProgressCircle from './DychaniProgressCircle';
 import DychaniParameters from './DychaniParameters';
-import DychaniActionButtons from './DychaniActionButtons';
 
 /**
  * Komponenta pro sekci dýchání
@@ -17,12 +16,9 @@ import DychaniActionButtons from './DychaniActionButtons';
  * @param {number} breathInDuration - Délka nádechu v sekundách
  * @param {number} breathOutDuration - Délka výdechu v sekundách
  * @param {Function} onPlayPause - Handler pro play/pause
- * @param {Function} onReset - Handler pro reset
  * @param {Function} onPreparationClick - Handler pro kliknutí na přípravu
  * @param {Function} onDurationClick - Handler pro kliknutí na délku
  * @param {Function} onRhythmClick - Handler pro kliknutí na rytmus
- * @param {Function} onGalleryClick - Handler pro otevření galerie
- * @param {Function} onProfilesClick - Handler pro otevření profilů
  * @param {Function} formatTime - Funkce pro formátování času
  * @param {Function} formatPreparationTime - Funkce pro formátování času přípravy
  * @param {Function} t - Funkce pro překlad
@@ -38,12 +34,9 @@ const DychaniSection = ({
   breathInDuration,
   breathOutDuration,
   onPlayPause,
-  onReset,
   onPreparationClick,
   onDurationClick,
   onRhythmClick,
-  onGalleryClick,
-  onProfilesClick,
   formatTime,
   formatPreparationTime,
   t
@@ -91,14 +84,6 @@ const DychaniSection = ({
         onRhythmClick={onRhythmClick}
         formatTime={formatTime}
         formatPreparationTime={formatPreparationTime}
-        t={t}
-      />
-
-      {/* Reset tlačítko, tlačítko pro zvukovou galerii a tlačítko pro profily */}
-      <DychaniActionButtons
-        onReset={onReset}
-        onGalleryClick={onGalleryClick}
-        onProfilesClick={onProfilesClick}
         t={t}
       />
     </div>

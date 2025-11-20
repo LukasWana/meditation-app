@@ -13,10 +13,10 @@ export const useShaderSettings = () => {
 export const ShaderSettingsProvider = ({ children }) => {
   // Výchozí shader nastavení pro všechny sekce
   const defaultShaderSettings = {
-    meditace: 'meditace',
-    dychani: 'dychani',
-    hudba: 'hudba',
-    settings: 'settings'
+    meditace: 'shader-HappyAccident',
+    dychani: 'shader-UltimateFlame',
+    hudba: 'shader-WindowsTerminal',
+    settings: 'shader-RainbowShroom'
   };
 
   const [shaderSettings, setShaderSettings] = useState(() => {
@@ -64,10 +64,10 @@ export const ShaderSettingsProvider = ({ children }) => {
   // Barvy pro každou sekci (místo shaderu)
   // Výchozí barvy pro každou sekci
   const defaultColors = {
-    meditace: '#f4ddc4',
-    hudba: '#f4ddc4',
-    dychani: '#f4ddc4',
-    settings: '#f4ddc4'
+    meditace: '#5c8454',
+    hudba: '#eb9444',
+    dychani: '#6c5cd4',
+    settings: '#d4445c'
   };
 
   const [colorSettings, setColorSettings] = useState(() => {
@@ -88,16 +88,32 @@ export const ShaderSettingsProvider = ({ children }) => {
 
   // Výchozí overlay nastavení pro každou sekci
   const defaultOverlay = {
-    opacity: 0.75,
-    intensity: 0.8,
+    opacity: 0.5,
+    intensity: 1,
     blendMode: 'normal'
   };
 
   const defaultOverlays = {
-    meditace: { ...defaultOverlay },
-    hudba: { ...defaultOverlay },
-    dychani: { ...defaultOverlay },
-    settings: { ...defaultOverlay }
+    meditace: {
+      opacity: 0.5,
+      intensity: 1,
+      blendMode: 'normal'
+    },
+    hudba: {
+      opacity: 0.3,
+      intensity: 1,
+      blendMode: 'normal'
+    },
+    dychani: {
+      opacity: 0.5,
+      intensity: 1,
+      blendMode: 'normal'
+    },
+    settings: {
+      opacity: 0.5,
+      intensity: 0,
+      blendMode: 'normal'
+    }
   };
 
   const [overlaySettings, setOverlaySettings] = useState(() => {
