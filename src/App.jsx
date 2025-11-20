@@ -1,11 +1,11 @@
-import React, { useState, Suspense, lazy } from 'react';
+import React, { useState, Suspense, lazy, useEffect } from 'react';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { PageManager } from '@features/navigation';
 import { useNavigation, useTouchNavigation, useAppState, useBackgroundDataLoader, useTimer, useDychaniPhase } from '@hooks';
 import { LazyIntroScreen } from '@components/LazyWrapper';
 import { LanguageProvider } from '@contexts/LanguageContext';
 import { UIConfigProvider } from '@contexts/UIConfigContext';
-import { ShaderSettingsProvider } from '@contexts/ShaderSettingsContext';
+import { ShaderSettingsProvider, useShaderSettings } from '@contexts/ShaderSettingsContext';
 import { AudioAnalysisProvider } from '@contexts/AudioAnalysisContext';
 import { ShaderPlaybackProvider } from '@contexts/ShaderPlaybackContext';
 import { AnimationProvider } from '@contexts/AnimationContext';
@@ -29,6 +29,29 @@ export default function App() {
       </Routes>
     </BrowserRouter>
   );
+}
+
+// Komponenta pro zpracování URL parametrů a reset
+function ResetHandler() {
+  const { resetAllSettings } = useShaderSettings();
+
+  useEffect(() => {
+    // Zkontroluj URL parametry
+    const urlParams = new URLSearchParams(window.location.search);
+    const resetParam = urlParams.get('reset');
+
+    if (resetParam === 'shaders') {
+      // Reset nastavení
+      resetAllSettings();
+
+      // Odstranit parametr z URL bez obnovení stránky
+      urlParams.delete('reset');
+      const newUrl = window.location.pathname + (urlParams.toString() ? '?' + urlParams.toString() : '');
+      window.history.replaceState({}, '', newUrl);
+    }
+  }, [resetAllSettings]);
+
+  return null;
 }
 
 // Meditační aplikace
@@ -266,6 +289,7 @@ function MeditationApp() {
         <LanguageProvider>
           <UIConfigProvider>
             <ShaderSettingsProvider>
+              <ResetHandler />
               <ShaderPlaybackProvider>
                 <AudioAnalysisProvider>
                 <div

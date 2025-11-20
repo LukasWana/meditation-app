@@ -296,6 +296,28 @@ export const ShaderSettingsProvider = ({ children }) => {
     });
   };
 
+  // Reset všech nastavení na výchozí hodnoty
+  const resetAllSettings = () => {
+    // Reset shader settings
+    setShaderSettings({ ...defaultShaderSettings });
+
+    // Reset color settings
+    setColorSettings({ ...defaultColors });
+
+    // Reset overlay settings
+    setOverlaySettings({ ...defaultOverlays });
+
+    // Vymaž z localStorage
+    try {
+      localStorage.setItem('meditation-app-shader-settings', JSON.stringify(defaultShaderSettings));
+      localStorage.setItem('meditation-app-color-settings', JSON.stringify(defaultColors));
+      localStorage.setItem('meditation-app-shader-overlay-settings', JSON.stringify(defaultOverlays));
+      console.log('✅ Všechna nastavení shaderů, barev a overlay byla resetována na výchozí hodnoty');
+    } catch (e) {
+      console.error('Failed to reset settings:', e);
+    }
+  };
+
   return (
     <ShaderSettingsContext.Provider
       value={{
@@ -309,7 +331,8 @@ export const ShaderSettingsProvider = ({ children }) => {
         clearColorForSection,
         getOverlaySettings,
         setOverlaySettingsForSection,
-        clearOverlaySettings
+        clearOverlaySettings,
+        resetAllSettings
       }}
     >
       {children}
