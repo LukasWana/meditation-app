@@ -32,6 +32,8 @@ const AudioControls = ({
   dataSource = null,
   // Dark mode
   isDarkMode = false,
+  // Section for color customization
+  section,
   className = "w-full flex flex-col items-center justify-center h-full"
 }) => {
   const theme = useTheme();
@@ -80,6 +82,7 @@ const AudioControls = ({
           <CircularProgress
             progress={progress}
             onSeek={durationStable ? onSeek : null}
+            section={section}
           />
         </div>
 

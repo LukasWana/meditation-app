@@ -36,6 +36,7 @@ const DychaniProgressCircle = ({
         onSeek={null}
         className="w-[60vw] h-[60vw] max-w-[280px] max-h-[280px] min-w-[220px] min-h-[220px]"
         style={{ position: 'relative', zIndex: 2 }}
+        section="dychani"
       />
 
       {/* Play/Pause Button - Center */}

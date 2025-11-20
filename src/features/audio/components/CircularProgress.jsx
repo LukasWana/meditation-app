@@ -1,17 +1,39 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useMemo } from 'react';
 import { motion } from 'framer-motion';
+import { useShaderSettings } from '@contexts/ShaderSettingsContext';
 
 const CircularProgress = ({
   progress,
   onSeek,
   className = "w-[50vw] h-[50vw] max-w-[400px] max-h-[400px] min-w-[200px] min-h-[200px]",
   backgroundColor = "rgba(255,255,255,0.3)",
-  progressColor = "limegreen",
+  progressColor,
   backgroundProgressColor = "white",
   backgroundProgressOpacity = 0.15,
   strokeWidth = 20,
-  backgroundStrokeWidth = 12
+  backgroundStrokeWidth = 12,
+  section
 }) => {
+  const { getColorForSection } = useShaderSettings();
+
+  // Urči finální barvu progressu
+  const finalProgressColor = useMemo(() => {
+    // Pokud je explicitně poskytnut progressColor, použij ho (má prioritu)
+    if (progressColor) {
+      return progressColor;
+    }
+
+    // Pokud je poskytnuta sekce, zkus získat barvu z kontextu
+    if (section) {
+      const sectionColor = getColorForSection(section);
+      if (sectionColor) {
+        return sectionColor;
+      }
+    }
+
+    // Fallback na výchozí barvu
+    return "limegreen";
+  }, [progressColor, section, getColorForSection]);
   const radius = 180; // Snížil radius aby se vešel do viewBox
   const circumference = 2 * Math.PI * radius;
   const [isDragging, setIsDragging] = useState(false);
@@ -188,7 +210,7 @@ const CircularProgress = ({
         cx="225"
         cy="225"
         r={radius}
-        stroke={progressColor}
+        stroke={finalProgressColor}
         strokeWidth={strokeWidth}
         fill="none"
         strokeLinecap="butt"

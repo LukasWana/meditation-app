@@ -215,6 +215,7 @@ const AudioPlayer = ({
           formatTime={formatTime}
           autoplayEnabled={autoplayEnabled}
           onAutoplayChange={onAutoplayChange}
+          section={sectionKey}
           // Voice switcher props
           hasVariants={hasVariants}
           selectedVoice={selectedVoice}

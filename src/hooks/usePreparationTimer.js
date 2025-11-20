@@ -29,6 +29,9 @@ export const usePreparationTimer = (
   const breathTimeRef = useRef(breathTime);
   const breathDurationRef = useRef(breathDuration);
   const intervalRef = useRef(null);
+  // Ref pro uložení času začátku přípravy (pro plynulou aktualizaci)
+  const startTimeRef = useRef(null);
+  const initialCountdownRef = useRef(null);
 
   // Aktualizuj refy při změně hodnot
   useEffect(() => {
@@ -56,36 +59,49 @@ export const usePreparationTimer = (
 
     // Pokud isPreparing je false, interval už neběží, nemusíme nic dělat
     if (!isPreparing) {
+      // Resetuj start time když se příprava zastaví
+      startTimeRef.current = null;
+      initialCountdownRef.current = null;
       return;
     }
 
-    // Použij aktuální hodnoty z props pro inicializaci
+    // Inicializuj start time při prvním spuštění
+    if (!startTimeRef.current && preparationCountdown > 0) {
+      startTimeRef.current = Date.now();
+      initialCountdownRef.current = preparationCountdown;
+    }
+
+    // Spusť interval pro odpočítávání - aktualizuj každých 100ms pro plynulou animaci
     if (preparationCountdown > 0) {
       intervalRef.current = setInterval(() => {
-        setPreparationCountdown(prev => {
-          // Kontroluj aktuální hodnotu, ne ref (ref se aktualizuje později)
-          const newCountdown = prev - 1;
-          if (newCountdown <= 0) {
-            // Po dokončení přípravy spusť dýchání - použij startTransition pro batchování změn
-            // Použij hodnoty z refů, aby se neměnily při re-renderu
-            startTransition(() => {
-              setIsPreparing(false);
-              if (breathTimeRef.current <= 0) {
-                const newTime = breathDurationRef.current * 60;
-                setBreathTime(newTime);
-              }
-              setIsBreathing(true);
-            });
-            // Zastav interval
-            if (intervalRef.current) {
-              clearInterval(intervalRef.current);
-              intervalRef.current = null;
+        // Vypočti uplynulý čas od začátku přípravy
+        const elapsed = (Date.now() - startTimeRef.current) / 1000;
+        const newCountdown = Math.max(0, Math.ceil((initialCountdownRef.current || preparationCountdown) - elapsed));
+
+        if (newCountdown <= 0) {
+          // Po dokončení přípravy spusť dýchání - použij startTransition pro batchování změn
+          // Použij hodnoty z refů, aby se neměnily při re-renderu
+          startTransition(() => {
+            setIsPreparing(false);
+            if (breathTimeRef.current <= 0) {
+              const newTime = breathDurationRef.current * 60;
+              setBreathTime(newTime);
             }
-            return 0;
+            setIsBreathing(true);
+          });
+          // Zastav interval
+          if (intervalRef.current) {
+            clearInterval(intervalRef.current);
+            intervalRef.current = null;
           }
-          return newCountdown;
-        });
-      }, 1000);
+          startTimeRef.current = null;
+          initialCountdownRef.current = null;
+          setPreparationCountdown(0);
+          return;
+        }
+
+        setPreparationCountdown(newCountdown);
+      }, 100); // Změněno z 1000ms na 100ms pro plynulou aktualizaci
     }
 
     return () => {
@@ -95,6 +111,6 @@ export const usePreparationTimer = (
       }
     };
     // Pouze když se změní isPreparing - interval se neresetuje při změně countdownu během běhu
-  }, [isPreparing, setBreathTime, setIsBreathing, setIsPreparing, setPreparationCountdown]);
+  }, [isPreparing, setBreathTime, setIsBreathing, setIsPreparing, setPreparationCountdown, preparationCountdown]);
 };
 

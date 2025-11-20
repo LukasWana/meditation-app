@@ -67,6 +67,7 @@ const PreparationSection = ({
             progress={progress}
             onSeek={null}
             className="w-[50vw] h-[50vw] max-w-[400px] max-h-[400px] min-w-[250px] min-h-[250px]"
+            section="dychani"
           />
 
           {/* Odpočítávání v centru - stejná struktura jako Play/Pause tlačítko na obrazovce dýchání */}

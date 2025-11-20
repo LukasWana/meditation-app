@@ -348,6 +348,7 @@ const DychaniScreen = ({
                       progress={preparationCountdown > 0 && preparationTime > 0 ? ((preparationTime - preparationCountdown) / preparationTime) * 100 : 0}
                       onSeek={null}
                       className="w-[50vw] h-[50vw] max-w-[400px] max-h-[400px] min-w-[250px] min-h-[250px]"
+                      section="dychani"
                     />
                   </div>
 
