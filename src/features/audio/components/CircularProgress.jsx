@@ -1,17 +1,25 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useContext } from 'react';
 import { motion } from 'framer-motion';
+import { ThemeContext } from '@contexts/ThemeContext';
 
 const CircularProgress = ({
   progress,
   onSeek,
   className = "w-[50vw] h-[50vw] max-w-[400px] max-h-[400px] min-w-[200px] min-h-[200px]",
-  backgroundColor = "rgba(255,255,255,0.3)",
-  progressColor = "limegreen",
+  backgroundColor = null,
+  progressColor = null,
   backgroundProgressColor = "white",
   backgroundProgressOpacity = 0.15,
   strokeWidth = 20,
   backgroundStrokeWidth = 12
 }) => {
+  // Bezpečné použití theme contextu - useContext vrací null pokud není Provider
+  const themeContext = useContext(ThemeContext);
+  const currentTheme = themeContext?.currentTheme || null;
+
+  // Použij barvy z theme jako výchozí, pokud nejsou explicitně předány
+  const finalProgressColor = progressColor || currentTheme?.colors?.progressIndicator || 'limegreen';
+  const finalBackgroundColor = backgroundColor || "rgba(255,255,255,0.3)";
   const radius = 180; // Snížil radius aby se vešel do viewBox
   const circumference = 2 * Math.PI * radius;
   const [isDragging, setIsDragging] = useState(false);
@@ -165,7 +173,7 @@ const CircularProgress = ({
         cx="225"
         cy="225"
         r={radius}
-        stroke={backgroundColor}
+        stroke={finalBackgroundColor}
         strokeWidth={backgroundStrokeWidth}
         fill="none"
       />
@@ -188,7 +196,7 @@ const CircularProgress = ({
         cx="225"
         cy="225"
         r={radius}
-        stroke={progressColor}
+        stroke={finalProgressColor}
         strokeWidth={strokeWidth}
         fill="none"
         strokeLinecap="butt"

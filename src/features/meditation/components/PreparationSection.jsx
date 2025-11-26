@@ -4,6 +4,7 @@ import { FramerSection } from '@components';
 import CircularProgress from '@features/audio/components/CircularProgress';
 import CurrentTimeDisplay from '@features/audio/components/CurrentTimeDisplay';
 import BreathActionButtons from './BreathActionButtons';
+import { useTheme } from '@contexts/ThemeContext';
 
 /**
  * Komponenta pro sekci přípravy
@@ -25,6 +26,7 @@ const PreparationSection = ({
   formatTime,
   t
 }) => {
+  const { currentTheme } = useTheme();
   const progress = preparationCountdown > 0 && preparationTime > 0
     ? ((preparationTime - preparationCountdown) / preparationTime) * 100
     : 0;
@@ -44,8 +46,21 @@ const PreparationSection = ({
         style={{ height: 'calc(3.5rem + clamp(32px, 3.5vw, 40px) + 1rem + 0.5rem)', paddingTop: 0, paddingBottom: 0, marginTop: 0, marginBottom: '1.5rem', position: 'relative', top: 0 }}
       >
         <motion.h1
-          className="text-4xl font-serif text-gray-800 leading-normal overflow-visible"
-          style={{ height: '3.5rem', minHeight: '3.5rem', maxHeight: '3.5rem', display: 'flex', alignItems: 'center', justifyContent: 'center', lineHeight: '1.2', marginTop: 0, paddingTop: 0, paddingBottom: 0, marginBottom: 0 }}
+          className="text-4xl text-gray-800 leading-normal overflow-visible"
+          style={{
+            height: '3.5rem',
+            minHeight: '3.5rem',
+            maxHeight: '3.5rem',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            lineHeight: '1.2',
+            marginTop: 0,
+            paddingTop: 0,
+            paddingBottom: 0,
+            marginBottom: 0,
+            fontFamily: currentTheme?.fontFamily || "'Petrona', serif"
+          }}
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
@@ -107,7 +122,7 @@ const PreparationSection = ({
             <div className="text-4xl md:text-5xl font-sans font-medium mb-1" style={{ height: 'clamp(2.5rem, 5vw, 3rem)' }}>
               &nbsp;
             </div>
-            <div className="text-base md:text-lg font-serif" style={{ height: '1.25rem' }}>
+            <div className="text-base md:text-lg" style={{ height: '1.25rem', fontFamily: currentTheme?.fontFamily || "'Petrona', serif" }}>
               &nbsp;
             </div>
           </div>
@@ -117,7 +132,7 @@ const PreparationSection = ({
             <div className="text-4xl md:text-5xl font-sans font-medium mb-1" style={{ height: 'clamp(2.5rem, 5vw, 3rem)' }}>
               &nbsp;
             </div>
-            <div className="text-base md:text-lg font-serif" style={{ height: '1.25rem' }}>
+            <div className="text-base md:text-lg" style={{ height: '1.25rem', fontFamily: currentTheme?.fontFamily || "'Petrona', serif" }}>
               &nbsp;
             </div>
           </div>
@@ -127,7 +142,7 @@ const PreparationSection = ({
             <div className="text-4xl md:text-5xl font-sans font-medium mb-1" style={{ height: 'clamp(2.5rem, 5vw, 3rem)' }}>
               &nbsp;
             </div>
-            <div className="text-base md:text-lg font-serif" style={{ height: '1.25rem' }}>
+            <div className="text-base md:text-lg" style={{ height: '1.25rem', fontFamily: currentTheme?.fontFamily || "'Petrona', serif" }}>
               &nbsp;
             </div>
           </div>

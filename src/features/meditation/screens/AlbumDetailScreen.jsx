@@ -4,6 +4,7 @@ import FramerSection from '@components/FramerSection';
 import FramerButton from '@components/FramerButton';
 import BackButton from '@components/BackButton';
 import { AudioPlayer } from '@features/audio';
+import { useTheme } from '@contexts/ThemeContext';
 
 const AlbumDetailScreen = ({
   album,
@@ -15,12 +16,14 @@ const AlbumDetailScreen = ({
 }) => {
   const [activeAudio, setActiveAudio] = useState(null);
   const [currentTrackIndex, setCurrentTrackIndex] = useState(0);
+  const { currentTheme } = useTheme();
 
   // Ochrana proti undefined album - MUSÍ BÝT NA ZAČÁTKU
   if (!album || !album.tracks) {
     return (
       <motion.div
-        className="min-h-screen w-full max-w-full bg-[#f4ddc4] flex flex-col items-center justify-center"
+        className="min-h-screen w-full max-w-full flex flex-col items-center justify-center"
+        style={{ backgroundColor: currentTheme?.colors?.background || '#f4ddc4' }}
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ duration: 0.3 }}
@@ -98,7 +101,14 @@ const AlbumDetailScreen = ({
       )}
 
       {/* Content overlay */}
-      <div className="relative z-10 min-h-screen w-full bg-[#f4ddc4]/80 backdrop-blur-sm flex flex-col">
+      <div
+        className="relative z-10 min-h-screen w-full backdrop-blur-sm flex flex-col"
+        style={{
+          backgroundColor: currentTheme?.colors?.background
+            ? `${currentTheme.colors.background}CC`
+            : 'rgba(244, 221, 196, 0.8)'
+        }}
+      >
         {/* Header s back buttonem */}
         <div className="p-2 sm:p-8 pt-4 pb-4">
           <BackButton onClick={handleBackClick} />

@@ -1,12 +1,16 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, Suspense, lazy } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { FramerButton, FramerSection, FramerPageTransition, BackButton } from '@components';
 import LanguageSwitcher from '@components/LanguageSwitcher';
 import { useLanguage } from '@contexts/LanguageContext';
+import { useTheme } from '@contexts/ThemeContext';
 import { Download, Wifi, WifiOff, HardDrive, RefreshCw, Trash2 } from 'lucide-react';
 import useOfflineCache from '@hooks/useOfflineCache';
 import { useFirebaseHudbaScanner } from '@hooks/useFirebaseHudbaScanner';
 import { realtimeMetadataService } from '@services/realtimeMetadataService';
+
+// Lazy loading ThemeSelector pro lepší pořadí načítání - načte se až po inicializaci ThemeProvider
+const ThemeSelector = lazy(() => import('@components/ThemeSelector'));
 
 const SettingsScreen = ({
   onNavigateToScreen,
@@ -18,6 +22,7 @@ const SettingsScreen = ({
   onGenderChange
 }) => {
   const { t } = useLanguage();
+  const { currentTheme } = useTheme();
 
   // Offline cache hook
   const {
@@ -127,7 +132,10 @@ const SettingsScreen = ({
 
   return (
     <FramerPageTransition screenKey="settings">
-      <div className="min-h-screen w-full max-w-full bg-[#f4ddc4] flex flex-col items-center justify-start p-2 sm:p-8 pb-20 overflow-x-hidden relative">
+      <div
+        className="min-h-screen w-full max-w-full flex flex-col items-center justify-start p-2 sm:p-8 pb-20 overflow-x-hidden relative"
+        style={{ backgroundColor: currentTheme?.colors?.background || '#f4ddc4' }}
+      >
         <BackButton onClick={() => onNavigateToScreen('home')} />
 
         <div className="max-w-md w-full" style={{ marginTop: '4rem', paddingTop: 0, position: 'relative', display: 'flex', flexDirection: 'column', alignItems: 'stretch' }}>
@@ -156,6 +164,26 @@ const SettingsScreen = ({
                 <LanguageSwitcher />
               </div>
             </FramerSection>
+
+            {/* Theme Selection */}
+            <Suspense fallback={
+              <FramerSection
+                animationType="slideInUp"
+                delay={0.22}
+              >
+                <div className="w-full p-6 bg-white/50 backdrop-blur rounded-none border border-black/10">
+                  <div className="animate-pulse">
+                    <div className="h-8 bg-gray-200 rounded mb-4 w-1/3"></div>
+                    <div className="space-y-3">
+                      <div className="h-16 bg-gray-200 rounded"></div>
+                      <div className="h-16 bg-gray-200 rounded"></div>
+                    </div>
+                  </div>
+                </div>
+              </FramerSection>
+            }>
+              <ThemeSelector />
+            </Suspense>
 
             {/* Gender Settings */}
             <FramerSection

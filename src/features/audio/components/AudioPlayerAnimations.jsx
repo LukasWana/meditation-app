@@ -1,5 +1,7 @@
 import React from 'react';
-import { motion } from 'framer-motion';
+import { motion } from 'framer-motion';
+import { useTheme } from '@contexts/ThemeContext';
+
 export const AudioPlayerAnimations = ({
   children,
   albumCover,
@@ -7,6 +9,9 @@ export const AudioPlayerAnimations = ({
   onClose,
   fadeOutAndClose
 }) => {
+  const { currentTheme } = useTheme();
+  const backgroundColor = currentTheme?.colors?.background || '#f4ddc4';
+
   return (
     <motion.div
       className={`fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 pointer-events-auto ${className}`}
@@ -28,7 +33,7 @@ export const AudioPlayerAnimations = ({
       <motion.div
         className="w-full h-full flex flex-col items-center justify-center relative overflow-hidden"
         style={{
-          backgroundColor: albumCover ? 'rgba(244, 221, 196, 0.7)' : '#f4ddc4'
+          backgroundColor: albumCover ? `${backgroundColor}B3` : backgroundColor
         }}
         initial={{ scale: 0.95, opacity: 0 }}
         animate={{ scale: 1, opacity: 1 }}
@@ -56,8 +61,18 @@ export const AudioPlayerAnimations = ({
 
         {/* Side bars for wide screens */}
         <div className="hidden lg:block absolute inset-0 pointer-events-none z-5">
-          <div className="absolute left-0 top-0 w-[calc((100vw-600px)/2)] h-full bg-gradient-to-r from-[#f4ddc4]/70 to-transparent"></div>
-          <div className="absolute right-0 top-0 w-[calc((100vw-600px)/2)] h-full bg-gradient-to-l from-[#f4ddc4]/70 to-transparent"></div>
+          <div
+            className="absolute left-0 top-0 w-[calc((100vw-600px)/2)] h-full bg-gradient-to-r to-transparent"
+            style={{
+              background: `linear-gradient(to right, ${backgroundColor}B3, transparent)`
+            }}
+          ></div>
+          <div
+            className="absolute right-0 top-0 w-[calc((100vw-600px)/2)] h-full bg-gradient-to-l to-transparent"
+            style={{
+              background: `linear-gradient(to left, ${backgroundColor}B3, transparent)`
+            }}
+          ></div>
         </div>
 
         {/* Content overlay */}

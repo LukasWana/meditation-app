@@ -2,6 +2,7 @@ import React, { useState, useMemo } from 'react';
 import { AnimatePresence } from 'framer-motion';
 import { FramerButton, FramerSection, FramerPageTransition, BackButton } from '@components';
 import { useLanguage } from '@contexts/LanguageContext';
+import { useTheme } from '@contexts/ThemeContext';
 // Odstraněny skeleton loadery
 import { AudioPlayer } from '@features/audio';
 // Preloadery odstraněny - data se načítají při startu
@@ -18,6 +19,7 @@ const SlovaScreen = ({
 }) => {
   const [activeAudio, setActiveAudio] = useState(null);
   const { t, language } = useLanguage();
+  const { currentTheme } = useTheme();
 
   // Debug: zobraz aktuální jazyk a gender
   console.log(`🔍 SlovaScreen - Current language: ${language}`);
@@ -67,7 +69,10 @@ const SlovaScreen = ({
   if (isLoading) {
     return (
       <FramerPageTransition screenKey="slova">
-        <div className="min-h-screen w-full max-w-full bg-[#f4ddc4] flex flex-col items-center justify-center p-2 sm:p-8 pb-20 overflow-x-hidden relative">
+        <div
+          className="min-h-screen w-full max-w-full flex flex-col items-center justify-center p-2 sm:p-8 pb-20 overflow-x-hidden relative"
+          style={{ backgroundColor: currentTheme?.colors?.background || '#f4ddc4' }}
+        >
           <BackButton onClick={() => onNavigateToScreen('home')} />
           <div className="text-center">
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-gray-700 mx-auto mb-4"></div>
@@ -82,7 +87,10 @@ const SlovaScreen = ({
   if (error) {
     return (
       <FramerPageTransition screenKey="slova">
-        <div className="min-h-screen w-full max-w-full bg-[#f4ddc4] flex flex-col items-center justify-center p-2 sm:p-8 pb-20 overflow-x-hidden relative">
+        <div
+          className="min-h-screen w-full max-w-full flex flex-col items-center justify-center p-2 sm:p-8 pb-20 overflow-x-hidden relative"
+          style={{ backgroundColor: currentTheme?.colors?.background || '#f4ddc4' }}
+        >
           <BackButton onClick={() => onNavigateToScreen('home')} />
           <div className="text-center">
             <p className="text-xl text-red-600 mb-4">Chyba při načítání</p>
@@ -96,9 +104,10 @@ const SlovaScreen = ({
   return (
     <FramerPageTransition screenKey="slova">
       <div
-        className={`min-h-screen w-full max-w-full bg-[#f4ddc4] flex flex-col items-center justify-start p-2 sm:p-8 pb-20 overflow-x-hidden relative ${
+        className={`min-h-screen w-full max-w-full flex flex-col items-center justify-start p-2 sm:p-8 pb-20 overflow-x-hidden relative ${
           activeAudio ? 'pointer-events-none' : ''
         }`}
+        style={{ backgroundColor: currentTheme?.colors?.background || '#f4ddc4' }}
         onTouchStart={activeAudio ? undefined : onTouchStart}
         onTouchMove={activeAudio ? undefined : onTouchMove}
         onTouchEnd={activeAudio ? undefined : onTouchEnd}

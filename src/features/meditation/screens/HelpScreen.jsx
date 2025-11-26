@@ -1,6 +1,7 @@
 import React from 'react';
 import { motion } from 'framer-motion';
 import { FramerButton, FramerSection, FramerPageTransition, BackButton } from '@components';
+import { useTheme } from '@contexts/ThemeContext';
 
 const HelpScreen = ({
   onNavigateToScreen,
@@ -8,10 +9,13 @@ const HelpScreen = ({
   onTouchMove,
   onTouchEnd
 }) => {
+  const { currentTheme } = useTheme();
+
   return (
     <FramerPageTransition screenKey="help">
       <div
-        className="min-h-screen w-full max-w-full bg-[#f4ddc4] flex flex-col overflow-x-hidden relative pb-20"
+        className="min-h-screen w-full max-w-full flex flex-col overflow-x-hidden relative pb-20"
+        style={{ backgroundColor: currentTheme?.colors?.background || '#f4ddc4' }}
         onTouchStart={onTouchStart}
         onTouchMove={onTouchMove}
         onTouchEnd={onTouchEnd}

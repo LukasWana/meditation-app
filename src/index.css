@@ -1,17 +1,17 @@
 @import url('https://fonts.googleapis.com/css2?family=Petrona:wght@400;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
 
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 body, html {
-  font-family: 'Petrona', serif;
+  /* font-family je aplikováno dynamicky z ThemeContext */
   margin: 0;
   padding: 0;
   overflow-x: hidden;
   width: 100%;
   max-width: 100vw;
-  background-color: #f4ddc4;
   -webkit-tap-highlight-color: transparent;
   -webkit-touch-callout: none;
   -webkit-user-select: none;
@@ -32,8 +32,7 @@ body, html {
   width: 100%;
   max-width: 100vw;
   overflow-x: hidden;
-  background-color: #f4ddc4;
-  font-family: 'Petrona', serif;
+  /* font-family je aplikováno dynamicky z ThemeContext */
 
   /* Android Chrome safe area support */
   padding-bottom: env(safe-area-inset-bottom);
@@ -135,7 +134,12 @@ button, .no-select {
 * {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  font-family: 'Petrona', serif;
+  /* font-family je aplikováno dynamicky z ThemeContext */
+}
+
+/* Font family se aplikuje dynamicky z ThemeContext pomocí CSS custom property */
+body, html, #root {
+  font-family: var(--theme-font-family, 'Petrona', serif) !important;
 }
 
 /* Zabránenie horizontálnemu scrollingu */

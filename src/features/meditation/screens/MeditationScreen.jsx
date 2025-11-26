@@ -5,6 +5,7 @@ import { FramerButton, FramerSection, FramerPageTransition, BackButton } from '@
 import CircularProgress from '@features/audio/components/CircularProgress';
 import PlayPauseButton from '@features/audio/components/PlayPauseButton';
 import { useLanguage } from '@contexts/LanguageContext';
+import { useTheme } from '@contexts/ThemeContext';
 import { useBreathSounds } from '@hooks';
 
 // Lazy loading modálů pro lepší performance
@@ -36,6 +37,7 @@ const MeditationScreen = ({
   preparationTime
 }) => {
   const { t } = useLanguage();
+  const { currentTheme } = useTheme();
   const [showGallery, setShowGallery] = useState(false);
   const [showDurationPicker, setShowDurationPicker] = useState(false);
   const [breathCycleTime, setBreathCycleTime] = useState(0); // Čas v aktuálním cyklu dýchání (0 až breathInDuration + breathOutDuration)
@@ -117,7 +119,8 @@ const MeditationScreen = ({
     return (
       <FramerPageTransition screenKey="meditation">
         <div
-          className="min-h-screen w-full max-w-full bg-[#f4ddc4] flex flex-col items-center justify-start p-2 sm:p-8 pb-20 overflow-x-hidden relative"
+          className="min-h-screen w-full max-w-full flex flex-col items-center justify-start p-2 sm:p-8 pb-20 overflow-x-hidden relative"
+          style={{ backgroundColor: currentTheme?.colors?.background || '#f4ddc4' }}
           onTouchStart={onTouchStart}
           onTouchMove={onTouchMove}
           onTouchEnd={onTouchEnd}
@@ -199,7 +202,8 @@ const MeditationScreen = ({
   return (
     <FramerPageTransition screenKey="meditation">
       <div
-        className="min-h-screen w-full max-w-full bg-[#f4ddc4] flex flex-col items-center justify-start p-2 sm:p-8 pb-20 overflow-x-hidden relative"
+        className="min-h-screen w-full max-w-full flex flex-col items-center justify-start p-2 sm:p-8 pb-20 overflow-x-hidden relative"
+        style={{ backgroundColor: currentTheme?.colors?.background || '#f4ddc4' }}
         onTouchStart={onTouchStart}
         onTouchMove={onTouchMove}
         onTouchEnd={onTouchEnd}
@@ -384,7 +388,10 @@ const MeditationScreen = ({
 
             {/* Current Time Display - pod CircularProgress */}
             <div className="mt-6 text-center">
-              <div className="text-black font-medium text-2xl">
+              <div
+                className="font-medium text-2xl"
+                style={{ color: currentTheme?.colors?.timeIndicator || '#000000' }}
+              >
                 {formatTime(time)}
               </div>
             </div>
