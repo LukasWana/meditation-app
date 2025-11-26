@@ -1,6 +1,7 @@
 import React, { useState, useCallback, useMemo, lazy, Suspense } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import Layout from './Layout';
+import { getTransitionVariants, getTransitionConfig } from '@config/animations';
 
 // Lazy loading pro lepší performance
 const IntroScreen = lazy(() => import('@features/meditation/screens/IntroScreen'));
@@ -34,9 +35,8 @@ const SCREEN_REGISTRY = {
     requiresLayout: true,
     props: ['onNavigateToScreen', 'onTouchStart', 'onTouchMove', 'onTouchEnd', 'audioPermission'],
     transition: {
-      type: 'slide',
-      direction: 'up',
-      duration: 0.6
+      type: 'fade',
+      duration: 0.2
     }
   },
   'meditation': {
@@ -44,9 +44,8 @@ const SCREEN_REGISTRY = {
     requiresLayout: true,
     props: ['time', 'selectedDuration', 'isPlaying', 'onDurationChange', 'onPlayPause', 'onReset', 'onNavigateToScreen', 'onTouchStart', 'onTouchMove', 'onTouchEnd', 'breathPhase', 'breathInDuration', 'breathOutDuration', 'breathInSound', 'breathOutSound', 'breathClickSound', 'breathFinalSound', 'breathSoundFadeEnabled', 'onBreathSoundChange', 'isPreparing', 'preparationCountdown', 'preparationTime'],
     transition: {
-      type: 'slide',
-      direction: 'right',
-      duration: 0.6
+      type: 'fade',
+      duration: 0.2
     }
   },
   'breath': {
@@ -54,8 +53,8 @@ const SCREEN_REGISTRY = {
     requiresLayout: true,
     props: ['breathPhase', 'setBreathPhase', 'onNavigateToScreen', 'onTouchStart', 'onTouchMove', 'onTouchEnd', 'breathInDuration', 'breathOutDuration', 'onBreathRhythmChange', 'preparationTime', 'onPreparationTimeChange', 'isPreparing', 'preparationCountdown', 'breathDuration', 'breathTime', 'setBreathTime', 'isBreathing', 'setIsBreathing', 'onBreathDurationChange', 'onReset', 'breathInSound', 'breathOutSound', 'breathClickSound', 'breathFinalSound', 'breathCountdownSound', 'breathSoundFadeEnabled', 'onBreathSoundChange'],
     transition: {
-      type: 'scale',
-      duration: 0.7
+      type: 'fade',
+      duration: 0.2
     }
   },
   'settings': {
@@ -63,9 +62,8 @@ const SCREEN_REGISTRY = {
     requiresLayout: true,
     props: ['onNavigateToScreen', 'onTouchStart', 'onTouchMove', 'onTouchEnd', 'onPlayerStateChange', 'gender', 'onGenderChange'],
     transition: {
-      type: 'slide',
-      direction: 'up',
-      duration: 0.6
+      type: 'fade',
+      duration: 0.2
     }
   },
   'help': {
@@ -73,9 +71,8 @@ const SCREEN_REGISTRY = {
     requiresLayout: true,
     props: ['onNavigateToScreen', 'onTouchStart', 'onTouchMove', 'onTouchEnd'],
     transition: {
-      type: 'slide',
-      direction: 'left',
-      duration: 0.6
+      type: 'fade',
+      duration: 0.2
     }
   },
   'hudba': {
@@ -83,9 +80,8 @@ const SCREEN_REGISTRY = {
     requiresLayout: true,
     props: ['onNavigateToScreen', 'onTouchStart', 'onTouchMove', 'onTouchEnd', 'gender', 'onPlayerStateChange', 'onAlbumSelect'],
     transition: {
-      type: 'slide',
-      direction: 'up',
-      duration: 0.6
+      type: 'fade',
+      duration: 0.2
     }
   },
   'slova': {
@@ -93,9 +89,8 @@ const SCREEN_REGISTRY = {
     requiresLayout: true,
     props: ['onNavigateToScreen', 'onTouchStart', 'onTouchMove', 'onTouchEnd', 'gender', 'onPlayerStateChange', 'onGenderChange'],
     transition: {
-      type: 'slide',
-      direction: 'up',
-      duration: 0.6
+      type: 'fade',
+      duration: 0.2
     }
   },
   'album-detail': {
@@ -103,9 +98,8 @@ const SCREEN_REGISTRY = {
     requiresLayout: true,
     props: ['album', 'onNavigateToScreen', 'onPlayerStateChange', 'onTouchStart', 'onTouchMove', 'onTouchEnd'],
     transition: {
-      type: 'slide',
-      direction: 'left',
-      duration: 0.6
+      type: 'fade',
+      duration: 0.2
     }
   },
   'audio-player': {
@@ -113,8 +107,8 @@ const SCREEN_REGISTRY = {
     requiresLayout: false,
     props: ['audioSrc', 'title', 'onClose'],
     transition: {
-      type: 'modal',
-      duration: 0.4
+      type: 'fade',
+      duration: 0.2
     }
   },
   'database-admin': {
@@ -122,9 +116,8 @@ const SCREEN_REGISTRY = {
     requiresLayout: false,
     props: [],
     transition: {
-      type: 'slide',
-      direction: 'up',
-      duration: 0.6
+      type: 'fade',
+      duration: 0.2
     }
   },
   'sound-theme-gallery': {
@@ -132,9 +125,8 @@ const SCREEN_REGISTRY = {
     requiresLayout: true,
     props: ['onNavigateToScreen', 'onTouchStart', 'onTouchMove', 'onTouchEnd', 'onSelectSound', 'selectedInSound', 'selectedOutSound', 'selectedClickSound', 'selectedFinalSound', 'selectedCountdownSound'],
     transition: {
-      type: 'slide',
-      direction: 'left',
-      duration: 0.6
+      type: 'fade',
+      duration: 0.2
     }
   },
   'breath-profiles': {
@@ -142,53 +134,13 @@ const SCREEN_REGISTRY = {
     requiresLayout: true,
     props: ['onNavigateToScreen', 'onTouchStart', 'onTouchMove', 'onTouchEnd', 'breathInDuration', 'breathOutDuration', 'breathDuration', 'preparationTime', 'breathInSound', 'breathOutSound', 'breathClickSound', 'breathFinalSound', 'breathCountdownSound', 'breathSoundFadeEnabled', 'onBreathRhythmChange', 'onBreathDurationChange', 'onPreparationTimeChange', 'onBreathSoundChange', 'onBreathSoundFadeChange'],
     transition: {
-      type: 'slide',
-      direction: 'left',
-      duration: 0.6
+      type: 'fade',
+      duration: 0.2
     }
   }
 };
 
-// Definice animací
-const TRANSITION_VARIANTS = {
-  fade: {
-    initial: { opacity: 0 },
-    in: { opacity: 1 },
-    out: { opacity: 0 }
-  },
-  slide: {
-    up: {
-      initial: { opacity: 0, y: 30, scale: 0.98 },
-      in: { opacity: 1, y: 0, scale: 1 },
-      out: { opacity: 0, y: -30, scale: 0.98 }
-    },
-    down: {
-      initial: { opacity: 0, y: -30, scale: 0.98 },
-      in: { opacity: 1, y: 0, scale: 1 },
-      out: { opacity: 0, y: 30, scale: 0.98 }
-    },
-    left: {
-      initial: { opacity: 0, x: 30, scale: 0.98 },
-      in: { opacity: 1, x: 0, scale: 1 },
-      out: { opacity: 0, x: -30, scale: 0.98 }
-    },
-    right: {
-      initial: { opacity: 0, x: -30, scale: 0.98 },
-      in: { opacity: 1, x: 0, scale: 1 },
-      out: { opacity: 0, x: 30, scale: 0.98 }
-    }
-  },
-  scale: {
-    initial: { opacity: 0, scale: 0.9 },
-    in: { opacity: 1, scale: 1 },
-    out: { opacity: 0, scale: 1.1 }
-  },
-  modal: {
-    initial: { opacity: 0, scale: 0.8, y: 50 },
-    in: { opacity: 1, scale: 1, y: 0 },
-    out: { opacity: 0, scale: 0.8, y: 50 }
-  }
-};
+// Animace se nyní načítají z globální konfigurace
 
 const PageManager = ({
   // Navigace
@@ -251,12 +203,9 @@ const PageManager = ({
     return SCREEN_REGISTRY[currentScreen] || null;
   }, [currentScreen]);
 
-  // Získání variant animace
-  const getTransitionVariants = useCallback((transitionType, direction = null) => {
-    if (transitionType === 'slide' && direction) {
-      return TRANSITION_VARIANTS.slide[direction];
-    }
-    return TRANSITION_VARIANTS[transitionType] || TRANSITION_VARIANTS.fade;
+  // Získání variant animace z globální konfigurace
+  const getTransitionVariantsLocal = useCallback((transitionType, direction = null) => {
+    return getTransitionVariants(transitionType, direction);
   }, []);
 
   // Vytvoření props pro komponentu
@@ -439,14 +388,8 @@ const PageManager = ({
     const Component = currentScreenConfig.component;
     const props = getScreenProps(currentScreen);
     const transition = currentScreenConfig.transition;
-    const variants = getTransitionVariants(transition.type, transition.direction);
-
-    const transitionConfig = {
-      type: "spring",
-      stiffness: 300,
-      damping: 30,
-      duration: transition.duration || 0.4
-    };
+    const variants = getTransitionVariantsLocal(transition.type, transition.direction);
+    const transitionConfig = getTransitionConfig(transition.duration);
 
     const screenElement = (
       <motion.div
@@ -481,7 +424,7 @@ const PageManager = ({
     }
 
     return screenElement;
-  }, [currentScreen, currentScreenConfig, getScreenProps, getTransitionVariants, gender, onGenderChange, voicePreference, onVoicePreferenceChange, isPlayerActive]);
+  }, [currentScreen, currentScreenConfig, getScreenProps, getTransitionVariantsLocal, gender, onGenderChange, voicePreference, onVoicePreferenceChange, isPlayerActive]);
 
   return (
     <AnimatePresence mode="wait">
