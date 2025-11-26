@@ -1,13 +1,48 @@
 
 
-import { database } from './firebase';
+import { realtimeDatabase as database } from '@config/secure-firebase';
 import { ref, get, onValue, off } from 'firebase/database';
 import log from './logger';
 
+const wait = (ms) => new Promise(resolve => setTimeout(resolve, ms));
+
 class RealtimeMetadataService {
   constructor() {
-    this.database = database;
     this.listeners = new Map();
+    this.databaseReadyPromise = null;
+  }
+
+  async ensureDatabaseReady(timeout = 5000) {
+    if (database) {
+      return database;
+    }
+
+    if (!this.databaseReadyPromise) {
+      this.databaseReadyPromise = new Promise((resolve, reject) => {
+        const start = Date.now();
+
+        const check = async () => {
+          if (database) {
+            this.databaseReadyPromise = null;
+            resolve(database);
+            return;
+          }
+
+          if (Date.now() - start >= timeout) {
+            this.databaseReadyPromise = null;
+            reject(new Error('Firebase Realtime Database is not ready yet'));
+            return;
+          }
+
+          await wait(50);
+          return check();
+        };
+
+        check();
+      });
+    }
+
+    return this.databaseReadyPromise;
   }
 
   sanitizePath(path) {
@@ -24,7 +59,8 @@ class RealtimeMetadataService {
   async getFileMetadata(filePath) {
     try {
       const safePath = this.sanitizePath(filePath);
-      const metadataRef = ref(this.database, `audio-metadata/${safePath}`);
+      const dbInstance = await this.ensureDatabaseReady();
+      const metadataRef = ref(dbInstance, `audio-metadata/${safePath}`);
       const snapshot = await get(metadataRef);
 
       if (snapshot.exists()) {
@@ -49,7 +85,8 @@ class RealtimeMetadataService {
 
   async getAllMetadata() {
     try {
-      const metadataRef = ref(this.database, 'audio-metadata');
+      const dbInstance = await this.ensureDatabaseReady();
+      const metadataRef = ref(dbInstance, 'audio-metadata');
       const snapshot = await get(metadataRef);
 
       if (snapshot.exists()) {
@@ -200,74 +237,108 @@ class RealtimeMetadataService {
   }
 
   watchMetadata(callback) {
-    try {
-      const metadataRef = ref(this.database, 'audio-metadata');
+    let unsubscribe = null;
+    let isActive = true;
 
-      const listener = onValue(metadataRef, (snapshot) => {
-        if (snapshot.exists()) {
-          const data = snapshot.val();
-          log.debug('📡 Real-time metadata update received');
-          callback(data);
-        } else {
-          log.debug('📡 Real-time metadata update: no data');
-          callback({});
+    const startListener = async () => {
+      try {
+        const dbInstance = await this.ensureDatabaseReady();
+        if (!isActive) {
+          return;
         }
-      }, (error) => {
-        log.error('❌ Real-time metadata listener error:', error);
-      });
 
-      // Ulož listener pro cleanup
-      this.listeners.set('metadata', listener);
+        const metadataRef = ref(dbInstance, 'audio-metadata');
 
-      // Vrať cleanup funkci
-      return () => {
-        off(metadataRef, 'value', listener);
-        this.listeners.delete('metadata');
-        log.debug('✅ Stopped watching metadata');
-      };
-    } catch (error) {
-      log.error('❌ Failed to watch metadata:', error);
-      throw error;
-    }
+        const listener = onValue(metadataRef, (snapshot) => {
+          if (snapshot.exists()) {
+            const data = snapshot.val();
+            log.debug('📡 Real-time metadata update received');
+            callback(data);
+          } else {
+            log.debug('📡 Real-time metadata update: no data');
+            callback({});
+          }
+        }, (error) => {
+          log.error('❌ Real-time metadata listener error:', error);
+        });
+
+        unsubscribe = () => {
+          off(metadataRef, 'value', listener);
+          this.listeners.delete('metadata');
+          log.debug('✅ Stopped watching metadata');
+        };
+
+        this.listeners.set('metadata', unsubscribe);
+      } catch (error) {
+        log.error('❌ Failed to watch metadata:', error);
+      }
+    };
+
+    startListener();
+
+    return () => {
+      isActive = false;
+      if (unsubscribe) {
+        unsubscribe();
+      }
+    };
   }
 
   watchFileMetadata(filePath, callback) {
-    try {
-      const safePath = this.sanitizePath(filePath);
-      const metadataRef = ref(this.database, `audio-metadata/${safePath}`);
+    let unsubscribe = null;
+    let isActive = true;
 
-      const listener = onValue(metadataRef, (snapshot) => {
-        if (snapshot.exists()) {
-          const data = snapshot.val();
-          log.debug(`📡 Real-time file metadata update: ${filePath}`);
-          callback(data);
-        } else {
-          log.debug(`📡 Real-time file metadata update: no data for ${filePath}`);
-          callback(null);
+    const startListener = async () => {
+      try {
+        const dbInstance = await this.ensureDatabaseReady();
+        if (!isActive) {
+          return;
         }
-      }, (error) => {
-        log.error(`❌ Real-time file metadata listener error for ${filePath}:`, error);
-      });
 
-      // Ulož listener pro cleanup
-      this.listeners.set(`file-${filePath}`, listener);
+        const safePath = this.sanitizePath(filePath);
+        const metadataRef = ref(dbInstance, `audio-metadata/${safePath}`);
 
-      // Vrať cleanup funkci
-      return () => {
-        off(metadataRef, 'value', listener);
-        this.listeners.delete(`file-${filePath}`);
-        log.debug(`✅ Stopped watching file metadata: ${filePath}`);
-      };
-    } catch (error) {
-      log.error(`❌ Failed to watch file metadata for ${filePath}:`, error);
-      throw error;
-    }
+        const listener = onValue(metadataRef, (snapshot) => {
+          if (snapshot.exists()) {
+            const data = snapshot.val();
+            log.debug(`📡 Real-time file metadata update: ${filePath}`);
+            callback(data);
+          } else {
+            log.debug(`📡 Real-time file metadata update: no data for ${filePath}`);
+            callback(null);
+          }
+        }, (error) => {
+          log.error(`❌ Real-time file metadata listener error for ${filePath}:`, error);
+        });
+
+        unsubscribe = () => {
+          off(metadataRef, 'value', listener);
+          this.listeners.delete(`file-${filePath}`);
+          log.debug(`✅ Stopped watching file metadata: ${filePath}`);
+        };
+
+        this.listeners.set(`file-${filePath}`, unsubscribe);
+      } catch (error) {
+        log.error(`❌ Failed to watch file metadata for ${filePath}:`, error);
+      }
+    };
+
+    startListener();
+
+    return () => {
+      isActive = false;
+      if (unsubscribe) {
+        unsubscribe();
+      }
+    };
   }
 
   stopAllListeners() {
-    this.listeners.forEach((listener, key) => {
+    this.listeners.forEach((unsubscribe, key) => {
       try {
-        off(listener);
+        if (typeof unsubscribe === 'function') {
+          unsubscribe();
+        }
         log.debug(`✅ Stopped listener: ${key}`);
       } catch (error) {
         log.error(`❌ Failed to stop listener ${key}:`, error);

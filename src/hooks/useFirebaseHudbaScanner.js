@@ -264,7 +264,7 @@ export const useFirebaseHudbaScanner = () => {
   useEffect(() => {
     // Zjednodušená logika: data jsou už načtená z Realtime DB při startu
     // Pouze načti z cache a zobraz
-    const loadFromCache = async () => {
+    const loadFromCache = async (retryCount = 0) => {
       // Pokud už máme data v state, nespouštěj nic
       if (audioFiles.length > 0) {
         hasLoadedDataRef.current = true;
@@ -299,9 +299,20 @@ export const useFirebaseHudbaScanner = () => {
         return;
       }
 
-      // Pouze pokud není žádná cache, načti z Firebase Storage (fallback)
+      // Pokud metadata ještě nejsou připravena, počkej a zkus znovu (max 10 pokusů)
+      if (retryCount < 10) {
+        log.debug(`⏳ Metadata not ready yet, retrying in 500ms... (${retryCount + 1}/10)`);
+        setTimeout(() => {
+          if (!hasLoadedDataRef.current) {
+            loadFromCache(retryCount + 1);
+          }
+        }, 500);
+        return;
+      }
+
+      // Pouze pokud není žádná cache a vyčerpali jsme retry, načti z Firebase Storage (fallback)
       if (!hasLoadedDataRef.current && !isLoadingRef.current) {
-        log.warn('⚠️ No cache found, loading from Firebase Storage (should not happen)');
+        log.warn('⚠️ No cache found after retries, loading from Firebase Storage (should not happen)');
         scanCDN();
       }
     };

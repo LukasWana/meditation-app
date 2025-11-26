@@ -2,6 +2,86 @@ import React, { createContext, useContext, useState, useEffect } from 'react';
 import uiDataService from '@services/uiDataService';
 import { useLanguage } from './LanguageContext';
 
+const DEFAULT_CONFIG = {
+  colors: {
+    primary: '#f4ddc4',
+    secondary: '#000000',
+    background: '#f4ddc4'
+  },
+  layout: {
+    defaultLayout: 'grid'
+  }
+};
+
+const DEFAULT_TEXTS = {
+  emptyState: {
+    SK: 'Žádné soubory nenalezeny',
+    CZ: 'Žádné soubory nenalezeny',
+    EN: 'No files found'
+  },
+  selected: {
+    SK: '✓ Vybráno',
+    CZ: '✓ Vybráno',
+    EN: '✓ Selected'
+  }
+};
+
+const cloneConfig = () => ({
+  colors: { ...DEFAULT_CONFIG.colors },
+  layout: { ...DEFAULT_CONFIG.layout }
+});
+
+const mergeConfig = (current, incoming) => {
+  if (!incoming) {
+    return current;
+  }
+  return {
+    ...current,
+    ...incoming,
+    colors: {
+      ...current.colors,
+      ...(incoming.colors || {})
+    },
+    layout: {
+      ...current.layout,
+      ...(incoming.layout || {})
+    }
+  };
+};
+
+const cloneTexts = () => ({
+  emptyState: { ...DEFAULT_TEXTS.emptyState },
+  selected: { ...DEFAULT_TEXTS.selected }
+});
+
+const mergeTexts = (current, incoming) => {
+  if (!incoming) {
+    return current;
+  }
+  const next = { ...current };
+  Object.entries(incoming).forEach(([key, value]) => {
+    if (value && typeof value === 'object' && !Array.isArray(value)) {
+      next[key] = {
+        ...(current[key] || {}),
+        ...value
+      };
+    } else {
+      next[key] = value;
+    }
+  });
+  return next;
+};
+
+const buildInitialConfig = (initialConfig) => {
+  const base = cloneConfig();
+  return initialConfig ? mergeConfig(base, initialConfig) : base;
+};
+
+const buildInitialTexts = (initialTexts) => {
+  const base = cloneTexts();
+  return initialTexts ? mergeTexts(base, initialTexts) : base;
+};
+
 const UIConfigContext = createContext();
 
 export const useUIConfig = () => {
@@ -12,7 +92,7 @@ export const useUIConfig = () => {
   return context;
 };
 
-export const UIConfigProvider = ({ children }) => {
+export const UIConfigProvider = ({ children, initialConfig, initialTexts }) => {
   // Bezpečně získat language s fallbackem
   let language = 'SK'; // default
   try {
@@ -23,80 +103,43 @@ export const UIConfigProvider = ({ children }) => {
     console.warn('LanguageContext not available, using default language');
   }
 
-  const [config, setConfig] = useState({
-    colors: {
-      primary: '#f4ddc4',
-      secondary: '#000000',
-      background: '#f4ddc4'
-    },
-    layout: {
-      defaultLayout: 'grid'
-    }
-  });
-  const [texts, setTexts] = useState({
-    emptyState: {
-      SK: 'Žádné soubory nenalezeny',
-      CZ: 'Žádné soubory nenalezeny',
-      EN: 'No files found'
-    },
-    selected: {
-      SK: '✓ Vybráno',
-      CZ: '✓ Vybráno',
-      EN: '✓ Selected'
-    }
-  });
+  const [config, setConfig] = useState(() => buildInitialConfig(initialConfig));
+  const [texts, setTexts] = useState(() => buildInitialTexts(initialTexts));
 
-  // Načti UI konfiguraci a texty z Realtime Database při startu
+  // Synchronizuj konfiguraci podle inicializačních dat
   useEffect(() => {
-    const loadUIConfig = async () => {
-      try {
-        // Načti UI data z DB
-        const uiData = await uiDataService.loadUIData();
+    if (!initialConfig) {
+      return;
+    }
+    setConfig(prev => mergeConfig(prev, initialConfig));
+  }, [initialConfig]);
 
-        if (uiData) {
-          // Aktualizuj konfiguraci
-          if (uiData.config) {
-            setConfig(uiData.config);
-          }
+  // Synchronizuj texty podle inicializačních dat
+  useEffect(() => {
+    if (!initialTexts) {
+      return;
+    }
+    setTexts(prev => mergeTexts(prev, initialTexts));
+  }, [initialTexts]);
 
-          // Aktualizuj texty
-          if (uiData.texts) {
-            setTexts(uiData.texts);
-          }
-
-          if (import.meta.env.MODE === 'development') {
-            console.log('✅ UI config and texts loaded from Realtime Database');
-          }
+  // Sleduj real-time změny UI dat
+  useEffect(() => {
+    const stopWatching = uiDataService.watchUIData((data) => {
+      if (data) {
+        if (data.config) {
+          setConfig(prev => mergeConfig(prev, data.config));
         }
+        if (data.texts) {
+          setTexts(prev => mergeTexts(prev, data.texts));
+        }
+      }
+    });
 
-        // Nastav real-time listener pro aktualizace
-        const stopWatching = uiDataService.watchUIData((data) => {
-          if (data) {
-            if (data.config) {
-              setConfig(data.config);
-            }
-            if (data.texts) {
-              setTexts(data.texts);
-            }
-            if (import.meta.env.MODE === 'development') {
-              console.log('📡 UI config and texts updated from real-time');
-            }
-          }
-        });
-
-        // Cleanup funkce
-        return () => {
-          if (stopWatching) {
-            stopWatching();
-          }
-        };
-      } catch (error) {
-        console.error('❌ Failed to load UI config:', error);
-        // Použij defaultní hodnoty při chybě
+    return () => {
+      if (stopWatching) {
+        stopWatching();
       }
     };
-
-    loadUIConfig();
   }, []);
 
   // Získej text podle aktuálního jazyka

@@ -1,16 +1,14 @@
 import React, { useState, Suspense, lazy } from 'react';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { PageManager } from '@features/navigation';
-import { useNavigation, useTouchNavigation, useAppState, useBackgroundDataLoader, useTimer, useBreathPhase } from '@hooks';
-import { useOfflineStatus } from '@hooks/useOfflineStatus';
+import { useNavigation, useTouchNavigation, useAppState, useTimer, useBreathPhase } from '@hooks';
+import { useAppInitialization } from '@hooks/useAppInitialization';
 import { LazyIntroScreen } from '@components/LazyWrapper';
 import { LanguageProvider } from '@contexts/LanguageContext';
 import { UIConfigProvider } from '@contexts/UIConfigContext';
 import MonitoringDashboard from '@components/MonitoringDashboard';
-import OfflineIndicator from '@components/OfflineIndicator';
 
 import ErrorBoundary from '@components/ErrorBoundary';
-import { register } from '@services/serviceWorker';
 
 // Lazy loading admin screen for better performance
 const NewAdminScreen = lazy(() => import('@features/meditation/screens/NewAdminScreen'));
@@ -33,12 +31,10 @@ function MeditationApp() {
   // Intro state
   const [showIntro, setShowIntro] = useState(true);
 
+  const initialization = useAppInitialization();
+
   // Navigation state
   const { currentScreen, navigateToScreen } = useNavigation('intro');
-
-  // Offline status
-  const { isOffline, showOfflineMessage } = useOfflineStatus();
-
 
   // App state
   const {
@@ -109,16 +105,8 @@ function MeditationApp() {
   // Breath phase logika
   useBreathPhase(isPlaying, time, setBreathPhase, breathInDuration, breathOutDuration);
 
-  // Načti data v pozadí během intro animace
-  useBackgroundDataLoader(showIntro);
-
-  // Service Worker registrace
+  // Development-only debug utilities
   React.useEffect(() => {
-    // Registruj Service Worker pouze v produkci nebo když je připraven
-    if (import.meta.env.MODE === 'production' || window.location.protocol === 'https:') {
-      register();
-    }
-
     // Načti database viewer pro development
     if (import.meta.env.MODE === 'development') {
       import('./scripts/consoleDbViewer.js').then(() => {
@@ -492,8 +480,11 @@ function MeditationApp() {
 
   return (
     <ErrorBoundary>
-      <LanguageProvider>
-        <UIConfigProvider>
+      <LanguageProvider initialTranslations={initialization.uiData?.translations}>
+        <UIConfigProvider
+          initialConfig={initialization.uiData?.config}
+          initialTexts={initialization.uiData?.texts}
+        >
           <div className="min-h-screen w-full bg-[#f4ddc4] overflow-x-hidden">
             {/* Intro animace s písmem "Meditácia" */}
             {showIntro && (

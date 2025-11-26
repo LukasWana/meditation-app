@@ -26,3 +26,4 @@ export { useRealtimeSlovaFilter } from './useRealtimeSlovaFilter';
 export { useFirebaseDychanieScanner } from './useFirebaseDychanieScanner';
 export { useFirebaseDychanieFilter } from './useFirebaseDychanieFilter';
 // useOptimizedPreloader removed - using useBackgroundDataLoader instead
+export { useAppInitialization } from './useAppInitialization';
