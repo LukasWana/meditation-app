@@ -303,8 +303,16 @@ export const LanguageProvider = ({ children }) => {
   useEffect(() => {
     const loadTranslations = async () => {
       try {
-        // Načti UI data z DB
-        const uiData = await uiDataService.loadUIData();
+        // Přidej timeout pro ochranu proti dlouhému čekání
+        const timeoutPromise = new Promise((_, reject) =>
+          setTimeout(() => reject(new Error('Timeout loading translations')), 5000)
+        );
+
+        // Načti UI data z DB s timeoutem
+        const uiData = await Promise.race([
+          uiDataService.loadUIData(),
+          timeoutPromise
+        ]);
 
         if (uiData && uiData.translations) {
           // Slouč překlady z DB s defaultními (merge místo replace)
@@ -398,7 +406,10 @@ export const LanguageProvider = ({ children }) => {
         };
       } catch (error) {
         console.error('❌ Failed to load translations:', error);
-        // Použij defaultní překlady při chybě
+        // Použij defaultní překlady při chybě - aplikace by měla pokračovat
+        if (import.meta.env.MODE === 'development') {
+          console.warn('⚠️ Using default translations due to error');
+        }
       }
     };
 
