@@ -13,7 +13,16 @@ export const useUIConfig = () => {
 };
 
 export const UIConfigProvider = ({ children }) => {
-  const { language } = useLanguage();
+  // Bezpečně získat language s fallbackem
+  let language = 'SK'; // default
+  try {
+    const languageContext = useLanguage();
+    language = languageContext?.language || 'SK';
+  } catch (error) {
+    // Pokud není LanguageProvider dostupný, použij default
+    console.warn('LanguageContext not available, using default language');
+  }
+
   const [config, setConfig] = useState({
     colors: {
       primary: '#f4ddc4',

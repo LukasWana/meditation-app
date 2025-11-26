@@ -6,11 +6,15 @@ export const useBackgroundDataLoader = (showIntro) => {
   useEffect(() => {
     let stopWatching = null;
     let updateTimeout = null;
+    let isMounted = true; // Flag pro kontrolu, zda je komponenta stále mounted
 
     if (showIntro) {
       // Spusť načítání dat v pozadí během animace
       const loadDataInBackground = async () => {
         try {
+          // Přidej kontrolu, zda je komponenta stále mounted
+          if (!isMounted) return;
+
           // Import dynamicky aby se nenačítal při startu
           const { realtimeMetadataService } = await import('@services/realtimeMetadataService');
           const { staticMetadataService } = await import('@services/staticMetadataService');
@@ -147,6 +151,7 @@ export const useBackgroundDataLoader = (showIntro) => {
           if (import.meta.env.MODE === 'development') {
             console.warn('Background data loading failed:', error);
           }
+          // Nevyhazuj chybu, aplikace by měla pokračovat i když načítání selže
         }
       };
 
@@ -155,6 +160,7 @@ export const useBackgroundDataLoader = (showIntro) => {
 
       // Cleanup funkce
       return () => {
+        isMounted = false; // Označ, že komponenta už není mounted
         clearTimeout(timeoutId);
         if (updateTimeout) {
           clearTimeout(updateTimeout);
