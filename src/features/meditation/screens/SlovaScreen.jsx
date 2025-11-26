@@ -19,7 +19,7 @@ const SlovaScreen = ({
 }) => {
   const [activeAudio, setActiveAudio] = useState(null);
   const { t, language } = useLanguage();
-  const { currentTheme } = useTheme();
+  const { getScreenBackgroundColor } = useTheme();
 
   // Debug: zobraz aktuální jazyk a gender
   console.log(`🔍 SlovaScreen - Current language: ${language}`);
@@ -71,7 +71,7 @@ const SlovaScreen = ({
       <FramerPageTransition screenKey="slova">
         <div
           className="min-h-screen w-full max-w-full flex flex-col items-center justify-center p-2 sm:p-8 pb-20 overflow-x-hidden relative"
-          style={{ backgroundColor: currentTheme?.colors?.background || '#f4ddc4' }}
+          style={{ backgroundColor: getScreenBackgroundColor() }}
         >
           <BackButton onClick={() => onNavigateToScreen('home')} />
           <div className="text-center">
@@ -89,7 +89,7 @@ const SlovaScreen = ({
       <FramerPageTransition screenKey="slova">
         <div
           className="min-h-screen w-full max-w-full flex flex-col items-center justify-center p-2 sm:p-8 pb-20 overflow-x-hidden relative"
-          style={{ backgroundColor: currentTheme?.colors?.background || '#f4ddc4' }}
+          style={{ backgroundColor: getScreenBackgroundColor() }}
         >
           <BackButton onClick={() => onNavigateToScreen('home')} />
           <div className="text-center">
@@ -107,7 +107,7 @@ const SlovaScreen = ({
         className={`min-h-screen w-full max-w-full flex flex-col items-center justify-start p-2 sm:p-8 pb-20 overflow-x-hidden relative ${
           activeAudio ? 'pointer-events-none' : ''
         }`}
-        style={{ backgroundColor: currentTheme?.colors?.background || '#f4ddc4' }}
+        style={{ backgroundColor: getScreenBackgroundColor() }}
         onTouchStart={activeAudio ? undefined : onTouchStart}
         onTouchMove={activeAudio ? undefined : onTouchMove}
         onTouchEnd={activeAudio ? undefined : onTouchEnd}

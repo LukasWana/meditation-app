@@ -37,7 +37,7 @@ const MeditationScreen = ({
   preparationTime
 }) => {
   const { t } = useLanguage();
-  const { currentTheme } = useTheme();
+  const { currentTheme, getScreenBackgroundColor } = useTheme();
   const [showGallery, setShowGallery] = useState(false);
   const [showDurationPicker, setShowDurationPicker] = useState(false);
   const [breathCycleTime, setBreathCycleTime] = useState(0); // Čas v aktuálním cyklu dýchání (0 až breathInDuration + breathOutDuration)
@@ -120,7 +120,7 @@ const MeditationScreen = ({
       <FramerPageTransition screenKey="meditation">
         <div
           className="min-h-screen w-full max-w-full flex flex-col items-center justify-start p-2 sm:p-8 pb-20 overflow-x-hidden relative"
-          style={{ backgroundColor: currentTheme?.colors?.background || '#f4ddc4' }}
+          style={{ backgroundColor: getScreenBackgroundColor() }}
           onTouchStart={onTouchStart}
           onTouchMove={onTouchMove}
           onTouchEnd={onTouchEnd}
@@ -203,7 +203,7 @@ const MeditationScreen = ({
     <FramerPageTransition screenKey="meditation">
       <div
         className="min-h-screen w-full max-w-full flex flex-col items-center justify-start p-2 sm:p-8 pb-20 overflow-x-hidden relative"
-        style={{ backgroundColor: currentTheme?.colors?.background || '#f4ddc4' }}
+        style={{ backgroundColor: getScreenBackgroundColor() }}
         onTouchStart={onTouchStart}
         onTouchMove={onTouchMove}
         onTouchEnd={onTouchEnd}

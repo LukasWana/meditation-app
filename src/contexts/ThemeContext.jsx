@@ -35,18 +35,53 @@ export const ThemeProvider = ({ children }) => {
   // Aktuální téma
   const currentTheme = getThemeById(themeId);
 
+  // Získat URL obrázku z customBackground
+  const getBackgroundImageUrl = () => {
+    if (!customBackground) return null;
+
+    try {
+      const parsed = JSON.parse(customBackground);
+      if (parsed.url) {
+        return parsed.url;
+      }
+    } catch (e) {
+      // Pokud to není JSON, použít jako URL (starý formát)
+      return customBackground;
+    }
+    return null;
+  };
+
   // Získat styl pro pozadí
   const getBackgroundStyle = () => {
+    const backgroundUrl = getBackgroundImageUrl();
+    const hasImage = !!backgroundUrl && currentTheme?.allowsCustomBackground;
+
+    // Barva pozadí pro body/root - pokud je obrázek, nastavit neprůhlednou (bez alpha kanálu)
+    let backgroundColor = currentTheme?.colors?.background || '#f4ddc4';
+    if (hasImage) {
+      // Pokud je barva v rgba formátu, převést na rgb (odstranit alpha)
+      if (backgroundColor.startsWith('rgba')) {
+        const rgbMatch = backgroundColor.match(/rgba?\((\d+),\s*(\d+),\s*(\d+)/);
+        if (rgbMatch) {
+          backgroundColor = `rgb(${rgbMatch[1]}, ${rgbMatch[2]}, ${rgbMatch[3]})`;
+        }
+      } else if (backgroundColor.startsWith('rgb(')) {
+        // Už je v rgb formátu, nechat beze změny
+      } else {
+        // Jiný formát, nechat beze změny
+      }
+    }
+
     const baseStyle = {
-      backgroundColor: currentTheme?.colors?.background || '#f4ddc4',
-      transition: 'background-color 0.3s ease'
+      backgroundColor: backgroundColor,
+      transition: 'background-color 0.3s ease, background-image 0.3s ease'
     };
 
     // Pokud máme custom pozadí a téma ho podporuje
-    if (customBackground && currentTheme?.allowsCustomBackground) {
+    if (hasImage) {
       return {
         ...baseStyle,
-        backgroundImage: `url(${customBackground})`,
+        backgroundImage: `url(${backgroundUrl})`,
         backgroundSize: 'cover',
         backgroundPosition: 'center',
         backgroundRepeat: 'no-repeat'
@@ -54,6 +89,19 @@ export const ThemeProvider = ({ children }) => {
     }
 
     return baseStyle;
+  };
+
+  // Získat backgroundColor pro obrazovky - transparent když je obrázek
+  const getScreenBackgroundColor = () => {
+    const backgroundUrl = getBackgroundImageUrl();
+    const hasImage = !!backgroundUrl && currentTheme?.allowsCustomBackground;
+
+    // Pokud je obrázek, vrátit transparent, aby bylo vidět pozadí z body
+    if (hasImage) {
+      return 'transparent';
+    }
+
+    return currentTheme?.colors?.background || '#f4ddc4';
   };
 
   // Aplikovat pozadí a fontFamily na body, root a #root element
@@ -77,10 +125,10 @@ export const ThemeProvider = ({ children }) => {
       appRoot.style.setProperty('font-family', fontFamily, 'important');
     }
 
-    body.style.transition = 'background-color 0.3s ease, font-family 0.3s ease';
-    root.style.transition = 'background-color 0.3s ease, font-family 0.3s ease';
+    body.style.transition = 'background-color 0.3s ease, background-image 0.3s ease, font-family 0.3s ease';
+    root.style.transition = 'background-color 0.3s ease, background-image 0.3s ease, font-family 0.3s ease';
     if (appRoot) {
-      appRoot.style.transition = 'background-color 0.3s ease, font-family 0.3s ease';
+      appRoot.style.transition = 'background-color 0.3s ease, background-image 0.3s ease, font-family 0.3s ease';
     }
 
     // Nastavit pozadí na body, root a #root
@@ -178,6 +226,7 @@ export const ThemeProvider = ({ children }) => {
     setCustomBackground: setCustomBackgroundImage,
     removeCustomBackground,
     getBackgroundStyle,
+    getScreenBackgroundColor,
     allowsCustomBackground: currentTheme?.allowsCustomBackground || false
   };
 

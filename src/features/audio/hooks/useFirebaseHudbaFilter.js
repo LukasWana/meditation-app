@@ -1,32 +1,5 @@
 import { useMemo } from 'react';
 import { useFirebaseHudbaScanner } from '@hooks/useFirebaseHudbaScanner';
-  let totalSeconds = 0;
-  let validDurations = 0;
-
-  tracks.forEach(track => {
-    const duration = track.duration;
-    if (duration && duration !== 'N/A') {
-      // Parse duration string like "5:30" to seconds
-      const parts = duration.split(':');
-      if (parts.length === 2) {
-        const minutes = parseInt(parts[0]);
-        const seconds = parseInt(parts[1]);
-        if (!isNaN(minutes) && !isNaN(seconds)) {
-          totalSeconds += minutes * 60 + seconds;
-          validDurations++;
-        }
-      }
-    }
-  });
-
-  if (validDurations === 0) {
-    return 'N/A';
-  }
-
-  const totalMinutes = Math.floor(totalSeconds / 60);
-  const remainingSeconds = totalSeconds % 60;
-  return `${totalMinutes}:${remainingSeconds.toString().padStart(2, '0')}`;
-};
 
 export const useFirebaseHudbaFilter = () => {
   const {

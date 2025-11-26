@@ -22,7 +22,7 @@ const SettingsScreen = ({
   onGenderChange
 }) => {
   const { t } = useLanguage();
-  const { currentTheme } = useTheme();
+  const { getScreenBackgroundColor } = useTheme();
 
   // Offline cache hook
   const {
@@ -134,7 +134,7 @@ const SettingsScreen = ({
     <FramerPageTransition screenKey="settings">
       <div
         className="min-h-screen w-full max-w-full flex flex-col items-center justify-start p-2 sm:p-8 pb-20 overflow-x-hidden relative"
-        style={{ backgroundColor: currentTheme?.colors?.background || '#f4ddc4' }}
+        style={{ backgroundColor: getScreenBackgroundColor() }}
       >
         <BackButton onClick={() => onNavigateToScreen('home')} />
 

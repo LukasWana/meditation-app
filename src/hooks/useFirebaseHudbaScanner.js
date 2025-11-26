@@ -34,7 +34,7 @@ export const useFirebaseHudbaScanner = () => {
     // Filtruj pouze hudba soubory (včetně album souborů)
     // Vyluč sound effects a breathing soubory
     console.log(`🔍 processFastMetadata: Filtering ${Object.keys(fastMetadata).length} metadata records`);
-    
+
     // Debug: zobraz všechny soubory ve složce hudba/ před filtrováním
     const allHudbaFiles = Object.values(fastMetadata).filter(m => {
       const fileName = (m.fileName || '').toLowerCase();
@@ -50,7 +50,7 @@ export const useFirebaseHudbaScanner = () => {
         hasDownloadURL: !!m.downloadURL
       })));
     }
-    
+
     const hudbaFiles = Object.values(fastMetadata).filter(metadata => {
       const fileName = (metadata.fileName || '').toLowerCase();
       const isInHudbaFolder = fileName.startsWith('hudba/');
@@ -85,7 +85,7 @@ export const useFirebaseHudbaScanner = () => {
       const isHudba = metadata.isHudba !== undefined ? metadata.isHudba : isInHudbaFolder;
 
       const shouldInclude = isValidType && isHudba;
-      
+
       // Debug: pokud soubor neprojde filtrem, zobraz důvod
       if (!shouldInclude && isInHudbaFolder && !isSoundEffect) {
         console.log(`⚠️ File filtered out: ${fileName}`, {
@@ -99,7 +99,7 @@ export const useFirebaseHudbaScanner = () => {
 
       return shouldInclude;
     });
-    
+
     console.log(`🎵 processFastMetadata: Found ${hudbaFiles.length} hudba files after filtering`);
 
     log.firebase(`📊 Found ${hudbaFiles.length} hudba files in fast metadata`);
@@ -207,7 +207,7 @@ export const useFirebaseHudbaScanner = () => {
   // Funkce pro čekání na inicializaci fastMetadataService
   const waitForMetadataInitialization = async (maxWaitTime = 5000) => {
     const startTime = Date.now();
-    
+
     // Zkontroluj, zda už máme data (to je hlavní indikátor, že je vše připravené)
     if (fastMetadataService.metadata?.size > 0) {
       console.log(`✅ FastMetadataService already has data: ${fastMetadataService.metadata.size} records`);
@@ -227,7 +227,7 @@ export const useFirebaseHudbaScanner = () => {
     // Počkej na dokončení inicializace - hlavně kontroluj, zda jsou data
     while ((fastMetadataService.isLoading || fastMetadataService.metadata?.size === 0) && (Date.now() - startTime) < maxWaitTime) {
       await new Promise(resolve => setTimeout(resolve, 100));
-      
+
       // Pokud už máme data, můžeme skončit dřív
       if (fastMetadataService.metadata?.size > 0) {
         break;
@@ -271,16 +271,16 @@ export const useFirebaseHudbaScanner = () => {
         // KROK 1: Zkontroluj, zda už máme metadata (nejrychlejší kontrola)
         let currentMetadataSize = fastMetadataService.metadata?.size || 0;
         console.log(`🔍 FastMetadataService current metadata size (before wait): ${currentMetadataSize}`);
-        
+
         // Pokud nemáme metadata, počkej na inicializaci
         if (currentMetadataSize === 0) {
           console.log('⏳ No metadata yet, waiting for initialization...');
           await waitForMetadataInitialization(5000);
-          
+
           // Zkontroluj znovu po čekání
           currentMetadataSize = fastMetadataService.metadata?.size || 0;
           console.log(`🔍 FastMetadataService current metadata size (after wait): ${currentMetadataSize}`);
-          
+
           // Pokud stále nemáme metadata, zkus retry nebo cache
           if (currentMetadataSize === 0) {
             if (retryCount < 3) {
@@ -294,7 +294,7 @@ export const useFirebaseHudbaScanner = () => {
               }, 500);
               return;
             }
-            
+
             // Pokud už jsme vyčerpali retry, zkus cache
             console.log('⚠️ Metadata initialization failed after retries, trying cache...');
           }
@@ -370,7 +370,7 @@ export const useFirebaseHudbaScanner = () => {
         } else {
           // Pokud metadata nejsou dostupná, zkus cache nebo retry
           console.log('⚠️ Fast metadata is empty or not available, metadataCount:', metadataCount);
-          
+
           // Zkontroluj cache (backup)
           const cacheKey = 'hudba_scanner_all_files';
           const cachedResult = cacheService.getFirebaseQuery(cacheKey);
@@ -536,6 +536,7 @@ export const useFirebaseHudbaScanner = () => {
     filesByTopic,
     availableTopics,
     stats,
+    coverImages,
 
     // State
     isLoading,

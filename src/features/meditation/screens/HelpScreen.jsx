@@ -9,13 +9,13 @@ const HelpScreen = ({
   onTouchMove,
   onTouchEnd
 }) => {
-  const { currentTheme } = useTheme();
+  const { getScreenBackgroundColor } = useTheme();
 
   return (
     <FramerPageTransition screenKey="help">
       <div
         className="min-h-screen w-full max-w-full flex flex-col overflow-x-hidden relative pb-20"
-        style={{ backgroundColor: currentTheme?.colors?.background || '#f4ddc4' }}
+        style={{ backgroundColor: getScreenBackgroundColor() }}
         onTouchStart={onTouchStart}
         onTouchMove={onTouchMove}
         onTouchEnd={onTouchEnd}
