@@ -42,11 +42,21 @@ const BreathParameters = ({
         <div className="flex flex-col items-center">
           <button
             onClick={onPreparationClick}
-            className="text-4xl md:text-5xl font-sans font-medium text-gray-800 hover:text-black transition-colors cursor-pointer mb-1"
+            className="text-4xl md:text-5xl font-sans font-medium transition-colors cursor-pointer mb-1"
+            style={{
+              color: currentTheme?.colors?.timeIndicator || currentTheme?.colors?.text || '#000000',
+              fontFamily: currentTheme?.fontFamily || "'Petrona', serif"
+            }}
           >
             {formatPreparationTime(preparationTime)}
           </button>
-          <span className="text-base md:text-lg text-gray-800 font-light" style={{ fontFamily: currentTheme?.fontFamily || "'Petrona', serif" }}>
+          <span
+            className="text-base md:text-lg font-light"
+            style={{
+              color: currentTheme?.colors?.textSecondary || currentTheme?.colors?.text || '#000000',
+              fontFamily: currentTheme?.fontFamily || "'Petrona', serif"
+            }}
+          >
             {t('priprava') || 'příprava'}
           </span>
         </div>
@@ -55,11 +65,21 @@ const BreathParameters = ({
         <div className="flex flex-col items-center">
           <button
             onClick={onDurationClick}
-            className="text-4xl md:text-5xl font-sans font-medium text-gray-800 hover:text-black transition-colors cursor-pointer mb-1"
+            className="text-4xl md:text-5xl font-sans font-medium transition-colors cursor-pointer mb-1"
+            style={{
+              color: currentTheme?.colors?.timeIndicator || currentTheme?.colors?.text || '#000000',
+              fontFamily: currentTheme?.fontFamily || "'Petrona', serif"
+            }}
           >
             {formatTime(totalTime)}
           </button>
-          <span className="text-base md:text-lg text-gray-800 font-light" style={{ fontFamily: currentTheme?.fontFamily || "'Petrona', serif" }}>
+          <span
+            className="text-base md:text-lg font-light"
+            style={{
+              color: currentTheme?.colors?.textSecondary || currentTheme?.colors?.text || '#000000',
+              fontFamily: currentTheme?.fontFamily || "'Petrona', serif"
+            }}
+          >
             {t('dlzka') || 'délka'}
           </span>
         </div>
@@ -68,11 +88,21 @@ const BreathParameters = ({
         <div className="flex flex-col items-center">
           <button
             onClick={onRhythmClick}
-            className="text-4xl md:text-5xl font-sans font-medium text-gray-800 hover:text-black transition-colors cursor-pointer mb-1"
+            className="text-4xl md:text-5xl font-sans font-medium transition-colors cursor-pointer mb-1"
+            style={{
+              color: currentTheme?.colors?.timeIndicator || currentTheme?.colors?.text || '#000000',
+              fontFamily: currentTheme?.fontFamily || "'Petrona', serif"
+            }}
           >
             {breathInDuration} : {breathOutDuration}
           </button>
-          <span className="text-base md:text-lg text-gray-800 font-light" style={{ fontFamily: currentTheme?.fontFamily || "'Petrona', serif" }}>
+          <span
+            className="text-base md:text-lg font-light"
+            style={{
+              color: currentTheme?.colors?.textSecondary || currentTheme?.colors?.text || '#000000',
+              fontFamily: currentTheme?.fontFamily || "'Petrona', serif"
+            }}
+          >
             {t('rytmus') || 'rytmus'}
           </span>
         </div>
