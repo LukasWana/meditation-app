@@ -46,7 +46,7 @@ const PreparationSection = ({
         style={{ height: 'calc(3.5rem + clamp(32px, 3.5vw, 40px) + 1rem + 0.5rem)', paddingTop: 0, paddingBottom: 0, marginTop: 0, marginBottom: '1.5rem', position: 'relative', top: 0 }}
       >
         <motion.h1
-          className="text-4xl text-gray-800 leading-normal overflow-visible"
+          className="text-4xl leading-normal overflow-visible"
           style={{
             height: '3.5rem',
             minHeight: '3.5rem',
@@ -59,6 +59,7 @@ const PreparationSection = ({
             paddingTop: 0,
             paddingBottom: 0,
             marginBottom: 0,
+            color: currentTheme?.colors?.text || '#000000',
             fontFamily: currentTheme?.fontFamily || "'Petrona', serif"
           }}
           initial={{ opacity: 0 }}
@@ -98,7 +99,10 @@ const PreparationSection = ({
           <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
             <motion.div
               key={preparationCountdown}
-              className="text-6xl font-light text-black"
+              className="text-6xl font-light"
+              style={{
+                color: currentTheme?.colors?.timeIndicator || currentTheme?.colors?.text || '#000000'
+              }}
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
