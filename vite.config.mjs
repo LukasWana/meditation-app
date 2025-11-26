@@ -65,9 +65,17 @@ export default defineConfig({
             return 'components';
           }
 
-          // Features
-          if (id.includes('/src/features/')) {
-            return 'features';
+          // Features - rozdělit na samostatné chunky pro lepší izolaci
+          if (id.includes('/src/features/audio/')) {
+            return 'features-audio';
+          }
+
+          if (id.includes('/src/features/meditation/')) {
+            return 'features-meditation';
+          }
+
+          if (id.includes('/src/features/navigation/')) {
+            return 'features-navigation';
           }
 
           // Services

@@ -1,4 +1,5 @@
 // Services exports
-export * from './firebase';
+// Explicitní re-exporty z firebase (místo export * pro lepší kompatibilitu s minifikací)
+export { app, storage, db, auth, database } from './firebase';
 export { uiDataCollector } from './uiDataCollector';
 export { firebaseMetadataCollector } from './firebaseMetadataCollector';
