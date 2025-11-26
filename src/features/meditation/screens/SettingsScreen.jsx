@@ -11,6 +11,7 @@ import { realtimeMetadataService } from '@services/realtimeMetadataService';
 
 // Lazy loading ThemeSelector pro lepší pořadí načítání - načte se až po inicializaci ThemeProvider
 const ThemeSelector = lazy(() => import('@components/ThemeSelector'));
+const ColorModeSelector = lazy(() => import('@components/ColorModeSelector'));
 
 const SettingsScreen = ({
   onNavigateToScreen,
@@ -183,6 +184,26 @@ const SettingsScreen = ({
               </FramerSection>
             }>
               <ThemeSelector />
+            </Suspense>
+
+            {/* Color Mode Selection */}
+            <Suspense fallback={
+              <FramerSection
+                animationType="slideInUp"
+                delay={0.23}
+              >
+                <div className="w-full p-6 bg-white/50 backdrop-blur rounded-none border border-black/10">
+                  <div className="animate-pulse">
+                    <div className="h-8 bg-gray-200 rounded mb-4 w-1/3"></div>
+                    <div className="space-y-3">
+                      <div className="h-16 bg-gray-200 rounded"></div>
+                      <div className="h-16 bg-gray-200 rounded"></div>
+                    </div>
+                  </div>
+                </div>
+              </FramerSection>
+            }>
+              <ColorModeSelector />
             </Suspense>
 
             {/* Gender Settings */}

@@ -3,7 +3,7 @@ import { motion } from 'framer-motion';
 import { ThemeContext } from '@contexts/ThemeContext';
 import { useLanguage } from '@contexts/LanguageContext';
 import { getThemeName } from '@data/themes';
-import { processImageForBackground, validateImageHeight } from '@utils/imageCropper';
+// Omezení odstraněna - obrázky se nahrávají bez validace a zpracování
 import FramerSection from '@components/FramerSection';
 import { ImageIcon, X } from 'lucide-react';
 
@@ -40,12 +40,6 @@ const ThemeSelector = () => {
         throw new Error('Vyberte prosím obrázek');
       }
 
-      // Validace výšky
-      const hasMinHeight = await validateImageHeight(file);
-      if (!hasMinHeight) {
-        throw new Error('Obrázek musí mít minimální výšku 1080px. Vyberte větší obrázek.');
-      }
-
       // Zjistit rozměry obrázku
       const imageDimensions = await new Promise((resolve) => {
         const img = new Image();
@@ -61,23 +55,28 @@ const ThemeSelector = () => {
         img.src = url;
       });
 
-      // Zpracování obrázku
-      const processedImage = await processImageForBackground(file);
+      // Přečíst obrázek jako base64 bez jakéhokoliv zpracování
+      const imageUrl = await new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = (e) => resolve(e.target.result);
+        reader.onerror = reject;
+        reader.readAsDataURL(file);
+      });
 
       // Extrahovat barvy z obrázku - dynamic import pro zajištění správné inicializace
       let extractedColors = null;
       try {
         const { extractColorsFromImage } = await import('@utils/colorExtractor');
-        extractedColors = await extractColorsFromImage(processedImage, 5);
+        extractedColors = await extractColorsFromImage(imageUrl, 5);
         console.log('🎨 Extrahované barvy z fotky:', extractedColors);
       } catch (colorError) {
         console.warn('Nepodařilo se extrahovat barvy z fotky:', colorError);
         // Pokračovat i bez extrahovaných barev
       }
 
-      // Uložit obrázek s informací o rozměrech a barvách
+      // Uložit obrázek s informací o rozměrech a barvách (bez zpracování)
       const backgroundData = {
-        url: processedImage,
+        url: imageUrl,
         width: imageDimensions?.width || null,
         height: imageDimensions?.height || null,
         colors: extractedColors // Uložit extrahované barvy
@@ -217,7 +216,7 @@ const ThemeSelector = () => {
                   </span>
                 </motion.label>
                 <p className="text-xs text-gray-500 mt-2">
-                  Minimální výška: 1080px
+                  {t('vyberteObrazek') || 'Vyberte libovolný obrázek'}
                 </p>
               </div>
             )}

@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect, useMemo } from 'react';
 import { THEMES, DEFAULT_THEME_ID, getThemeById } from '@data/themes';
 
 export const ThemeContext = createContext();
@@ -19,6 +19,17 @@ export const ThemeProvider = ({ children }) => {
     } catch (error) {
       console.warn('Failed to load theme from localStorage:', error);
       return DEFAULT_THEME_ID;
+    }
+  });
+
+  // Dark/Light mode - 'dark', 'light', nebo 'auto' (automatická detekce)
+  const [colorMode, setColorMode] = useState(() => {
+    try {
+      const saved = localStorage.getItem('meditation-app-color-mode');
+      return saved || 'auto';
+    } catch (error) {
+      console.warn('Failed to load color mode from localStorage:', error);
+      return 'auto';
     }
   });
 
@@ -64,8 +75,8 @@ export const ThemeProvider = ({ children }) => {
     return loadBackgroundForTheme(initialThemeId);
   });
 
-  // Základní téma (statické)
-  const baseTheme = getThemeById(themeId);
+  // Základní téma (statické) - memoizovat, aby se neměnilo při každém renderu
+  const baseTheme = useMemo(() => getThemeById(themeId), [themeId]);
 
   // Získat data z customBackground
   const getBackgroundData = () => {
@@ -97,28 +108,57 @@ export const ThemeProvider = ({ children }) => {
     const backgroundUrl = getBackgroundImageUrl();
     const hasImage = !!backgroundUrl && baseTheme?.allowsCustomBackground;
     const extractedColors = getExtractedColors();
+    let colors = {};
 
     // Pokud máme fotku s extrahovanými barvami, použít je
     if (hasImage && extractedColors) {
       // Sloučit extrahované barvy s defaultními (extrahované mají prioritu)
-      return {
+      colors = {
         ...baseTheme?.colors,
         ...extractedColors
       };
+    } else {
+      // Jinak použít defaultní barvy tématu
+      colors = baseTheme?.colors || {};
     }
 
-    // Jinak použít defaultní barvy tématu
-    return baseTheme?.colors || {};
+    // Pokud je nastaven colorMode, upravit barvy podle volby
+    if (colorMode === 'dark') {
+      // Vynutit tmavý režim - tmavší barvy
+      colors = {
+        ...colors,
+        text: 'rgba(255, 255, 255, 1)',
+        textSecondary: 'rgba(180, 180, 180, 1)',
+        background: colors.background || 'rgba(10, 10, 10, 1)',
+        card: colors.card || 'rgba(15, 15, 15, 0.95)'
+      };
+    } else if (colorMode === 'light') {
+      // Vynutit světlý režim
+      colors = {
+        ...colors,
+        text: 'rgba(0, 0, 0, 1)',
+        textSecondary: 'rgba(100, 100, 100, 1)',
+        background: colors.background || 'rgba(255, 255, 255, 1)',
+        card: colors.card || 'rgba(255, 255, 255, 0.95)'
+      };
+    }
+    // Pokud je 'auto', použít automatickou detekci (stávající logika)
+
+    return colors;
   };
 
-  // Dynamické barvy (buď z fotky, nebo defaultní)
-  const themeColors = getCurrentThemeColors();
+  // Dynamické barvy (buď z fotky, nebo defaultní) - přepočítá se při změně colorMode
+  // Použít useMemo pro optimalizaci - přepočítá se při změně colorMode, themeId, customBackground nebo baseTheme
+  const themeColors = useMemo(() => getCurrentThemeColors(), [colorMode, themeId, customBackground, baseTheme]);
 
   // Aktuální téma s dynamickými barvami
-  const currentTheme = baseTheme ? {
-    ...baseTheme,
-    colors: themeColors
-  } : null;
+  const currentTheme = useMemo(() => {
+    if (!baseTheme) return null;
+    return {
+      ...baseTheme,
+      colors: themeColors
+    };
+  }, [baseTheme, themeColors]);
 
   // Získat styl pro pozadí
   const getBackgroundStyle = () => {
@@ -149,12 +189,47 @@ export const ThemeProvider = ({ children }) => {
 
     // Pokud máme custom pozadí a téma ho podporuje
     if (hasImage) {
+      // Určit barvu overlay podle colorMode
+      let overlayColor;
+
+      // Pokud je dark mode, použít tmavý overlay
+      if (colorMode === 'dark') {
+        overlayColor = 'rgba(0, 0, 0, 0.6)'; // Černá s 60% průhledností
+      } else if (colorMode === 'light') {
+        // Pro light mode použít světlý overlay
+        overlayColor = 'rgba(255, 255, 255, 0.6)'; // Bílá s 60% průhledností
+      } else {
+        // Pro auto mode použít barvu pozadí s 60% průhledností
+        if (backgroundColor.startsWith('rgb(')) {
+          const rgbMatch = backgroundColor.match(/rgb\((\d+),\s*(\d+),\s*(\d+)\)/);
+          if (rgbMatch) {
+            overlayColor = `rgba(${rgbMatch[1]}, ${rgbMatch[2]}, ${rgbMatch[3]}, 0.6)`;
+          } else {
+            overlayColor = 'rgba(0, 0, 0, 0.4)'; // Fallback
+          }
+        } else if (backgroundColor.startsWith('rgba')) {
+          // Pokud už je rgba, upravit alpha na 0.6
+          const rgbaMatch = backgroundColor.match(/rgba\((\d+),\s*(\d+),\s*(\d+),\s*([\d.]+)\)/);
+          if (rgbaMatch) {
+            overlayColor = `rgba(${rgbaMatch[1]}, ${rgbaMatch[2]}, ${rgbaMatch[3]}, 0.6)`;
+          } else {
+            overlayColor = 'rgba(0, 0, 0, 0.4)'; // Fallback
+          }
+        } else {
+          // Pro hex barvy, použít fallback
+          overlayColor = 'rgba(0, 0, 0, 0.4)'; // Tmavý overlay jako fallback
+        }
+      }
+
+      // Použít linear-gradient pro průhlednost 60% (opacity 0.6) nad dynamickou barvou
+      // Vytvořit overlay s 60% průhledností nad obrázkem
       return {
         ...baseStyle,
-        backgroundImage: `url(${backgroundUrl})`,
+        backgroundImage: `linear-gradient(${overlayColor}, ${overlayColor}), url(${backgroundUrl})`,
         backgroundSize: 'cover',
         backgroundPosition: 'center',
-        backgroundRepeat: 'no-repeat'
+        backgroundRepeat: 'no-repeat',
+        backgroundBlendMode: 'normal'
       };
     }
 
@@ -230,7 +305,7 @@ export const ThemeProvider = ({ children }) => {
         }
 
         // Získat barvu karty
-        const cardColor = themeColors.card || (isDarkText ? 'rgba(30, 30, 30, 0.9)' : 'rgba(255, 255, 255, 0.95)');
+        const cardColor = themeColors.card || (isDarkText ? 'rgba(0, 0, 0, 0.4)' : 'rgba(255, 255, 255, 0.95)');
 
         if (isDarkText) {
           // CSS pro tmavé pozadí (bílý text)
@@ -321,23 +396,32 @@ export const ThemeProvider = ({ children }) => {
     }
 
     if (bgStyle.backgroundImage) {
-      body.style.backgroundImage = bgStyle.backgroundImage;
-      body.style.backgroundSize = bgStyle.backgroundSize || 'cover';
-      body.style.backgroundPosition = bgStyle.backgroundPosition || 'center';
-      body.style.backgroundRepeat = bgStyle.backgroundRepeat || 'no-repeat';
-      body.style.backgroundAttachment = 'fixed';
-      // Aplikovat i na root pokud je potřeba
-      root.style.backgroundImage = bgStyle.backgroundImage;
-      root.style.backgroundSize = bgStyle.backgroundSize || 'cover';
-      root.style.backgroundPosition = bgStyle.backgroundPosition || 'center';
-      root.style.backgroundRepeat = bgStyle.backgroundRepeat || 'no-repeat';
-      root.style.backgroundAttachment = 'fixed';
+      // Aplikovat pozadí s !important pro zajištění, že se správně aplikuje
+      // background-size: cover zachovává poměr stran a vyplní celý prostor bez deformace
+      // Použít scroll místo fixed pro lepší kompatibilitu
+      body.style.setProperty('background-image', bgStyle.backgroundImage, 'important');
+      body.style.setProperty('background-size', 'cover', 'important');
+      body.style.setProperty('background-position', 'center center', 'important');
+      body.style.setProperty('background-repeat', 'no-repeat', 'important');
+      body.style.setProperty('background-attachment', 'scroll', 'important');
+      // Zajistit, aby se obrázek nedeformoval
+      body.style.setProperty('image-rendering', 'auto', 'important');
+
+      // Aplikovat i na root
+      root.style.setProperty('background-image', bgStyle.backgroundImage, 'important');
+      root.style.setProperty('background-size', 'cover', 'important');
+      root.style.setProperty('background-position', 'center center', 'important');
+      root.style.setProperty('background-repeat', 'no-repeat', 'important');
+      root.style.setProperty('background-attachment', 'scroll', 'important');
+      root.style.setProperty('image-rendering', 'auto', 'important');
+
       if (appRoot) {
-        appRoot.style.backgroundImage = bgStyle.backgroundImage;
-        appRoot.style.backgroundSize = bgStyle.backgroundSize || 'cover';
-        appRoot.style.backgroundPosition = bgStyle.backgroundPosition || 'center';
-        appRoot.style.backgroundRepeat = bgStyle.backgroundRepeat || 'no-repeat';
-        appRoot.style.backgroundAttachment = 'fixed';
+        appRoot.style.setProperty('background-image', bgStyle.backgroundImage, 'important');
+        appRoot.style.setProperty('background-size', 'cover', 'important');
+        appRoot.style.setProperty('background-position', 'center center', 'important');
+        appRoot.style.setProperty('background-repeat', 'no-repeat', 'important');
+        appRoot.style.setProperty('background-attachment', 'scroll', 'important');
+        appRoot.style.setProperty('image-rendering', 'auto', 'important');
       }
     } else {
       body.style.backgroundImage = '';
@@ -346,7 +430,7 @@ export const ThemeProvider = ({ children }) => {
         appRoot.style.backgroundImage = '';
       }
     }
-  }, [themeId, customBackground, baseTheme, themeColors]);
+  }, [themeId, customBackground, baseTheme, themeColors, colorMode]);
 
   // Uložit theme ID do localStorage při změně
   useEffect(() => {
@@ -370,6 +454,22 @@ export const ThemeProvider = ({ children }) => {
       console.warn('Failed to save custom background to localStorage:', error);
     }
   }, [customBackground, themeId]);
+
+  // Uložit color mode do localStorage při změně
+  useEffect(() => {
+    try {
+      localStorage.setItem('meditation-app-color-mode', colorMode);
+    } catch (error) {
+      console.warn('Failed to save color mode to localStorage:', error);
+    }
+  }, [colorMode]);
+
+  // Funkce pro změnu color mode
+  const changeColorMode = (mode) => {
+    if (mode === 'dark' || mode === 'light' || mode === 'auto') {
+      setColorMode(mode);
+    }
+  };
 
   // Funkce pro změnu tématu
   const changeTheme = (newThemeId) => {
@@ -432,7 +532,9 @@ export const ThemeProvider = ({ children }) => {
     getBackgroundStyle,
     getScreenBackgroundColor,
     getCurrentThemeColors,
-    allowsCustomBackground: baseTheme?.allowsCustomBackground || false
+    allowsCustomBackground: baseTheme?.allowsCustomBackground || false,
+    colorMode,
+    changeColorMode
   };
 
   return (
