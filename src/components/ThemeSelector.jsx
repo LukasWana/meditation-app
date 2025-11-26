@@ -4,7 +4,6 @@ import { ThemeContext } from '@contexts/ThemeContext';
 import { useLanguage } from '@contexts/LanguageContext';
 import { getThemeName } from '@data/themes';
 import { processImageForBackground, validateImageHeight } from '@utils/imageCropper';
-import { extractColorsFromImage } from '@utils/colorExtractor';
 import FramerSection from '@components/FramerSection';
 import { ImageIcon, X } from 'lucide-react';
 
@@ -65,9 +64,10 @@ const ThemeSelector = () => {
       // Zpracování obrázku
       const processedImage = await processImageForBackground(file);
 
-      // Extrahovat barvy z obrázku
+      // Extrahovat barvy z obrázku - dynamic import pro zajištění správné inicializace
       let extractedColors = null;
       try {
+        const { extractColorsFromImage } = await import('@utils/colorExtractor');
         extractedColors = await extractColorsFromImage(processedImage, 5);
         console.log('🎨 Extrahované barvy z fotky:', extractedColors);
       } catch (colorError) {
