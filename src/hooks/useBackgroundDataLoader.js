@@ -1,175 +1,209 @@
 
 
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
+import uiDataService from '@services/uiDataService';
 
-export const useBackgroundDataLoader = (showIntro) => {
+const INITIAL_STATE = {
+  phase: 'idle',
+  statusMessage: 'Čekám na inicializaci…',
+  isLoading: false,
+  uiData: null,
+  metadataLoaded: false,
+  cacheInitialized: false,
+  fastMetadataInitialized: false,
+  globalPreloaderInitialized: false,
+  slovaServiceInitialized: false,
+  realtimeUpdates: 0,
+  lastRealtimeUpdate: null,
+  readyForServiceWorker: false,
+  error: null,
+  isComplete: false
+};
+
+export const useBackgroundDataLoader = ({ enabled = true } = {}) => {
+  const [state, setState] = useState(INITIAL_STATE);
+
   useEffect(() => {
+    if (!enabled) {
+      setState(INITIAL_STATE);
+      return;
+    }
+
     let stopWatching = null;
     let updateTimeout = null;
-    let isMounted = true; // Flag pro kontrolu, zda je komponenta stále mounted
+    let isMounted = true;
 
-    if (showIntro) {
-      // Spusť načítání dat v pozadí během animace
-      const loadDataInBackground = async () => {
+    const safelySetState = (updater) => {
+      if (!isMounted) return;
+      setState(prev => typeof updater === 'function' ? updater(prev) : updater);
+    };
+
+    const loadDataInBackground = async () => {
+      safelySetState(prev => ({
+        ...prev,
+        isLoading: true,
+        phase: 'ui-data',
+        statusMessage: 'Načítám UI data…'
+      }));
+
+      try {
+        const uiData = await uiDataService.loadUIData();
+        safelySetState(prev => ({
+          ...prev,
+          uiData
+        }));
+
+        safelySetState(prev => ({
+          ...prev,
+          phase: 'metadata',
+          statusMessage: 'Načítám metadata…'
+        }));
+
+        const { realtimeMetadataService } = await import('@services/realtimeMetadataService');
+        const { staticMetadataService } = await import('@services/staticMetadataService');
+        const { fastMetadataService } = await import('@services/fastMetadataService');
+        const globalMetadataPreloader = (await import('@services/globalMetadataPreloader')).default;
+        const cacheService = (await import('@services/cacheServiceRefactored')).default;
+        const { slovaDataService } = await import('@services/slovaDataService');
+
         try {
-          // Přidej kontrolu, zda je komponenta stále mounted
-          if (!isMounted) return;
+          const realtimeMetadata = await realtimeMetadataService.getAllMetadata();
+          if (realtimeMetadata && Object.keys(realtimeMetadata).length > 0) {
+            Object.entries(realtimeMetadata).forEach(([key, value]) => {
+              cacheService.setMetadata(key, value);
+            });
+          } else {
+            throw new Error('No metadata in Realtime Database');
+          }
+        } catch (realtimeError) {
+          if (import.meta.env.MODE === 'development') {
+            console.warn('⚠️ Realtime metadata unavailable, using static fallback:', realtimeError.message);
+          }
+          await staticMetadataService.initialize();
+        }
 
-          // Import dynamicky aby se nenačítal při startu
-          const { realtimeMetadataService } = await import('@services/realtimeMetadataService');
-          const { staticMetadataService } = await import('@services/staticMetadataService');
-          const { fastMetadataService } = await import('@services/fastMetadataService');
-          const globalMetadataPreloader = (await import('@services/globalMetadataPreloader')).default;
-          const cacheService = (await import('@services/cacheServiceRefactored')).default;
-          const uiDataService = (await import('@services/uiDataService')).default;
+        safelySetState(prev => ({
+          ...prev,
+          metadataLoaded: true,
+          statusMessage: 'Inicializuji cache…'
+        }));
 
-          // Načti UI data (texty, překlady, konfigurace) z Realtime Database
-          console.log('🔄 Loading UI data from Realtime Database...');
-          try {
-            await uiDataService.loadUIData();
-            console.log('✅ UI data loaded successfully');
-          } catch (uiError) {
-            console.warn('⚠️ Failed to load UI data:', uiError.message);
-            // Pokračuj i když UI data selžou
+        await cacheService.preloadCriticalData();
+        safelySetState(prev => ({
+          ...prev,
+          cacheInitialized: true,
+          statusMessage: 'Inicializuji služby…'
+        }));
+
+        await fastMetadataService.initialize();
+        safelySetState(prev => ({
+          ...prev,
+          fastMetadataInitialized: true
+        }));
+
+        await globalMetadataPreloader.initialize();
+        safelySetState(prev => ({
+          ...prev,
+          globalPreloaderInitialized: true
+        }));
+
+        await slovaDataService.initialize();
+        safelySetState(prev => ({
+          ...prev,
+          slovaServiceInitialized: true
+        }));
+
+        safelySetState(prev => ({
+          ...prev,
+          phase: 'listening',
+          statusMessage: 'Čekám na real-time aktualizace…'
+        }));
+
+        let lastUpdateTime = 0;
+        let isProcessingUpdate = false;
+
+        stopWatching = realtimeMetadataService.watchMetadata((data) => {
+          const now = Date.now();
+          if (now - lastUpdateTime < 2000) {
+            return;
           }
 
-          console.log('🔄 Loading metadata from Realtime Database...');
+          if (isProcessingUpdate) {
+            return;
+          }
 
-          // Nejdříve zkus Realtime Database (nejrychlejší)
-          try {
-            const realtimeMetadata = await realtimeMetadataService.getAllMetadata();
-            if (realtimeMetadata && Object.keys(realtimeMetadata).length > 0) {
-              console.log(`✅ Loaded ${Object.keys(realtimeMetadata).length} metadata entries from Realtime Database`);
+          lastUpdateTime = now;
+          isProcessingUpdate = true;
 
-              // Ulož do cache pro rychlý přístup
-              const cacheServiceInstance = cacheService;
-              Object.entries(realtimeMetadata).forEach(([key, value]) => {
-                cacheServiceInstance.setMetadata(key, value);
+          if (updateTimeout) {
+            clearTimeout(updateTimeout);
+          }
+
+          updateTimeout = setTimeout(async () => {
+            if (data.files && Array.isArray(data.files)) {
+              data.files.forEach(file => {
+                if (file.fileName) {
+                  cacheService.setMetadata(file.fileName, file);
+                }
               });
 
-              console.log('✅ Realtime Database metadata cached successfully');
-            } else {
-              throw new Error('No metadata in Realtime Database');
-            }
-          } catch (realtimeError) {
-            console.warn('⚠️ Realtime Database failed, falling back to static metadata:', realtimeError.message);
-
-            // Fallback na statická metadata
-            await staticMetadataService.initialize();
-          }
-
-          // Inicializuj fast metadata service (struktura + názvy)
-          console.log('🔄 Initializing fast metadata service in background...');
-          await fastMetadataService.initialize();
-          console.log('✅ Fast metadata service initialized');
-
-          // Inicializuj globální metadata preloader (skutečné délky MP3)
-          console.log('🔄 Initializing global MP3 metadata preloader in background...');
-          await globalMetadataPreloader.initialize();
-          console.log('✅ Global MP3 metadata preloader initialized');
-
-          // Inicializuj slova data service (předpřipravené filtrované data)
-          console.log('🔄 Initializing slova data service in background...');
-          const { slovaDataService } = await import('@services/slovaDataService');
-          await slovaDataService.initialize();
-          console.log('✅ Slova data service initialized');
-
-          // Preload kritická metadata
-          await cacheService.preloadCriticalData();
-
-          // Nastav real-time listener pro aktualizace
-          console.log('🔄 Setting up real-time metadata listener...');
-          let lastUpdateTime = 0;
-          let isProcessingUpdate = false;
-
-          stopWatching = realtimeMetadataService.watchMetadata((data) => {
-            // Debounce: aktualizuj maximálně jednou za 2 sekundy
-            const now = Date.now();
-            if (now - lastUpdateTime < 2000) {
-              console.debug('⏭️ Skipping real-time update (debounce)');
-              return;
-            }
-
-            // Pokud už probíhá aktualizace, přeskoč
-            if (isProcessingUpdate) {
-              console.debug('⏭️ Skipping real-time update (already processing)');
-              return;
-            }
-
-            lastUpdateTime = now;
-            isProcessingUpdate = true;
-
-            console.log('📡 Real-time metadata update received:', {
-              hasFiles: !!data.files,
-              filesCount: data.files ? data.files.length : 0,
-              lastSync: data.lastSync
-            });
-
-            // Debounce aktualizaci o 500ms
-            if (updateTimeout) {
-              clearTimeout(updateTimeout);
-            }
-
-            updateTimeout = setTimeout(() => {
-              if (data.files && Array.isArray(data.files)) {
-                // Aktualizuj cache s novými daty
-                const cacheServiceInstance = cacheService;
-                data.files.forEach(file => {
-                  if (file.fileName) {
-                    cacheServiceInstance.setMetadata(file.fileName, file);
-                  }
-                });
-
-                console.log(`✅ Updated cache with ${data.files.length} files from real-time update`);
-
-                // Aktualizuj fast metadata service (bez force reload)
-                fastMetadataService.initialize(false).then(() => {
-                  console.log('✅ Fast metadata service updated from real-time data');
-                  isProcessingUpdate = false;
-                }).catch(err => {
-                  console.warn('⚠️ Failed to update fast metadata service:', err);
-                  isProcessingUpdate = false;
-                });
-
-                // Aktualizuj slova data service
-                slovaDataService.initialize().then(() => {
-                  console.log('✅ Slova data service updated from real-time data');
-                }).catch(err => {
-                  console.warn('⚠️ Failed to update slova data service:', err);
-                });
-              } else {
-                isProcessingUpdate = false;
+              try {
+                await fastMetadataService.initialize(false);
+              } catch (err) {
+                console.warn('⚠️ Failed to refresh fast metadata:', err);
               }
-            }, 500); // Debounce 500ms
-          });
 
-          if (import.meta.env.MODE === 'development') {
-            console.log('✅ Background data loading completed during intro animation');
-          }
+              try {
+                await slovaDataService.initialize();
+              } catch (err) {
+                console.warn('⚠️ Failed to refresh slova service:', err);
+              }
 
-        } catch (error) {
-          if (import.meta.env.MODE === 'development') {
-            console.warn('Background data loading failed:', error);
-          }
-          // Nevyhazuj chybu, aplikace by měla pokračovat i když načítání selže
+              safelySetState(prev => ({
+                ...prev,
+                realtimeUpdates: prev.realtimeUpdates + 1,
+                lastRealtimeUpdate: new Date().toISOString()
+              }));
+            }
+
+            isProcessingUpdate = false;
+          }, 500);
+        });
+
+        safelySetState(prev => ({
+          ...prev,
+          isLoading: false,
+          isComplete: true,
+          readyForServiceWorker: true,
+          statusMessage: 'Data připravena'
+        }));
+      } catch (error) {
+        safelySetState(prev => ({
+          ...prev,
+          isLoading: false,
+          phase: 'error',
+          error,
+          statusMessage: error.message || 'Načítání selhalo'
+        }));
+
+        if (import.meta.env.MODE === 'development') {
+          console.error('❌ Background data loading failed:', error);
         }
-      };
+      }
+    };
 
-      // Spusť po delay aby neovlivnilo LCP
-      const timeoutId = setTimeout(loadDataInBackground, 1000);
+    loadDataInBackground();
 
-      // Cleanup funkce
-      return () => {
-        isMounted = false; // Označ, že komponenta už není mounted
-        clearTimeout(timeoutId);
-        if (updateTimeout) {
-          clearTimeout(updateTimeout);
-        }
-        if (stopWatching) {
-          console.log('🔄 Cleaning up real-time metadata listener...');
-          stopWatching();
-        }
-      };
-    }
-  }, [showIntro]);
+    return () => {
+      isMounted = false;
+      if (updateTimeout) {
+        clearTimeout(updateTimeout);
+      }
+      if (stopWatching) {
+        stopWatching();
+      }
+    };
+  }, [enabled]);
+
+  return state;
 };

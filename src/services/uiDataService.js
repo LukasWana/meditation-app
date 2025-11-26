@@ -1,6 +1,8 @@
-import { database } from './firebase';
+import { realtimeDatabase as database } from '@config/secure-firebase';
 import { ref, get, onValue, off } from 'firebase/database';
 import log from './logger';
+
+const wait = (ms) => new Promise(resolve => setTimeout(resolve, ms));
 
 /**
  * UI Data Service
@@ -8,11 +10,44 @@ import log from './logger';
  */
 class UIDataService {
   constructor() {
-    this.database = database;
     this.listeners = new Map();
     this.uiData = null;
     this.cacheKey = 'meditation-app-ui-data';
     this.cacheExpiry = 24 * 60 * 60 * 1000; // 24 hodin
+    this.databaseReadyPromise = null;
+  }
+
+  async ensureDatabaseReady(timeout = 5000) {
+    if (database) {
+      return database;
+    }
+
+    if (!this.databaseReadyPromise) {
+      this.databaseReadyPromise = new Promise((resolve, reject) => {
+        const start = Date.now();
+
+        const check = async () => {
+          if (database) {
+            this.databaseReadyPromise = null;
+            resolve(database);
+            return;
+          }
+
+          if (Date.now() - start >= timeout) {
+            this.databaseReadyPromise = null;
+            reject(new Error('Firebase Realtime Database is not ready yet'));
+            return;
+          }
+
+          await wait(50);
+          return check();
+        };
+
+        check();
+      });
+    }
+
+    return this.databaseReadyPromise;
   }
 
   /**
@@ -30,7 +65,8 @@ class UIDataService {
       }
 
       // Pokud cache není, načti z DB
-      const uiDataRef = ref(this.database, 'ui-data');
+      const dbInstance = await this.ensureDatabaseReady();
+      const uiDataRef = ref(dbInstance, 'ui-data');
       const snapshot = await get(uiDataRef);
 
       if (snapshot.exists()) {
@@ -191,40 +227,55 @@ class UIDataService {
    * @returns {Function} Cleanup funkce
    */
   watchUIData(callback) {
-    try {
-      const uiDataRef = ref(this.database, 'ui-data');
+    let unsubscribe = null;
+    let isActive = true;
 
-      const listener = onValue(uiDataRef, (snapshot) => {
-        if (snapshot.exists()) {
-          const data = snapshot.val();
-          log.debug('📡 Real-time UI data update received');
-
-          // Ulož do cache
-          this.saveToCache(data);
-          this.uiData = data;
-
-          callback(data);
-        } else {
-          log.debug('📡 Real-time UI data update: no data');
-          callback(null);
+    const startListener = async () => {
+      try {
+        const dbInstance = await this.ensureDatabaseReady();
+        if (!isActive) {
+          return;
         }
-      }, (error) => {
-        log.error('❌ Real-time UI data listener error:', error);
-      });
 
-      // Ulož listener pro cleanup
-      this.listeners.set('ui-data', listener);
+        const uiDataRef = ref(dbInstance, 'ui-data');
 
-      // Vrať cleanup funkci
-      return () => {
-        off(uiDataRef, 'value', listener);
-        this.listeners.delete('ui-data');
-        log.debug('✅ Stopped watching UI data');
-      };
-    } catch (error) {
-      log.error('❌ Failed to watch UI data:', error);
-      throw error;
-    }
+        const listener = onValue(uiDataRef, (snapshot) => {
+          if (snapshot.exists()) {
+            const data = snapshot.val();
+            log.debug('📡 Real-time UI data update received');
+
+            this.saveToCache(data);
+            this.uiData = data;
+
+            callback(data);
+          } else {
+            log.debug('📡 Real-time UI data update: no data');
+            callback(null);
+          }
+        }, (error) => {
+          log.error('❌ Real-time UI data listener error:', error);
+        });
+
+        unsubscribe = () => {
+          off(uiDataRef, 'value', listener);
+          this.listeners.delete('ui-data');
+          log.debug('✅ Stopped watching UI data');
+        };
+
+        this.listeners.set('ui-data', unsubscribe);
+      } catch (error) {
+        log.error('❌ Failed to watch UI data:', error);
+      }
+    };
+
+    startListener();
+
+    return () => {
+      isActive = false;
+      if (unsubscribe) {
+        unsubscribe();
+      }
+    };
   }
 
   /**
@@ -277,10 +328,11 @@ class UIDataService {
    * Vyčistí všechny listeners
    */
   cleanup() {
-    this.listeners.forEach((listener, key) => {
+    this.listeners.forEach((unsubscribe, key) => {
       try {
-        const uiDataRef = ref(this.database, key);
-        off(uiDataRef, 'value', listener);
+        if (typeof unsubscribe === 'function') {
+          unsubscribe();
+        }
       } catch (error) {
         log.warn(`⚠️ Failed to cleanup listener for ${key}:`, error);
       }

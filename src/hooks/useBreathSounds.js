@@ -37,7 +37,7 @@ export const useBreathSounds = (
       return;
     }
 
-    const loadSoundUrl = async () => {
+    const loadSoundUrl = async (retryCount = 0) => {
       try {
         // Zkus načíst z metadata
         const metadata = await realtimeMetadataService.getFileMetadata(breathInSound);
@@ -46,11 +46,26 @@ export const useBreathSounds = (
           return;
         }
 
+        // Pokud metadata ještě nejsou připravena, počkej a zkus znovu (max 5 pokusů)
+        if (retryCount < 5) {
+          setTimeout(() => {
+            loadSoundUrl(retryCount + 1);
+          }, 500);
+          return;
+        }
+
         // Pokud není v metadata, zkus načíst přímo z Firebase Storage
         const audioRef = ref(storage, breathInSound);
         const url = await getDownloadURL(audioRef);
         setInSoundUrl(url);
       } catch (error) {
+        // Pokud je to první pokus a metadata nejsou připravena, zkus znovu
+        if (retryCount < 5 && error.message?.includes('not ready')) {
+          setTimeout(() => {
+            loadSoundUrl(retryCount + 1);
+          }, 500);
+          return;
+        }
         console.error('Failed to load breath in sound URL:', error);
         setInSoundUrl(null);
       }
@@ -66,7 +81,7 @@ export const useBreathSounds = (
       return;
     }
 
-    const loadSoundUrl = async () => {
+    const loadSoundUrl = async (retryCount = 0) => {
       try {
         // Zkus načíst z metadata
         const metadata = await realtimeMetadataService.getFileMetadata(breathOutSound);
@@ -75,11 +90,26 @@ export const useBreathSounds = (
           return;
         }
 
+        // Pokud metadata ještě nejsou připravena, počkej a zkus znovu (max 5 pokusů)
+        if (retryCount < 5) {
+          setTimeout(() => {
+            loadSoundUrl(retryCount + 1);
+          }, 500);
+          return;
+        }
+
         // Pokud není v metadata, zkus načíst přímo z Firebase Storage
         const audioRef = ref(storage, breathOutSound);
         const url = await getDownloadURL(audioRef);
         setOutSoundUrl(url);
       } catch (error) {
+        // Pokud je to první pokus a metadata nejsou připravena, zkus znovu
+        if (retryCount < 5 && error.message?.includes('not ready')) {
+          setTimeout(() => {
+            loadSoundUrl(retryCount + 1);
+          }, 500);
+          return;
+        }
         console.error('Failed to load breath out sound URL:', error);
         setOutSoundUrl(null);
       }
@@ -95,7 +125,7 @@ export const useBreathSounds = (
       return;
     }
 
-    const loadSoundUrl = async () => {
+    const loadSoundUrl = async (retryCount = 0) => {
       try {
         // Zkus načíst z metadata
         const metadata = await realtimeMetadataService.getFileMetadata(breathClickSound);
@@ -104,11 +134,26 @@ export const useBreathSounds = (
           return;
         }
 
+        // Pokud metadata ještě nejsou připravena, počkej a zkus znovu (max 5 pokusů)
+        if (retryCount < 5) {
+          setTimeout(() => {
+            loadSoundUrl(retryCount + 1);
+          }, 500);
+          return;
+        }
+
         // Pokud není v metadata, zkus načíst přímo z Firebase Storage
         const audioRef = ref(storage, breathClickSound);
         const url = await getDownloadURL(audioRef);
         setClickSoundUrl(url);
       } catch (error) {
+        // Pokud je to první pokus a metadata nejsou připravena, zkus znovu
+        if (retryCount < 5 && error.message?.includes('not ready')) {
+          setTimeout(() => {
+            loadSoundUrl(retryCount + 1);
+          }, 500);
+          return;
+        }
         console.error('Failed to load breath click sound URL:', error);
         setClickSoundUrl(null);
       }

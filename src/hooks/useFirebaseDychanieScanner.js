@@ -181,7 +181,7 @@ export const useFirebaseDychanieScanner = () => {
   }, []);
 
   useEffect(() => {
-    const loadFromCache = async () => {
+    const loadFromCache = async (retryCount = 0) => {
       if (audioFiles.length > 0) {
         hasLoadedDataRef.current = true;
         isLoadingRef.current = false;
@@ -215,9 +215,22 @@ export const useFirebaseDychanieScanner = () => {
         return;
       }
 
+      // Pokud metadata ještě nejsou připravena, počkej a zkus znovu (max 10 pokusů)
+      if (retryCount < 10) {
+        log.debug(`⏳ Metadata not ready yet for dychanie, retrying in 500ms... (${retryCount + 1}/10)`);
+        setTimeout(() => {
+          if (!hasLoadedDataRef.current) {
+            loadFromCache(retryCount + 1);
+          }
+        }, 500);
+        return;
+      }
+
       if (!hasLoadedDataRef.current && !isLoadingRef.current) {
-        log.warn('⚠️ No cache found for dychanie, loading from Firebase Storage (should not happen)');
-        scanCDN();
+        log.warn('⚠️ No cache found for dychanie after retries, this should not happen if data was loaded at startup');
+        setIsLoading(false);
+        isLoadingRef.current = false;
+        setError('Data nebyla načtena při startu aplikace. Prosím obnovte stránku.');
       }
     };
 
