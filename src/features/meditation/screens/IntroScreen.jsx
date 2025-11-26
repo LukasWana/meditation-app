@@ -5,7 +5,19 @@ import { useTheme } from '@contexts/ThemeContext';
 
 const IntroScreen = ({ onIntroComplete }) => {
   const [showIntro, setShowIntro] = useState(true);
-  const { getScreenBackgroundColor } = useTheme();
+  const { getScreenBackgroundColor, currentTheme } = useTheme();
+
+  // Získat barvu textu z tématu a detekovat dark mode
+  const textColor = currentTheme?.colors?.text || '#000000';
+  const isDarkMode = textColor.includes('255, 255, 255') ||
+                     textColor === '#ffffff' ||
+                     textColor === 'white' ||
+                     textColor.includes('rgba(255, 255, 255');
+
+  // Pro dark mode (bílé písmo) použít světlý/bílý kroužek, pro light mode (černé písmo) také světlý
+  // Kroužek by měl být vždy světlý pro kontrast s tmavým pozadím v dark mode
+  // Plně neprůhledný (bez průhlednosti)
+  const circleColor = isDarkMode ? 'rgba(255, 255, 255, 1)' : 'rgba(255, 255, 255, 1)';
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -53,8 +65,11 @@ const IntroScreen = ({ onIntroComplete }) => {
                 delay: 0.1
               }}
             >
-              {/* Bílý kruh jako halo */}
-              <div className="absolute w-48 h-48 bg-white rounded-full z-0"></div>
+              {/* Kroužek jako halo - přizpůsobí se tématu */}
+              <div
+                className="absolute w-48 h-48 rounded-full z-0"
+                style={{ backgroundColor: circleColor }}
+              ></div>
 
               {/* SVG silueta meditujícího člověka */}
               <motion.img

@@ -371,9 +371,39 @@ function createThemeColors(colors, regionAnalysis = null) {
     }
   }
 
-  // TimeIndicator by měl mít stejný kontrast jako hlavní text
-  // Použít stejnou barvu jako text pro konzistenci a čitelnost
-  const timeIndicator = textColor;
+  // TimeIndicator by měl mít výraznější kontrast než hlavní text
+  // Pro tmavé pozadí: světlejší barva (téměř bílá)
+  // Pro světlé pozadí: tmavší barva (téměř černá)
+  let timeIndicator;
+  if (isDark) {
+    // Pro tmavé pozadí: použít velmi světlou barvu pro maximální kontrast
+    // Zkusit téměř bílou (luminance ~0.95) pro výrazný kontrast
+    const timeIndicatorLum = 0.95;
+    const contrast = getContrastRatio(timeIndicatorLum, effectiveLuminance);
+
+    // Pokud kontrast není dostatečný, použít čistou bílou
+    if (contrast < 4.5) {
+      timeIndicator = 'rgba(255, 255, 255, 1)'; // Čistá bílá
+    } else {
+      // Použít velmi světlou šedou
+      const grayValue = Math.round(timeIndicatorLum * 255);
+      timeIndicator = `rgba(${grayValue}, ${grayValue}, ${grayValue}, 1)`;
+    }
+  } else {
+    // Pro světlé pozadí: použít velmi tmavou barvu pro maximální kontrast
+    // Zkusit téměř černou (luminance ~0.05) pro výrazný kontrast
+    const timeIndicatorLum = 0.05;
+    const contrast = getContrastRatio(effectiveLuminance, timeIndicatorLum);
+
+    // Pokud kontrast není dostatečný, použít čistou černou
+    if (contrast < 4.5) {
+      timeIndicator = 'rgba(0, 0, 0, 1)'; // Čistá černá
+    } else {
+      // Použít velmi tmavou šedou
+      const grayValue = Math.round(timeIndicatorLum * 255);
+      timeIndicator = `rgba(${grayValue}, ${grayValue}, ${grayValue}, 1)`;
+    }
+  }
 
   return {
     primary: `rgba(${primary.r}, ${primary.g}, ${primary.b}, 1)`,
