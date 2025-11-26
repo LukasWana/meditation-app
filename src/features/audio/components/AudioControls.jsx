@@ -63,8 +63,8 @@ const AudioControls = ({
           onSeek={durationStable ? onSeek : null}
         />
 
-        {/* Play/Pause Button - Center */}
-        <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+        {/* Play/Pause Button - Center - ve vrchní vrstvě */}
+        <div className="absolute inset-0 flex items-center justify-center pointer-events-none" style={{ zIndex: 20 }}>
           <PlayPauseButton
             isPlaying={isPlaying}
             onToggle={onTogglePlayPause}
