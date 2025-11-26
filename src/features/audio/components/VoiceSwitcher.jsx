@@ -45,8 +45,6 @@ const VoiceSwitcher = ({
                   : 'bg-gray-200 text-gray-400 cursor-not-allowed'
               }
             `}
-            whileHover={option.available ? { scale: 1.1 } : {}}
-            whileTap={option.available ? { scale: 0.95 } : {}}
             transition={{ type: "spring", stiffness: 300, damping: 20 }}
           >
             {option.label}

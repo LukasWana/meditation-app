@@ -62,8 +62,6 @@ const AudioPermissionOverlay = ({
 
           {/* Button */}
           <motion.button
-            whileHover={{ scale: 1.02 }}
-            whileTap={{ scale: 0.98 }}
             onHoverStart={() => setIsHovered(true)}
             onHoverEnd={() => setIsHovered(false)}
             onClick={onRequestPermission}

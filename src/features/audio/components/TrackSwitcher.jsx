@@ -47,8 +47,6 @@ const TrackSwitcher = ({
                   : 'bg-white text-black hover:bg-gray-100 cursor-pointer'
                 }
               `}
-              whileHover={globalIndex !== currentTrackIndex ? { scale: 1.05 } : {}}
-              whileTap={globalIndex !== currentTrackIndex ? { scale: 0.95 } : {}}
               transition={{
                 type: "spring",
                 stiffness: 300,
@@ -108,8 +106,6 @@ const TrackSwitcher = ({
                     : 'bg-white text-black hover:bg-gray-100 cursor-pointer'
                   }
                 `}
-                whileHover={globalIndex !== currentTrackIndex ? { scale: 1.05 } : {}}
-                whileTap={globalIndex !== currentTrackIndex ? { scale: 0.95 } : {}}
                 transition={{
                   type: "spring",
                   stiffness: 300,
@@ -137,8 +133,6 @@ const TrackSwitcher = ({
                 : 'bg-white text-black hover:bg-gray-100 cursor-pointer'
               }
             `}
-            whileHover={currentPage > 0 ? { scale: 1.05 } : {}}
-            whileTap={currentPage > 0 ? { scale: 0.95 } : {}}
             transition={{
               type: "spring",
               stiffness: 300,
@@ -164,8 +158,6 @@ const TrackSwitcher = ({
                 : 'bg-white text-black hover:bg-gray-100 cursor-pointer'
               }
             `}
-            whileHover={currentPage < totalPages - 1 ? { scale: 1.05 } : {}}
-            whileTap={currentPage < totalPages - 1 ? { scale: 0.95 } : {}}
             transition={{
               type: "spring",
               stiffness: 300,

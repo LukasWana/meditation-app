@@ -18,7 +18,6 @@ const PlayPauseButton = ({
       onTouchEnd={handleTouchEnd}
       className={`${className} rounded-full flex items-center justify-center pointer-events-auto cursor-pointer relative overflow-hidden`}
       style={{ position: 'relative', zIndex: 30, touchAction: 'manipulation' }}
-      whileTap={{ scale: 0.95 }}
       transition={{ type: "spring", stiffness: 300, damping: 20 }}
     >
       {/* Pozadí buttonu - 20% průhledné při přehrávání, jinak neprůhledné */}

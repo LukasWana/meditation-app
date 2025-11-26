@@ -36,8 +36,6 @@ const LanguageSwitcher = ({ className = "" }) => {
               ? 'bg-gray-800'
               : 'hover:bg-gray-100'
           }`}
-          whileHover={{ scale: 1.1 }}
-          whileTap={{ scale: 0.9 }}
           transition={{ type: "spring", stiffness: 300, damping: 20 }}
         >
           <img src={SlovakiaFlagUrl} alt="Slovakia" className="w-6 h-6" />
@@ -49,8 +47,6 @@ const LanguageSwitcher = ({ className = "" }) => {
               ? 'bg-gray-800'
               : 'hover:bg-gray-100'
           }`}
-          whileHover={{ scale: 1.1 }}
-          whileTap={{ scale: 0.9 }}
           transition={{ type: "spring", stiffness: 300, damping: 20 }}
         >
           <img src={CzechFlagUrl} alt="Czech Republic" className="w-6 h-6" />
@@ -62,8 +58,6 @@ const LanguageSwitcher = ({ className = "" }) => {
               ? 'bg-gray-800'
               : 'hover:bg-gray-100'
           }`}
-          whileHover={{ scale: 1.1 }}
-          whileTap={{ scale: 0.9 }}
           transition={{ type: "spring", stiffness: 300, damping: 20 }}
         >
           <img src={UKFlagUrl} alt="United Kingdom" className="w-6 h-6" />

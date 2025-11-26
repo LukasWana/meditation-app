@@ -64,8 +64,6 @@ const Layout = ({
                   ? 'bg-gray-800'
                   : 'hover:bg-gray-100'
               }`}
-              whileHover={{ scale: 1.1 }}
-              whileTap={{ scale: 0.9 }}
               transition={{ type: "spring", stiffness: 300, damping: 20 }}
             >
               <img src={SlovakiaFlagUrl} alt="Slovakia" className="w-6 h-6" />
@@ -77,8 +75,6 @@ const Layout = ({
                   ? 'bg-gray-800'
                   : 'hover:bg-gray-100'
               }`}
-              whileHover={{ scale: 1.1 }}
-              whileTap={{ scale: 0.9 }}
               transition={{ type: "spring", stiffness: 300, damping: 20 }}
             >
               <img src={CzechFlagUrl} alt="Czech Republic" className="w-6 h-6" />
@@ -90,8 +86,6 @@ const Layout = ({
                   ? 'bg-gray-800'
                   : 'hover:bg-gray-100'
               }`}
-              whileHover={{ scale: 1.1 }}
-              whileTap={{ scale: 0.9 }}
               transition={{ type: "spring", stiffness: 300, damping: 20 }}
             >
               <img src={UKFlagUrl} alt="United Kingdom" className="w-6 h-6" />
@@ -105,8 +99,6 @@ const Layout = ({
             initial={{ opacity: 0, scale: 0.9 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ duration: 0.3, ease: "easeOut" }}
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.9 }}
           >
             <img src={getFlagUrl(language)} alt={language} className="w-6 h-6" />
           </motion.button>
@@ -126,8 +118,6 @@ const Layout = ({
                     ? 'bg-gray-800 text-white'
                     : 'text-gray-600 hover:text-gray-800'
                 }`}
-                whileHover={{ scale: 1 }}
-                whileTap={{ scale: 0.9 }}
                 transition={{ type: "spring", stiffness: 300, damping: 20 }}
               >
                 {t('jsemMuz')}
@@ -139,8 +129,6 @@ const Layout = ({
                     ? 'bg-gray-800 text-white'
                     : 'text-gray-600 hover:text-gray-800'
                 }`}
-                whileHover={{ scale: 1 }}
-                whileTap={{ scale: 0.9 }}
                 transition={{ type: "spring", stiffness: 300, damping: 20 }}
               >
                 {t('jsemZena')}
@@ -156,8 +144,6 @@ const Layout = ({
               initial={{ opacity: 0, scale: 0.9 }}
               animate={{ opacity: 1, scale: 1 }}
               transition={{ duration: 0.3, ease: "easeOut" }}
-              whileHover={{ scale: 1.02 }}
-              whileTap={{ scale: 0.95 }}
             >
               {gender === 'female' ? t('jsemZena') : t('jsemMuz')}
             </motion.button>
