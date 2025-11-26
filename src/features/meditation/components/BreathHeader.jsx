@@ -30,7 +30,7 @@ const BreathHeader = ({
     >
       <motion.h1
         key={isBreathing ? breathPhase : 'default'}
-        className="text-4xl text-gray-800 leading-normal overflow-visible"
+        className="text-4xl leading-normal overflow-visible"
         style={{
           height: '3.5rem',
           minHeight: '3.5rem',
@@ -43,6 +43,7 @@ const BreathHeader = ({
           paddingTop: 0,
           paddingBottom: 0,
           marginBottom: 0,
+          color: currentTheme?.colors?.text || '#000000',
           fontFamily: currentTheme?.fontFamily || "'Petrona', serif"
         }}
         initial={{ opacity: 0 }}

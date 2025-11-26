@@ -217,8 +217,10 @@ export const ThemeProvider = ({ children }) => {
 
       // Přidat CSS třídu pro tmavé pozadí, která přepíše Tailwind text-gray-* třídy a bg-white/* třídy
       const isDarkText = themeColors.text.includes('255, 255, 255') || themeColors.text === '#ffffff' || themeColors.text === 'white';
+      const isLightText = themeColors.text.includes('0, 0, 0') || themeColors.text === '#000000' || themeColors.text === 'black';
 
-      if (isDarkText) {
+      // Aplikovat CSS pro tmavé i světlé pozadí
+      if (isDarkText || isLightText) {
         // Přidat CSS pro přepsání text-gray-* tříd a bg-white/* tříd na tmavých pozadích
         let styleElement = document.getElementById('dark-theme-text-override');
         if (!styleElement) {
@@ -227,43 +229,73 @@ export const ThemeProvider = ({ children }) => {
           document.head.appendChild(styleElement);
         }
 
-        // Získat barvu karty pro tmavé pozadí
-        const cardColor = themeColors.card || 'rgba(30, 30, 30, 0.9)';
+        // Získat barvu karty
+        const cardColor = themeColors.card || (isDarkText ? 'rgba(30, 30, 30, 0.9)' : 'rgba(255, 255, 255, 0.95)');
 
-        styleElement.textContent = `
-          /* Přepsat textové barvy na bílou */
-          .text-gray-800, .text-gray-700, .text-gray-600, .text-gray-500, .text-gray-400, .text-gray-300,
-          .text-black, .text-gray-900 {
-            color: ${themeColors.text} !important;
-          }
-          h1, h2, h3, h4, h5, h6, p, span, div, a, button, label {
-            color: inherit;
-          }
+        if (isDarkText) {
+          // CSS pro tmavé pozadí (bílý text)
+          styleElement.textContent = `
+            /* Přepsat textové barvy na bílou pro tmavé pozadí */
+            .text-gray-800, .text-gray-700, .text-gray-600, .text-gray-500, .text-gray-400, .text-gray-300,
+            .text-black, .text-gray-900 {
+              color: ${themeColors.text} !important;
+            }
 
-          /* Přepsat bílé pozadí na tmavé, aby byl bílý text viditelný */
-          .bg-white, .bg-white\\/50, .bg-white\\/70, .bg-white\\/30, .bg-white\\/20, .bg-white\\/90, .bg-white\\/95,
-          .bg-white\\/10, .bg-white\\/40, .bg-white\\/60, .bg-white\\/80 {
-            background-color: ${cardColor} !important;
-          }
+            /* Zajistit, aby všechny textové elementy měly správnou barvu */
+            h1, h2, h3, h4, h5, h6, p, span, div, a, button, label, input, textarea, select {
+              color: inherit;
+            }
 
-          /* Přepsat hover stavy pro bílé pozadí */
-          .hover\\:bg-white:hover, .hover\\:bg-white\\/70:hover, .hover\\:bg-white\\/30:hover,
-          .hover\\:bg-white\\/40:hover, .hover\\:bg-white\\/90:hover {
-            background-color: ${cardColor} !important;
-            opacity: 0.95;
-          }
+            /* Přepsat bílé pozadí na tmavé, aby byl bílý text viditelný */
+            .bg-white, .bg-white\\/50, .bg-white\\/70, .bg-white\\/30, .bg-white\\/20, .bg-white\\/90, .bg-white\\/95,
+            .bg-white\\/10, .bg-white\\/40, .bg-white\\/60, .bg-white\\/80 {
+              background-color: ${cardColor} !important;
+            }
 
-          /* Přepsat text-gray-* barvy v komponentách s bílým pozadím */
-          .bg-white .text-gray-700, .bg-white\\/50 .text-gray-700, .bg-white\\/70 .text-gray-700,
-          .bg-white\\/30 .text-gray-700, .bg-white\\/90 .text-gray-700 {
-            color: ${themeColors.text} !important;
-          }
+            /* Přepsat hover stavy pro bílé pozadí */
+            .hover\\:bg-white:hover, .hover\\:bg-white\\/70:hover, .hover\\:bg-white\\/30:hover,
+            .hover\\:bg-white\\/40:hover, .hover\\:bg-white\\/90:hover {
+              background-color: ${cardColor} !important;
+              opacity: 0.95;
+            }
 
-          /* Přepsat border barvy na světlé pro tmavé pozadí */
-          .border-black\\/10, .border-gray-200, .border-gray-300 {
-            border-color: rgba(255, 255, 255, 0.2) !important;
-          }
-        `;
+            /* Přepsat text-gray-* barvy v komponentách s bílým pozadím */
+            .bg-white .text-gray-700, .bg-white\\/50 .text-gray-700, .bg-white\\/70 .text-gray-700,
+            .bg-white\\/30 .text-gray-700, .bg-white\\/90 .text-gray-700,
+            .bg-white .text-gray-800, .bg-white\\/50 .text-gray-800, .bg-white\\/70 .text-gray-800 {
+              color: ${themeColors.text} !important;
+            }
+
+            /* Přepsat border barvy na světlé pro tmavé pozadí */
+            .border-black\\/10, .border-gray-200, .border-gray-300 {
+              border-color: rgba(255, 255, 255, 0.3) !important;
+            }
+
+            /* Zajistit, aby text na kartách měl správnou barvu */
+            [style*="background-color"] {
+              color: ${themeColors.text} !important;
+            }
+          `;
+        } else {
+          // CSS pro světlé pozadí (černý text)
+          styleElement.textContent = `
+            /* Přepsat textové barvy na černou pro světlé pozadí */
+            .text-gray-800, .text-gray-700, .text-gray-600, .text-gray-500, .text-gray-400, .text-gray-300,
+            .text-black, .text-gray-900 {
+              color: ${themeColors.text} !important;
+            }
+
+            /* Zajistit, aby všechny textové elementy měly správnou barvu */
+            h1, h2, h3, h4, h5, h6, p, span, div, a, button, label, input, textarea, select {
+              color: inherit;
+            }
+
+            /* Přepsat border barvy na tmavé pro světlé pozadí */
+            .border-black\\/10, .border-gray-200, .border-gray-300 {
+              border-color: rgba(0, 0, 0, 0.15) !important;
+            }
+          `;
+        }
       } else {
         // Odstranit CSS pro tmavé pozadí, pokud není potřeba
         const styleElement = document.getElementById('dark-theme-text-override');
