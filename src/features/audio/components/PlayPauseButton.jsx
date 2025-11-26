@@ -10,6 +10,7 @@ const PlayPauseButton = ({
   const { currentTheme } = useTheme();
   const pauseBar1Ref = useRef(null);
   const pauseBar2Ref = useRef(null);
+  const playIconRef = useRef(null);
 
   // Získat barvu textu z tématu a detekovat dark mode
   const textColor = currentTheme?.colors?.text || '#000000';
@@ -26,6 +27,9 @@ const PlayPauseButton = ({
     if (pauseBar1Ref.current && pauseBar2Ref.current) {
       pauseBar1Ref.current.style.setProperty('background-color', iconColor, 'important');
       pauseBar2Ref.current.style.setProperty('background-color', iconColor, 'important');
+    }
+    if (playIconRef.current) {
+      playIconRef.current.style.setProperty('border-left-color', iconColor, 'important');
     }
   }, [iconColor]);
 
@@ -75,6 +79,7 @@ const PlayPauseButton = ({
           ) : (
             <motion.div
               key="play"
+              ref={playIconRef}
               initial={{ scale: 0 }}
               animate={{ scale: 1 }}
               exit={{ scale: 0 }}
