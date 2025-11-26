@@ -8,8 +8,19 @@ class EnhancedOfflineCacheService {
     this.isInitialized = false;
   }
 
-  async initialize() {
-    if (this.isInitialized) return true;
+  async initialize(forceReload = false) {
+    if (this.isInitialized && !forceReload) return true;
+
+    if (forceReload) {
+      this.isInitialized = false;
+      if (this.cache) {
+        try {
+          await caches.delete(this.cacheName);
+        } catch (error) {
+          log.warn('⚠️ Failed to delete cache on force reload:', error);
+        }
+      }
+    }
 
     try {
       if ('caches' in window) {
@@ -55,8 +66,8 @@ class EnhancedOfflineCacheService {
     }
   }
 
-  // Získej offline URL pro soubor
-  async getOfflineUrl(fileName) {
+  // Získej soubor z cache
+  async getFile(fileName) {
     if (!this.isInitialized) return null;
 
     try {
@@ -98,7 +109,7 @@ class EnhancedOfflineCacheService {
 
     try {
       // 1. Zkus offline cache PRVNÍ - šetří mobilní data
-      const offlineUrl = await this.getOfflineUrl(fileName);
+      const offlineUrl = await this.getFile(fileName);
       if (offlineUrl) {
         log.debug(`🎵 Using offline URL for: ${fileName} (saving mobile data)`);
         // Pokud je to cache key (pro opaque responses), vrať ho přímo

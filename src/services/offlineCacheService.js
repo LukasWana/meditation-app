@@ -11,10 +11,21 @@ class OfflineCacheService {
     this.isDownloading = false;
   }
 
-  async initialize() {
-    if (this.isInitialized) {
+  async initialize(forceReload = false) {
+    if (this.isInitialized && !forceReload) {
       log.debug('✅ Cache already initialized');
       return true;
+    }
+
+    if (forceReload) {
+      this.isInitialized = false;
+      if (this.cache) {
+        try {
+          await caches.delete(this.cacheName);
+        } catch (error) {
+          log.warn('⚠️ Failed to delete cache on force reload:', error);
+        }
+      }
     }
 
     try {
@@ -81,7 +92,7 @@ class OfflineCacheService {
   }
 
   // Získej soubor z cache
-  async getCachedFile(fileName) {
+  async getFile(fileName) {
     if (!this.isInitialized) return null;
 
     try {
@@ -878,7 +889,7 @@ class OfflineCacheService {
     if (!this.isInitialized) return originalUrl;
 
     try {
-      const cachedResponse = await this.getCachedFile(fileName);
+      const cachedResponse = await this.getFile(fileName);
       if (cachedResponse) {
         // Pro opaque responses nemůžeme vytvořit blob URL
         // Vraťme originál URL - Service Worker to vyřeší
