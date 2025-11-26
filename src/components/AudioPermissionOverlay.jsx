@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useTheme } from '@contexts/ThemeContext';
 
 const AudioPermissionOverlay = ({
   isVisible,
@@ -8,6 +9,10 @@ const AudioPermissionOverlay = ({
   isRequesting = false
 }) => {
   const [isHovered, setIsHovered] = useState(false);
+  const { currentTheme, getScreenBackgroundColor } = useTheme();
+
+  // Získat barvu pozadí z tématu
+  const backgroundColor = getScreenBackgroundColor() || currentTheme?.colors?.background || '#f4ddc4';
 
   if (!isVisible) return null;
 
@@ -24,8 +29,9 @@ const AudioPermissionOverlay = ({
           initial={{ scale: 0.9, opacity: 0 }}
           animate={{ scale: 1, opacity: 1 }}
           exit={{ scale: 0.9, opacity: 0 }}
-          className="bg-[#f4ddc4] rounded-2xl p-8 mx-4 max-w-md w-full text-center shadow-2xl border border-black/10"
+          className="rounded-2xl p-8 mx-4 max-w-md w-full text-center shadow-2xl border border-black/10"
           onClick={(e) => e.stopPropagation()}
+          style={{ backgroundColor: backgroundColor }}
         >
           {/* Icon */}
           <div className="mb-6">

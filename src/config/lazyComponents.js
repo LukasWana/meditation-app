@@ -21,6 +21,9 @@ export const SimpleAdminScreen = lazy(() => import('@features/meditation/screens
 export const NewAdminScreen = lazy(() => import('@features/meditation/screens/NewAdminScreen'));
 export const SoundThemeGalleryScreen = lazy(() => import('@features/meditation/screens/SoundThemeGalleryScreen'));
 export const BreathProfilesScreen = lazy(() => import('@features/meditation/screens/BreathProfilesScreen'));
+export const PreparationTimePickerScreen = lazy(() => import('@features/meditation/screens/PreparationTimePickerScreen'));
+export const DurationPickerScreen = lazy(() => import('@features/meditation/screens/DurationPickerScreen'));
+export const RhythmPickerScreen = lazy(() => import('@features/meditation/screens/RhythmPickerScreen'));
 
 // Audio komponenty
 export const AudioPlayer = lazy(() => import('@features/audio/AudioPlayer'));

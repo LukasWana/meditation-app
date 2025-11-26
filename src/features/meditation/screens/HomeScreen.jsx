@@ -11,7 +11,18 @@ const HomeScreen = ({
   audioPermission
 }) => {
   const { t } = useLanguage();
-  const { currentTheme, getScreenBackgroundColor } = useTheme();
+  const { currentTheme, getScreenBackgroundColor, getCurrentThemeColors } = useTheme();
+  const themeColors = getCurrentThemeColors();
+
+  // Získat barvu textu a detekovat dark mode
+  const textColor = themeColors?.text || '#000000';
+  const isDarkMode = textColor.includes('255, 255, 255') ||
+                     textColor === '#ffffff' ||
+                     textColor === 'white' ||
+                     textColor.includes('rgba(255, 255, 255');
+
+  // Všechny texty by měly být bílé v dark mode, černé v light mode
+  const displayTextColor = isDarkMode ? '#ffffff' : '#000000';
 
   // Aktivuj audio permission při prvním renderu HomeScreen
   useEffect(() => {
@@ -42,7 +53,7 @@ const HomeScreen = ({
           <div className="text-center px-2 sm:px-8 py-4">
             <div
               className="text-5xl font-light tracking-wide py-4 leading-loose"
-              style={{ color: currentTheme?.colors?.text || '#000000' }}
+              style={{ color: displayTextColor }}
             >
               {t('meditace') || 'meditace'}
             </div>
@@ -58,7 +69,7 @@ const HomeScreen = ({
           <div className="text-center px-2 sm:px-8 py-4">
             <div
               className="text-5xl font-light tracking-wide py-4 leading-loose"
-              style={{ color: currentTheme?.colors?.text || '#000000' }}
+              style={{ color: displayTextColor }}
             >
               {t('hudba')}
             </div>
@@ -73,7 +84,7 @@ const HomeScreen = ({
           <div className="text-center px-2 sm:px-8 py-4">
             <div
               className="text-5xl font-light tracking-wide mb-4 py-4 leading-loose"
-              style={{ color: currentTheme?.colors?.text || '#000000' }}
+              style={{ color: displayTextColor }}
             >
               {t('dychanie') || 'dýchání'}
             </div>
@@ -88,7 +99,7 @@ const HomeScreen = ({
           <div className="text-center px-2 sm:px-8 py-4">
             <div
               className="text-5xl font-light tracking-wide py-4 leading-loose"
-              style={{ color: currentTheme?.colors?.text || '#000000' }}
+              style={{ color: displayTextColor }}
             >
               {t('nastavenie')}
             </div>

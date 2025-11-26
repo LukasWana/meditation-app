@@ -28,8 +28,20 @@ const BreathParameters = ({
   formatPreparationTime,
   t
 }) => {
-  const { currentTheme } = useTheme();
+  const { getCurrentThemeColors, currentTheme } = useTheme();
+  const themeColors = getCurrentThemeColors();
   const totalTime = breathDuration * 60; // v sekundách
+
+  // Získat barvu textu a detekovat dark mode
+  const textColor = themeColors?.text || '#000000';
+  const isDarkMode = textColor.includes('255, 255, 255') ||
+                     textColor === '#ffffff' ||
+                     textColor === 'white' ||
+                     textColor.includes('rgba(255, 255, 255');
+
+  // Všechny texty by měly být bílé v dark mode, černé v light mode
+  const displayTextColor = isDarkMode ? '#ffffff' : '#000000';
+  const timeIndicatorColor = displayTextColor;
 
   return (
     <FramerSection
@@ -44,7 +56,7 @@ const BreathParameters = ({
             onClick={onPreparationClick}
             className="text-4xl md:text-5xl font-sans font-medium transition-colors cursor-pointer mb-1"
             style={{
-              color: currentTheme?.colors?.timeIndicator || currentTheme?.colors?.text || '#000000',
+              color: timeIndicatorColor,
               fontFamily: currentTheme?.fontFamily || "'Petrona', serif"
             }}
           >
@@ -53,7 +65,7 @@ const BreathParameters = ({
           <span
             className="text-base md:text-lg font-light"
             style={{
-              color: currentTheme?.colors?.textSecondary || currentTheme?.colors?.text || '#000000',
+              color: displayTextColor,
               fontFamily: currentTheme?.fontFamily || "'Petrona', serif"
             }}
           >
@@ -67,7 +79,7 @@ const BreathParameters = ({
             onClick={onDurationClick}
             className="text-4xl md:text-5xl font-sans font-medium transition-colors cursor-pointer mb-1"
             style={{
-              color: currentTheme?.colors?.timeIndicator || currentTheme?.colors?.text || '#000000',
+              color: timeIndicatorColor,
               fontFamily: currentTheme?.fontFamily || "'Petrona', serif"
             }}
           >
@@ -76,7 +88,7 @@ const BreathParameters = ({
           <span
             className="text-base md:text-lg font-light"
             style={{
-              color: currentTheme?.colors?.textSecondary || currentTheme?.colors?.text || '#000000',
+              color: displayTextColor,
               fontFamily: currentTheme?.fontFamily || "'Petrona', serif"
             }}
           >
@@ -90,7 +102,7 @@ const BreathParameters = ({
             onClick={onRhythmClick}
             className="text-4xl md:text-5xl font-sans font-medium transition-colors cursor-pointer mb-1"
             style={{
-              color: currentTheme?.colors?.timeIndicator || currentTheme?.colors?.text || '#000000',
+              color: timeIndicatorColor,
               fontFamily: currentTheme?.fontFamily || "'Petrona', serif"
             }}
           >
@@ -99,7 +111,7 @@ const BreathParameters = ({
           <span
             className="text-base md:text-lg font-light"
             style={{
-              color: currentTheme?.colors?.textSecondary || currentTheme?.colors?.text || '#000000',
+              color: displayTextColor,
               fontFamily: currentTheme?.fontFamily || "'Petrona', serif"
             }}
           >

@@ -26,10 +26,22 @@ const PreparationSection = ({
   formatTime,
   t
 }) => {
-  const { currentTheme } = useTheme();
+  const { getCurrentThemeColors, currentTheme } = useTheme();
+  const themeColors = getCurrentThemeColors();
   const progress = preparationCountdown > 0 && preparationTime > 0
     ? ((preparationTime - preparationCountdown) / preparationTime) * 100
     : 0;
+
+  // Získat barvu textu a detekovat dark mode
+  const textColor = themeColors?.text || '#000000';
+  const isDarkMode = textColor.includes('255, 255, 255') ||
+                     textColor === '#ffffff' ||
+                     textColor === 'white' ||
+                     textColor.includes('rgba(255, 255, 255');
+
+  // Všechny texty by měly být bílé v dark mode, černé v light mode
+  const displayTextColor = isDarkMode ? '#ffffff' : '#000000';
+  const timeIndicatorColor = displayTextColor;
 
   return (
     <motion.div
@@ -59,7 +71,7 @@ const PreparationSection = ({
             paddingTop: 0,
             paddingBottom: 0,
             marginBottom: 0,
-            color: currentTheme?.colors?.text || '#000000',
+            color: displayTextColor,
             fontFamily: currentTheme?.fontFamily || "'Petrona', serif"
           }}
           initial={{ opacity: 0 }}
@@ -101,7 +113,7 @@ const PreparationSection = ({
               key={preparationCountdown}
               className="text-6xl font-light"
               style={{
-                color: currentTheme?.colors?.timeIndicator || currentTheme?.colors?.text || '#000000'
+                color: timeIndicatorColor
               }}
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
@@ -126,7 +138,7 @@ const PreparationSection = ({
             <div className="text-4xl md:text-5xl font-sans font-medium mb-1" style={{ height: 'clamp(2.5rem, 5vw, 3rem)' }}>
               &nbsp;
             </div>
-            <div className="text-base md:text-lg" style={{ height: '1.25rem', fontFamily: currentTheme?.fontFamily || "'Petrona', serif" }}>
+            <div className="text-base md:text-lg" style={{ height: '1.25rem', fontFamily: themeColors?.fontFamily || "'Petrona', serif" }}>
               &nbsp;
             </div>
           </div>
@@ -136,7 +148,7 @@ const PreparationSection = ({
             <div className="text-4xl md:text-5xl font-sans font-medium mb-1" style={{ height: 'clamp(2.5rem, 5vw, 3rem)' }}>
               &nbsp;
             </div>
-            <div className="text-base md:text-lg" style={{ height: '1.25rem', fontFamily: currentTheme?.fontFamily || "'Petrona', serif" }}>
+            <div className="text-base md:text-lg" style={{ height: '1.25rem', fontFamily: themeColors?.fontFamily || "'Petrona', serif" }}>
               &nbsp;
             </div>
           </div>
@@ -146,7 +158,7 @@ const PreparationSection = ({
             <div className="text-4xl md:text-5xl font-sans font-medium mb-1" style={{ height: 'clamp(2.5rem, 5vw, 3rem)' }}>
               &nbsp;
             </div>
-            <div className="text-base md:text-lg" style={{ height: '1.25rem', fontFamily: currentTheme?.fontFamily || "'Petrona', serif" }}>
+            <div className="text-base md:text-lg" style={{ height: '1.25rem', fontFamily: themeColors?.fontFamily || "'Petrona', serif" }}>
               &nbsp;
             </div>
           </div>

@@ -15,7 +15,10 @@ import {
   AudioPlayer,
   SimpleAdminScreen,
   SoundThemeGalleryScreen,
-  BreathProfilesScreen
+  BreathProfilesScreen,
+  PreparationTimePickerScreen,
+  DurationPickerScreen,
+  RhythmPickerScreen
 } from '@config/lazyComponents';
 
 
@@ -133,6 +136,33 @@ const SCREEN_REGISTRY = {
     component: BreathProfilesScreen,
     requiresLayout: true,
     props: ['onNavigateToScreen', 'onTouchStart', 'onTouchMove', 'onTouchEnd', 'breathInDuration', 'breathOutDuration', 'breathDuration', 'preparationTime', 'breathInSound', 'breathOutSound', 'breathClickSound', 'breathFinalSound', 'breathCountdownSound', 'breathSoundFadeEnabled', 'onBreathRhythmChange', 'onBreathDurationChange', 'onPreparationTimeChange', 'onBreathSoundChange', 'onBreathSoundFadeChange'],
+    transition: {
+      type: 'fade',
+      duration: 0.2
+    }
+  },
+  'preparation-time-picker': {
+    component: PreparationTimePickerScreen,
+    requiresLayout: true,
+    props: ['onNavigateToScreen', 'onTouchStart', 'onTouchMove', 'onTouchEnd', 'preparationTime', 'onPreparationTimeChange'],
+    transition: {
+      type: 'fade',
+      duration: 0.2
+    }
+  },
+  'duration-picker': {
+    component: DurationPickerScreen,
+    requiresLayout: true,
+    props: ['onNavigateToScreen', 'onTouchStart', 'onTouchMove', 'onTouchEnd', 'breathDuration', 'onBreathDurationChange', 'setBreathTime'],
+    transition: {
+      type: 'fade',
+      duration: 0.2
+    }
+  },
+  'rhythm-picker': {
+    component: RhythmPickerScreen,
+    requiresLayout: true,
+    props: ['onNavigateToScreen', 'onTouchStart', 'onTouchMove', 'onTouchEnd', 'breathInDuration', 'breathOutDuration', 'onBreathRhythmChange'],
     transition: {
       type: 'fade',
       duration: 0.2

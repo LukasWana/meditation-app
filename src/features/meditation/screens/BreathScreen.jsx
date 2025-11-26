@@ -11,7 +11,6 @@ import { useBreathTimer } from '@hooks/useBreathTimer';
 import { usePreparationTimer } from '@hooks/usePreparationTimer';
 import PreparationSection from '@features/meditation/components/PreparationSection';
 import BreathingSection from '@features/meditation/components/BreathingSection';
-import BreathModals from '@features/meditation/components/BreathModals';
 
 const BreathScreen = ({
   breathPhase,
@@ -22,15 +21,18 @@ const BreathScreen = ({
   onTouchEnd,
   breathInDuration,
   breathOutDuration,
-  onBreathRhythmChange,
+  // eslint-disable-next-line no-unused-vars
+  onBreathRhythmChange, // Předáváno do RhythmPickerScreen přes PageManager
   preparationTime,
-  onPreparationTimeChange,
+  // eslint-disable-next-line no-unused-vars
+  onPreparationTimeChange, // Předáváno do PreparationTimePickerScreen přes PageManager
   breathDuration,
   breathTime,
   setBreathTime,
   isBreathing,
   setIsBreathing,
-  onBreathDurationChange,
+  // eslint-disable-next-line no-unused-vars
+  onBreathDurationChange, // Předáváno do DurationPickerScreen přes PageManager
   breathInSound,
   breathOutSound,
   breathClickSound,
@@ -39,9 +41,6 @@ const BreathScreen = ({
   breathSoundFadeEnabled
 }) => {
   const { t } = useLanguage();
-  const [showPreparationPicker, setShowPreparationPicker] = useState(false);
-  const [showDurationPicker, setShowDurationPicker] = useState(false);
-  const [showRhythmPicker, setShowRhythmPicker] = useState(false);
 
   // Lokální state pro přípravný čas (vždy používáme lokální state pro BreathScreen)
   const [localIsPreparing, setLocalIsPreparing] = useState(false);
@@ -208,19 +207,13 @@ const BreathScreen = ({
                 onPlayPause={handlePlayPause}
                 onReset={handleReset}
                 onPreparationClick={() => {
-                  setShowDurationPicker(false);
-                  setShowRhythmPicker(false);
-                  setShowPreparationPicker(true);
+                  onNavigateToScreen('preparation-time-picker');
                 }}
                 onDurationClick={() => {
-                  setShowPreparationPicker(false);
-                  setShowRhythmPicker(false);
-                  setShowDurationPicker(true);
+                  onNavigateToScreen('duration-picker');
                 }}
                 onRhythmClick={() => {
-                  setShowPreparationPicker(false);
-                  setShowDurationPicker(false);
-                  setShowRhythmPicker(true);
+                  onNavigateToScreen('rhythm-picker');
                 }}
                 onGalleryClick={() => onNavigateToScreen('sound-theme-gallery')}
                 onProfilesClick={() => onNavigateToScreen('breath-profiles')}
@@ -231,28 +224,6 @@ const BreathScreen = ({
             )}
           </AnimatePresence>
         </div>
-
-        {/* Modaly */}
-        <BreathModals
-          showPreparationPicker={showPreparationPicker}
-          showDurationPicker={showDurationPicker}
-          showRhythmPicker={showRhythmPicker}
-          preparationTime={preparationTime}
-          breathDuration={breathDuration}
-          breathInDuration={breathInDuration}
-          breathOutDuration={breathOutDuration}
-          onClosePreparation={() => setShowPreparationPicker(false)}
-          onCloseDuration={() => setShowDurationPicker(false)}
-          onCloseRhythm={() => setShowRhythmPicker(false)}
-          onPreparationChange={onPreparationTimeChange}
-          onDurationChange={(duration) => {
-            onBreathDurationChange(duration);
-            setBreathTime(duration * 60);
-          }}
-          onRhythmChange={onBreathRhythmChange}
-          onSoundButtonClick={() => onNavigateToScreen('sound-theme-gallery')}
-          t={t}
-        />
       </div>
     </FramerPageTransition>
   );
