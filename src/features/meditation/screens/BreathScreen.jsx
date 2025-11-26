@@ -98,7 +98,6 @@ const BreathScreen = ({
 
   // Handler pro play/pause s podporou přípravného času
   const handlePlayPause = () => {
-    console.log('🔊 handlePlayPause called', { isBreathing, currentIsPreparing, preparationTime });
 
     // Pokud už dýchání probíhá, zastav ho
     if (isBreathing) {

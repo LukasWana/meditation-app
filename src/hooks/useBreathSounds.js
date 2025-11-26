@@ -86,7 +86,8 @@ export const useBreathSounds = (
         // Zkus načíst z metadata
         const metadata = await realtimeMetadataService.getFileMetadata(breathOutSound);
         if (metadata && (metadata.downloadURL || metadata.audioSrc)) {
-          setOutSoundUrl(metadata.downloadURL || metadata.audioSrc);
+          const url = metadata.downloadURL || metadata.audioSrc;
+          setOutSoundUrl(url);
           return;
         }
 
@@ -355,7 +356,9 @@ export const useBreathSounds = (
         : (breathOutSound !== 'none' ? outSoundRef.current : null);
       const duration = phase === 'in' ? breathInDuration : breathOutDuration;
 
-      if (!sound) return;
+      if (!sound) {
+        return;
+      }
 
       try {
         // Zjisti, zda je zvuk delší než fáze
@@ -367,7 +370,13 @@ export const useBreathSounds = (
           // Zvuk je dlouhý a běží - necháme ho pokračovat, jen nastavíme fade in
           // NEPAUZUJEME a NERESETUJEME
           const currentIntervalRef = phase === 'in' ? inFadeIntervalRef : outFadeIntervalRef;
-          const fadeInDuration = 1.5;
+
+          // Použij stejnou logiku pro výpočet fade in duration
+          const soundDuration = sound.duration;
+          const fadeInDuration = (soundDuration && !isNaN(soundDuration) && soundDuration < 2.0)
+            ? Math.max(0.3, soundDuration * 0.3)
+            : 1.5;
+
           fadeIn(sound, fadeInDuration, currentIntervalRef);
           return; // Ukonči funkci - zvuk už běží
         }
@@ -391,8 +400,35 @@ export const useBreathSounds = (
         });
 
         const currentIntervalRef = phase === 'in' ? inFadeIntervalRef : outFadeIntervalRef;
-        // Fade in nového zvuku - delší fade in při prvním spuštění (3 sekundy) nebo při prvním nádechu, jinak 1.5 sekundy
-        const fadeInDuration = (isFirstStart && phase === 'in') ? 3.0 : 1.5;
+
+        // Funkce pro výpočet optimální délky fade in podle délky zvuku
+        const getFadeInDuration = () => {
+          const soundDuration = sound.duration;
+
+          // Pokud délka zvuku není známá, použij výchozí hodnotu
+          if (!soundDuration || isNaN(soundDuration) || soundDuration <= 0) {
+            return (isFirstStart && phase === 'in') ? 3.0 : 1.5;
+          }
+
+          // Pro krátké zvuky (kratší než 2 sekundy) použij kratší fade in
+          // aby zvuk dosáhl plné hlasitosti před koncem
+          if (soundDuration < 2.0) {
+            // Pro velmi krátké zvuky (< 1.5s) použij ještě kratší fade in (20% nebo max 0.2s)
+            // Pro ostatní krátké zvuky použij 30% délky, minimálně 0.2 sekundy
+            if (soundDuration < 1.5) {
+              // Velmi krátké zvuky - 20% délky, max 0.2 sekundy, min 0.15 sekundy
+              return Math.max(0.15, Math.min(0.2, soundDuration * 0.2));
+            } else {
+              // Ostatní krátké zvuky - 30% délky, minimálně 0.2 sekundy
+              return Math.max(0.2, soundDuration * 0.3);
+            }
+          }
+
+          // Pro delší zvuky použij standardní fade in
+          return (isFirstStart && phase === 'in') ? 3.0 : 1.5;
+        };
+
+        const fadeInDuration = getFadeInDuration();
         fadeIn(sound, fadeInDuration, currentIntervalRef);
 
         // Pomocná funkce pro nastavení fade out
@@ -412,12 +448,16 @@ export const useBreathSounds = (
             return;
           } else {
             // Pokud je zvuk kratší než fáze, fade out na konci zvuku
+            // Pro velmi krátké zvuky (< 2s) použij kratší fade out (0.2s) a spusť ho až na konci
+            const fadeOutDuration = soundDuration < 2.0 ? 0.2 : 1.5;
+            const fadeOutStartTime = Math.max(0, soundDuration - fadeOutDuration);
+
             fadeOutTimeoutRef.current = setTimeout(() => {
               if (sound && !sound.paused && sound.currentTime < soundDuration) {
                 const fadeIntervalRef = phase === 'in' ? inFadeIntervalRef : outFadeIntervalRef;
-                fadeOut(sound, 1.5, fadeIntervalRef);
+                fadeOut(sound, fadeOutDuration, fadeIntervalRef);
               }
-            }, (soundDuration - 1.5) * 1000);
+            }, fadeOutStartTime * 1000);
           }
         };
 
@@ -434,8 +474,11 @@ export const useBreathSounds = (
     };
 
     // Při změně fáze: nejdříve fade out předchozího zvuku, poté spusť nový
-    if (phaseChanged && soundToStop && soundToStop.volume > 0) {
-      // Ulož čekající fázi
+    // Kontrolujeme, zda zvuk skutečně běží (není pauzovaný a má currentTime > 0)
+    const isSoundPlaying = soundToStop && !soundToStop.paused && soundToStop.currentTime > 0;
+
+    if (phaseChanged && soundToStop && isSoundPlaying) {
+      // Zvuk běží - zastav ho fade out a pak spusť nový
       pendingPhaseRef.current = breathPhase;
 
       const stopIntervalRef = breathPhase === 'in' ? outFadeIntervalRef : inFadeIntervalRef;

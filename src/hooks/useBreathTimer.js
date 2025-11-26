@@ -79,7 +79,6 @@ export const useBreathTimer = (
 
             // Použij aktuální fázi z refu (ne z props, aby se to neměnilo při re-renderu)
             const currentPhase = currentPhaseRef.current;
-            console.log('⏰ Breath time reached 0, stopping timer and waiting for cycle completion', { currentPhase, breathInDuration, breathOutDuration });
 
             // Ulož aktuální fázi pro výpočet čekacího času
             waitingPhaseRef.current = currentPhase;
