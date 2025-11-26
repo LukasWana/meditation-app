@@ -69,6 +69,30 @@ export const THEMES = [
     },
     allowsCustomBackground: true,
     fontFamily: "'Montserrat', sans-serif"
+  },
+  {
+    id: 'soft-pastels',
+    name: {
+      SK: 'Jemné pastely',
+      CZ: 'Jemné pastely',
+      EN: 'Soft pastels'
+    },
+    colors: {
+      primary: 'rgba(200, 180, 230, 1)',      // Světle fialová (lavender)
+      secondary: 'rgba(255, 200, 220, 1)',    // Světle růžová
+      background: 'rgba(250, 245, 255, 1)',   // Velmi světlé fialové pozadí (gradient nahoře)
+      card: 'rgba(255, 255, 255, 0.9)',       // Bílá s lehkou průhledností
+      text: 'rgba(80, 60, 100, 1)',           // Tmavě fialová pro text
+      textSecondary: 'rgba(140, 120, 160, 1)', // Střední fialová pro sekundární text
+      accent1: 'rgba(255, 200, 220, 1)',      // Světle růžová
+      accent2: 'rgba(200, 220, 255, 1)',      // Světle modrá
+      accent3: 'rgba(240, 210, 250, 1)',      // Jemná fialová
+      border: 'rgba(200, 180, 230, 0.25)',    // Lehký fialový border
+      progressIndicator: 'rgba(200, 180, 230, 0.8)', // Fialová pro progress
+      timeIndicator: 'rgba(80, 60, 100, 1)'   // Tmavší fialová pro čas
+    },
+    allowsCustomBackground: true,
+    fontFamily: "'Quicksand', sans-serif"
   }
 
 ];
