@@ -22,42 +22,112 @@ export const ThemeProvider = ({ children }) => {
     }
   });
 
-  const [customBackground, setCustomBackground] = useState(() => {
+  // Helper funkce pro získání klíče localStorage pro pozadí daného tématu
+  const getBackgroundStorageKey = (themeId) => {
+    return `meditation-app-custom-background-${themeId}`;
+  };
+
+  // Helper funkce pro načtení pozadí pro dané téma
+  const loadBackgroundForTheme = (themeId) => {
     try {
-      const saved = localStorage.getItem('meditation-app-custom-background');
+      const key = getBackgroundStorageKey(themeId);
+      const saved = localStorage.getItem(key);
+
+      // Zpětná kompatibilita - pokud není pozadí pro toto téma, zkusit starý klíč
+      if (!saved) {
+        const oldKey = 'meditation-app-custom-background';
+        const oldSaved = localStorage.getItem(oldKey);
+        if (oldSaved) {
+          // Migrovat staré pozadí na nové téma
+          localStorage.setItem(key, oldSaved);
+          // Nechat starý klíč pro případ, že by ho jiné téma potřebovalo
+          return oldSaved;
+        }
+      }
+
       return saved || null;
     } catch (error) {
       console.warn('Failed to load custom background from localStorage:', error);
       return null;
     }
+  };
+
+  const [customBackground, setCustomBackground] = useState(() => {
+    const initialThemeId = (() => {
+      try {
+        const saved = localStorage.getItem('meditation-app-theme');
+        return saved || DEFAULT_THEME_ID;
+      } catch (error) {
+        return DEFAULT_THEME_ID;
+      }
+    })();
+    return loadBackgroundForTheme(initialThemeId);
   });
 
-  // Aktuální téma
-  const currentTheme = getThemeById(themeId);
+  // Základní téma (statické)
+  const baseTheme = getThemeById(themeId);
 
-  // Získat URL obrázku z customBackground
-  const getBackgroundImageUrl = () => {
+  // Získat data z customBackground
+  const getBackgroundData = () => {
     if (!customBackground) return null;
 
     try {
       const parsed = JSON.parse(customBackground);
-      if (parsed.url) {
-        return parsed.url;
-      }
+      return parsed;
     } catch (e) {
       // Pokud to není JSON, použít jako URL (starý formát)
-      return customBackground;
+      return { url: customBackground };
     }
-    return null;
   };
+
+  // Získat URL obrázku z customBackground
+  const getBackgroundImageUrl = () => {
+    const data = getBackgroundData();
+    return data?.url || null;
+  };
+
+  // Získat extrahované barvy z customBackground
+  const getExtractedColors = () => {
+    const data = getBackgroundData();
+    return data?.colors || null;
+  };
+
+  // Získat aktuální barvy tématu (buď z fotky, nebo defaultní)
+  const getCurrentThemeColors = () => {
+    const backgroundUrl = getBackgroundImageUrl();
+    const hasImage = !!backgroundUrl && baseTheme?.allowsCustomBackground;
+    const extractedColors = getExtractedColors();
+
+    // Pokud máme fotku s extrahovanými barvami, použít je
+    if (hasImage && extractedColors) {
+      // Sloučit extrahované barvy s defaultními (extrahované mají prioritu)
+      return {
+        ...baseTheme?.colors,
+        ...extractedColors
+      };
+    }
+
+    // Jinak použít defaultní barvy tématu
+    return baseTheme?.colors || {};
+  };
+
+  // Dynamické barvy (buď z fotky, nebo defaultní)
+  const themeColors = getCurrentThemeColors();
+
+  // Aktuální téma s dynamickými barvami
+  const currentTheme = baseTheme ? {
+    ...baseTheme,
+    colors: themeColors
+  } : null;
 
   // Získat styl pro pozadí
   const getBackgroundStyle = () => {
     const backgroundUrl = getBackgroundImageUrl();
-    const hasImage = !!backgroundUrl && currentTheme?.allowsCustomBackground;
+    const hasImage = !!backgroundUrl && baseTheme?.allowsCustomBackground;
+    const themeColors = getCurrentThemeColors();
 
-    // Barva pozadí pro body/root - pokud je obrázek, nastavit neprůhlednou (bez alpha kanálu)
-    let backgroundColor = currentTheme?.colors?.background || '#f4ddc4';
+    // Barva pozadí pro body/root - použít barvy z fotky pokud jsou, jinak defaultní
+    let backgroundColor = themeColors?.background || currentTheme?.colors?.background || '#f4ddc4';
     if (hasImage) {
       // Pokud je barva v rgba formátu, převést na rgb (odstranit alpha)
       if (backgroundColor.startsWith('rgba')) {
@@ -94,29 +164,41 @@ export const ThemeProvider = ({ children }) => {
   // Získat backgroundColor pro obrazovky - transparent když je obrázek
   const getScreenBackgroundColor = () => {
     const backgroundUrl = getBackgroundImageUrl();
-    const hasImage = !!backgroundUrl && currentTheme?.allowsCustomBackground;
+    const hasImage = !!backgroundUrl && baseTheme?.allowsCustomBackground;
+    const themeColors = getCurrentThemeColors();
 
     // Pokud je obrázek, vrátit transparent, aby bylo vidět pozadí z body
     if (hasImage) {
       return 'transparent';
     }
 
-    return currentTheme?.colors?.background || '#f4ddc4';
+    // Použít barvy z fotky pokud jsou, jinak defaultní
+    return themeColors?.background || currentTheme?.colors?.background || '#f4ddc4';
   };
 
-  // Aplikovat pozadí a fontFamily na body, root a #root element
+  // Aplikovat pozadí, barvy a fontFamily na body, root a #root element
   useEffect(() => {
     const body = document.body;
     const root = document.documentElement;
     const appRoot = document.getElementById('root');
     const bgStyle = getBackgroundStyle();
+    const themeColors = getCurrentThemeColors();
 
     // Nastavit fontFamily podle aktuálního tématu
-    const fontFamily = currentTheme?.fontFamily || "'Petrona', serif";
-    console.log('🎨 Setting fontFamily:', { themeId, fontFamily, themeName: currentTheme?.id });
+    const fontFamily = baseTheme?.fontFamily || "'Petrona', serif";
+    console.log('🎨 Setting fontFamily:', { themeId, fontFamily, themeName: baseTheme?.id });
+    console.log('🎨 Theme colors:', themeColors);
 
     // Nastavit jako CSS custom property pro použití v CSS
     root.style.setProperty('--theme-font-family', fontFamily);
+
+    // Nastavit barvy jako CSS custom properties
+    if (themeColors) {
+      Object.entries(themeColors).forEach(([key, value]) => {
+        const cssVarName = `--theme-color-${key}`;
+        root.style.setProperty(cssVarName, value);
+      });
+    }
 
     // Nastavit také přímo s !important pro zajištění, že se aplikuje
     body.style.setProperty('font-family', fontFamily, 'important');
@@ -125,10 +207,76 @@ export const ThemeProvider = ({ children }) => {
       appRoot.style.setProperty('font-family', fontFamily, 'important');
     }
 
-    body.style.transition = 'background-color 0.3s ease, background-image 0.3s ease, font-family 0.3s ease';
-    root.style.transition = 'background-color 0.3s ease, background-image 0.3s ease, font-family 0.3s ease';
+    // Nastavit barvu textu globálně (pro tmavé fotky bílý text, pro světlé černý)
+    if (themeColors?.text) {
+      body.style.setProperty('color', themeColors.text, 'important');
+      root.style.setProperty('color', themeColors.text, 'important');
+      if (appRoot) {
+        appRoot.style.setProperty('color', themeColors.text, 'important');
+      }
+
+      // Přidat CSS třídu pro tmavé pozadí, která přepíše Tailwind text-gray-* třídy a bg-white/* třídy
+      const isDarkText = themeColors.text.includes('255, 255, 255') || themeColors.text === '#ffffff' || themeColors.text === 'white';
+
+      if (isDarkText) {
+        // Přidat CSS pro přepsání text-gray-* tříd a bg-white/* tříd na tmavých pozadích
+        let styleElement = document.getElementById('dark-theme-text-override');
+        if (!styleElement) {
+          styleElement = document.createElement('style');
+          styleElement.id = 'dark-theme-text-override';
+          document.head.appendChild(styleElement);
+        }
+
+        // Získat barvu karty pro tmavé pozadí
+        const cardColor = themeColors.card || 'rgba(30, 30, 30, 0.9)';
+
+        styleElement.textContent = `
+          /* Přepsat textové barvy na bílou */
+          .text-gray-800, .text-gray-700, .text-gray-600, .text-gray-500, .text-gray-400, .text-gray-300,
+          .text-black, .text-gray-900 {
+            color: ${themeColors.text} !important;
+          }
+          h1, h2, h3, h4, h5, h6, p, span, div, a, button, label {
+            color: inherit;
+          }
+
+          /* Přepsat bílé pozadí na tmavé, aby byl bílý text viditelný */
+          .bg-white, .bg-white\\/50, .bg-white\\/70, .bg-white\\/30, .bg-white\\/20, .bg-white\\/90, .bg-white\\/95,
+          .bg-white\\/10, .bg-white\\/40, .bg-white\\/60, .bg-white\\/80 {
+            background-color: ${cardColor} !important;
+          }
+
+          /* Přepsat hover stavy pro bílé pozadí */
+          .hover\\:bg-white:hover, .hover\\:bg-white\\/70:hover, .hover\\:bg-white\\/30:hover,
+          .hover\\:bg-white\\/40:hover, .hover\\:bg-white\\/90:hover {
+            background-color: ${cardColor} !important;
+            opacity: 0.95;
+          }
+
+          /* Přepsat text-gray-* barvy v komponentách s bílým pozadím */
+          .bg-white .text-gray-700, .bg-white\\/50 .text-gray-700, .bg-white\\/70 .text-gray-700,
+          .bg-white\\/30 .text-gray-700, .bg-white\\/90 .text-gray-700 {
+            color: ${themeColors.text} !important;
+          }
+
+          /* Přepsat border barvy na světlé pro tmavé pozadí */
+          .border-black\\/10, .border-gray-200, .border-gray-300 {
+            border-color: rgba(255, 255, 255, 0.2) !important;
+          }
+        `;
+      } else {
+        // Odstranit CSS pro tmavé pozadí, pokud není potřeba
+        const styleElement = document.getElementById('dark-theme-text-override');
+        if (styleElement) {
+          styleElement.remove();
+        }
+      }
+    }
+
+    body.style.transition = 'background-color 0.3s ease, background-image 0.3s ease, font-family 0.3s ease, color 0.3s ease';
+    root.style.transition = 'background-color 0.3s ease, background-image 0.3s ease, font-family 0.3s ease, color 0.3s ease';
     if (appRoot) {
-      appRoot.style.transition = 'background-color 0.3s ease, background-image 0.3s ease, font-family 0.3s ease';
+      appRoot.style.transition = 'background-color 0.3s ease, background-image 0.3s ease, font-family 0.3s ease, color 0.3s ease';
     }
 
     // Nastavit pozadí na body, root a #root
@@ -166,7 +314,7 @@ export const ThemeProvider = ({ children }) => {
         appRoot.style.backgroundImage = '';
       }
     }
-  }, [themeId, customBackground, currentTheme]);
+  }, [themeId, customBackground, baseTheme, themeColors]);
 
   // Uložit theme ID do localStorage při změně
   useEffect(() => {
@@ -177,26 +325,44 @@ export const ThemeProvider = ({ children }) => {
     }
   }, [themeId]);
 
-  // Uložit custom background do localStorage při změně
+  // Uložit custom background do localStorage při změně (pro aktuální téma)
   useEffect(() => {
     try {
+      const key = getBackgroundStorageKey(themeId);
       if (customBackground) {
-        localStorage.setItem('meditation-app-custom-background', customBackground);
+        localStorage.setItem(key, customBackground);
       } else {
-        localStorage.removeItem('meditation-app-custom-background');
+        localStorage.removeItem(key);
       }
     } catch (error) {
       console.warn('Failed to save custom background to localStorage:', error);
     }
-  }, [customBackground]);
+  }, [customBackground, themeId]);
 
   // Funkce pro změnu tématu
   const changeTheme = (newThemeId) => {
     const theme = getThemeById(newThemeId);
     if (theme) {
+      // Nejdříve uložit aktuální pozadí pro aktuální téma
+      try {
+        const currentKey = getBackgroundStorageKey(themeId);
+        if (customBackground) {
+          localStorage.setItem(currentKey, customBackground);
+        }
+      } catch (error) {
+        console.warn('Failed to save current theme background:', error);
+      }
+
+      // Změnit téma
       setThemeId(newThemeId);
-      // Pokud nové téma nepodporuje custom background, vymaž ho
-      if (!theme.allowsCustomBackground) {
+
+      // Načíst pozadí pro nové téma (pokud existuje)
+      if (theme.allowsCustomBackground) {
+        const newBackground = loadBackgroundForTheme(newThemeId);
+        setCustomBackground(newBackground);
+      } else {
+        // Pokud nové téma nepodporuje custom background, skrýt ho
+        // ale neukládat null - pozadí zůstane v localStorage pro případ návratu
         setCustomBackground(null);
       }
     }
@@ -205,15 +371,21 @@ export const ThemeProvider = ({ children }) => {
   // Funkce pro nastavení custom pozadí
   const setCustomBackgroundImage = (imageUrl) => {
     // Ověřit, zda aktuální téma podporuje custom pozadí
-    if (currentTheme?.allowsCustomBackground) {
+    if (baseTheme?.allowsCustomBackground) {
       setCustomBackground(imageUrl);
     } else {
       console.warn('Current theme does not support custom background');
     }
   };
 
-  // Funkce pro odstranění custom pozadí
+  // Funkce pro odstranění custom pozadí (pro aktuální téma)
   const removeCustomBackground = () => {
+    try {
+      const key = getBackgroundStorageKey(themeId);
+      localStorage.removeItem(key);
+    } catch (error) {
+      console.warn('Failed to remove custom background from localStorage:', error);
+    }
     setCustomBackground(null);
   };
 
@@ -227,7 +399,8 @@ export const ThemeProvider = ({ children }) => {
     removeCustomBackground,
     getBackgroundStyle,
     getScreenBackgroundColor,
-    allowsCustomBackground: currentTheme?.allowsCustomBackground || false
+    getCurrentThemeColors,
+    allowsCustomBackground: baseTheme?.allowsCustomBackground || false
   };
 
   return (

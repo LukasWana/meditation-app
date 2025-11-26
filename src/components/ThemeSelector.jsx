@@ -4,6 +4,7 @@ import { ThemeContext } from '@contexts/ThemeContext';
 import { useLanguage } from '@contexts/LanguageContext';
 import { getThemeName } from '@data/themes';
 import { processImageForBackground, validateImageHeight } from '@utils/imageCropper';
+import { extractColorsFromImage } from '@utils/colorExtractor';
 import FramerSection from '@components/FramerSection';
 import { ImageIcon, X } from 'lucide-react';
 
@@ -64,11 +65,22 @@ const ThemeSelector = () => {
       // Zpracování obrázku
       const processedImage = await processImageForBackground(file);
 
-      // Uložit obrázek s informací o rozměrech
+      // Extrahovat barvy z obrázku
+      let extractedColors = null;
+      try {
+        extractedColors = await extractColorsFromImage(processedImage, 5);
+        console.log('🎨 Extrahované barvy z fotky:', extractedColors);
+      } catch (colorError) {
+        console.warn('Nepodařilo se extrahovat barvy z fotky:', colorError);
+        // Pokračovat i bez extrahovaných barev
+      }
+
+      // Uložit obrázek s informací o rozměrech a barvách
       const backgroundData = {
         url: processedImage,
         width: imageDimensions?.width || null,
-        height: imageDimensions?.height || null
+        height: imageDimensions?.height || null,
+        colors: extractedColors // Uložit extrahované barvy
       };
 
       // Nastavení jako pozadí (uložit jako JSON string)
