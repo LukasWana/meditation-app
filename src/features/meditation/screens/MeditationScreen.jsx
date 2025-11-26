@@ -174,10 +174,10 @@ const MeditationScreen = ({
                   <motion.div
                     key={preparationCountdown}
                     className="text-6xl font-light text-black"
-                    initial={{ opacity: 0, scale: 0.8 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    exit={{ opacity: 0, scale: 0.8 }}
-                    transition={{ duration: 0.3 }}
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0 }}
+                    transition={{ duration: 0.2 }}
                   >
                     {preparationCountdown}
                   </motion.div>
@@ -263,10 +263,10 @@ const MeditationScreen = ({
                 <motion.p
                   key={breathPhase}
                   className="text-2xl font-light text-gray-600"
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -10 }}
-                  transition={{ duration: 0.3 }}
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  transition={{ duration: 0.2 }}
                 >
                   {breathPhase === 'in' ? t('nadech') : t('vydech')}
                 </motion.p>

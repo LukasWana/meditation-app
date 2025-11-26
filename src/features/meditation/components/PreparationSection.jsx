@@ -46,10 +46,10 @@ const PreparationSection = ({
         <motion.h1
           className="text-4xl font-serif text-gray-800 leading-normal overflow-visible"
           style={{ height: '3.5rem', minHeight: '3.5rem', maxHeight: '3.5rem', display: 'flex', alignItems: 'center', justifyContent: 'center', lineHeight: '1.2', marginTop: 0, paddingTop: 0, paddingBottom: 0, marginBottom: 0 }}
-          initial={{ opacity: 0, y: -10 }}
-          animate={{ opacity: 1, y: 0 }}
-          exit={{ opacity: 0, y: 10 }}
-          transition={{ duration: 0.3 }}
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          transition={{ duration: 0.2 }}
         >
           {t('priprava') || 'příprava'}
         </motion.h1>
@@ -84,10 +84,10 @@ const PreparationSection = ({
             <motion.div
               key={preparationCountdown}
               className="text-6xl font-light text-black"
-              initial={{ opacity: 0, scale: 0.8 }}
-              animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0, scale: 0.8 }}
-              transition={{ duration: 0.3 }}
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.2 }}
             >
               {preparationCountdown}
             </motion.div>

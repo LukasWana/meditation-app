@@ -29,10 +29,10 @@ const BreathHeader = ({
         key={isBreathing ? breathPhase : 'default'}
         className="text-4xl font-serif text-gray-800 leading-normal overflow-visible"
         style={{ height: '3.5rem', minHeight: '3.5rem', maxHeight: '3.5rem', display: 'flex', alignItems: 'center', justifyContent: 'center', lineHeight: '1.2', marginTop: 0, paddingTop: 0, paddingBottom: 0, marginBottom: 0 }}
-        initial={{ opacity: 0, y: -10 }}
-        animate={{ opacity: 1, y: 0 }}
-        exit={{ opacity: 0, y: 10 }}
-        transition={{ duration: 0.3 }}
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+        transition={{ duration: 0.2 }}
       >
         {isBreathing
           ? (breathPhase === 'in' ? t('nadech') || 'nádech' : t('vydech') || 'výdech')

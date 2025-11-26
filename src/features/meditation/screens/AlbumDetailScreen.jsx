@@ -81,9 +81,9 @@ const AlbumDetailScreen = ({
       onTouchStart={onTouchStart}
       onTouchMove={onTouchMove}
       onTouchEnd={onTouchEnd}
-      initial={{ opacity: 0, scale: 0.9 }}
-      animate={{ opacity: 1, scale: 1 }}
-      transition={{ duration: 0.3, ease: "easeOut" }}
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      transition={{ duration: 0.2, ease: "easeInOut" }}
       style={{ height: '100vh' }}
     >
       {/* Cover background */}
@@ -108,17 +108,17 @@ const AlbumDetailScreen = ({
         <div className="flex-1 flex flex-col items-center justify-start p-2 sm:p-8 pb-20">
         <motion.div
           className="text-center mb-8"
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.1, duration: 0.3, ease: "easeOut" }}
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.1, duration: 0.2, ease: "easeInOut" }}
         >
           {/* Album cover */}
           {album.coverImage && (
             <motion.div
               className="w-32 h-32 sm:w-48 sm:h-48 mx-auto mb-6 rounded-lg overflow-hidden bg-gray-200 flex-shrink-0"
-              initial={{ opacity: 0, scale: 0.8 }}
-              animate={{ opacity: 1, scale: 1 }}
-              transition={{ delay: 0.2, duration: 0.3, ease: "easeOut" }}
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 0.2, duration: 0.2, ease: "easeInOut" }}
             >
               <img
                 src={album.coverImage}
