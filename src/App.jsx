@@ -1,17 +1,15 @@
-import React, { useState, Suspense, lazy } from 'react';
+import React, { useState, Suspense } from 'react';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { PageManager } from '@features/navigation';
 import { useNavigation, useTouchNavigation, useAppState, useTimer, useBreathPhase } from '@hooks';
 import { useAppInitialization } from '@hooks/useAppInitialization';
-import { LazyIntroScreen } from '@components/LazyWrapper';
+import { LazyIntroScreen, NewAdminScreen } from '@config/lazyComponents';
 import { LanguageProvider } from '@contexts/LanguageContext';
 import { UIConfigProvider } from '@contexts/UIConfigContext';
 import MonitoringDashboard from '@components/MonitoringDashboard';
+import OfflineIndicator from '@components/OfflineIndicator';
 
 import ErrorBoundary from '@components/ErrorBoundary';
-
-// Lazy loading admin screen for better performance
-const NewAdminScreen = lazy(() => import('@features/meditation/screens/NewAdminScreen'));
 
 // Hlavní aplikace s routingem
 export default function App() {
@@ -31,6 +29,7 @@ function MeditationApp() {
   // Intro state
   const [showIntro, setShowIntro] = useState(true);
 
+  // Inicializace dat z Firebase
   const initialization = useAppInitialization();
 
   // Navigation state
@@ -551,7 +550,7 @@ function MeditationApp() {
             )}
 
             {/* Offline Indicator */}
-            <OfflineIndicator isOffline={isOffline} showOfflineMessage={showOfflineMessage} />
+            <OfflineIndicator />
 
           </div>
         </UIConfigProvider>

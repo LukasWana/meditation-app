@@ -1,22 +1,22 @@
-import React, { useState, useCallback, useMemo, lazy, Suspense } from 'react';
+import React, { useCallback, useMemo, Suspense } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import Layout from './Layout';
 import { getTransitionVariants, getTransitionConfig } from '@config/animations';
-
-// Lazy loading pro lepší performance
-const IntroScreen = lazy(() => import('@features/meditation/screens/IntroScreen'));
-const HomeScreen = lazy(() => import('@features/meditation/screens/HomeScreen'));
-const MeditationScreen = lazy(() => import('@features/meditation/screens/MeditationScreen'));
-const BreathScreen = lazy(() => import('@features/meditation/screens/BreathScreen'));
-const SettingsScreen = lazy(() => import('@features/meditation/screens/SettingsScreen'));
-const HelpScreen = lazy(() => import('@features/meditation/screens/HelpScreen'));
-const HudbaScreen = lazy(() => import('@features/meditation/screens/HudbaScreen'));
-const SlovaScreen = lazy(() => import('@features/meditation/screens/SlovaScreen'));
-const AlbumDetailScreen = lazy(() => import('@features/meditation/screens/AlbumDetailScreen'));
-const AudioPlayer = lazy(() => import('@features/audio/AudioPlayer'));
-const SimpleAdminScreen = lazy(() => import('@features/meditation/screens/SimpleAdminScreen'));
-const SoundThemeGalleryScreen = lazy(() => import('@features/meditation/screens/SoundThemeGalleryScreen'));
-const BreathProfilesScreen = lazy(() => import('@features/meditation/screens/BreathProfilesScreen'));
+import {
+  IntroScreen,
+  HomeScreen,
+  MeditationScreen,
+  BreathScreen,
+  SettingsScreen,
+  HelpScreen,
+  HudbaScreen,
+  SlovaScreen,
+  AlbumDetailScreen,
+  AudioPlayer,
+  SimpleAdminScreen,
+  SoundThemeGalleryScreen,
+  BreathProfilesScreen
+} from '@config/lazyComponents';
 
 
 // Registry stránek s jejich konfigurací
