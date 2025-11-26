@@ -398,7 +398,7 @@ function createThemeColors(colors, regionAnalysis = null) {
  * @param {number} colorCount - Počet barev k extrakci (default 5)
  * @returns {Promise<Object>} - Objekt s extrahovanými barvami
  */
-export function extractColorsFromImage(imageUrl, colorCount = 5) {
+function extractColorsFromImage(imageUrl, colorCount = 5) {
   return new Promise((resolve, reject) => {
     const img = new Image();
     img.crossOrigin = 'anonymous';
@@ -457,10 +457,13 @@ export function extractColorsFromImage(imageUrl, colorCount = 5) {
  * @param {number} b - Blue
  * @returns {string} - Hex barva
  */
-export function rgbToHex(r, g, b) {
+function rgbToHex(r, g, b) {
   return '#' + [r, g, b].map(x => {
     const hex = x.toString(16);
     return hex.length === 1 ? '0' + hex : hex;
   }).join('');
 }
+
+// Export na konci souboru pro zajištění správné inicializace
+export { extractColorsFromImage, rgbToHex };
 
