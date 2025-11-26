@@ -1,11 +1,34 @@
-import React from 'react';
+import React, { useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useTheme } from '@contexts/ThemeContext';
 
 const PlayPauseButton = ({
   isPlaying,
   onToggle,
   className = "w-24 h-24"
 }) => {
+  const { currentTheme } = useTheme();
+  const pauseBar1Ref = useRef(null);
+  const pauseBar2Ref = useRef(null);
+
+  // Získat barvu textu z tématu a detekovat dark mode
+  const textColor = currentTheme?.colors?.text || '#000000';
+  const isDarkMode = textColor.includes('255, 255, 255') ||
+                     textColor === '#ffffff' ||
+                     textColor === 'white' ||
+                     textColor.includes('rgba(255, 255, 255');
+
+  // Pro dark mode použít bílou, jinak použít barvu z tématu
+  const iconColor = isDarkMode ? '#ffffff' : (textColor || '#000000');
+
+  // Nastavit barvu s !important pomocí setProperty
+  useEffect(() => {
+    if (pauseBar1Ref.current && pauseBar2Ref.current) {
+      pauseBar1Ref.current.style.setProperty('background-color', iconColor, 'important');
+      pauseBar2Ref.current.style.setProperty('background-color', iconColor, 'important');
+    }
+  }, [iconColor]);
+
   const handleTouchEnd = (e) => {
     e.preventDefault();
     e.stopPropagation();
@@ -37,8 +60,16 @@ const PlayPauseButton = ({
               className="w-8 h-8 flex items-center justify-center pointer-events-none"
             >
               <div className="flex space-x-3 pointer-events-none">
-                <div className="w-3 h-10 bg-black pointer-events-none"></div>
-                <div className="w-3 h-10 bg-black pointer-events-none"></div>
+                <div
+                  ref={pauseBar1Ref}
+                  className="w-3 h-10 pointer-events-none"
+                  style={{ backgroundColor: iconColor }}
+                ></div>
+                <div
+                  ref={pauseBar2Ref}
+                  className="w-3 h-10 pointer-events-none"
+                  style={{ backgroundColor: iconColor }}
+                ></div>
               </div>
             </motion.div>
           ) : (
@@ -47,7 +78,8 @@ const PlayPauseButton = ({
               initial={{ scale: 0 }}
               animate={{ scale: 1 }}
               exit={{ scale: 0 }}
-              className="w-0 h-0 border-l-[16px] border-l-white border-y-[12px] border-y-transparent ml-3 pointer-events-none"
+              className="w-0 h-0 border-y-[12px] border-y-transparent ml-3 pointer-events-none"
+              style={{ borderLeftColor: iconColor, borderLeftWidth: '16px', color: iconColor }}
             />
           )}
         </AnimatePresence>
