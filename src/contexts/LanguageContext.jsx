@@ -121,7 +121,8 @@ const DEFAULT_TRANSLATIONS = {
     importovatZeSouboru: 'Importovať zo súboru',
     click: 'Klik',
     final: 'Finálny',
-    countdown: 'Odpočítavanie'
+    countdown: 'Odpočítavanie',
+    editovatNazev: 'Editovať názov',
   },
   CZ: {
     // Hlavní navigace
@@ -240,6 +241,7 @@ const DEFAULT_TRANSLATIONS = {
     click: 'Klik',
     final: 'Finální',
     countdown: 'Odpočítávání',
+    editovatNazev: 'Editovat název',
   },
   EN: {
     // Main navigation
@@ -357,7 +359,8 @@ const DEFAULT_TRANSLATIONS = {
     importovatZeSouboru: 'Import from file',
     click: 'Click',
     final: 'Final',
-    countdown: 'Countdown'
+    countdown: 'Countdown',
+    editovatNazev: 'Edit name',
   }
 };
 

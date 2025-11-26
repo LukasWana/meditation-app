@@ -1,6 +1,6 @@
 import React, { useState, useEffect, Suspense, lazy, useRef } from 'react';
 import { motion } from 'framer-motion';
-import { Trash2, Plus, Play, Download, Upload } from 'lucide-react';
+import { Trash2, Plus, Play, Download, Upload, Edit2 } from 'lucide-react';
 import { FramerSection, FramerPageTransition, BackButton, FramerButton } from '@components';
 import { useLanguage } from '@contexts/LanguageContext';
 import breathProfilesService from '@services/breathProfilesService';
@@ -39,6 +39,8 @@ const BreathProfilesScreen = ({
   const [saving, setSaving] = useState(false);
   const [importing, setImporting] = useState(false);
   const [soundMetadataCache, setSoundMetadataCache] = useState({});
+  const [editingProfileId, setEditingProfileId] = useState(null);
+  const [editingProfileName, setEditingProfileName] = useState('');
   const fileInputRef = useRef(null);
 
   // Načtení profilů při načtení stránky
@@ -194,6 +196,52 @@ const BreathProfilesScreen = ({
         console.error('Failed to delete profile:', error);
         alert(t('chybaMazaniProfilu') || 'Chyba při mazání profilu');
       }
+    }
+  };
+
+  // Zahájení editace názvu profilu
+  const handleStartEditProfile = (profile, e) => {
+    e.stopPropagation();
+    setEditingProfileId(profile.id);
+    setEditingProfileName(profile.name);
+  };
+
+  // Zrušení editace názvu profilu
+  const handleCancelEditProfile = () => {
+    setEditingProfileId(null);
+    setEditingProfileName('');
+  };
+
+  // Uložení nového názvu profilu
+  const handleSaveProfileName = async (profileId) => {
+    if (!editingProfileName.trim()) {
+      alert(t('zadejteNazevProfilu') || 'Zadejte název profilu');
+      return;
+    }
+
+    try {
+      setSaving(true);
+      const profile = profiles.find(p => p.id === profileId);
+      if (!profile) {
+        throw new Error('Profil nenalezen');
+      }
+
+      // Aktualizuj název profilu
+      const updatedProfile = {
+        ...profile,
+        name: editingProfileName.trim()
+      };
+
+      await breathProfilesService.saveProfile(updatedProfile, profileId);
+      setEditingProfileId(null);
+      setEditingProfileName('');
+      await loadProfiles();
+      alert(t('profilUlozen') || 'Profil byl úspěšně uložen');
+    } catch (error) {
+      console.error('Failed to save profile name:', error);
+      alert(t('chybaUlozeniProfilu') || 'Chyba při ukládání profilu: ' + (error.message || error));
+    } finally {
+      setSaving(false);
     }
   };
 
@@ -425,12 +473,53 @@ const BreathProfilesScreen = ({
                   >
                     <div className="w-full p-4 bg-white rounded-lg shadow-sm hover:shadow-md transition-shadow flex items-center justify-between gap-4">
                       <div
-                        onClick={() => handleLoadProfile(profile)}
+                        onClick={() => editingProfileId !== profile.id && handleLoadProfile(profile)}
                         className="flex-1 cursor-pointer"
                       >
-                        <div className="text-xl font-medium mb-2">
-                          {profile.name}
-                        </div>
+                        {editingProfileId === profile.id ? (
+                          <div className="mb-2">
+                            <input
+                              type="text"
+                              value={editingProfileName}
+                              onChange={(e) => setEditingProfileName(e.target.value)}
+                              className="w-full px-3 py-2 text-xl font-medium border border-black/20 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-500"
+                              autoFocus
+                              onClick={(e) => e.stopPropagation()}
+                              onKeyPress={(e) => {
+                                if (e.key === 'Enter') {
+                                  handleSaveProfileName(profile.id);
+                                } else if (e.key === 'Escape') {
+                                  handleCancelEditProfile();
+                                }
+                              }}
+                            />
+                            <div className="flex gap-2 mt-2">
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleSaveProfileName(profile.id);
+                                }}
+                                disabled={saving || !editingProfileName.trim()}
+                                className="px-3 py-1 text-sm bg-white/70 hover:bg-white text-gray-700 rounded disabled:opacity-50 disabled:cursor-not-allowed border border-black/10"
+                              >
+                                {saving ? (t('ukladani') || 'Ukládání...') : (t('ulozit') || 'Uložit')}
+                              </button>
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleCancelEditProfile();
+                                }}
+                                className="px-3 py-1 text-sm bg-white/70 hover:bg-white text-gray-700 rounded border border-black/10"
+                              >
+                                {t('zrusit') || 'Zrušit'}
+                              </button>
+                            </div>
+                          </div>
+                        ) : (
+                          <div className="text-xl font-medium mb-2">
+                            {profile.name}
+                          </div>
+                        )}
                         <div className="text-sm text-gray-600 space-y-1">
                           <div>
                             {t('rytmus') || 'Rytmus'}: {profile.breathInDuration} : {profile.breathOutDuration}
@@ -488,26 +577,40 @@ const BreathProfilesScreen = ({
                         </div>
                       </div>
                       <div className="flex items-center gap-2 flex-shrink-0">
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleExportProfile(profile, e);
-                          }}
-                          className="p-2 text-gray-600 hover:text-blue-600 hover:bg-blue-50 rounded-full transition-colors"
-                          title={t('exportovatProfil') || 'Exportovat profil'}
-                        >
-                          <Download size={20} />
-                        </button>
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleDeleteProfile(profile.id, e);
-                          }}
-                          className="p-2 text-gray-600 hover:text-red-600 hover:bg-red-50 rounded-full transition-colors"
-                          title={t('smazat') || 'Smazat'}
-                        >
-                          <Trash2 size={20} />
-                        </button>
+                        {editingProfileId !== profile.id && (
+                          <>
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleStartEditProfile(profile, e);
+                              }}
+                              className="p-2 text-gray-600 hover:text-green-600 hover:bg-green-50 rounded-full transition-colors"
+                              title={t('editovatNazev') || 'Editovat název'}
+                            >
+                              <Edit2 size={20} />
+                            </button>
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleExportProfile(profile, e);
+                              }}
+                              className="p-2 text-gray-600 hover:text-blue-600 hover:bg-blue-50 rounded-full transition-colors"
+                              title={t('exportovatProfil') || 'Exportovat profil'}
+                            >
+                              <Download size={20} />
+                            </button>
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleDeleteProfile(profile.id, e);
+                              }}
+                              className="p-2 text-gray-600 hover:text-red-600 hover:bg-red-50 rounded-full transition-colors"
+                              title={t('smazat') || 'Smazat'}
+                            >
+                              <Trash2 size={20} />
+                            </button>
+                          </>
+                        )}
                         <Play size={20} className="text-gray-400" />
                       </div>
                     </div>
