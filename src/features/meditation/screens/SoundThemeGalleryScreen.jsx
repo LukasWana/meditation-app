@@ -3,6 +3,7 @@ import { motion } from 'framer-motion';
 import { ArrowDown, ArrowUp, MousePointerClick, CheckCircle, Play, Pause, Clock } from 'lucide-react';
 import { FramerPageTransition, BackButton, FramerSection } from '@components';
 import { useLanguage } from '@contexts/LanguageContext';
+import { useTheme } from '@contexts/ThemeContext';
 import { realtimeMetadataService } from '@services/realtimeMetadataService';
 import Waveform from '@components/Waveform';
 
@@ -25,6 +26,7 @@ const SoundThemeGalleryScreen = ({
   const safeSelectedFinalSound = selectedFinalSound || 'none';
   const safeSelectedCountdownSound = selectedCountdownSound || 'none';
   const { t } = useLanguage();
+  const { getScreenBackgroundColor } = useTheme();
 
   // Funkce pro parsování délky zvuku v sekundách
   const parseDurationToSeconds = (duration) => {
@@ -374,10 +376,13 @@ const SoundThemeGalleryScreen = ({
     }
   };
 
+  const backgroundColor = getScreenBackgroundColor();
+
   return (
     <FramerPageTransition screenKey="sound-theme-gallery">
       <div
-        className="min-h-screen w-full max-w-full bg-[#f4ddc4] flex flex-col items-center justify-start p-2 sm:p-8 pb-20 overflow-x-hidden relative"
+        className="min-h-screen w-full max-w-full flex flex-col items-center justify-start p-2 sm:p-8 pb-20 overflow-x-hidden relative"
+        style={{ backgroundColor }}
         onTouchStart={onTouchStart}
         onTouchMove={onTouchMove}
         onTouchEnd={onTouchEnd}

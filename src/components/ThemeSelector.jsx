@@ -74,12 +74,14 @@ const ThemeSelector = () => {
         // Pokračovat i bez extrahovaných barev
       }
 
-      // Uložit obrázek s informací o rozměrech a barvách (bez zpracování)
+      // Uložit obrázek s informací o rozměrech, barvách a vlastnostech tématu
       const backgroundData = {
         url: imageUrl,
         width: imageDimensions?.width || null,
         height: imageDimensions?.height || null,
-        colors: extractedColors // Uložit extrahované barvy
+        colors: extractedColors, // Uložit extrahované barvy
+        useRoundedStyle: currentTheme?.useRoundedStyle ?? false, // Uložit vlastnost kulatého stylu z aktuálního tématu
+        fontFamily: currentTheme?.fontFamily || "'Petrona', serif" // Uložit font z aktuálního tématu
       };
 
       // Nastavení jako pozadí (uložit jako JSON string)

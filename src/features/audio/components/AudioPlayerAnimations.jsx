@@ -9,8 +9,8 @@ export const AudioPlayerAnimations = ({
   onClose,
   fadeOutAndClose
 }) => {
-  const { currentTheme } = useTheme();
-  const backgroundColor = currentTheme?.colors?.background || '#f4ddc4';
+  const { getScreenBackgroundColor } = useTheme();
+  const backgroundColor = getScreenBackgroundColor() || '#f4ddc4';
 
   return (
     <motion.div
