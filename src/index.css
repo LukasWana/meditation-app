@@ -257,6 +257,45 @@ body, html, #root, main, div, section, article {
   user-select: none;
 }
 
+/* Rounded style for themes with useRoundedStyle enabled */
+/* Pro kulaté písmo: kulaté rohy a čtvercové objekty udělat kulaté */
+[data-rounded-style="true"] button,
+[data-rounded-style="true"] .rounded-none,
+[data-rounded-style="true"] [class*="rounded-lg"],
+[data-rounded-style="true"] [class*="rounded-xl"],
+[data-rounded-style="true"] [class*="rounded-md"],
+[data-rounded-style="true"] .rounded-full,
+[data-rounded-style="true"] div[class*="rounded"],
+[data-rounded-style="true"] [class*="bg-white"],
+[data-rounded-style="true"] [class*="bg-black"],
+[data-rounded-style="true"] [class*="bg-gray"],
+[data-rounded-style="true"] [class*="bg-white/"],
+[data-rounded-style="true"] [class*="bg-black/"] {
+  border-radius: 12px !important; /* Kulaté rohy pro všechny objekty */
+}
+
+/* Čtvercové objekty (aspect-square nebo stejná šířka a výška) udělat kulaté */
+[data-rounded-style="true"] .aspect-square,
+[data-rounded-style="true"] [class*="w-20"][class*="h-20"],
+[data-rounded-style="true"] [class*="w-16"][class*="h-16"],
+[data-rounded-style="true"] [class*="w-12"][class*="h-12"],
+[data-rounded-style="true"] [class*="w-10"][class*="h-10"],
+[data-rounded-style="true"] [class*="w-8"][class*="h-8"],
+[data-rounded-style="true"] [class*="w-6"][class*="h-6"],
+[data-rounded-style="true"] [class*="w-4"][class*="h-4"] {
+  border-radius: 50% !important; /* Plně kulaté pro čtvercové objekty */
+}
+
+/* Pro hranaté písmo: hranaté rohy (border-radius: 0) - aplikovat pouze když není rounded style */
+html:not([data-rounded-style="true"]) button:not([class*="rounded-full"]),
+html:not([data-rounded-style="true"]) .rounded-none,
+html:not([data-rounded-style="true"]) [class*="rounded-lg"],
+html:not([data-rounded-style="true"]) [class*="rounded-xl"],
+html:not([data-rounded-style="true"]) [class*="rounded-md"],
+html:not([data-rounded-style="true"]) div[class*="rounded"]:not([class*="rounded-full"]) {
+  border-radius: 0 !important; /* Hranaté rohy pro hranaté písmo */
+}
+
 /* Z-index utilities for common values */
 .z-10000 {
   z-index: 10000;

@@ -20,7 +20,8 @@ export const THEMES = [
       timeIndicator: 'rgba(0, 0, 0, 1)' // Barva textu času pod kruhovým přehrávačem
     },
     allowsCustomBackground: false,
-    fontFamily: "'Petrona', serif"
+    fontFamily: "'Petrona', serif",
+    useRoundedStyle: false
   },
   {
     id: 'calma',
@@ -44,7 +45,8 @@ export const THEMES = [
       timeIndicator: 'rgb(214, 214, 214)' // Barva textu času pod kruhovým přehrávačem
     },
     allowsCustomBackground: true, // Tento styl umožňuje vlastní pozadí
-    fontFamily: "'Inter', sans-serif"
+    fontFamily: "'Inter', sans-serif",
+    useRoundedStyle: false // Pro barevná témata bez kulatého stylu
   },
   {
     id: 'dreamy-lavender',
@@ -68,7 +70,8 @@ export const THEMES = [
       timeIndicator: 'rgba(80, 60, 100, 1)'   // Tmavší fialová pro čas
     },
     allowsCustomBackground: true,
-    fontFamily: "'Montserrat', sans-serif"
+    fontFamily: "'Montserrat', sans-serif",
+    useRoundedStyle: false
   },
   {
     id: 'soft-pastels',
@@ -92,7 +95,8 @@ export const THEMES = [
       timeIndicator: 'rgba(80, 60, 100, 1)'   // Tmavší fialová pro čas
     },
     allowsCustomBackground: true,
-    fontFamily: "'Quicksand', sans-serif"
+    fontFamily: "'Quicksand', sans-serif",
+    useRoundedStyle: true // Pro barevná témata s kulatým stylem (Quicksand je kulatý font)
   }
 
 ];

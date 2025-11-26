@@ -103,6 +103,15 @@ export const ThemeProvider = ({ children }) => {
     return data?.colors || null;
   };
 
+  // Získat uložené vlastnosti tématu z customBackground (useRoundedStyle, fontFamily)
+  const getSavedThemeProperties = () => {
+    const data = getBackgroundData();
+    return {
+      useRoundedStyle: data?.useRoundedStyle ?? null,
+      fontFamily: data?.fontFamily ?? null
+    };
+  };
+
   // Získat aktuální barvy tématu (buď z fotky, nebo defaultní)
   const getCurrentThemeColors = () => {
     const backgroundUrl = getBackgroundImageUrl();
@@ -151,14 +160,31 @@ export const ThemeProvider = ({ children }) => {
   // Použít useMemo pro optimalizaci - přepočítá se při změně colorMode, themeId, customBackground nebo baseTheme
   const themeColors = useMemo(() => getCurrentThemeColors(), [colorMode, themeId, customBackground, baseTheme]);
 
-  // Aktuální téma s dynamickými barvami
+  // Aktuální téma s dynamickými barvami a uloženými vlastnostmi
   const currentTheme = useMemo(() => {
     if (!baseTheme) return null;
+
+    // Získat uložené vlastnosti z customBackground (pokud existují)
+    const savedProperties = getSavedThemeProperties();
+    const backgroundUrl = getBackgroundImageUrl();
+    const hasImage = !!backgroundUrl && baseTheme?.allowsCustomBackground;
+
+    // Pokud máme vlastní pozadí, použít uložené vlastnosti, jinak použít z baseTheme
+    const useRoundedStyle = hasImage && savedProperties.useRoundedStyle !== null
+      ? savedProperties.useRoundedStyle
+      : baseTheme?.useRoundedStyle ?? false;
+
+    const fontFamily = hasImage && savedProperties.fontFamily
+      ? savedProperties.fontFamily
+      : baseTheme?.fontFamily || "'Petrona', serif";
+
     return {
       ...baseTheme,
-      colors: themeColors
+      colors: themeColors,
+      useRoundedStyle,
+      fontFamily
     };
-  }, [baseTheme, themeColors]);
+  }, [baseTheme, themeColors, customBackground]);
 
   // Získat styl pro pozadí
   const getBackgroundStyle = () => {
@@ -259,13 +285,22 @@ export const ThemeProvider = ({ children }) => {
     const bgStyle = getBackgroundStyle();
     const themeColors = getCurrentThemeColors();
 
-    // Nastavit fontFamily podle aktuálního tématu
-    const fontFamily = baseTheme?.fontFamily || "'Petrona', serif";
-    console.log('🎨 Setting fontFamily:', { themeId, fontFamily, themeName: baseTheme?.id });
+    // Nastavit fontFamily podle aktuálního tématu (může být z uložených vlastností)
+    const fontFamily = currentTheme?.fontFamily || baseTheme?.fontFamily || "'Petrona', serif";
+    const useRoundedStyle = currentTheme?.useRoundedStyle ?? false;
+    console.log('🎨 Setting fontFamily:', { themeId, fontFamily, themeName: baseTheme?.id, useRoundedStyle });
     console.log('🎨 Theme colors:', themeColors);
 
     // Nastavit jako CSS custom property pro použití v CSS
     root.style.setProperty('--theme-font-family', fontFamily);
+    root.style.setProperty('--theme-use-rounded-style', useRoundedStyle ? '1' : '0');
+
+    // Nastavit data atribut pro CSS selektor
+    if (useRoundedStyle) {
+      root.setAttribute('data-rounded-style', 'true');
+    } else {
+      root.removeAttribute('data-rounded-style');
+    }
 
     // Nastavit barvy jako CSS custom properties
     if (themeColors) {
@@ -430,7 +465,7 @@ export const ThemeProvider = ({ children }) => {
         appRoot.style.backgroundImage = '';
       }
     }
-  }, [themeId, customBackground, baseTheme, themeColors, colorMode]);
+  }, [themeId, customBackground, baseTheme, themeColors, colorMode, currentTheme]);
 
   // Uložit theme ID do localStorage při změně
   useEffect(() => {

@@ -3,6 +3,7 @@ import { motion } from 'framer-motion';
 import { Trash2, Plus, Play, Download, Upload, Edit2 } from 'lucide-react';
 import { FramerSection, FramerPageTransition, BackButton, FramerButton } from '@components';
 import { useLanguage } from '@contexts/LanguageContext';
+import { useTheme } from '@contexts/ThemeContext';
 import breathProfilesService from '@services/breathProfilesService';
 
 // Lazy loading modálu
@@ -32,6 +33,7 @@ const BreathProfilesScreen = ({
   onBreathSoundFadeChange
 }) => {
   const { t } = useLanguage();
+  const { getScreenBackgroundColor } = useTheme();
   const [profiles, setProfiles] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showNameInput, setShowNameInput] = useState(false);
@@ -330,10 +332,13 @@ const BreathProfilesScreen = ({
     return `${mins}:${secs.toString().padStart(2, '0')}`;
   };
 
+  const backgroundColor = getScreenBackgroundColor();
+
   return (
     <FramerPageTransition screenKey="breath-profiles">
       <div
-        className="min-h-screen w-full max-w-full bg-[#f4ddc4] flex flex-col items-center justify-start p-2 sm:p-8 pb-20 overflow-x-hidden relative"
+        className="min-h-screen w-full max-w-full flex flex-col items-center justify-start p-2 sm:p-8 pb-20 overflow-x-hidden relative"
+        style={{ backgroundColor }}
         onTouchStart={onTouchStart}
         onTouchMove={onTouchMove}
         onTouchEnd={onTouchEnd}
