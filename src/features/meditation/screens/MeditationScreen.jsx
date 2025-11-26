@@ -104,20 +104,6 @@ const MeditationScreen = ({
   // Pro výpočet, kde jsme v cyklu (nádech nebo výdech část)
   const inPhaseProgress = cycleDuration > 0 ? (breathInDuration / cycleDuration) * 100 : 50; // Procenta pro nádech část
 
-  // Debug logování
-  useEffect(() => {
-    if (isPlaying) {
-      console.log('🔵 Breath Rhythm:', {
-        breathPhase,
-        breathCycleTime: breathCycleTime.toFixed(2),
-        cycleDuration,
-        breathRhythmProgress: breathRhythmProgress.toFixed(2),
-        inPhaseProgress: inPhaseProgress.toFixed(2),
-        breathInDuration,
-        breathOutDuration
-      });
-    }
-  }, [isPlaying, breathPhase, breathCycleTime, cycleDuration, breathRhythmProgress, inPhaseProgress, breathInDuration, breathOutDuration]);
 
   // Formátování času
   const formatTime = (seconds) => {
