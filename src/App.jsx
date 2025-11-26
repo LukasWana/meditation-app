@@ -1,17 +1,15 @@
-import React, { useState, Suspense, lazy } from 'react';
+import React, { useState, Suspense } from 'react';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { PageManager } from '@features/navigation';
 import { useNavigation, useTouchNavigation, useAppState, useTimer, useBreathPhase } from '@hooks';
 import { useAppInitialization } from '@hooks/useAppInitialization';
 import { LazyIntroScreen } from '@components/LazyWrapper';
+import { SimpleAdminScreen } from '@config/lazyComponents';
 import { LanguageProvider } from '@contexts/LanguageContext';
 import { UIConfigProvider } from '@contexts/UIConfigContext';
 import MonitoringDashboard from '@components/MonitoringDashboard';
 
 import ErrorBoundary from '@components/ErrorBoundary';
-
-// Lazy loading SimpleAdminScreen pro lepší performance
-const SimpleAdminScreen = lazy(() => import('@features/meditation/screens/SimpleAdminScreen'));
 
 // Hlavní aplikace s routingem
 export default function App() {
