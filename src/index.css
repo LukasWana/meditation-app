@@ -1,5 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Petrona:wght@400;700&display=swap');
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+/* Fonts are loaded in index.html for better performance - no @import needed here */
 
 @tailwind base;
 @tailwind components;
