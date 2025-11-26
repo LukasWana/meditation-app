@@ -22,7 +22,6 @@ const PlayPauseButton = ({
   // Pro dark mode použít bílou ikonku na tmavém pozadí, pro light mode tmavou ikonku na světlém pozadí
   const iconColor = isDarkMode ? '#ffffff' : '#000000';
   const buttonBackgroundColor = isDarkMode ? 'rgba(0, 0, 0, 0.8)' : 'rgba(255, 255, 255, 0.8)';
-  const buttonBorderColor = isDarkMode ? 'rgba(255, 255, 255, 0.2)' : 'rgba(0, 0, 0, 0.2)';
 
   // Nastavit barvu s !important pomocí setProperty
   useEffect(() => {
@@ -46,7 +45,13 @@ const PlayPauseButton = ({
       onClick={onToggle}
       onTouchEnd={handleTouchEnd}
       className={`${className} rounded-full flex items-center justify-center pointer-events-auto cursor-pointer relative overflow-hidden`}
-      style={{ position: 'relative', zIndex: 30, touchAction: 'manipulation' }}
+      style={{
+        position: 'relative',
+        zIndex: 30,
+        touchAction: 'manipulation',
+        outline: 'none',
+        border: 'none'
+      }}
       transition={{ type: "spring", stiffness: 300, damping: 20 }}
     >
       {/* Pozadí buttonu - 20% průhledné při přehrávání, jinak neprůhledné */}
@@ -54,9 +59,6 @@ const PlayPauseButton = ({
         className="absolute inset-0 rounded-full backdrop-blur-sm pointer-events-none"
         style={{
           backgroundColor: buttonBackgroundColor,
-          borderColor: buttonBorderColor,
-          borderWidth: '1px',
-          borderStyle: 'solid',
           opacity: isPlaying ? 0.2 : 1
         }}
       />
