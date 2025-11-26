@@ -16,14 +16,14 @@ const AlbumDetailScreen = ({
 }) => {
   const [activeAudio, setActiveAudio] = useState(null);
   const [currentTrackIndex, setCurrentTrackIndex] = useState(0);
-  const { currentTheme } = useTheme();
+  const { currentTheme, getScreenBackgroundColor } = useTheme();
 
   // Ochrana proti undefined album - MUSÍ BÝT NA ZAČÁTKU
   if (!album || !album.tracks) {
     return (
       <motion.div
         className="min-h-screen w-full max-w-full flex flex-col items-center justify-center"
-        style={{ backgroundColor: currentTheme?.colors?.background || '#f4ddc4' }}
+        style={{ backgroundColor: getScreenBackgroundColor() }}
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ duration: 0.3 }}

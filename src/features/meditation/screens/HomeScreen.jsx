@@ -11,7 +11,7 @@ const HomeScreen = ({
   audioPermission
 }) => {
   const { t } = useLanguage();
-  const { currentTheme } = useTheme();
+  const { currentTheme, getScreenBackgroundColor } = useTheme();
 
   // Aktivuj audio permission při prvním renderu HomeScreen
   useEffect(() => {
@@ -30,7 +30,7 @@ const HomeScreen = ({
         onTouchEnd={onTouchEnd}
         style={{
           height: '100vh',
-          backgroundColor: currentTheme?.colors?.background || '#f4ddc4'
+          backgroundColor: getScreenBackgroundColor()
         }}
       >
         <div

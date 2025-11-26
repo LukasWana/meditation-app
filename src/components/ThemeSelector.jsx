@@ -46,11 +46,33 @@ const ThemeSelector = () => {
         throw new Error('Obrázek musí mít minimální výšku 1080px. Vyberte větší obrázek.');
       }
 
+      // Zjistit rozměry obrázku
+      const imageDimensions = await new Promise((resolve) => {
+        const img = new Image();
+        const url = URL.createObjectURL(file);
+        img.onload = () => {
+          URL.revokeObjectURL(url);
+          resolve({ width: img.width, height: img.height });
+        };
+        img.onerror = () => {
+          URL.revokeObjectURL(url);
+          resolve(null);
+        };
+        img.src = url;
+      });
+
       // Zpracování obrázku
       const processedImage = await processImageForBackground(file);
 
-      // Nastavení jako pozadí
-      setCustomBackground(processedImage);
+      // Uložit obrázek s informací o rozměrech
+      const backgroundData = {
+        url: processedImage,
+        width: imageDimensions?.width || null,
+        height: imageDimensions?.height || null
+      };
+
+      // Nastavení jako pozadí (uložit jako JSON string)
+      setCustomBackground(JSON.stringify(backgroundData));
     } catch (err) {
       setError(err.message || 'Chyba při zpracování obrázku');
       console.error('Error processing image:', err);
@@ -145,7 +167,9 @@ const ThemeSelector = () => {
               <div className="relative">
                 <div className="relative w-full h-32 rounded-lg overflow-hidden border border-gray-200">
                   <img
-                    src={customBackground}
+                    src={typeof customBackground === 'string' && customBackground.startsWith('{')
+                      ? JSON.parse(customBackground).url
+                      : customBackground}
                     alt="Custom background"
                     className="w-full h-full object-cover"
                   />

@@ -15,7 +15,7 @@ const AudioPlayerPage = ({
   onClose,
   className = ""
 }) => {
-  const { currentTheme } = useTheme();
+  const { getScreenBackgroundColor } = useTheme();
   // Načtení URL z Firebase Storage
   const { audioUrl, loading: firebaseLoading, error: firebaseError } = useFirebaseAudio(audioSrc);
 
@@ -38,7 +38,7 @@ const AudioPlayerPage = ({
     <FramerPageTransition screenKey="audio-player-page">
       <div
         className={`min-h-screen w-full max-w-full flex flex-col items-center justify-center p-2 sm:p-8 pb-20 overflow-x-hidden relative ${className}`}
-        style={{ backgroundColor: currentTheme?.colors?.background || '#f4ddc4' }}
+        style={{ backgroundColor: getScreenBackgroundColor() }}
       >
         {/* Back Button - Top Right */}
         <div className="absolute top-4 right-4 z-10">
