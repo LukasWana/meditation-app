@@ -66,18 +66,13 @@ export const AlbumCard = ({
               )}
             </div>
           </div>
-          <div className="flex items-center space-x-3">
-            {item.type === 'song' && (
-              <span className="text-2xl font-light text-gray-500">
-                {getDisplayDuration(item)}
-              </span>
-            )}
-            {item.type === 'album' && (
+          {item.type === 'album' && (
+            <div className="flex items-center space-x-3">
               <span className="text-2xl font-light text-gray-500">
                 {item.totalDuration}
               </span>
-            )}
-          </div>
+            </div>
+          )}
         </div>
       </FramerButton>
     </FramerSection>
