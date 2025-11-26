@@ -1,7 +1,11 @@
 
 
 import { useEffect, useState } from 'react';
-import uiDataService from '@services/uiDataService';
+import initializationManager from '@services/initializationManager';
+import { getService } from '@services/serviceRegistry';
+import { realtimeMetadataService } from '@services/realtimeMetadataService';
+import cacheServiceRefactored from '@services/cacheServiceRefactored';
+import log from '@services/logger';
 
 const INITIAL_STATE = {
   phase: 'idle',
@@ -47,7 +51,20 @@ export const useBackgroundDataLoader = ({ enabled = true } = {}) => {
       }));
 
       try {
-        const uiData = await uiDataService.loadUIData();
+        // Inicializuj UI data service
+        await initializationManager.initializeCategory('data', false, (service, status) => {
+          if (status.name === 'ui') {
+            safelySetState(prev => ({
+              ...prev,
+              phase: 'ui-data',
+              statusMessage: 'Načítám UI data…'
+            }));
+          }
+        });
+
+        // Získej UI data
+        const uiDataEntry = getService('data', 'ui');
+        const uiData = await uiDataEntry.service.loadUIData();
         safelySetState(prev => ({
           ...prev,
           uiData
@@ -59,58 +76,82 @@ export const useBackgroundDataLoader = ({ enabled = true } = {}) => {
           statusMessage: 'Načítám metadata…'
         }));
 
-        const { realtimeMetadataService } = await import('@services/realtimeMetadataService');
-        const { staticMetadataService } = await import('@services/staticMetadataService');
-        const { fastMetadataService } = await import('@services/fastMetadataService');
-        const globalMetadataPreloader = (await import('@services/globalMetadataPreloader')).default;
-        const cacheService = (await import('@services/cacheServiceRefactored')).default;
-        const { slovaDataService } = await import('@services/slovaDataService');
+        // Inicializuj metadata services
+        await initializationManager.initializeCategory('metadata', false, (service, status) => {
+          safelySetState(prev => ({
+            ...prev,
+            phase: 'metadata',
+            statusMessage: `Inicializuji ${status.name} metadata…`
+          }));
+        });
 
+        // Načti metadata z Realtime Database a ulož do cache
         try {
           const realtimeMetadata = await realtimeMetadataService.getAllMetadata();
           if (realtimeMetadata && Object.keys(realtimeMetadata).length > 0) {
             Object.entries(realtimeMetadata).forEach(([key, value]) => {
-              cacheService.setMetadata(key, value);
+              cacheServiceRefactored.setMetadata(key, value);
             });
+            safelySetState(prev => ({
+              ...prev,
+              metadataLoaded: true
+            }));
           } else {
             throw new Error('No metadata in Realtime Database');
           }
         } catch (realtimeError) {
           if (import.meta.env.MODE === 'development') {
-            console.warn('⚠️ Realtime metadata unavailable, using static fallback:', realtimeError.message);
+            log.warn('⚠️ Realtime metadata unavailable, using static fallback:', realtimeError.message);
           }
-          await staticMetadataService.initialize();
+          // Static metadata service se inicializoval přes initializationManager
+          safelySetState(prev => ({
+            ...prev,
+            metadataLoaded: true
+          }));
         }
 
         safelySetState(prev => ({
           ...prev,
-          metadataLoaded: true,
           statusMessage: 'Inicializuji cache…'
         }));
 
-        await cacheService.preloadCriticalData();
+        // Inicializuj cache services
+        await initializationManager.initializeCategory('cache', false, (service, status) => {
+          safelySetState(prev => ({
+            ...prev,
+            phase: 'cache',
+            statusMessage: `Inicializuji ${status.name} cache…`
+          }));
+        });
+
+        // Preload critical data
+        await cacheServiceRefactored.preloadCriticalData();
         safelySetState(prev => ({
           ...prev,
           cacheInitialized: true,
           statusMessage: 'Inicializuji služby…'
         }));
 
-        await fastMetadataService.initialize();
-        safelySetState(prev => ({
-          ...prev,
-          fastMetadataInitialized: true
-        }));
-
-        await globalMetadataPreloader.initialize();
+        // Inicializuj preloader a data services
+        await initializationManager.initializeCategory('preloader', false);
         safelySetState(prev => ({
           ...prev,
           globalPreloaderInitialized: true
         }));
 
-        await slovaDataService.initialize();
+        await initializationManager.initializeCategory('data', false, (service, status) => {
+          if (status.name === 'slova') {
+            safelySetState(prev => ({
+              ...prev,
+              slovaServiceInitialized: true
+            }));
+          }
+        });
+
+        // Fast metadata service se inicializoval přes initializationManager
         safelySetState(prev => ({
           ...prev,
-          slovaServiceInitialized: true
+          fastMetadataInitialized: true
         }));
 
         safelySetState(prev => ({
@@ -143,20 +184,27 @@ export const useBackgroundDataLoader = ({ enabled = true } = {}) => {
             if (data.files && Array.isArray(data.files)) {
               data.files.forEach(file => {
                 if (file.fileName) {
-                  cacheService.setMetadata(file.fileName, file);
+                  cacheServiceRefactored.setMetadata(file.fileName, file);
                 }
               });
 
               try {
-                await fastMetadataService.initialize(false);
+                // Refresh fast metadata a slova services
+                const fastMetadataEntry = getService('metadata', 'fast');
+                if (fastMetadataEntry) {
+                  await initializationManager.initializeService(fastMetadataEntry, false);
+                }
               } catch (err) {
-                console.warn('⚠️ Failed to refresh fast metadata:', err);
+                log.warn('⚠️ Failed to refresh fast metadata:', err);
               }
 
               try {
-                await slovaDataService.initialize();
+                const slovaEntry = getService('data', 'slova');
+                if (slovaEntry) {
+                  await initializationManager.initializeService(slovaEntry, false);
+                }
               } catch (err) {
-                console.warn('⚠️ Failed to refresh slova service:', err);
+                log.warn('⚠️ Failed to refresh slova service:', err);
               }
 
               safelySetState(prev => ({

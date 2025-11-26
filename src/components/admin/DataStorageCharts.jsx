@@ -50,7 +50,7 @@ const DataStorageCharts = () => {
 
       // Test Firestore
       try {
-        const firestoreData = await firestoreMetadataService.loadAllMetadata();
+        const firestoreData = await firestoreMetadataService.getAllMetadata();
         data.firestore = {
           status: 'available',
           count: Object.keys(firestoreData).length,

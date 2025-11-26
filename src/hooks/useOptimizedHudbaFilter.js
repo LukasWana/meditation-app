@@ -43,14 +43,14 @@ export const useOptimizedHudbaFilter = () => {
           // Fallback na Firestore
           try {
             log.info('📊 Trying Firestore database...');
-            allMetadata = await firestoreMetadataService.loadAllMetadata();
+            allMetadata = await firestoreMetadataService.getAllMetadata();
             log.success('✅ Firestore metadata loaded successfully');
           } catch (firestoreError) {
             log.warn('⚠️ Firestore failed, falling back to static metadata:', firestoreError.message);
 
             // Fallback na statická metadata
             try {
-              await staticMetadataService.loadMetadata();
+              await staticMetadataService.initialize();
               allMetadata = staticMetadataService.getAllMetadata();
               log.success('✅ Static metadata loaded successfully');
             } catch (staticError) {

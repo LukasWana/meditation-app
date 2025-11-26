@@ -46,7 +46,7 @@ class FirestoreMetadataService {
     }
   }
 
-  async loadAllMetadata() {
+  async getAllMetadata() {
     try {
       console.log('Loading metadata from Firestore...');
 
@@ -180,18 +180,23 @@ class FirestoreMetadataService {
     return this.cache.has(fileName);
   }
 
-  async initialize() {
+  async initialize(forceReload = false) {
     console.log('Initializing FirestoreMetadataService...');
 
+    if (forceReload) {
+      this.cache.clear();
+      localStorage.removeItem(this.localStorageKey);
+    }
+
     // Nejdříve zkus načíst z localStorage
-    if (this.loadFromLocalCache()) {
+    if (!forceReload && this.loadFromLocalCache()) {
       console.log('Metadata loaded from local cache');
       return;
     }
 
     // Pokud není v localStorage, načti z Firestore
     try {
-      await this.loadAllMetadata();
+      await this.getAllMetadata();
     } catch (error) {
       console.warn('Failed to initialize metadata service:', error);
     }

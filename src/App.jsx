@@ -204,7 +204,7 @@ function MeditationApp() {
           console.log('📊 Is cached:', isCached);
 
           if (isCached) {
-            const cachedFile = await offlineCacheService.getCachedFile(fileName);
+            const cachedFile = await offlineCacheService.getFile(fileName);
             console.log('📊 Cached file type:', cachedFile ? cachedFile.type : 'unknown');
             console.log('📊 Cached file headers:', cachedFile ? [...cachedFile.headers.entries()] : []);
           }

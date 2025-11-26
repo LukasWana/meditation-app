@@ -10,7 +10,7 @@ export const testCachePerformance = async () => {
   // Test 1: Načtení z cache
   console.log('📊 Test 1: Loading from cache');
   const cacheStart = performance.now();
-  const metadata = await fastMetadataService.loadAllMetadata();
+  const metadata = await fastMetadataService.getAllMetadata();
   const cacheEnd = performance.now();
 
   console.log(`⚡ Cache load time: ${(cacheEnd - cacheStart).toFixed(2)}ms`);

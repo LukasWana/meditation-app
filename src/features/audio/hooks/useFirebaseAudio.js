@@ -43,7 +43,7 @@ export const useFirebaseAudio = (audioFileName) => {
         await enhancedOfflineCacheService.initialize();
 
         // Zkontroluj offline cache PRVNÍ - šetří mobilní data
-        const offlineUrl = await enhancedOfflineCacheService.getOfflineUrl(audioFileName);
+        const offlineUrl = await enhancedOfflineCacheService.getFile(audioFileName);
         if (offlineUrl) {
           console.log('🔗 Using offline URL for:', audioFileName, '(saving mobile data)');
           setAudioUrl(offlineUrl);

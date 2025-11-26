@@ -70,10 +70,19 @@ class SlovaDataService {
   }
 
   // Inicializace slova dat z cache
-  async initialize() {
-    if (this.isInitialized) {
+  async initialize(forceReload = false) {
+    if (this.isInitialized && !forceReload) {
       log.debug('SlovaDataService already initialized, skipping...');
       return;
+    }
+
+    if (forceReload) {
+      this.slovaData = {
+        sk: { male: [], female: [], all: [] },
+        cz: { male: [], female: [], all: [] },
+        en: { male: [], female: [], all: [] }
+      };
+      this.isInitialized = false;
     }
 
     try {

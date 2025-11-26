@@ -76,7 +76,7 @@ class FastMetadataService {
     return false;
   }
 
-  async loadAllMetadata() {
+  async getAllMetadata() {
     if (this.isLoading) {
       return this.metadata;
     }
@@ -597,7 +597,7 @@ class FastMetadataService {
     return this.metadata.get(fileName);
   }
 
-  getAllMetadata() {
+  getAllFromCache() {
     return Object.fromEntries(this.metadata);
   }
 
@@ -842,7 +842,7 @@ class FastMetadataService {
     // Fallback na Firebase Storage, pokud Realtime Database ani cache neobsahují data
     try {
       log.info('🔄 Loading metadata from Firebase Storage...');
-      await this.loadAllMetadata();
+      await this.getAllMetadata();
       log.success('✅ FastMetadataService initialized from Firebase Storage');
     } catch (error) {
       log.warn('❌ Failed to initialize metadata service:', error);
@@ -852,7 +852,7 @@ class FastMetadataService {
   async refresh() {
     this.metadata.clear();
     localStorage.removeItem(this.cacheKey);
-    await this.loadAllMetadata();
+    await this.getAllMetadata();
   }
 
   /**

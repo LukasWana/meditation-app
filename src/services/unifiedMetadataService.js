@@ -256,16 +256,22 @@ class UnifiedMetadataService {
     }
   }
 
-  async initialize() {
-    if (this.isInitialized) return;
+  async initialize(forceReload = false) {
+    if (this.isInitialized && !forceReload) return;
     if (this.isLoading) return;
+
+    if (forceReload) {
+      this.cache.clear();
+      this.isInitialized = false;
+      localStorage.removeItem(this.localStorageKey);
+    }
 
     this.isLoading = true;
     log.info('🚀 Initializing UnifiedMetadataService...');
 
     try {
       // Nejdříve zkus načíst z localStorage
-      if (this.loadFromLocalCache()) {
+      if (!forceReload && this.loadFromLocalCache()) {
         this.isInitialized = true;
         this.isLoading = false;
         log.info('✅ Initialized from localStorage cache');
