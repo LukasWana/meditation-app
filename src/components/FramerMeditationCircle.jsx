@@ -94,7 +94,6 @@ const FramerMeditationCircle = ({
         {!showTimeBelow ? (
           <motion.div
             className="w-40 h-40 rounded-full bg-black/5 flex items-center justify-center p-4"
-            whileHover={{ scale: 1.05 }}
             transition={{ type: "spring", stiffness: 300, damping: 20 }}
           >
             <motion.span

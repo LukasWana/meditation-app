@@ -179,8 +179,6 @@ const SettingsScreen = ({
                         ? 'bg-gray-800 text-white'
                         : 'text-gray-600 hover:text-gray-800'
                     }`}
-                    whileHover={{ scale: 1 }}
-                    whileTap={{ scale: 0.9 }}
                     transition={{ type: "spring", stiffness: 300, damping: 20 }}
                   >
                     {t('jsemMuz')}
@@ -192,8 +190,6 @@ const SettingsScreen = ({
                         ? 'bg-gray-800 text-white'
                         : 'text-gray-600 hover:text-gray-800'
                     }`}
-                    whileHover={{ scale: 1 }}
-                    whileTap={{ scale: 0.9 }}
                     transition={{ type: "spring", stiffness: 300, damping: 20 }}
                   >
                     {t('jsemZena')}
@@ -205,8 +201,6 @@ const SettingsScreen = ({
                         ? 'bg-gray-800 text-white'
                         : 'text-gray-600 hover:text-gray-800'
                     }`}
-                    whileHover={{ scale: 1 }}
-                    whileTap={{ scale: 0.9 }}
                     transition={{ type: "spring", stiffness: 300, damping: 20 }}
                   >
                     {t('obecnyObsah')}

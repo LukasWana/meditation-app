@@ -516,7 +516,7 @@ const SoundThemeGallery = ({ isOpen, onClose, onSelectSound, selectedInSound, se
                       className={`px-3 py-1.5 rounded-full text-sm transition-colors flex items-center gap-1.5 ${
                         selectedCategory === 'all'
                           ? 'bg-black text-white'
-                          : 'bg-white/70 hover:bg-white text-gray-700 border border-black/10'
+                          : 'bg-white/70  text-gray-700 border border-black/10'
                       }`}
                       type="button"
                     >
@@ -531,7 +531,7 @@ const SoundThemeGallery = ({ isOpen, onClose, onSelectSound, selectedInSound, se
                     className={`px-3 py-1.5 rounded-full text-sm transition-colors flex items-center gap-1.5 ${
                       selectedCategory === 'background'
                         ? 'bg-black text-white'
-                        : 'bg-white/70 hover:bg-white text-gray-700 border border-black/10'
+                        : 'bg-white/70  text-gray-700 border border-black/10'
                     }`}
                     type="button"
                     title="Background"
@@ -548,7 +548,7 @@ const SoundThemeGallery = ({ isOpen, onClose, onSelectSound, selectedInSound, se
                     className={`px-3 py-1.5 rounded-full text-sm transition-colors flex items-center gap-1.5 ${
                       selectedCategory === 'mnich'
                         ? 'bg-black text-white'
-                        : 'bg-white/70 hover:bg-white text-gray-700 border border-black/10'
+                        : 'bg-white/70  text-gray-700 border border-black/10'
                     }`}
                     type="button"
                     title="Mnich"
@@ -565,7 +565,7 @@ const SoundThemeGallery = ({ isOpen, onClose, onSelectSound, selectedInSound, se
                     className={`px-3 py-1.5 rounded-full text-sm transition-colors flex items-center gap-1.5 ${
                       selectedCategory === 'kratke'
                         ? 'bg-black text-white'
-                        : 'bg-white/70 hover:bg-white text-gray-700 border border-black/10'
+                        : 'bg-white/70  text-gray-700 border border-black/10'
                     }`}
                     type="button"
                     title="Krátké zvuky"
@@ -582,7 +582,7 @@ const SoundThemeGallery = ({ isOpen, onClose, onSelectSound, selectedInSound, se
                     className={`px-3 py-1.5 rounded-full text-sm transition-colors flex items-center gap-1.5 ${
                       selectedCategory === 'pt_voice'
                         ? 'bg-black text-white'
-                        : 'bg-white/70 hover:bg-white text-gray-700 border border-black/10'
+                        : 'bg-white/70  text-gray-700 border border-black/10'
                     }`}
                     type="button"
                     title="PT Voice"
@@ -600,7 +600,7 @@ const SoundThemeGallery = ({ isOpen, onClose, onSelectSound, selectedInSound, se
                   className={`px-3 py-1.5 rounded-full text-sm transition-colors flex items-center gap-1.5 ${
                     selectedCategory === 'silence'
                       ? 'bg-black text-white'
-                      : 'bg-white/70 hover:bg-white text-gray-700 border border-black/10'
+                      : 'bg-white/70  text-gray-700 border border-black/10'
                   }`}
                   type="button"
                   title="Silence"
@@ -627,7 +627,7 @@ const SoundThemeGallery = ({ isOpen, onClose, onSelectSound, selectedInSound, se
                   className={`px-3 py-1.5 rounded-full text-sm transition-colors flex items-center gap-1.5 ${
                     currentPage === 0
                       ? 'bg-gray-200 text-gray-400 cursor-not-allowed'
-                      : 'bg-white/70 hover:bg-white text-gray-700 border border-black/10'
+                      : 'bg-white/70  text-gray-700 border border-black/10'
                   }`}
                   type="button"
                 >
@@ -642,7 +642,7 @@ const SoundThemeGallery = ({ isOpen, onClose, onSelectSound, selectedInSound, se
                   className={`px-3 py-1.5 rounded-full text-sm transition-colors flex items-center gap-1.5 ${
                     currentPage === paginatedFiles.length - 1
                       ? 'bg-gray-200 text-gray-400 cursor-not-allowed'
-                      : 'bg-white/70 hover:bg-white text-gray-700 border border-black/10'
+                      : 'bg-white/70  text-gray-700 border border-black/10'
                   }`}
                   type="button"
                 >
@@ -656,9 +656,7 @@ const SoundThemeGallery = ({ isOpen, onClose, onSelectSound, selectedInSound, se
               <div className="mb-4 space-y-3">
                 {/* První položka: Všechny události najednou */}
                 <motion.div
-                  className="bg-white/50 backdrop-blur rounded-lg border border-black/10 p-3 hover:bg-white/70 transition-colors flex flex-col"
-                  whileHover={{ scale: 1.02 }}
-                  whileTap={{ scale: 0.98 }}
+                  className="bg-white/50 backdrop-blur rounded-lg border border-black/10 p-3 /70 transition-colors flex flex-col"
                   onClick={(e) => e.stopPropagation()}
                 >
                   <div className="w-full mb-2 flex items-center justify-center mt-1">
@@ -679,8 +677,8 @@ const SoundThemeGallery = ({ isOpen, onClose, onSelectSound, selectedInSound, se
                       }}
                       className={`flex-1 p-2 rounded transition-colors flex items-center justify-center cursor-pointer ${
                         safeSelectedInSound === 'none' && safeSelectedOutSound === 'none' && safeSelectedClickSound === 'none' && safeSelectedFinalSound === 'none' && safeSelectedCountdownSound === 'none'
-                          ? 'bg-black text-white hover:bg-gray-800'
-                          : 'bg-white/70 hover:bg-white text-gray-700 border border-black/10'
+                          ? 'bg-black text-white '
+                          : 'bg-white/70  text-gray-700 border border-black/10'
                       }`}
                       title={t('ziadnyZvuk') || 'Žádný zvuk pro všechny'}
                       type="button"
@@ -696,9 +694,7 @@ const SoundThemeGallery = ({ isOpen, onClose, onSelectSound, selectedInSound, se
 
                 {/* Druhá položka: Jednotlivé události */}
                 <motion.div
-                  className="bg-white/50 backdrop-blur rounded-lg border border-black/10 p-3 hover:bg-white/70 transition-colors flex flex-col"
-                  whileHover={{ scale: 1.02 }}
-                  whileTap={{ scale: 0.98 }}
+                  className="bg-white/50 backdrop-blur rounded-lg border border-black/10 p-3 /70 transition-colors flex flex-col"
                   onClick={(e) => e.stopPropagation()}
                 >
                   <div className="w-full mb-2 flex items-center justify-center mt-1">
@@ -717,8 +713,8 @@ const SoundThemeGallery = ({ isOpen, onClose, onSelectSound, selectedInSound, se
                       }}
                       className={`flex-1 p-2 rounded transition-colors flex items-center justify-center cursor-pointer ${
                         safeSelectedInSound === 'none'
-                          ? 'bg-black text-white hover:bg-gray-800'
-                          : 'bg-white/70 hover:bg-white text-gray-700 border border-black/10'
+                          ? 'bg-black text-white '
+                          : 'bg-white/70  text-gray-700 border border-black/10'
                       }`}
                       title={t('zvolteZvukNadech') || 'Nádech - žádný zvuk'}
                       type="button"
@@ -736,8 +732,8 @@ const SoundThemeGallery = ({ isOpen, onClose, onSelectSound, selectedInSound, se
                       }}
                       className={`flex-1 p-2 rounded transition-colors flex items-center justify-center cursor-pointer ${
                         safeSelectedOutSound === 'none'
-                          ? 'bg-black text-white hover:bg-gray-800'
-                          : 'bg-white/70 hover:bg-white text-gray-700 border border-black/10'
+                          ? 'bg-black text-white '
+                          : 'bg-white/70  text-gray-700 border border-black/10'
                       }`}
                       title={t('zvolteZvukVydech') || 'Výdech - žádný zvuk'}
                       type="button"
@@ -755,8 +751,8 @@ const SoundThemeGallery = ({ isOpen, onClose, onSelectSound, selectedInSound, se
                       }}
                       className={`flex-1 p-2 rounded transition-colors flex items-center justify-center cursor-pointer ${
                         safeSelectedClickSound === 'none'
-                          ? 'bg-black text-white hover:bg-gray-800'
-                          : 'bg-white/70 hover:bg-white text-gray-700 border border-black/10'
+                          ? 'bg-black text-white '
+                          : 'bg-white/70  text-gray-700 border border-black/10'
                       }`}
                       title={t('zvolteZvukKliknuti') || 'Kliknutí - žádný zvuk'}
                       type="button"
@@ -774,8 +770,8 @@ const SoundThemeGallery = ({ isOpen, onClose, onSelectSound, selectedInSound, se
                       }}
                       className={`flex-1 p-2 rounded transition-colors flex items-center justify-center cursor-pointer ${
                         safeSelectedFinalSound === 'none'
-                          ? 'bg-black text-white hover:bg-gray-800'
-                          : 'bg-white/70 hover:bg-white text-gray-700 border border-black/10'
+                          ? 'bg-black text-white '
+                          : 'bg-white/70  text-gray-700 border border-black/10'
                       }`}
                       title={t('zvolteZvukFinalni') || 'Finální - žádný zvuk'}
                       type="button"
@@ -793,8 +789,8 @@ const SoundThemeGallery = ({ isOpen, onClose, onSelectSound, selectedInSound, se
                       }}
                       className={`flex-1 p-2 rounded transition-colors flex items-center justify-center cursor-pointer ${
                         safeSelectedCountdownSound === 'none'
-                          ? 'bg-black text-white hover:bg-gray-800'
-                          : 'bg-white/70 hover:bg-white text-gray-700 border border-black/10'
+                          ? 'bg-black text-white '
+                          : 'bg-white/70  text-gray-700 border border-black/10'
                       }`}
                       title={t('zvolteZvukOdpocitavani') || 'Odpočítávání - žádný zvuk'}
                       type="button"
@@ -812,9 +808,7 @@ const SoundThemeGallery = ({ isOpen, onClose, onSelectSound, selectedInSound, se
                 {currentPageFiles.map((file) => (
                   <motion.div
                     key={file.id}
-                    className="bg-white/50 backdrop-blur rounded-lg border border-black/10 p-3 hover:bg-white/70 transition-colors flex flex-col"
-                    whileHover={{ scale: 1.02 }}
-                    whileTap={{ scale: 0.98 }}
+                    className="bg-white/50 backdrop-blur rounded-lg border border-black/10 p-3 /70 transition-colors flex flex-col"
                   >
                     {/* Název a popisek */}
                     <div className="mb-2">
@@ -851,8 +845,8 @@ const SoundThemeGallery = ({ isOpen, onClose, onSelectSound, selectedInSound, se
                         }}
                         className={`p-2 rounded-full transition-colors flex items-center justify-center flex-shrink-0 ${
                           playingPreview === file.fileName
-                            ? 'bg-black text-white hover:bg-gray-800'
-                            : 'bg-white/70 hover:bg-white text-gray-700 border border-black/10'
+                            ? 'bg-black text-white '
+                            : 'bg-white/70  text-gray-700 border border-black/10'
                         }`}
                         title={playingPreview === file.fileName ? 'Zastavit' : 'Přehrát'}
                         type="button"
@@ -880,8 +874,8 @@ const SoundThemeGallery = ({ isOpen, onClose, onSelectSound, selectedInSound, se
                             }}
                             className={`flex-1 min-w-[60px] p-2 rounded transition-colors flex items-center justify-center cursor-pointer ${
                               safeSelectedCountdownSound === file.fileName
-                                ? 'bg-black text-white hover:bg-gray-800'
-                                : 'bg-white/70 hover:bg-white text-gray-700 border border-black/10'
+                                ? 'bg-black text-white '
+                                : 'bg-white/70  text-gray-700 border border-black/10'
                             }`}
                             title={t('zvolteZvukOdpocitavani') || 'Odpočítávání'}
                             type="button"
@@ -909,8 +903,8 @@ const SoundThemeGallery = ({ isOpen, onClose, onSelectSound, selectedInSound, se
                             }}
                             className={`flex-1 min-w-[60px] p-2 rounded transition-colors flex items-center justify-center cursor-pointer ${
                               safeSelectedInSound === file.fileName
-                                ? 'bg-black text-white hover:bg-gray-800'
-                                : 'bg-white/70 hover:bg-white text-gray-700 border border-black/10'
+                                ? 'bg-black text-white '
+                                : 'bg-white/70  text-gray-700 border border-black/10'
                             }`}
                             title={t('zvolteZvukNadech') || 'Nádech'}
                             type="button"
@@ -927,8 +921,8 @@ const SoundThemeGallery = ({ isOpen, onClose, onSelectSound, selectedInSound, se
                             }}
                             className={`flex-1 min-w-[60px] p-2 rounded transition-colors flex items-center justify-center cursor-pointer ${
                               safeSelectedOutSound === file.fileName
-                                ? 'bg-black text-white hover:bg-gray-800'
-                                : 'bg-white/70 hover:bg-white text-gray-700 border border-black/10'
+                                ? 'bg-black text-white '
+                                : 'bg-white/70  text-gray-700 border border-black/10'
                             }`}
                             title={t('zvolteZvukVydech') || 'Výdech'}
                             type="button"
@@ -953,8 +947,8 @@ const SoundThemeGallery = ({ isOpen, onClose, onSelectSound, selectedInSound, se
                         }}
                         className={`flex-1 min-w-[60px] p-2 rounded transition-colors flex items-center justify-center cursor-pointer ${
                           safeSelectedClickSound === file.fileName
-                            ? 'bg-black text-white hover:bg-gray-800'
-                            : 'bg-white/70 hover:bg-white text-gray-700 border border-black/10'
+                            ? 'bg-black text-white '
+                            : 'bg-white/70  text-gray-700 border border-black/10'
                         }`}
                         title={t('zvolteZvukKliknuti') || 'Kliknutí'}
                         type="button"
@@ -972,8 +966,8 @@ const SoundThemeGallery = ({ isOpen, onClose, onSelectSound, selectedInSound, se
                         }}
                         className={`flex-1 min-w-[60px] p-2 rounded transition-colors flex items-center justify-center cursor-pointer ${
                           safeSelectedFinalSound === file.fileName
-                            ? 'bg-black text-white hover:bg-gray-800'
-                            : 'bg-white/70 hover:bg-white text-gray-700 border border-black/10'
+                            ? 'bg-black text-white '
+                            : 'bg-white/70  text-gray-700 border border-black/10'
                         }`}
                         title={t('zvolteZvukFinalni') || 'Finální'}
                         type="button"

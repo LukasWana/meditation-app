@@ -38,6 +38,7 @@ const BreathProfilesScreen = ({
   const [newProfileName, setNewProfileName] = useState('');
   const [saving, setSaving] = useState(false);
   const [importing, setImporting] = useState(false);
+  const [soundMetadataCache, setSoundMetadataCache] = useState({});
   const fileInputRef = useRef(null);
 
   // Načtení profilů při načtení stránky
@@ -52,6 +53,7 @@ const BreathProfilesScreen = ({
       const loadedProfiles = await breathProfilesService.getAllProfiles();
       console.log('✅ Loaded profiles:', loadedProfiles);
       setProfiles(loadedProfiles);
+
       if (loadedProfiles.length === 0) {
         console.log('📭 No profiles found');
       }
@@ -61,6 +63,58 @@ const BreathProfilesScreen = ({
     } finally {
       setLoading(false);
     }
+  };
+
+  // Načti metadata zvuků po načtení profilů
+  useEffect(() => {
+    if (profiles.length > 0) {
+      loadSoundMetadataForProfiles(profiles);
+    }
+  }, [profiles.length]);
+
+  // Načte metadata zvuků pro profily
+  const loadSoundMetadataForProfiles = async (profilesToLoad) => {
+    const metadataCache = {};
+    const soundIds = new Set();
+
+    // Shromážděte všechna unikátní ID zvuků
+    profilesToLoad.forEach(profile => {
+      if (profile.breathInSound && profile.breathInSound !== 'none') soundIds.add(profile.breathInSound);
+      if (profile.breathOutSound && profile.breathOutSound !== 'none') soundIds.add(profile.breathOutSound);
+      if (profile.breathClickSound && profile.breathClickSound !== 'none') soundIds.add(profile.breathClickSound);
+      if (profile.breathFinalSound && profile.breathFinalSound !== 'none') soundIds.add(profile.breathFinalSound);
+      if (profile.breathCountdownSound && profile.breathCountdownSound !== 'none') soundIds.add(profile.breathCountdownSound);
+    });
+
+    // Načti metadata pro všechny zvuky
+    const metadataPromises = Array.from(soundIds).map(async (soundId) => {
+      try {
+        const metadata = await breathProfilesService.getSoundMetadata(soundId);
+        return { soundId, metadata };
+      } catch (error) {
+        console.warn(`Failed to load metadata for sound ${soundId}:`, error);
+        return { soundId, metadata: null };
+      }
+    });
+
+    const results = await Promise.all(metadataPromises);
+    results.forEach(({ soundId, metadata }) => {
+      if (metadata) {
+        metadataCache[soundId] = metadata;
+      }
+    });
+
+    setSoundMetadataCache(metadataCache);
+  };
+
+  // Získá název zvuku z cache
+  const getSoundName = (soundId) => {
+    if (!soundId || soundId === 'none') return null;
+    const metadata = soundMetadataCache[soundId];
+    if (metadata) {
+      return metadata.displayName || metadata.fileName?.split('/').pop()?.replace(/\.(ogg|oga|mp3)$/i, '') || soundId;
+    }
+    return soundId;
   };
 
   // Uložení aktuálního nastavení jako nový profil
@@ -151,7 +205,26 @@ const BreathProfilesScreen = ({
       alert(t('profilExportovan') || 'Profil byl exportován');
     } catch (error) {
       console.error('Failed to export profile:', error);
-      alert(t('chybaExportuProfilu') || 'Chyba při exportu profilu');
+      alert(t('chybaExportuProfilu') || 'Chyba při exportu profilu: ' + (error.message || error));
+    }
+  };
+
+  // Export všech profilů do JSON
+  const handleExportAllProfiles = async () => {
+    try {
+      console.log('🔄 Starting export of all profiles...');
+      console.log('Service methods:', Object.keys(breathProfilesService));
+
+      // Ověření, že funkce existuje
+      if (typeof breathProfilesService.downloadAllProfilesAsJSON !== 'function') {
+        throw new Error('Funkce downloadAllProfilesAsJSON není dostupná. Zkuste obnovit stránku.');
+      }
+
+      await breathProfilesService.downloadAllProfilesAsJSON();
+      alert(t('profilExportovan') || 'Všechny profily byly exportovány');
+    } catch (error) {
+      console.error('Failed to export all profiles:', error);
+      alert(t('chybaExportuProfilu') || 'Chyba při exportu profilů: ' + (error.message || error));
     }
   };
 
@@ -248,66 +321,82 @@ const BreathProfilesScreen = ({
             animationType="fadeIn"
             delay={0.15}
           >
-            <div className="flex flex-row gap-3">
-              {/* Tlačítko pro uložení aktuálního nastavení */}
-              {!showNameInput ? (
+            <div className="flex flex-col gap-3">
+              {/* První řada: Uložit a Import */}
+              <div className="flex flex-row gap-3">
+                {/* Tlačítko pro uložení aktuálního nastavení */}
+                {!showNameInput ? (
+                  <button
+                    onClick={() => setShowNameInput(true)}
+                    className="flex-1 p-4 bg-white/70 hover:bg-white text-gray-700 rounded-lg transition-colors flex items-center gap-3 border border-black/10"
+                  >
+                    <Plus size={24} className="text-gray-700" />
+                    <span className="text-xl font-light">
+                      {t('ulozit') || 'Uložit'}
+                    </span>
+                  </button>
+                ) : (
+                  <div className="flex-1 bg-white rounded-lg p-4 shadow-sm border border-black/10">
+                    <input
+                      type="text"
+                      value={newProfileName}
+                      onChange={(e) => setNewProfileName(e.target.value)}
+                      placeholder={t('nazevProfilu') || 'Název profilu'}
+                      className="w-full px-4 py-2 text-lg border border-black/10 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-500 mb-3"
+                      autoFocus
+                      onKeyPress={(e) => {
+                        if (e.key === 'Enter') {
+                          handleSaveCurrentProfile();
+                        } else if (e.key === 'Escape') {
+                          setShowNameInput(false);
+                          setNewProfileName('');
+                        }
+                      }}
+                    />
+                    <div className="flex gap-2">
+                      <button
+                        onClick={handleSaveCurrentProfile}
+                        disabled={saving || !newProfileName.trim()}
+                        className="flex-1 px-4 py-2 bg-white/70 hover:bg-white text-gray-700 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed border border-black/10"
+                      >
+                        {saving ? (t('ukladani') || 'Ukládání...') : (t('ulozit') || 'Uložit')}
+                      </button>
+                      <button
+                        onClick={() => {
+                          setShowNameInput(false);
+                          setNewProfileName('');
+                        }}
+                        className="px-4 py-2 bg-white/70 hover:bg-white text-gray-700 rounded-lg border border-black/10"
+                      >
+                        {t('zrusit') || 'Zrušit'}
+                      </button>
+                    </div>
+                  </div>
+                )}
+
+                {/* Tlačítko pro import profilu */}
                 <button
-                  onClick={() => setShowNameInput(true)}
-                  className="flex-1 p-4 bg-white/70 hover:bg-white text-gray-700 rounded-lg transition-colors flex items-center gap-3 border border-black/10"
+                  onClick={handleOpenImportDialog}
+                  disabled={importing}
+                  className="flex-1 py-3 bg-white/70 hover:bg-white text-gray-700 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 border border-black/10"
                 >
-                  <Plus size={24} className="text-gray-700" />
-                  <span className="text-xl font-light">
-                    {t('ulozit') || 'Uložit'}
+                  <Upload size={20} className="text-gray-700" />
+                  {importing ? (t('nahravani') || 'Nahrávání...') : (t('nahrat') || 'Nahrát')}
+                </button>
+              </div>
+
+              {/* Druhá řada: Export všech profilů (pokud jsou nějaké profily) */}
+              {profiles.length > 0 && (
+                <button
+                  onClick={handleExportAllProfiles}
+                  className="w-full py-3 bg-white/70 hover:bg-white text-gray-700 rounded-lg flex items-center justify-center gap-2 border border-black/10"
+                >
+                  <Download size={20} className="text-gray-700" />
+                  <span className="text-lg font-light">
+                    {t('exportovatVsechnyProfily') || 'Exportovat všechny profily'}
                   </span>
                 </button>
-              ) : (
-                <div className="flex-1 bg-white rounded-lg p-4 shadow-sm border border-black/10">
-                  <input
-                    type="text"
-                    value={newProfileName}
-                    onChange={(e) => setNewProfileName(e.target.value)}
-                    placeholder={t('nazevProfilu') || 'Název profilu'}
-                    className="w-full px-4 py-2 text-lg border border-black/10 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-500 mb-3"
-                    autoFocus
-                    onKeyPress={(e) => {
-                      if (e.key === 'Enter') {
-                        handleSaveCurrentProfile();
-                      } else if (e.key === 'Escape') {
-                        setShowNameInput(false);
-                        setNewProfileName('');
-                      }
-                    }}
-                  />
-                  <div className="flex gap-2">
-                    <button
-                      onClick={handleSaveCurrentProfile}
-                      disabled={saving || !newProfileName.trim()}
-                      className="flex-1 px-4 py-2 bg-white/70 hover:bg-white text-gray-700 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed border border-black/10"
-                    >
-                      {saving ? (t('ukladani') || 'Ukládání...') : (t('ulozit') || 'Uložit')}
-                    </button>
-                    <button
-                      onClick={() => {
-                        setShowNameInput(false);
-                        setNewProfileName('');
-                      }}
-                      className="px-4 py-2 bg-white/70 hover:bg-white text-gray-700 rounded-lg border border-black/10"
-                    >
-                      {t('zrusit') || 'Zrušit'}
-                    </button>
-                  </div>
-                </div>
               )}
-
-              {/* Tlačítko pro import profilu */}
-              <button
-                onClick={handleOpenImportDialog}
-                disabled={importing}
-                className="flex-1 py-3 bg-white/70 hover:bg-white text-gray-700 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 border border-black/10"
-              >
-                <Upload size={20} className="text-gray-700" />
-                {importing ? (t('nahravani') || 'Nahrávání...') : (t('nahrat') || 'Nahrát')}
-              </button>
             </div>
           </FramerSection>
 
@@ -354,11 +443,48 @@ const BreathProfilesScreen = ({
                               {t('priprava') || 'Příprava'}: {formatPreparationTime(profile.preparationTime)}
                             </div>
                           )}
-                          {(profile.breathInSound !== 'none' || profile.breathOutSound !== 'none') && (
-                            <div className="text-xs text-gray-500">
-                              {t('zvukyNastaveny') || 'Zvuky nastaveny'}
+                          {/* Zobrazení přiřazených zvuků */}
+                          <div className="mt-2 pt-2 border-t border-gray-200">
+                            <div className="text-xs font-medium text-gray-700 mb-1">
+                              {t('zvuky') || 'Zvuky'}:
                             </div>
-                          )}
+                            <div className="text-xs text-gray-600 space-y-0.5">
+                              {profile.breathInSound && profile.breathInSound !== 'none' && (
+                                <div>
+                                  <span className="font-medium">{t('nadech') || 'Nádech'}:</span> {getSoundName(profile.breathInSound) || profile.breathInSound}
+                                </div>
+                              )}
+                              {profile.breathOutSound && profile.breathOutSound !== 'none' && (
+                                <div>
+                                  <span className="font-medium">{t('vydech') || 'Výdech'}:</span> {getSoundName(profile.breathOutSound) || profile.breathOutSound}
+                                </div>
+                              )}
+                              {profile.breathClickSound && profile.breathClickSound !== 'none' && (
+                                <div>
+                                  <span className="font-medium">{t('click') || 'Klik'}:</span> {getSoundName(profile.breathClickSound) || profile.breathClickSound}
+                                </div>
+                              )}
+                              {profile.breathFinalSound && profile.breathFinalSound !== 'none' && (
+                                <div>
+                                  <span className="font-medium">{t('final') || 'Finální'}:</span> {getSoundName(profile.breathFinalSound) || profile.breathFinalSound}
+                                </div>
+                              )}
+                              {profile.breathCountdownSound && profile.breathCountdownSound !== 'none' && (
+                                <div>
+                                  <span className="font-medium">{t('countdown') || 'Odpočítávání'}:</span> {getSoundName(profile.breathCountdownSound) || profile.breathCountdownSound}
+                                </div>
+                              )}
+                              {(!profile.breathInSound || profile.breathInSound === 'none') &&
+                               (!profile.breathOutSound || profile.breathOutSound === 'none') &&
+                               (!profile.breathClickSound || profile.breathClickSound === 'none') &&
+                               (!profile.breathFinalSound || profile.breathFinalSound === 'none') &&
+                               (!profile.breathCountdownSound || profile.breathCountdownSound === 'none') && (
+                                <div className="text-gray-400 italic">
+                                  {t('ziadnyZvuk') || 'Žádný zvuk'}
+                                </div>
+                              )}
+                            </div>
+                          </div>
                         </div>
                       </div>
                       <div className="flex items-center gap-2 flex-shrink-0">
