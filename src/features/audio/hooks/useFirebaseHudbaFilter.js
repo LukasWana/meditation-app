@@ -140,8 +140,6 @@ export const useFirebaseHudbaFilter = () => {
         if (!coverImageUrl) {
           console.log(`⚠️ Cover image not found for album: ${albumName}`);
           console.log(`📊 Available cover images:`, Array.from(coverImages.keys()));
-        } else {
-          console.log(`✅ Cover image found for album: ${albumName}`);
         }
       } else {
         coverImageUrl = coverImages[albumName] || null;
