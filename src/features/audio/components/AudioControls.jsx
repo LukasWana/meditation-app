@@ -5,6 +5,7 @@ import SkipButton from './SkipButton';
 import CurrentTimeDisplay from './CurrentTimeDisplay';
 import VoiceSwitcher from './VoiceSwitcher';
 import TrackSwitcher from './TrackSwitcher';
+import { useTheme } from '@contexts/ThemeContext';
 
 const AudioControls = ({
   progress,
@@ -31,6 +32,8 @@ const AudioControls = ({
   dataSource = null,
   className = "w-full flex flex-col items-center justify-center h-full"
 }) => {
+  const { currentTheme } = useTheme();
+
   return (
     <div className={className}>
       {/* Title and Duration - Above Circular Progress with fixed height */}
@@ -86,7 +89,8 @@ const AudioControls = ({
           <CurrentTimeDisplay
             currentTime={currentTime}
             formatTime={formatTime}
-            className="text-black font-medium text-center text-clamp-time"
+            className="font-medium text-center text-clamp-time"
+            style={{ color: currentTheme?.colors?.timeIndicator || '#000000' }}
           />
         </div>
 

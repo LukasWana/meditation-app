@@ -1,9 +1,5 @@
 import { useMemo } from 'react';
 import { useFirebaseHudbaScanner } from '@hooks/useFirebaseHudbaScanner';
-import fastMetadataService from '@services/fastMetadataService';
-
-// Funkce pro výpočet celkového času alba
-const calculateTotalDuration = (tracks) => {
   let totalSeconds = 0;
   let validDurations = 0;
 
@@ -50,14 +46,27 @@ export const useFirebaseHudbaFilter = () => {
 
   // Filtruj soubory podle témat a vyber nejvyšší verzi pro každé téma
   const hudbaItems = useMemo(() => {
-    // console.log('🔄 useFirebaseHudbaFilter useMemo triggered');
-    // console.log('📊 availableFiles:', availableFiles?.length || 0);
-    // console.log('📊 coverImages:', coverImages);
+    console.log('🔄 useFirebaseHudbaFilter useMemo triggered');
+    console.log('📊 availableFiles:', availableFiles?.length || 0);
+    console.log('📊 availableFiles sample:', availableFiles?.slice(0, 3));
+    console.log('📊 isLoading:', isLoading);
+    console.log('📊 error:', error);
+
     const items = [];
-    const albums = new Map(); // Pro skupování album skladeb
 
     // Filtruj pouze hudební soubory (ze složky hudba/)
-    const hudbaFiles = availableFiles.filter(file => file.type === 'hudba' && file.isAvailable);
+    const hudbaFiles = availableFiles.filter(file => {
+      const matches = file.type === 'hudba' && file.isAvailable;
+      if (!matches && file.fileName?.includes('hudba')) {
+        console.log('⚠️ File in hudba folder but not matching filter:', {
+          fileName: file.fileName,
+          type: file.type,
+          isAvailable: file.isAvailable
+        });
+      }
+      return matches;
+    });
+    console.log(`📊 Filtered ${hudbaFiles.length} hudba files from ${availableFiles?.length || 0} total files`);
     // console.log(`📊 Processing ${hudbaFiles.length} hudba files:`, hudbaFiles.map(f => ({
     //   fileName: f.fileName,
     //   type: f.type,
@@ -90,9 +99,16 @@ export const useFirebaseHudbaFilter = () => {
       // Získej skutečnou délku z fastMetadataService
       const actualDuration = file.duration || 'N/A';
 
+      // Bezpečný přístup k názvu skladby
+      const title = parsed?.trackName ||
+                   parsed?.name ||
+                   file.fileNameOnly ||
+                   file.fileName?.split('/').pop()?.replace(/\.mp3$/i, '') ||
+                   'Unknown Track';
+
       items.push({
         key: `standalone-${file.fileName}`,
-        title: parsed.trackName || parsed.name || file.fileNameOnly,
+        title: title,
         type: 'song',
         audioSrc: file.downloadURL,
         fileName: file.fileName,
@@ -156,7 +172,7 @@ export const useFirebaseHudbaFilter = () => {
 
         // Odstraň číslo skladby z názvu (např. "01 - Název skladby" -> "Název skladby")
         // Podporuje různé formáty: "01 - Název", "1. Název", "01 Název", atd.
-        return trackName.replace(/^\d+[\s\-\.]*/, '').trim();
+        return trackName.replace(/^\d+[\s\-.]+/, '').trim();
       };
 
       // Vytvoř tracks pro album
@@ -165,7 +181,12 @@ export const useFirebaseHudbaFilter = () => {
         const actualDuration = file.duration || 'N/A';
 
         // Získej název skladby a vyčisti ho od čísla
-        const rawTrackName = file.parsed.trackName || file.parsed.name || file.fileNameOnly;
+        // Použij optional chaining pro bezpečný přístup k parsed
+        const rawTrackName = file.parsed?.trackName ||
+                            file.parsed?.name ||
+                            file.fileNameOnly ||
+                            file.fileName?.split('/').pop()?.replace(/\.mp3$/i, '') ||
+                            'Unknown Track';
         const cleanName = cleanTrackName(rawTrackName);
 
         return {
@@ -174,7 +195,7 @@ export const useFirebaseHudbaFilter = () => {
           duration: actualDuration,
           audioSrc: file.downloadURL,
           fileName: file.fileName,
-          originalFileName: file.parsed.originalFileName
+          originalFileName: file.parsed?.originalFileName || file.fileNameOnly || file.fileName
         };
       });
 
@@ -224,7 +245,7 @@ export const useFirebaseHudbaFilter = () => {
 
     return sortedItems;
 
-  }, [availableFiles, filesByTopic, availableTopics]);
+  }, [availableFiles, filesByTopic, availableTopics, coverImages]);
 
   return {
     // Data

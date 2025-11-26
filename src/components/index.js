@@ -10,5 +10,6 @@ export { default as FramerPageTransition } from './FramerPageTransition';
 export { default as FramerSection } from './FramerSection';
 export { default as SimpleLoading } from './SimpleLoading';
 export { default as SoundThemeGallery } from './SoundThemeGallery';
+export { default as ThemeSelector } from './ThemeSelector';
 export { default as WheelPicker, DualWheelPicker } from './WheelPicker';
 export { WheelPickerModal, DualWheelPickerModal } from './TimePickerModal';

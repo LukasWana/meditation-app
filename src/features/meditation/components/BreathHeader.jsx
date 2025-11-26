@@ -1,6 +1,7 @@
 import React from 'react';
 import { motion } from 'framer-motion';
 import CurrentTimeDisplay from '@features/audio/components/CurrentTimeDisplay';
+import { useTheme } from '@contexts/ThemeContext';
 
 /**
  * Komponenta pro nadpis a zobrazení času dýchání
@@ -20,6 +21,8 @@ const BreathHeader = ({
   formatTime,
   t
 }) => {
+  const { currentTheme } = useTheme();
+
   return (
     <div
       className="text-center flex flex-col justify-start"
@@ -27,8 +30,21 @@ const BreathHeader = ({
     >
       <motion.h1
         key={isBreathing ? breathPhase : 'default'}
-        className="text-4xl font-serif text-gray-800 leading-normal overflow-visible"
-        style={{ height: '3.5rem', minHeight: '3.5rem', maxHeight: '3.5rem', display: 'flex', alignItems: 'center', justifyContent: 'center', lineHeight: '1.2', marginTop: 0, paddingTop: 0, paddingBottom: 0, marginBottom: 0 }}
+        className="text-4xl text-gray-800 leading-normal overflow-visible"
+        style={{
+          height: '3.5rem',
+          minHeight: '3.5rem',
+          maxHeight: '3.5rem',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          lineHeight: '1.2',
+          marginTop: 0,
+          paddingTop: 0,
+          paddingBottom: 0,
+          marginBottom: 0,
+          fontFamily: currentTheme?.fontFamily || "'Petrona', serif"
+        }}
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
@@ -45,8 +61,13 @@ const BreathHeader = ({
           <CurrentTimeDisplay
             currentTime={currentTime}
             formatTime={formatTime}
-            className="text-black font-medium text-center text-clamp-time"
-            style={{ height: '100%', display: 'flex', alignItems: 'center' }}
+            className="font-medium text-center text-clamp-time"
+            style={{
+              height: '100%',
+              display: 'flex',
+              alignItems: 'center',
+              color: currentTheme?.colors?.timeIndicator || '#000000'
+            }}
           />
         </div>
       </div>

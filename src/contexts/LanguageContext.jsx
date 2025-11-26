@@ -123,6 +123,14 @@ const DEFAULT_TRANSLATIONS = {
     final: 'Finálny',
     countdown: 'Odpočítavanie',
     editovatNazev: 'Editovať názov',
+
+    // Vzhled aplikace
+    vzhledAplikace: 'Vzhľad aplikácie',
+    chillCoffee: 'chill&coffee',
+    calma: 'Calma',
+    vlastniPozadi: 'Vlastné pozadie',
+    vybratFotku: 'Vybrať fotku',
+    odstranitPozadi: 'Odstrániť pozadie',
   },
   CZ: {
     // Hlavní navigace
@@ -242,6 +250,14 @@ const DEFAULT_TRANSLATIONS = {
     final: 'Finální',
     countdown: 'Odpočítávání',
     editovatNazev: 'Editovat název',
+
+    // Vzhled aplikace
+    vzhledAplikace: 'Vzhled aplikace',
+    chillCoffee: 'chill&coffee',
+    calma: 'Calma',
+    vlastniPozadi: 'Vlastní pozadí',
+    vybratFotku: 'Vybrat fotku',
+    odstranitPozadi: 'Odstranit pozadí',
   },
   EN: {
     // Main navigation
@@ -361,6 +377,14 @@ const DEFAULT_TRANSLATIONS = {
     final: 'Final',
     countdown: 'Countdown',
     editovatNazev: 'Edit name',
+
+    // App appearance
+    vzhledAplikace: 'App Appearance',
+    chillCoffee: 'chill&coffee',
+    calma: 'Calma',
+    vlastniPozadi: 'Custom Background',
+    vybratFotku: 'Select Photo',
+    odstranitPozadi: 'Remove Background',
   }
 };
 

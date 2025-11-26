@@ -1,9 +1,11 @@
 import React, { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import meditatebodySvg from '../../../assets/flags/meditatebody.svg';
+import { useTheme } from '@contexts/ThemeContext';
 
 const IntroScreen = ({ onIntroComplete }) => {
   const [showIntro, setShowIntro] = useState(true);
+  const { currentTheme } = useTheme();
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -21,7 +23,8 @@ const IntroScreen = ({ onIntroComplete }) => {
     <AnimatePresence mode="wait">
       {showIntro && (
         <motion.div
-          className="h-screen w-full max-w-full bg-[#f4ddc4] flex items-center justify-center overflow-x-hidden fixed inset-0 z-50"
+          className="h-screen w-full max-w-full flex items-center justify-center overflow-x-hidden fixed inset-0 z-50"
+          style={{ backgroundColor: currentTheme?.colors?.background || '#f4ddc4' }}
           initial={{ opacity: 1 }}
           exit={{ opacity: 0 }}
           transition={{ duration: 0.5, ease: "easeInOut" }}

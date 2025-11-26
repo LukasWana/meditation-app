@@ -7,6 +7,7 @@ import {
   LoadingIndicator
 } from './components';
 import { FramerPageTransition, BackButton } from '@components';
+import { useTheme } from '@contexts/ThemeContext';
 
 const AudioPlayerPage = ({
   audioSrc,
@@ -14,6 +15,7 @@ const AudioPlayerPage = ({
   onClose,
   className = ""
 }) => {
+  const { currentTheme } = useTheme();
   // Načtení URL z Firebase Storage
   const { audioUrl, loading: firebaseLoading, error: firebaseError } = useFirebaseAudio(audioSrc);
 
@@ -34,7 +36,10 @@ const AudioPlayerPage = ({
 
   return (
     <FramerPageTransition screenKey="audio-player-page">
-      <div className={`min-h-screen w-full max-w-full bg-[#f4ddc4] flex flex-col items-center justify-center p-2 sm:p-8 pb-20 overflow-x-hidden relative ${className}`}>
+      <div
+        className={`min-h-screen w-full max-w-full flex flex-col items-center justify-center p-2 sm:p-8 pb-20 overflow-x-hidden relative ${className}`}
+        style={{ backgroundColor: currentTheme?.colors?.background || '#f4ddc4' }}
+      >
         {/* Back Button - Top Right */}
         <div className="absolute top-4 right-4 z-10">
           <BackButton onClick={onClose} />

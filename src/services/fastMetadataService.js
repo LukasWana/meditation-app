@@ -763,7 +763,23 @@ class FastMetadataService {
   }
 
   async initialize(forceReload = false) {
+    // Pokud už inicializace probíhá, počkej na ni
+    if (this.isLoading) {
+      console.log('⏳ FastMetadataService already initializing, waiting...');
+      // Počkej až do 5 sekund na dokončení inicializace
+      let waitCount = 0;
+      while (this.isLoading && waitCount < 50) {
+        await new Promise(resolve => setTimeout(resolve, 100));
+        waitCount++;
+      }
+      if (!this.isLoading) {
+        console.log('✅ FastMetadataService initialization completed');
+        return;
+      }
+    }
+
     log.info('Initializing FastMetadataService...');
+    console.log('🔄 FastMetadataService.initialize() started');
 
     if (forceReload) {
       log.info('Force reloading metadata from Firebase...');
@@ -771,13 +787,18 @@ class FastMetadataService {
       localStorage.removeItem(this.cacheKey);
     }
 
+    this.isLoading = true;
+
     // Nejdříve zkus načíst z Realtime Database (nejrychlejší a nejaktuálnější)
     try {
       log.info('🔄 Trying to load metadata from Realtime Database...');
+      console.log('🔄 Calling realtimeMetadataService.getAllMetadata()...');
       const realtimeMetadata = await realtimeMetadataService.getAllMetadata();
+      console.log(`📊 RealtimeMetadata received: ${realtimeMetadata ? Object.keys(realtimeMetadata).length : 0} records`);
 
       if (realtimeMetadata && Object.keys(realtimeMetadata).length > 0) {
         log.success(`✅ Loaded ${Object.keys(realtimeMetadata).length} metadata records from Realtime Database`);
+        console.log(`✅ Processing ${Object.keys(realtimeMetadata).length} metadata records...`);
 
         // Převeď na Map a normalizuj data do správného formátu
         this.metadata.clear();
@@ -793,7 +814,10 @@ class FastMetadataService {
 
         // Ulož do cache
         this.saveToCache();
+        this.isLoading = false;
+        this.isInitialized = true; // Nastav flag, že je inicializovaný
         log.success(`✅ FastMetadataService initialized from Realtime Database (${this.metadata.size} records)`);
+        console.log(`✅ FastMetadataService initialized: ${this.metadata.size} records in Map`);
 
         // Načti cover obrázky z Firebase Storage (pokud nejsou v Realtime Database)
         const coverImagesCount = Array.from(this.metadata.values()).filter(m => m.type === 'image' && m.isCover).length;
@@ -807,15 +831,20 @@ class FastMetadataService {
         return;
       } else {
         log.warn('⚠️ Realtime Database is empty, trying cache...');
+        console.log('⚠️ Realtime Database returned empty result');
       }
     } catch (error) {
       log.warn('⚠️ Failed to load from Realtime Database, trying cache:', error.message);
+      console.error('❌ Error loading from Realtime Database:', error);
     }
 
     // Pokud Realtime Database neobsahuje data, zkus cache (pokud není forceReload)
     if (!forceReload && this.loadFromCache()) {
       const cachedCount = this.metadata.size;
+      this.isLoading = false;
+      this.isInitialized = true; // Nastav flag, že je inicializovaný
       log.success(`✅ Metadata loaded from cache (${cachedCount} records)`);
+      console.log(`✅ FastMetadataService loaded from cache: ${cachedCount} records`);
 
       // Pokud máme méně než 10 souborů v cache, zkus načíst z Realtime Database znovu
       if (cachedCount < 10) {
@@ -826,9 +855,14 @@ class FastMetadataService {
             log.success(`✅ Found ${Object.keys(realtimeMetadata).length} records in Realtime Database (more than cache)`);
             this.metadata.clear();
             Object.entries(realtimeMetadata).forEach(([key, value]) => {
-              this.metadata.set(key, value);
+              const normalized = this.normalizeRealtimeMetadata(value);
+              if (normalized) {
+                const metadataKey = normalized.fileName || key;
+                this.metadata.set(metadataKey, normalized);
+              }
             });
             this.saveToCache();
+            this.isInitialized = true; // Nastav flag
             return;
           }
         } catch (error) {
@@ -843,9 +877,13 @@ class FastMetadataService {
     try {
       log.info('🔄 Loading metadata from Firebase Storage...');
       await this.getAllMetadata();
+      this.isLoading = false;
+      this.isInitialized = true; // Nastav flag, že je inicializovaný
       log.success('✅ FastMetadataService initialized from Firebase Storage');
     } catch (error) {
+      this.isLoading = false;
       log.warn('❌ Failed to initialize metadata service:', error);
+      console.error('❌ FastMetadataService initialization failed:', error);
     }
   }
 

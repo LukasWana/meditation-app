@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { AnimatePresence } from 'framer-motion';
 import { FramerPageTransition, BackButton } from '@components';
 import { useLanguage } from '@contexts/LanguageContext';
+import { useTheme } from '@contexts/ThemeContext';
 import { useBreathSounds } from '@hooks';
 import { useBreathPhase } from '@hooks/useBreathPhase';
 import { useCountdownSound } from '@hooks/useCountdownSound';
@@ -164,10 +165,13 @@ const BreathScreen = ({
     return `${mins}:${secs.toString().padStart(2, '0')}`;
   };
 
+  const { currentTheme } = useTheme();
+
   return (
     <FramerPageTransition screenKey="breath">
       <div
-        className="min-h-screen w-full max-w-full bg-[#f4ddc4] flex flex-col items-center justify-start p-2 sm:p-8 pb-20 overflow-x-hidden overflow-y-auto relative"
+        className="min-h-screen w-full max-w-full flex flex-col items-center justify-start p-2 sm:p-8 pb-20 overflow-x-hidden overflow-y-auto relative"
+        style={{ backgroundColor: currentTheme?.colors?.background || '#f4ddc4' }}
         onTouchStart={onTouchStart}
         onTouchMove={onTouchMove}
         onTouchEnd={onTouchEnd}

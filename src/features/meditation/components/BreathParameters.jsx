@@ -1,5 +1,6 @@
 import React from 'react';
 import { FramerSection } from '@components';
+import { useTheme } from '@contexts/ThemeContext';
 
 /**
  * Komponenta pro zobrazení tří parametrů dýchání (příprava, délka, rytmus)
@@ -27,6 +28,7 @@ const BreathParameters = ({
   formatPreparationTime,
   t
 }) => {
+  const { currentTheme } = useTheme();
   const totalTime = breathDuration * 60; // v sekundách
 
   return (
@@ -44,7 +46,7 @@ const BreathParameters = ({
           >
             {formatPreparationTime(preparationTime)}
           </button>
-          <span className="text-base md:text-lg font-serif text-gray-800 font-light">
+          <span className="text-base md:text-lg text-gray-800 font-light" style={{ fontFamily: currentTheme?.fontFamily || "'Petrona', serif" }}>
             {t('priprava') || 'příprava'}
           </span>
         </div>
@@ -57,7 +59,7 @@ const BreathParameters = ({
           >
             {formatTime(totalTime)}
           </button>
-          <span className="text-base md:text-lg font-serif text-gray-800 font-light">
+          <span className="text-base md:text-lg text-gray-800 font-light" style={{ fontFamily: currentTheme?.fontFamily || "'Petrona', serif" }}>
             {t('dlzka') || 'délka'}
           </span>
         </div>
@@ -70,7 +72,7 @@ const BreathParameters = ({
           >
             {breathInDuration} : {breathOutDuration}
           </button>
-          <span className="text-base md:text-lg font-serif text-gray-800 font-light">
+          <span className="text-base md:text-lg text-gray-800 font-light" style={{ fontFamily: currentTheme?.fontFamily || "'Petrona', serif" }}>
             {t('rytmus') || 'rytmus'}
           </span>
         </div>

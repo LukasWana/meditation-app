@@ -1,68 +1,15 @@
-import { useState, useEffect, useCallback, useRef } from 'react';
-import { ref, listAll, getDownloadURL, getMetadata } from 'firebase/storage';
-import { storage } from '@services/firebase';
-import { parseAudioFileName } from '@utils/hudbaParser';
+import { useState, useEffect, useRef } from 'react';
 import cacheService from '@services/cacheServiceRefactored';
 import log from '@services/logger';
-import { performanceMonitor } from '@services/performanceMonitor';
-import { getComponentConfig } from '@config/performance';
 import { fastMetadataService } from '@services/fastMetadataService';
 import { realtimeMetadataService } from '@services/realtimeMetadataService';
-
-// Pomocná funkce pro načtení délky audio souboru
-const getAudioDuration = (audioSrc) => {
-  return new Promise((resolve) => {
-    const audio = new Audio();
-    audio.addEventListener('loadedmetadata', () => {
-      const duration = audio.duration;
-      if (isFinite(duration) && duration > 0) {
-        const minutes = Math.floor(duration / 60);
-        const seconds = Math.floor(duration % 60);
-        const durationString = `${minutes}:${seconds.toString().padStart(2, '0')}`;
-
-        // Ulož duration do cache
-        cacheService.setDuration(audioSrc, duration);
-
-        resolve(durationString);
-      } else {
-        resolve(null);
-      }
-    });
-    audio.addEventListener('error', () => {
-      resolve(null);
-    });
-    audio.src = audioSrc;
-    // Timeout po 5 sekundách
-    setTimeout(() => resolve(null), 5000);
-  });
-};
-
-// Pomocná funkce pro odhad délky na základě velikosti souboru
-const estimateDuration = (sizeInBytes, contentType) => {
-  if (!sizeInBytes || !contentType) return null;
-
-  // Pro MP3 soubory - přibližně 1MB = 1 minuta
-  if (contentType.includes('audio/mpeg')) {
-    const estimatedMinutes = Math.round(sizeInBytes / (1024 * 1024));
-    const minutes = Math.floor(estimatedMinutes);
-    const seconds = Math.floor((estimatedMinutes - minutes) * 60);
-    return `${minutes}:${seconds.toString().padStart(2, '0')}`;
-  }
-
-  return null;
-};
 
 export const useFirebaseHudbaScanner = () => {
   const [audioFiles, setAudioFiles] = useState([]);
   const [coverImages, setCoverImages] = useState(new Map());
   const [isLoading, setIsLoading] = useState(true);
-  const [isLoadingCovers, setIsLoadingCovers] = useState(false);
-  const [isLoadingDurations, setIsLoadingDurations] = useState(false);
   const [error, setError] = useState(null);
   const [lastUpdated, setLastUpdated] = useState(null);
-
-  // Získej konfiguraci pro tento hook
-  const config = getComponentConfig('useFirebaseHudbaScanner');
 
   // Použij ref pro sledování, zda už probíhá načítání
   const isLoadingRef = useRef(false);
@@ -86,6 +33,24 @@ export const useFirebaseHudbaScanner = () => {
 
     // Filtruj pouze hudba soubory (včetně album souborů)
     // Vyluč sound effects a breathing soubory
+    console.log(`🔍 processFastMetadata: Filtering ${Object.keys(fastMetadata).length} metadata records`);
+    
+    // Debug: zobraz všechny soubory ve složce hudba/ před filtrováním
+    const allHudbaFiles = Object.values(fastMetadata).filter(m => {
+      const fileName = (m.fileName || '').toLowerCase();
+      return fileName.startsWith('hudba/');
+    });
+    console.log(`🎵 All files in hudba/ folder: ${allHudbaFiles.length}`);
+    if (allHudbaFiles.length > 0) {
+      console.log('🎵 Sample hudba files:', allHudbaFiles.slice(0, 5).map(m => ({
+        fileName: m.fileName,
+        type: m.type,
+        folder: m.folder,
+        isHudba: m.isHudba,
+        hasDownloadURL: !!m.downloadURL
+      })));
+    }
+    
     const hudbaFiles = Object.values(fastMetadata).filter(metadata => {
       const fileName = (metadata.fileName || '').toLowerCase();
       const isInHudbaFolder = fileName.startsWith('hudba/');
@@ -107,15 +72,35 @@ export const useFirebaseHudbaScanner = () => {
       }
 
       // Přijímej soubory s typem audio, album_track nebo simple (jednoduché MP3 soubory)
+      // TAKÉ přijímáme soubory bez typu nebo s jiným typem, pokud jsou ve složce hudba/ a mají downloadURL
+      // (to je důležité, protože normalizace může nastavit různý type)
       const isValidType = metadata.type === 'audio' ||
                          metadata.type === 'album_track' ||
-                         metadata.type === 'simple';
+                         metadata.type === 'simple' ||
+                         !metadata.type || // Pokud nemá type, přijmi ho
+                         metadata.type === 'hudba' || // Některé metadata mohou mít type 'hudba'
+                         (metadata.folder === 'hudba' && metadata.downloadURL); // Pokud je ve složce hudba a má URL
 
       // Pokud má metadata nastavené isHudba, použij to, jinak akceptuj pokud je ve složce hudba/
       const isHudba = metadata.isHudba !== undefined ? metadata.isHudba : isInHudbaFolder;
 
-      return isValidType && isHudba;
+      const shouldInclude = isValidType && isHudba;
+      
+      // Debug: pokud soubor neprojde filtrem, zobraz důvod
+      if (!shouldInclude && isInHudbaFolder && !isSoundEffect) {
+        console.log(`⚠️ File filtered out: ${fileName}`, {
+          type: metadata.type,
+          isValidType,
+          isHudba,
+          hasDownloadURL: !!metadata.downloadURL,
+          folder: metadata.folder
+        });
+      }
+
+      return shouldInclude;
     });
+    
+    console.log(`🎵 processFastMetadata: Found ${hudbaFiles.length} hudba files after filtering`);
 
     log.firebase(`📊 Found ${hudbaFiles.length} hudba files in fast metadata`);
 
@@ -172,6 +157,14 @@ export const useFirebaseHudbaScanner = () => {
 
     log.debug(`🖼️ Cover images loaded: ${coverImages.size}`, Array.from(coverImages.keys()));
 
+    console.log(`🎵 processFastMetadata: Setting ${processedFiles.length} audioFiles`);
+    console.log(`🎵 Processed files sample:`, processedFiles.slice(0, 3).map(f => ({
+      fileName: f.fileName,
+      type: f.type,
+      isAvailable: f.isAvailable,
+      downloadURL: f.downloadURL ? 'OK' : 'MISSING'
+    })));
+
     setAudioFiles(processedFiles);
     setCoverImages(coverImages);
     setLastUpdated(new Date());
@@ -192,13 +185,7 @@ export const useFirebaseHudbaScanner = () => {
       coverImagesCount: Object.keys(cachedResult.coverImages || {}).length
     });
 
-    // Zajisti, že všechny soubory mají isAvailable: true
-    const processedAudioFiles = (cachedResult.audioFiles || []).map(file => ({
-      ...file,
-      isAvailable: true // Zajisti, že cached soubory jsou dostupné
-    }));
-
-    setAudioFiles(processedAudioFiles);
+    setAudioFiles(cachedResult.audioFiles);
     setCoverImages(new Map(Object.entries(cachedResult.coverImages || {})));
     setLastUpdated(cachedResult.lastUpdated);
     setIsLoading(false);
@@ -210,61 +197,57 @@ export const useFirebaseHudbaScanner = () => {
     cacheService.optimizeCache();
   };
 
-  // Zjednodušená verze scanCDN - pouze fallback pro případy, kdy není cache
-  // V normálních případech se data načítají z Realtime DB při startu
-  const scanCDN = useCallback(async () => {
-    // Pokud už načítáme, nespouštěj znovu
-    if (isLoadingRef.current) {
-      log.debug('⏸️ Scan already in progress, skipping...');
-      return;
-    }
-
-    // Pokud už máme data, nespouštěj znovu
-    if (hasLoadedDataRef.current) {
-      log.debug('✅ Data already loaded, skipping scan...');
-      return;
-    }
-
-    // Nejdříve zkus rychlé načítání z fast metadata service (data z Realtime DB)
-    try {
-      const fastMetadata = fastMetadataService.getAllMetadata();
-      if (fastMetadata && Object.keys(fastMetadata).length > 0) {
-        log.debug('✅ Using fast metadata from Realtime DB');
-        isLoadingRef.current = true;
-        setIsLoading(true);
-        await processFastMetadata(fastMetadata);
-        return;
-      }
-    } catch (error) {
-      log.debug('Fast metadata not available:', error);
-    }
-
-    // Zkontroluj cache (backup)
-    const cacheKey = 'hudba_scanner_all_files';
-    const cachedResult = cacheService.getFirebaseQuery(cacheKey);
-    if (cachedResult && cachedResult.audioFiles && cachedResult.audioFiles.length > 0) {
-      log.debug('✅ Using cached data');
-      isLoadingRef.current = true;
-      setIsLoading(true);
-      await processCachedResult(cachedResult);
-      return;
-    }
-
-    // Pouze pokud není žádná cache, loguj varování (nemělo by se stát)
-    log.warn('⚠️ No cache found - this should not happen if data was loaded at startup');
-    setIsLoading(false);
-    isLoadingRef.current = false;
-    setError('Data nebyla načtena při startu aplikace. Prosím obnovte stránku.');
-
+  // Funkce pro načtení dat z CDN (Firebase Storage) - fallback, pokud není cache
+  const scanCDN = async () => {
     // NENÍ potřeba načítat z Firebase Storage - data jsou v Realtime DB
     // Pokud se dostaneme sem, je to chyba v inicializaci aplikace
     // Všechny zbytečné Firebase Storage operace byly odstraněny
-  }, []);
+  };
+
+  // Funkce pro čekání na inicializaci fastMetadataService
+  const waitForMetadataInitialization = async (maxWaitTime = 5000) => {
+    const startTime = Date.now();
+    
+    // Zkontroluj, zda už máme data (to je hlavní indikátor, že je vše připravené)
+    if (fastMetadataService.metadata?.size > 0) {
+      console.log(`✅ FastMetadataService already has data: ${fastMetadataService.metadata.size} records`);
+      return true;
+    }
+
+    // Pokud není inicializovaný a neprobíhá inicializace, zkus ho inicializovat
+    if (!fastMetadataService.isLoading && !fastMetadataService.isInitialized) {
+      console.log('🔄 FastMetadataService not initialized, initializing now...');
+      try {
+        await fastMetadataService.initialize(false);
+      } catch (initError) {
+        console.error('❌ Error initializing FastMetadataService:', initError);
+      }
+    }
+
+    // Počkej na dokončení inicializace - hlavně kontroluj, zda jsou data
+    while ((fastMetadataService.isLoading || fastMetadataService.metadata?.size === 0) && (Date.now() - startTime) < maxWaitTime) {
+      await new Promise(resolve => setTimeout(resolve, 100));
+      
+      // Pokud už máme data, můžeme skončit dřív
+      if (fastMetadataService.metadata?.size > 0) {
+        break;
+      }
+    }
+
+    // Zkontroluj výsledek - hlavní kritérium je existence dat
+    const hasData = fastMetadataService.metadata?.size > 0;
+    if (hasData) {
+      console.log(`✅ FastMetadataService initialized successfully: ${fastMetadataService.metadata.size} metadata records`);
+      return true;
+    } else {
+      console.warn(`⚠️ FastMetadataService initialization timeout or no data available. Metadata size: ${fastMetadataService.metadata?.size || 0}, isInitialized: ${fastMetadataService.isInitialized}, isLoading: ${fastMetadataService.isLoading}`);
+      return false;
+    }
+  };
 
   useEffect(() => {
-    // Zjednodušená logika: data jsou už načtená z Realtime DB při startu
-    // Pouze načti z cache a zobraz
-    const loadFromCache = async (retryCount = 0) => {
+    // Zjednodušená logika: počkej na inicializaci metadat, pak načti data
+    const loadData = async (retryCount = 0) => {
       // Pokud už máme data v state, nespouštěj nic
       if (audioFiles.length > 0) {
         hasLoadedDataRef.current = true;
@@ -274,51 +257,161 @@ export const useFirebaseHudbaScanner = () => {
         return;
       }
 
-      // Zkontroluj fast metadata service (data z Realtime DB)
+      // Pokud už probíhá načítání, nezačínej nové
+      if (isLoadingRef.current) {
+        log.debug('⏭️ Loading already in progress, skipping.');
+        return;
+      }
+
+      isLoadingRef.current = true;
+      setIsLoading(true);
+      setError(null);
+
       try {
-        const fastMetadata = fastMetadataService.getAllMetadata();
-        if (fastMetadata && Object.keys(fastMetadata).length > 0) {
+        // KROK 1: Zkontroluj, zda už máme metadata (nejrychlejší kontrola)
+        let currentMetadataSize = fastMetadataService.metadata?.size || 0;
+        console.log(`🔍 FastMetadataService current metadata size (before wait): ${currentMetadataSize}`);
+        
+        // Pokud nemáme metadata, počkej na inicializaci
+        if (currentMetadataSize === 0) {
+          console.log('⏳ No metadata yet, waiting for initialization...');
+          await waitForMetadataInitialization(5000);
+          
+          // Zkontroluj znovu po čekání
+          currentMetadataSize = fastMetadataService.metadata?.size || 0;
+          console.log(`🔍 FastMetadataService current metadata size (after wait): ${currentMetadataSize}`);
+          
+          // Pokud stále nemáme metadata, zkus retry nebo cache
+          if (currentMetadataSize === 0) {
+            if (retryCount < 3) {
+              console.log(`⏳ Metadata still not ready, retrying in 500ms... (${retryCount + 1}/3)`);
+              isLoadingRef.current = false;
+              setIsLoading(false);
+              setTimeout(() => {
+                if (!hasLoadedDataRef.current) {
+                  loadData(retryCount + 1);
+                }
+              }, 500);
+              return;
+            }
+            
+            // Pokud už jsme vyčerpali retry, zkus cache
+            console.log('⚠️ Metadata initialization failed after retries, trying cache...');
+          }
+        }
+
+        // KROK 2: Načti metadata z fastMetadataService - použij data pokud existují
+        let fastMetadata = null;
+
+        // Hlavní kontrola: zda máme data v Map
+        if (currentMetadataSize > 0) {
+          // Použij data přímo z Map v fastMetadataService
+          console.log('✅ Using metadata directly from fastMetadataService.metadata Map');
+          fastMetadata = Object.fromEntries(fastMetadataService.metadata);
+          console.log(`🔍 Converted Map to object: ${Object.keys(fastMetadata).length} keys`);
+
+          // Debug: zkontroluj hudba soubory
+          const hudbaInMetadata = Object.values(fastMetadata).filter(m =>
+            m.fileName && m.fileName.toLowerCase().startsWith('hudba/')
+          );
+          console.log(`🎵 Hudba files in metadata: ${hudbaInMetadata.length}`);
+        } else {
+          // Fallback: zkus načíst přímo z realtimeMetadataService
+          console.log('⚠️ FastMetadataService Map is empty, trying realtimeMetadataService directly...');
+          try {
+            const realtimeMetadata = await realtimeMetadataService.getAllMetadata();
+            const realtimeCount = realtimeMetadata ? Object.keys(realtimeMetadata).length : 0;
+            console.log(`🔍 RealtimeMetadataService count: ${realtimeCount}`);
+
+            if (realtimeCount > 0) {
+              console.log('✅ Found metadata in RealtimeDatabase, using it directly...');
+              fastMetadata = realtimeMetadata;
+            }
+          } catch (realtimeError) {
+            console.error('❌ Error loading from realtimeMetadataService:', realtimeError);
+          }
+        }
+
+        // KROK 3: Zpracuj metadata pokud jsou dostupná
+        const metadataCount = fastMetadata ? Object.keys(fastMetadata).length : 0;
+        console.log(`🔍 useFirebaseHudbaScanner: fastMetadata count: ${metadataCount}`);
+
+        if (fastMetadata && metadataCount > 0) {
+          // Debug: zobraz hudba soubory
+          const hudbaMetadata = Object.values(fastMetadata).filter(m =>
+            m.fileName && m.fileName.toLowerCase().startsWith('hudba/')
+          );
+          console.log(`🎵 Found ${hudbaMetadata.length} hudba files in metadata before processing:`,
+            hudbaMetadata.slice(0, 5).map(m => ({
+              fileName: m.fileName,
+              type: m.type,
+              isHudba: m.isHudba,
+              downloadURL: m.downloadURL ? 'OK' : 'MISSING',
+              folder: m.folder
+            }))
+          );
+
+          console.log('✅ Calling processFastMetadata...');
           log.debug('✅ Loading from fast metadata (Realtime DB)...');
           hasLoadedDataRef.current = true;
           isLoadingRef.current = false;
-          await processFastMetadata(fastMetadata);
+
+          try {
+            await processFastMetadata(fastMetadata);
+            console.log('✅ processFastMetadata completed successfully');
+
+            // Zkontroluj, jestli se audioFiles nastavily
+            // POZNÁMKA: setAudioFiles je async, takže může trvat trochu déle
+            await new Promise(resolve => setTimeout(resolve, 100));
+          } catch (processError) {
+            console.error('❌ Error in processFastMetadata:', processError);
+          }
           return;
+        } else {
+          // Pokud metadata nejsou dostupná, zkus cache nebo retry
+          console.log('⚠️ Fast metadata is empty or not available, metadataCount:', metadataCount);
+          
+          // Zkontroluj cache (backup)
+          const cacheKey = 'hudba_scanner_all_files';
+          const cachedResult = cacheService.getFirebaseQuery(cacheKey);
+          if (cachedResult && cachedResult.audioFiles && cachedResult.audioFiles.length > 0) {
+            log.debug('✅ Loading from cache...');
+            hasLoadedDataRef.current = true;
+            isLoadingRef.current = false;
+            await processCachedResult(cachedResult);
+            return;
+          }
+
+          // Pokud metadata nejsou připravená a není cache, zkus retry
+          if (retryCount < 3) {
+            console.log(`⏳ Metadata not ready yet, retrying in 500ms... (${retryCount + 1}/3)`);
+            isLoadingRef.current = false;
+            setIsLoading(false);
+            setTimeout(() => {
+              if (!hasLoadedDataRef.current) {
+                loadData(retryCount + 1);
+              }
+            }, 500);
+            return;
+          }
+
+          // Pokud už jsme vyčerpali všechny možnosti, nastav chybu
+          console.error('❌ Failed to load metadata after all retries');
+          setError('Data nebyla načtena. Prosím obnovte stránku.');
+          setIsLoading(false);
+          isLoadingRef.current = false;
         }
       } catch (err) {
-        log.debug('Fast metadata not available:', err);
-      }
-
-      // Zkontroluj cache (backup)
-      const cacheKey = 'hudba_scanner_all_files';
-      const cachedResult = cacheService.getFirebaseQuery(cacheKey);
-      if (cachedResult && cachedResult.audioFiles && cachedResult.audioFiles.length > 0) {
-        log.debug('✅ Loading from cache...');
-        hasLoadedDataRef.current = true;
+        console.error('❌ Error loading metadata:', err);
+        log.error('Error loading metadata:', err);
+        setError(err.message || 'Chyba při načítání dat');
+        setIsLoading(false);
         isLoadingRef.current = false;
-        await processCachedResult(cachedResult);
-        return;
-      }
-
-      // Pokud metadata ještě nejsou připravena, počkej a zkus znovu (max 10 pokusů)
-      if (retryCount < 10) {
-        log.debug(`⏳ Metadata not ready yet, retrying in 500ms... (${retryCount + 1}/10)`);
-        setTimeout(() => {
-          if (!hasLoadedDataRef.current) {
-            loadFromCache(retryCount + 1);
-          }
-        }, 500);
-        return;
-      }
-
-      // Pouze pokud není žádná cache a vyčerpali jsme retry, načti z Firebase Storage (fallback)
-      if (!hasLoadedDataRef.current && !isLoadingRef.current) {
-        log.warn('⚠️ No cache found after retries, loading from Firebase Storage (should not happen)');
-        scanCDN();
       }
     };
 
-    loadFromCache();
-  }, [scanCDN, audioFiles.length]);
+    loadData();
+  }, [audioFiles.length]);
 
   // Real-time listener pro automatickou aktualizaci při změnách v Realtime Database
   // Zjednodušeno: pouze aktualizuj fast metadata service, nespouštěj scanCDN
@@ -372,7 +465,7 @@ export const useFirebaseHudbaScanner = () => {
                 ).length;
 
                 if (currentHudbaFiles !== audioFiles.length || audioFiles.length === 0) {
-                  processFastMetadata(fastMetadata);
+                  processFastMetadata(Object.fromEntries(fastMetadata)); // Převeď Map na objekt
                   log.success('✅ Data updated from real-time');
                 } else {
                   log.debug('⏭️ Skipping update (data unchanged)');
@@ -417,15 +510,7 @@ export const useFirebaseHudbaScanner = () => {
   const filesByTopic = availableFiles.reduce((acc, file) => {
     if (!file.parsed) return acc;
 
-    // Pro soubory ze složek, použij název složky jako téma
-    let topic = file.parsed.topic;
-    if (!topic && file.fileName.includes('/')) {
-      const folderName = file.fileName.split('/')[0];
-      topic = folderName.replace(/-/g, ' '); // ambient-journey -> ambient journey
-    }
-
-    if (!topic) return acc;
-
+    const topic = file.parsed.topic;
     if (!acc[topic]) {
       acc[topic] = [];
     }
@@ -449,22 +534,38 @@ export const useFirebaseHudbaScanner = () => {
     audioFiles,
     availableFiles,
     filesByTopic,
-    coverImages,
     availableTopics,
     stats,
 
     // State
     isLoading,
-    isLoadingCovers,
-    isLoadingDurations,
+    isLoadingCovers: false,
+    isLoadingDurations: false,
     error,
-    lastUpdated,
 
     // Actions
-    refreshCDN: scanCDN,
+    refreshAudioFiles: scanCDN, // Použij scanCDN pro refresh
 
     // Getters
-    getFilesForTopic: (topic) => filesByTopic[topic] || [],
-    getFileByName: (fileName) => availableFiles.find(f => f.fileName === fileName)
+    getAudioForTopic: (topic) => {
+      const topicFiles = filesByTopic[topic] || [];
+      const bestFile = topicFiles
+        .filter(file => file.parsed && file.isAvailable)
+        .sort((a, b) => parseInt(b.parsed.version) - parseInt(a.parsed.version))[0];
+      return bestFile?.fileName || null;
+    },
+    getBestAudio: () => {
+      return availableFiles[0]?.fileName || null;
+    },
+    getFilesForTopic: (topic) => {
+      return filesByTopic[topic] || [];
+    },
+    getAudioInfo: (fileName) => {
+      const file = availableFiles.find(f => f.fileName === fileName);
+      return file?.parsed || null;
+    },
+    getRecommendedFiles: (limit = 5) => {
+      return availableFiles.slice(0, limit);
+    }
   };
 };
