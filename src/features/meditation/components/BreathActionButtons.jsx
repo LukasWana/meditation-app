@@ -17,8 +17,18 @@ const BreathActionButtons = ({
   onProfilesClick,
   t
 }) => {
-  const { currentTheme } = useTheme();
-  const iconColor = currentTheme?.colors?.text || '#000000';
+  const { getCurrentThemeColors } = useTheme();
+  const themeColors = getCurrentThemeColors();
+
+  // Získat barvu textu a detekovat dark mode
+  const textColor = themeColors?.text || '#000000';
+  const isDarkMode = textColor.includes('255, 255, 255') ||
+                     textColor === '#ffffff' ||
+                     textColor === 'white' ||
+                     textColor.includes('rgba(255, 255, 255');
+
+  // Všechny texty by měly být bílé v dark mode, černé v light mode
+  const iconColor = isDarkMode ? '#ffffff' : '#000000';
 
   return (
     <FramerSection

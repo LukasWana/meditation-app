@@ -3,6 +3,7 @@ import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, Music2 } from 'lucide-react';
 import { useLanguage } from '@contexts/LanguageContext';
+import { useTheme } from '@contexts/ThemeContext';
 
 // Lazy loading WheelPicker komponent pro lepší performance
 const WheelPicker = lazy(() => import('@components/WheelPicker').then(m => ({ default: m.default })));
@@ -11,7 +12,11 @@ const DualWheelPicker = lazy(() => import('@components/WheelPicker').then(m => (
 // Modal pro jeden WheelPicker
 export const WheelPickerModal = ({ isOpen, onClose, value, onChange, min, max, step, label, title, onSoundButtonClick }) => {
   const { t } = useLanguage();
+  const { currentTheme, getScreenBackgroundColor } = useTheme();
   const [tempValue, setTempValue] = React.useState(value);
+
+  // Získat barvu pozadí z tématu
+  const backgroundColor = getScreenBackgroundColor() || currentTheme?.colors?.background || '#f4ddc4';
 
   React.useEffect(() => {
     if (isOpen) {
@@ -45,12 +50,15 @@ export const WheelPickerModal = ({ isOpen, onClose, value, onChange, min, max, s
           }}
         >
           <motion.div
-            className="bg-[#f4ddc4] w-full max-w-sm min-h-screen p-6 relative mx-4 border border-black/10 rounded-none flex flex-col items-center"
+            className="w-full max-w-sm min-h-screen p-6 relative mx-4 border border-black/10 rounded-none flex flex-col items-center"
             initial={{ scale: 0.9, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
             exit={{ scale: 0.9, opacity: 0 }}
             onClick={(e) => e.stopPropagation()}
-            style={{ zIndex: 10001 }}
+            style={{
+              zIndex: 10001,
+              backgroundColor: backgroundColor
+            }}
           >
             {/* Header */}
             <div className="flex items-center justify-between mb-6 flex-shrink-0 w-full">
@@ -150,8 +158,12 @@ export const DualWheelPickerModal = ({
   onSoundButtonClick // Callback pro otevření galerie zvuků
 }) => {
   const { t } = useLanguage();
+  const { currentTheme, getScreenBackgroundColor } = useTheme();
   const [tempLeftValue, setTempLeftValue] = React.useState(leftValue);
   const [tempRightValue, setTempRightValue] = React.useState(rightValue);
+
+  // Získat barvu pozadí z tématu
+  const backgroundColor = getScreenBackgroundColor() || currentTheme?.colors?.background || '#f4ddc4';
 
   React.useEffect(() => {
     if (isOpen) {
@@ -194,12 +206,15 @@ export const DualWheelPickerModal = ({
           }}
         >
           <motion.div
-            className="bg-[#f4ddc4] w-full max-w-md min-h-screen p-6 relative mx-4 border border-black/10 rounded-none flex flex-col"
+            className="w-full max-w-md min-h-screen p-6 relative mx-4 border border-black/10 rounded-none flex flex-col"
             initial={{ scale: 0.9, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
             exit={{ scale: 0.9, opacity: 0 }}
             onClick={(e) => e.stopPropagation()}
-            style={{ zIndex: 10001 }}
+            style={{
+              zIndex: 10001,
+              backgroundColor: backgroundColor
+            }}
           >
             {/* Header */}
             <div className="flex items-center justify-between mb-6 flex-shrink-0">

@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, ArrowDown, ArrowUp, MousePointerClick, CheckCircle, Play, Pause, Clock } from 'lucide-react';
 import { useLanguage } from '@contexts/LanguageContext';
+import { useTheme } from '@contexts/ThemeContext';
 import { realtimeMetadataService } from '@services/realtimeMetadataService';
 import Waveform from './Waveform';
 
@@ -13,6 +14,10 @@ const SoundThemeGallery = ({ isOpen, onClose, onSelectSound, selectedInSound, se
   const safeSelectedFinalSound = selectedFinalSound || 'none';
   const safeSelectedCountdownSound = selectedCountdownSound || 'none';
   const { t } = useLanguage();
+  const { currentTheme, getScreenBackgroundColor } = useTheme();
+
+  // Získat barvu pozadí z tématu
+  const backgroundColor = getScreenBackgroundColor() || currentTheme?.colors?.background || '#f4ddc4';
 
   // Funkce pro parsování délky zvuku v sekundách
   const parseDurationToSeconds = (duration) => {
@@ -485,11 +490,12 @@ const SoundThemeGallery = ({ isOpen, onClose, onSelectSound, selectedInSound, se
           onClick={onClose}
         >
           <motion.div
-            className="bg-[#f4ddc4] w-full max-w-md max-h-[90vh] overflow-y-auto p-4 relative m-4 border border-black/10"
+            className="w-full max-w-md max-h-[90vh] overflow-y-auto p-4 relative m-4 border border-black/10"
             initial={{ scale: 0.9, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
             exit={{ scale: 0.9, opacity: 0 }}
             onClick={(e) => e.stopPropagation()}
+            style={{ backgroundColor: backgroundColor }}
           >
             {/* Header */}
             <div className="flex items-center justify-between mb-4">

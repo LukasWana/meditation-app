@@ -5,14 +5,18 @@ import { useTheme } from '@contexts/ThemeContext';
 
 const IntroScreen = ({ onIntroComplete }) => {
   const [showIntro, setShowIntro] = useState(true);
-  const { getScreenBackgroundColor, currentTheme } = useTheme();
+  const { getScreenBackgroundColor, getCurrentThemeColors } = useTheme();
 
   // Získat barvu textu z tématu a detekovat dark mode
-  const textColor = currentTheme?.colors?.text || '#000000';
+  const themeColors = getCurrentThemeColors();
+  const textColor = themeColors?.text || '#000000';
   const isDarkMode = textColor.includes('255, 255, 255') ||
                      textColor === '#ffffff' ||
                      textColor === 'white' ||
                      textColor.includes('rgba(255, 255, 255');
+
+  // Text by měl být bílý v dark mode, černý v light mode
+  const displayTextColor = isDarkMode ? '#ffffff' : '#000000';
 
   // Pro dark mode (bílé písmo) použít světlý/bílý kroužek, pro light mode (černé písmo) také světlý
   // Kroužek by měl být vždy světlý pro kontrast s tmavým pozadím v dark mode
@@ -103,6 +107,7 @@ const IntroScreen = ({ onIntroComplete }) => {
                 ease: "easeOut",
                 delay: 0.3
               }}
+              style={{ color: displayTextColor }}
             >
               meditácia
             </motion.h1>
