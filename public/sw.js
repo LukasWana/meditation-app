@@ -95,7 +95,6 @@ self.addEventListener('fetch', (event) => {
             try {
               cachedResponse = await cache.match(cacheKey);
               if (cachedResponse) {
-                console.log(`🎵 Cache hit for: ${request.url} (found with key: ${cacheKey})`);
                 break;
               }
             } catch (err) {
@@ -105,8 +104,6 @@ self.addEventListener('fetch', (event) => {
         }
 
         if (cachedResponse) {
-          console.log(`🎵 Cache hit for: ${request.url} (using cached version)`);
-
           // Pokud je opaque response, převeď ho na normální Response s blobem
           // Opaque responses nefungují s Audio elementem na Androidu
           if (cachedResponse.type === 'opaque') {
@@ -141,7 +138,6 @@ self.addEventListener('fetch', (event) => {
 
         // Pokud není v cache, nech prohlížeč zpracovat požadavek přímo (bez interceptování)
         // Tím se zabrání opaque responses, které nefungují na Androidu
-        console.log(`🎵 Cache miss for: ${request.url} (bypassing Service Worker)`);
         return fetch(request);
       }).catch(() => {
         // V případě chyby zkus fetch
@@ -194,8 +190,6 @@ async function cacheFirst(request, cacheName) {
       return cachedResponse;
     }
 
-    console.log(`🖼️ Cache miss for image: ${request.url}`);
-
     // Pokud není v cache, zkus network
     try {
       const networkResponse = await fetch(request);
@@ -230,8 +224,6 @@ async function networkFirstAudio(request, cacheName) {
       console.log(`🎵 Cache hit for: ${request.url} (saving mobile data)`);
       return cachedResponse;
     }
-
-    console.log(`🎵 Cache miss for: ${request.url}`);
 
         // Pokud není v cache, zkus network
         try {

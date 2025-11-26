@@ -73,10 +73,6 @@ if (import.meta.env.VITE_RECAPTCHA_SITE_KEY) {
     console.warn('⚠️ Firebase App Check initialization failed:', error.message);
     console.warn('   App Check je volitelný, ale doporučený pro produkci');
   }
-} else {
-  if (import.meta.env.MODE === 'development') {
-    console.log('ℹ️ App Check je vypnutý - můžete nastavit VITE_RECAPTCHA_SITE_KEY pro aktivaci');
-  }
 }
 
 // Realtime Database - používáme produkční databázi
