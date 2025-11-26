@@ -38,15 +38,13 @@ const BreathProgressCircle = ({
         style={{ position: 'relative', zIndex: 2 }}
       />
 
-      {/* Play/Pause Button - Center */}
-      <div className="absolute inset-0 flex items-center justify-center pointer-events-none" style={{ zIndex: 10 }}>
-        <div className="pointer-events-auto">
-          <PlayPauseButton
-            isPlaying={isBreathing}
-            onToggle={onPlayPause}
-            className="w-[18vw] h-[18vw] max-w-[120px] max-h-[120px] min-w-[80px] min-h-[80px] sm:w-[16vw] sm:h-[16vw] sm:max-w-[140px] sm:max-h-[140px] sm:min-w-[100px] sm:min-h-[100px]"
-          />
-        </div>
+      {/* Play/Pause Button - Center - ve vrchní vrstvě */}
+      <div className="absolute inset-0 flex items-center justify-center pointer-events-none" style={{ zIndex: 20 }}>
+        <PlayPauseButton
+          isPlaying={isBreathing}
+          onToggle={onPlayPause}
+          className="w-[18vw] h-[18vw] max-w-[120px] max-h-[120px] min-w-[80px] min-h-[80px] sm:w-[16vw] sm:h-[16vw] sm:max-w-[140px] sm:max-h-[140px] sm:min-w-[100px] sm:min-h-[100px]"
+        />
       </div>
     </div>
   );
