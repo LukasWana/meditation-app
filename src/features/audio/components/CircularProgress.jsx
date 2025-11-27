@@ -26,8 +26,8 @@ const CircularProgress = ({
 
   // Použij barvy z theme jako výchozí, pokud nejsou explicitně předány
   const finalProgressColor = progressColor || currentTheme?.colors?.progressIndicator || 'limegreen';
-  // Pro light mode použít černé pozadí, pro dark mode také černé pozadí
-  const finalBackgroundColor = backgroundColor || "rgba(0, 0, 0, 0.3)";
+  // Pro light mode použít černé pozadí, pro dark mode bílé pozadí
+  const finalBackgroundColor = backgroundColor || (isDarkMode ? "rgba(255, 255, 255, 0.3)" : "rgba(0, 0, 0, 0.3)");
   const radius = 180; // Snížil radius aby se vešel do viewBox
   const circumference = 2 * Math.PI * radius;
   const [isDragging, setIsDragging] = useState(false);
