@@ -22,14 +22,16 @@ const BreathProgressCircle = ({
   onPlayPause
 }) => {
   return (
-    <div className="relative flex-shrink-0">
-      {/* Dýchací animace během dýchání - pod kruhem a tlačítkem */}
-      <BreathingAnimation
-        isBreathing={isBreathing}
-        breathPhase={breathPhase}
-        breathInDuration={breathInDuration}
-        breathOutDuration={breathOutDuration}
-      />
+    <div className="relative flex-shrink-0" style={{ overflow: 'visible' }}>
+      {/* Dýchací animace během dýchání - pod kruhem a tlačítkem - z-index 1 */}
+      <div style={{ position: 'absolute', inset: 0, zIndex: 1, pointerEvents: 'none' }}>
+        <BreathingAnimation
+          isBreathing={isBreathing}
+          breathPhase={breathPhase}
+          breathInDuration={breathInDuration}
+          breathOutDuration={breathOutDuration}
+        />
+      </div>
 
       <CircularProgress
         progress={progress}
@@ -39,7 +41,7 @@ const BreathProgressCircle = ({
       />
 
       {/* Play/Pause Button - Center - ve vrchní vrstvě */}
-      <div className="absolute inset-0 flex items-center justify-center pointer-events-none" style={{ zIndex: 20 }}>
+      <div className="absolute inset-0 flex items-center justify-center pointer-events-none" style={{ zIndex: 100 }}>
         <PlayPauseButton
           isPlaying={isBreathing}
           onToggle={onPlayPause}

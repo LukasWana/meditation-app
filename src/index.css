@@ -258,18 +258,18 @@ body, html, #root, main, div, section, article {
 
 /* Rounded style for themes with useRoundedStyle enabled */
 /* Pro kulaté písmo: kulaté rohy a čtvercové objekty udělat kulaté */
-[data-rounded-style="true"] button,
+[data-rounded-style="true"] button:not(.play-pause-button),
 [data-rounded-style="true"] .rounded-none,
 [data-rounded-style="true"] [class*="rounded-lg"],
 [data-rounded-style="true"] [class*="rounded-xl"],
 [data-rounded-style="true"] [class*="rounded-md"],
-[data-rounded-style="true"] .rounded-full,
-[data-rounded-style="true"] div[class*="rounded"],
-[data-rounded-style="true"] [class*="bg-white"],
-[data-rounded-style="true"] [class*="bg-black"],
-[data-rounded-style="true"] [class*="bg-gray"],
-[data-rounded-style="true"] [class*="bg-white/"],
-[data-rounded-style="true"] [class*="bg-black/"] {
+[data-rounded-style="true"] .rounded-full:not(.play-pause-button),
+[data-rounded-style="true"] div[class*="rounded"]:not(.play-pause-button div),
+[data-rounded-style="true"] [class*="bg-white"]:not(.play-pause-button [class*="bg-white"]),
+[data-rounded-style="true"] [class*="bg-black"]:not(.play-pause-button [class*="bg-black"]),
+[data-rounded-style="true"] [class*="bg-gray"]:not(.play-pause-button [class*="bg-gray"]),
+[data-rounded-style="true"] [class*="bg-white/"]:not(.play-pause-button [class*="bg-white/"]),
+[data-rounded-style="true"] [class*="bg-black/"]:not(.play-pause-button [class*="bg-black/"]) {
   border-radius: 12px !important; /* Kulaté rohy pro všechny objekty */
 }
 
@@ -286,12 +286,12 @@ body, html, #root, main, div, section, article {
 }
 
 /* Pro hranaté písmo: hranaté rohy (border-radius: 0) - aplikovat pouze když není rounded style */
-html:not([data-rounded-style="true"]) button:not([class*="rounded-full"]),
-html:not([data-rounded-style="true"]) .rounded-none,
-html:not([data-rounded-style="true"]) [class*="rounded-lg"],
-html:not([data-rounded-style="true"]) [class*="rounded-xl"],
-html:not([data-rounded-style="true"]) [class*="rounded-md"],
-html:not([data-rounded-style="true"]) div[class*="rounded"]:not([class*="rounded-full"]) {
+html:not([data-rounded-style="true"]) button:not([class*="rounded-full"]):not(.play-pause-button),
+html:not([data-rounded-style="true"]) .rounded-none:not(.play-pause-button),
+html:not([data-rounded-style="true"]) [class*="rounded-lg"]:not(.play-pause-button),
+html:not([data-rounded-style="true"]) [class*="rounded-xl"]:not(.play-pause-button),
+html:not([data-rounded-style="true"]) [class*="rounded-md"]:not(.play-pause-button),
+html:not([data-rounded-style="true"]) div[class*="rounded"]:not([class*="rounded-full"]):not(.play-pause-button div) {
   border-radius: 0 !important; /* Hranaté rohy pro hranaté písmo */
 }
 
@@ -303,4 +303,71 @@ html:not([data-rounded-style="true"]) div[class*="rounded"]:not([class*="rounded
 /* Audio controls container */
 .audio-controls-container {
   min-height: clamp(80px, 15vh, 120px);
+}
+
+/* Vynutit, aby PlayPauseButton bylo vždy kulaté a nereagovalo na změny tématu */
+/* Toto pravidlo má nejvyšší prioritu a přepíše všechna ostatní - musí být na konci */
+button.play-pause-button,
+button[class*="play-pause-button"],
+.play-pause-button,
+.play-pause-button[class*="rounded-full"],
+motion.button.play-pause-button,
+[data-rounded-style="true"] button.play-pause-button,
+[data-rounded-style="true"] .play-pause-button,
+[data-rounded-style="true"] .play-pause-button[class*="rounded-full"],
+html:not([data-rounded-style="true"]) button.play-pause-button,
+html:not([data-rounded-style="true"]) .play-pause-button,
+html:not([data-rounded-style="true"]) .play-pause-button[class*="rounded-full"],
+div .play-pause-button,
+div[class*="relative"] .play-pause-button,
+div[class*="absolute"] .play-pause-button,
+div[class*="flex"] .play-pause-button {
+  border-radius: 50% !important;
+  overflow: visible !important;
+}
+.play-pause-button div[class*="rounded-full"],
+.play-pause-button div[class*="absolute"],
+[data-rounded-style="true"] .play-pause-button div[class*="rounded-full"],
+[data-rounded-style="true"] .play-pause-button div[class*="absolute"],
+html:not([data-rounded-style="true"]) .play-pause-button div[class*="rounded-full"],
+html:not([data-rounded-style="true"]) .play-pause-button div[class*="absolute"] {
+  border-radius: 50% !important;
+}
+.play-pause-button *:not([class*="w-3"]):not([class*="h-10"]),
+.play-pause-button div:not([class*="w-3"]):not([class*="h-10"]) {
+  overflow: visible !important;
+}
+/* Vnitřní prvky pause ikony nesmí mít border-radius */
+.play-pause-button [class*="w-3"],
+.play-pause-button [class*="h-10"] {
+  border-radius: 0 !important;
+}
+
+/* FINÁLNÍ PRAVIDLO - PlayPauseButton musí být vždy kulaté - nejvyšší priorita na konci souboru */
+button.play-pause-button,
+.play-pause-button,
+[class*="play-pause-button"] {
+  border-radius: 50% !important;
+}
+
+/* Animace dýchání a úvodní animace musí být vždy kulaté - nejvyšší priorita */
+div.breath-animation-circle,
+div.intro-animation-circle,
+.breath-animation-circle,
+.intro-animation-circle,
+[class*="breath-animation-circle"],
+[class*="intro-animation-circle"],
+motion.div.breath-animation-circle,
+motion.div.intro-animation-circle,
+[data-rounded-style="true"] div.breath-animation-circle,
+[data-rounded-style="true"] div.intro-animation-circle,
+[data-rounded-style="true"] .breath-animation-circle,
+[data-rounded-style="true"] .intro-animation-circle,
+html:not([data-rounded-style="true"]) div.breath-animation-circle,
+html:not([data-rounded-style="true"]) div.intro-animation-circle,
+html:not([data-rounded-style="true"]) .breath-animation-circle,
+html:not([data-rounded-style="true"]) .intro-animation-circle,
+.breath-animation-circle[style*="border-radius"],
+.intro-animation-circle[style*="border-radius"] {
+  border-radius: 50% !important;
 }

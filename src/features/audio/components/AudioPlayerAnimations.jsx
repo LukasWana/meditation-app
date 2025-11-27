@@ -9,7 +9,8 @@ export const AudioPlayerAnimations = ({
   onClose,
   fadeOutAndClose
 }) => {
-  const { getScreenBackgroundColor } = useTheme();
+  const { getBackgroundStyle, getScreenBackgroundColor } = useTheme();
+  const backgroundStyle = getBackgroundStyle();
   const backgroundColor = getScreenBackgroundColor() || '#f4ddc4';
 
   return (
@@ -33,7 +34,17 @@ export const AudioPlayerAnimations = ({
       <motion.div
         className="w-full h-full flex flex-col items-center justify-center relative overflow-hidden"
         style={{
-          backgroundColor: albumCover ? `${backgroundColor}B3` : backgroundColor
+          // Pokud má album vlastní obrázek, použij pozadí z tématu pouze jako fallback
+          // Jinak použij pozadí z tématu (obrázek nebo barvu)
+          ...(albumCover ? {} : (backgroundStyle?.backgroundImage ? {
+            backgroundImage: backgroundStyle.backgroundImage,
+            backgroundSize: backgroundStyle.backgroundSize || 'cover',
+            backgroundPosition: backgroundStyle.backgroundPosition || 'center center',
+            backgroundRepeat: backgroundStyle.backgroundRepeat || 'no-repeat'
+          } : {})),
+          backgroundColor: albumCover
+            ? `${backgroundColor}B3`
+            : (backgroundStyle?.backgroundColor || backgroundColor)
         }}
         initial={{ scale: 0.95, opacity: 0 }}
         animate={{ scale: 1, opacity: 1 }}
@@ -47,13 +58,12 @@ export const AudioPlayerAnimations = ({
         }}
         onClick={(e) => e.stopPropagation()}
       >
-        {/* Album cover background */}
+        {/* Album cover background - má přednost před pozadím z tématu */}
         {albumCover && (
           <div
             className="absolute inset-0 bg-cover bg-center bg-no-repeat"
             style={{
               backgroundImage: `url(${albumCover})`,
-              filter: 'blur(80px) brightness(1)',
               opacity: 1
             }}
           />
@@ -64,13 +74,13 @@ export const AudioPlayerAnimations = ({
           <div
             className="absolute left-0 top-0 w-[calc((100vw-600px)/2)] h-full bg-gradient-to-r to-transparent"
             style={{
-              background: `linear-gradient(to right, ${backgroundColor}B3, transparent)`
+              background: `linear-gradient(to right, ${backgroundStyle?.backgroundColor || backgroundColor}B3, transparent)`
             }}
           ></div>
           <div
             className="absolute right-0 top-0 w-[calc((100vw-600px)/2)] h-full bg-gradient-to-l to-transparent"
             style={{
-              background: `linear-gradient(to left, ${backgroundColor}B3, transparent)`
+              background: `linear-gradient(to left, ${backgroundStyle?.backgroundColor || backgroundColor}B3, transparent)`
             }}
           ></div>
         </div>

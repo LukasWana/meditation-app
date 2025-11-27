@@ -17,9 +17,17 @@ const CircularProgress = ({
   const themeContext = useContext(ThemeContext);
   const currentTheme = themeContext?.currentTheme || null;
 
+  // Získat barvu textu z tématu a detekovat dark mode
+  const textColor = currentTheme?.colors?.text || '#000000';
+  const isDarkMode = textColor.includes('255, 255, 255') ||
+                     textColor === '#ffffff' ||
+                     textColor === 'white' ||
+                     textColor.includes('rgba(255, 255, 255');
+
   // Použij barvy z theme jako výchozí, pokud nejsou explicitně předány
   const finalProgressColor = progressColor || currentTheme?.colors?.progressIndicator || 'limegreen';
-  const finalBackgroundColor = backgroundColor || "rgba(255,255,255,0.3)";
+  // Pro light mode použít černé pozadí, pro dark mode také černé pozadí
+  const finalBackgroundColor = backgroundColor || "rgba(0, 0, 0, 0.3)";
   const radius = 180; // Snížil radius aby se vešel do viewBox
   const circumference = 2 * Math.PI * radius;
   const [isDragging, setIsDragging] = useState(false);
