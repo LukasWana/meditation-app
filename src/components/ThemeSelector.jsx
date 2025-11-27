@@ -7,6 +7,26 @@ import { getThemeName } from '@data/themes';
 import FramerSection from '@components/FramerSection';
 import { ImageIcon, X } from 'lucide-react';
 
+// Import defaultních obrázků pozadí
+import defaultBg1 from '@assets/backgrounds/pexels-arts-1496373.jpg';
+import defaultBg2 from '@assets/backgrounds/pexels-brakou-1723637.jpg';
+import defaultBg3 from '@assets/backgrounds/pexels-eberhardgross-1624496.jpg';
+import defaultBg4 from '@assets/backgrounds/pexels-gabriel-peter-219375-719396.jpg';
+import defaultBg5 from '@assets/backgrounds/pexels-zetong-li-880728-1784578-min.jpg';
+import defaultBg6 from '@assets/backgrounds/samuel-ferrara-dKJXkKCF2D8-unsplash.jpg';
+import defaultBg7 from '@assets/backgrounds/will-turner-KWzUuVg7U-0-unsplash.jpg';
+
+// Seznam defaultních obrázků
+const DEFAULT_BACKGROUNDS = [
+  defaultBg1,
+  defaultBg2,
+  defaultBg3,
+  defaultBg4,
+  defaultBg5,
+  defaultBg6,
+  defaultBg7
+];
+
 const ThemeSelector = () => {
   const { t, language } = useLanguage();
 
@@ -99,6 +119,53 @@ const ThemeSelector = () => {
   const handleRemoveBackground = () => {
     removeCustomBackground();
     setError(null);
+  };
+
+  const handleDefaultImageSelect = async (imageUrl) => {
+    setError(null);
+    setIsProcessing(true);
+
+    try {
+      // Zjistit rozměry obrázku
+      const imageDimensions = await new Promise((resolve) => {
+        const img = new Image();
+        img.onload = () => {
+          resolve({ width: img.width, height: img.height });
+        };
+        img.onerror = () => {
+          resolve(null);
+        };
+        img.src = imageUrl;
+      });
+
+      // Extrahovat barvy z obrázku
+      let extractedColors = null;
+      try {
+        const { extractColorsFromImage } = await import('@utils/colorExtractor');
+        extractedColors = await extractColorsFromImage(imageUrl, 5);
+        console.log('🎨 Extrahované barvy z defaultního obrázku:', extractedColors);
+      } catch (colorError) {
+        console.warn('Nepodařilo se extrahovat barvy z obrázku:', colorError);
+      }
+
+      // Uložit obrázek s informací o rozměrech, barvách a vlastnostech tématu
+      const backgroundData = {
+        url: imageUrl,
+        width: imageDimensions?.width || null,
+        height: imageDimensions?.height || null,
+        colors: extractedColors,
+        useRoundedStyle: currentTheme?.useRoundedStyle ?? false,
+        fontFamily: currentTheme?.fontFamily || "'Petrona', serif"
+      };
+
+      // Nastavení jako pozadí (uložit jako JSON string)
+      setCustomBackground(JSON.stringify(backgroundData));
+    } catch (err) {
+      setError(err.message || 'Chyba při zpracování obrázku');
+      console.error('Error processing default image:', err);
+    } finally {
+      setIsProcessing(false);
+    }
   };
 
   const themeColors = themeContext?.getCurrentThemeColors?.() || {};
@@ -267,11 +334,43 @@ const ThemeSelector = () => {
                   </span>
                 </motion.label>
                 <p
-                  className="text-xs mt-2"
+                  className="text-xs mt-2 mb-3"
                   style={{ color: textSecondaryColor }}
                 >
                   {t('vyberteObrazek') || 'Vyberte libovolný obrázek'}
                 </p>
+
+                {/* Defaultní obrázky jako malé čtverečky */}
+                <div className="mt-4">
+                  <p
+                    className="text-xs mb-2"
+                    style={{ color: textSecondaryColor }}
+                  >
+                    {t('vychoziObrazky') || 'Výchozí obrázky:'}
+                  </p>
+                  <div className="grid grid-cols-4 gap-2">
+                    {DEFAULT_BACKGROUNDS.map((bgUrl, index) => (
+                      <motion.button
+                        key={index}
+                        onClick={() => handleDefaultImageSelect(bgUrl)}
+                        className="relative w-full aspect-square rounded-lg overflow-hidden border-2"
+                        style={{
+                          borderColor: borderColor
+                        }}
+                        whileHover={{ scale: 1.05 }}
+                        whileTap={{ scale: 0.95 }}
+                        disabled={isProcessing}
+                      >
+                        <img
+                          src={bgUrl}
+                          alt={`Default background ${index + 1}`}
+                          className="w-full h-full object-cover"
+                        />
+                        <div className="absolute inset-0 bg-black/0 hover:bg-black/10 transition-colors" />
+                      </motion.button>
+                    ))}
+                  </div>
+                </div>
               </div>
             )}
 
