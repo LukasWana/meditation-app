@@ -71,7 +71,7 @@ const BreathingSection = ({
       {/* CircularProgress s play button a animací */}
       <div
         className="flex flex-col items-center"
-        style={{ marginTop: 0, marginBottom: '1.5rem' }}
+        style={{ marginTop: 0, marginBottom: '1.5rem', overflow: 'visible' }}
       >
         <BreathProgressCircle
           progress={progress}

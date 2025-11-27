@@ -41,6 +41,21 @@ const MeditationScreen = ({
   const [showGallery, setShowGallery] = useState(false);
   const [showDurationPicker, setShowDurationPicker] = useState(false);
   const [breathCycleTime, setBreathCycleTime] = useState(0); // Čas v aktuálním cyklu dýchání (0 až breathInDuration + breathOutDuration)
+  const breathCircleRef = useRef(null);
+
+  // Vynutit, aby kruh byl vždy kulatý - nastavit okamžitě a při každé změně
+  useEffect(() => {
+    if (breathCircleRef.current) {
+      breathCircleRef.current.style.setProperty('border-radius', '50%', 'important');
+    }
+  }, [breathPhase, isPlaying]);
+
+  // Nastavit border-radius také při mount a při každém renderu
+  const setBorderRadius = (element) => {
+    if (element) {
+      element.style.setProperty('border-radius', '50%', 'important');
+    }
+  };
 
   // Použij hook pro přehrávání zvuků dýchání
   useBreathSounds(
@@ -264,58 +279,73 @@ const MeditationScreen = ({
             </div>
 
             {/* CircularProgress s Play/Pause Button - stejný jako v přehrávači */}
-            <div className="relative flex-shrink-0 flex items-center justify-center" style={{ isolation: 'isolate' }}>
-              {/* Dýchací animace během meditace - SPODNÍ vrstva - pod kruhovým ukazatelem */}
+            <div className="relative flex-shrink-0 flex items-center justify-center" style={{ overflow: 'visible' }}>
+              {/* Dýchací animace během meditace - SPODNÍ vrstva - pod kruhovým ukazatelem a play tlačítkem */}
               {isPlaying && (
                 <div
                   className="absolute inset-0 flex items-center justify-center pointer-events-none"
                   style={{
-                    zIndex: 0,
-                    isolation: 'isolate',
-                    transform: 'translateZ(0)' // Force hardware acceleration and create stacking context
+                    zIndex: 1,
+                    overflow: 'visible'
                   }}
                 >
-                  {/* Animace s maskou - bílý kruh uprostřed, černý okolo, vycentrovaná na tlačítko */}
+                  {/* Animace s maskou - bílý kruh uprostřed, černý okolo, vycentrovaná na tlačítko - pod play tlačítkem */}
                   <motion.div
-                    key={breathPhase}
-                    className="rounded-full"
+                    ref={(el) => {
+                      breathCircleRef.current = el;
+                      setBorderRadius(el);
+                    }}
+                    className="rounded-full breath-animation-circle"
                     style={{
-                      width: '45vw',
-                      height: '45vw',
-                      maxWidth: '350px',
-                      maxHeight: '350px',
-                      minWidth: '220px',
-                      minHeight: '220px',
+                      // Velikost play tlačítka jako základní velikost (responzivní)
+                      width: '18vw',
+                      height: '18vw',
+                      maxWidth: '120px',
+                      maxHeight: '120px',
+                      minWidth: '80px',
+                      minHeight: '80px',
                       background: 'radial-gradient(circle, rgba(255,255,255,1) 0%, rgba(255,255,255,1) 25%, rgba(255,255,255,1) 25%, rgba(255,255,255,1) 100%)',
                       transformOrigin: 'center center',
                       position: 'absolute',
-                      zIndex: 0,
-                      willChange: 'transform, opacity' // Optimize animation performance
+                      zIndex: 1,
+                      willChange: 'transform, opacity',
+                      borderRadius: '50%',
+                      overflow: 'visible',
+                      pointerEvents: 'none'
                     }}
                     initial={{
-                      opacity: 0.9,
-                      scale: breathPhase === 'in' ? 0.5 : 1.5
+                      scale: 1.0,  // Začínáme ve velikosti play tlačítka (scale 1.0)
+                      opacity: 0.9
                     }}
                     animate={isPlaying ? {
                       scale: breathPhase === 'in'
-                        ? [0.5, 1.5]  // Nádech - zvětšování až na 120%
+                        ? [1.0, 2.9]  // Nádech - zvětšování z velikosti play tlačítka (1.0) až na 2.9x (45vw / 18vw ≈ 2.5, ale pro větší obrazovky 16vw → 45vw ≈ 2.8)
                         : breathPhase === 'out'
-                        ? [1.5, 0.5]  // Výdech - zmenšování až na 20%
-                        : 1.5,
+                        ? [2.9, 1.0]  // Výdech - zmenšování z 2.9x zpět na velikost play tlačítka (1.0)
+                        : 1.0,  // Výchozí stav je velikost play tlačítka
                       opacity: [0.9, 1, 0.9]
                     } : {
                       scale: 1.0,
-                      opacity: 0.8
+                      opacity: 0.9
                     }}
-                    exit={{ opacity: 0 }}
                     transition={isPlaying ? {
                       duration: breathPhase === 'in' ? breathInDuration : breathOutDuration,
-                      delay: breathPhase === 'out' ? 3 : 0,  // Pozdržení výdechu, aby počkal na zvuk
+                      delay: breathPhase === 'out' ? 3 : 0,
                       ease: "easeInOut",
                       repeat: Infinity,
                       repeatType: "reverse"
                     } : {
                       duration: 0.5
+                    }}
+                    onAnimationStart={() => {
+                      if (breathCircleRef.current) {
+                        breathCircleRef.current.style.setProperty('border-radius', '50%', 'important');
+                      }
+                    }}
+                    onUpdate={() => {
+                      if (breathCircleRef.current) {
+                        breathCircleRef.current.style.setProperty('border-radius', '50%', 'important');
+                      }
                     }}
                   />
                 </div>
@@ -376,8 +406,8 @@ const MeditationScreen = ({
                 )}
               </div>
 
-              {/* Play/Pause Button - Center */}
-              <div className="absolute inset-0 flex items-center justify-center pointer-events-none" style={{ zIndex: 20 }}>
+              {/* Play/Pause Button - Center - nejvyšší z-index */}
+              <div className="absolute inset-0 flex items-center justify-center pointer-events-none" style={{ zIndex: 100 }}>
                 <PlayPauseButton
                   isPlaying={isPlaying}
                   onToggle={onPlayPause}

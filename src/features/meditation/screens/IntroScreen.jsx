@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import meditatebodySvg from '../../../assets/flags/meditatebody.svg';
 import { useTheme } from '@contexts/ThemeContext';
@@ -6,6 +6,14 @@ import { useTheme } from '@contexts/ThemeContext';
 const IntroScreen = ({ onIntroComplete }) => {
   const [showIntro, setShowIntro] = useState(true);
   const { getScreenBackgroundColor, getCurrentThemeColors } = useTheme();
+  const introCircleRef = useRef(null);
+
+  // Vynutit, aby kruh byl vždy kulatý
+  useEffect(() => {
+    if (introCircleRef.current) {
+      introCircleRef.current.style.setProperty('border-radius', '50%', 'important');
+    }
+  }, []);
 
   // Získat barvu textu z tématu a detekovat dark mode
   const themeColors = getCurrentThemeColors();
@@ -90,8 +98,9 @@ const IntroScreen = ({ onIntroComplete }) => {
             >
               {/* Kroužek jako halo - přizpůsobí se tématu */}
               <div
-                className="absolute w-48 h-48 rounded-full z-0"
-                style={{ backgroundColor: circleColor }}
+                ref={introCircleRef}
+                className="absolute w-48 h-48 rounded-full intro-animation-circle z-0"
+                style={{ backgroundColor: circleColor, borderRadius: '50%' }}
               ></div>
 
               {/* SVG silueta meditujícího člověka */}

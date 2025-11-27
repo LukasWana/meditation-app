@@ -19,9 +19,9 @@ const PlayPauseButton = ({
                      textColor === 'white' ||
                      textColor.includes('rgba(255, 255, 255');
 
-  // Pro dark mode použít bílou ikonku na tmavém pozadí, pro light mode tmavou ikonku na světlém pozadí
-  const iconColor = isDarkMode ? '#ffffff' : '#000000';
-  const buttonBackgroundColor = isDarkMode ? 'rgba(0, 0, 0, 0.8)' : 'rgba(255, 255, 255, 0.8)';
+  // Pro dark mode použít bílou ikonku na tmavém pozadí, pro light mode bílou ikonku na černém pozadí
+  const iconColor = isDarkMode ? '#ffffff' : '#ffffff';
+  const buttonBackgroundColor = isDarkMode ? 'rgba(0, 0, 0, 0.8)' : 'rgba(0, 0, 0, 0.8)';
 
   // Nastavit barvu s !important pomocí setProperty
   useEffect(() => {
@@ -34,6 +34,14 @@ const PlayPauseButton = ({
     }
   }, [iconColor]);
 
+  // Vynutit, aby tlačítko bylo vždy kulaté
+  const buttonRef = useRef(null);
+  useEffect(() => {
+    if (buttonRef.current) {
+      buttonRef.current.style.setProperty('border-radius', '50%', 'important');
+    }
+  }, []);
+
   const handleTouchEnd = (e) => {
     e.preventDefault();
     e.stopPropagation();
@@ -42,24 +50,31 @@ const PlayPauseButton = ({
 
   return (
     <motion.button
+      ref={buttonRef}
       onClick={onToggle}
       onTouchEnd={handleTouchEnd}
-      className={`${className} rounded-full flex items-center justify-center pointer-events-auto cursor-pointer relative overflow-hidden`}
+      className={`${className} rounded-full flex items-center justify-center pointer-events-auto cursor-pointer relative play-pause-button`}
       style={{
         position: 'relative',
-        zIndex: 30,
+        zIndex: 100,
         touchAction: 'manipulation',
         outline: 'none',
-        border: 'none'
+        border: 'none',
+        overflow: 'visible',
+        borderRadius: '50%',
+        isolation: 'isolate'
       }}
       transition={{ type: "spring", stiffness: 300, damping: 20 }}
     >
-      {/* Pozadí buttonu - 20% průhledné při přehrávání, jinak neprůhledné */}
+      {/* Pozadí buttonu - stále stejné, nemění se při přepínání */}
       <div
         className="absolute inset-0 rounded-full backdrop-blur-sm pointer-events-none"
         style={{
           backgroundColor: buttonBackgroundColor,
-          opacity: isPlaying ? 0.2 : 1
+          opacity: 1,
+          overflow: 'hidden',
+          borderRadius: '50%',
+          willChange: 'auto'
         }}
       />
       {/* Ikona - vždy neprůhledná, relativní k buttonu */}
