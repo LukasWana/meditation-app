@@ -23,7 +23,8 @@ const SettingsScreen = ({
   onGenderChange
 }) => {
   const { t } = useLanguage();
-  const { getScreenBackgroundColor } = useTheme();
+  const { getScreenBackgroundColor, getCurrentThemeColors, colorMode } = useTheme();
+  const themeColors = getCurrentThemeColors?.() || {};
 
   // Offline cache hook
   const {
@@ -134,12 +135,14 @@ const SettingsScreen = ({
   return (
     <FramerPageTransition screenKey="settings">
       <div
-        className="min-h-screen w-full max-w-full flex flex-col items-center justify-start p-2 sm:p-8 pb-20 overflow-x-hidden relative"
-        style={{ backgroundColor: getScreenBackgroundColor() }}
+        className="min-h-screen w-full max-w-full flex flex-col items-center justify-start p-2 sm:p-8 pb-20 overflow-x-hidden overflow-y-auto relative"
+        style={{
+          backgroundColor: getScreenBackgroundColor()
+        }}
       >
         <BackButton onClick={() => onNavigateToScreen('home')} />
 
-        <div className="max-w-md w-full" style={{ marginTop: '4rem', paddingTop: 0, position: 'relative', display: 'flex', flexDirection: 'column', alignItems: 'stretch' }}>
+        <div className="max-w-md w-full" style={{ marginTop: '4rem', paddingTop: 0, paddingBottom: '2rem', position: 'relative', display: 'flex', flexDirection: 'column', alignItems: 'stretch' }}>
           <FramerSection
             className="text-center mb-6"
             animationType="fadeIn"
@@ -158,8 +161,18 @@ const SettingsScreen = ({
               animationType="slideInUp"
               delay={0.2}
             >
-              <div className="w-full p-6 bg-white/50 backdrop-blur rounded-none border border-black/10">
-                <h3 className="text-2xl font-light mb-4">
+              <div
+                className="w-full p-6 backdrop-blur rounded-none border"
+                style={{
+                  backgroundColor: themeColors?.card || (colorMode === 'dark' ? 'rgba(15, 15, 15, 0.95)' : 'rgba(255, 255, 255, 0.95)'),
+                  borderColor: colorMode === 'dark' ? 'rgba(255, 255, 255, 0.2)' : 'rgba(0, 0, 0, 0.1)',
+                  color: themeColors?.text || (colorMode === 'dark' ? 'rgba(255, 255, 255, 1)' : 'rgba(0, 0, 0, 1)')
+                }}
+              >
+                <h3
+                  className="text-2xl font-light mb-4"
+                  style={{ color: themeColors?.text || (colorMode === 'dark' ? 'rgba(255, 255, 255, 1)' : 'rgba(0, 0, 0, 1)') }}
+                >
                   {t('selectLanguage')}
                 </h3>
                 <LanguageSwitcher />
@@ -211,8 +224,18 @@ const SettingsScreen = ({
               animationType="slideInUp"
               delay={0.21}
             >
-              <div className="w-full p-6 bg-white/50 backdrop-blur rounded-none border border-black/10">
-                <h3 className="text-2xl font-light mb-4">
+              <div
+                className="w-full p-6 backdrop-blur rounded-none border"
+                style={{
+                  backgroundColor: themeColors?.card || (colorMode === 'dark' ? 'rgba(15, 15, 15, 0.95)' : 'rgba(255, 255, 255, 0.95)'),
+                  borderColor: colorMode === 'dark' ? 'rgba(255, 255, 255, 0.2)' : 'rgba(0, 0, 0, 0.1)',
+                  color: themeColors?.text || (colorMode === 'dark' ? 'rgba(255, 255, 255, 1)' : 'rgba(0, 0, 0, 1)')
+                }}
+              >
+                <h3
+                  className="text-2xl font-light mb-4"
+                  style={{ color: themeColors?.text || (colorMode === 'dark' ? 'rgba(255, 255, 255, 1)' : 'rgba(0, 0, 0, 1)') }}
+                >
                   {t('pohlavie')}
                 </h3>
                 <motion.div
@@ -263,11 +286,24 @@ const SettingsScreen = ({
               animationType="slideInUp"
               delay={0.25}
             >
-              <div className="w-full p-6 bg-white/30 backdrop-blur rounded-none border border-black/10">
-                <h3 className="text-2xl font-light mb-4">
+              <div
+                className="w-full p-6 backdrop-blur rounded-none border"
+                style={{
+                  backgroundColor: themeColors?.card || (colorMode === 'dark' ? 'rgba(15, 15, 15, 0.7)' : 'rgba(255, 255, 255, 0.7)'),
+                  borderColor: colorMode === 'dark' ? 'rgba(255, 255, 255, 0.2)' : 'rgba(0, 0, 0, 0.1)',
+                  color: themeColors?.text || (colorMode === 'dark' ? 'rgba(255, 255, 255, 1)' : 'rgba(0, 0, 0, 1)')
+                }}
+              >
+                <h3
+                  className="text-2xl font-light mb-4"
+                  style={{ color: themeColors?.text || (colorMode === 'dark' ? 'rgba(255, 255, 255, 1)' : 'rgba(0, 0, 0, 1)') }}
+                >
                   {t('informacie')}
                 </h3>
-                <p className="text-lg text-gray-600 leading-relaxed whitespace-pre-line">
+                <p
+                  className="text-lg leading-relaxed whitespace-pre-line"
+                  style={{ color: themeColors?.textSecondary || (colorMode === 'dark' ? 'rgba(180, 180, 180, 1)' : 'rgba(100, 100, 100, 1)') }}
+                >
                   {t('informacieText')}
                 </p>
               </div>
