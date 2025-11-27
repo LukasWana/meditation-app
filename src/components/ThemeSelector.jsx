@@ -101,13 +101,31 @@ const ThemeSelector = () => {
     setError(null);
   };
 
+  const themeColors = themeContext?.getCurrentThemeColors?.() || {};
+  const isDarkMode = themeContext?.colorMode === 'dark';
+  const cardColor = themeColors.card || (isDarkMode ? 'rgba(15, 15, 15, 0.95)' : 'rgba(255, 255, 255, 0.95)');
+  const textColor = themeColors.text || (isDarkMode ? 'rgba(255, 255, 255, 1)' : 'rgba(0, 0, 0, 1)');
+  const textSecondaryColor = themeColors.textSecondary || (isDarkMode ? 'rgba(180, 180, 180, 1)' : 'rgba(100, 100, 100, 1)');
+  const borderColor = isDarkMode ? 'rgba(255, 255, 255, 0.2)' : 'rgba(0, 0, 0, 0.1)';
+  const activeBorderColor = isDarkMode ? 'rgba(255, 255, 255, 0.5)' : 'rgba(0, 0, 0, 0.3)';
+  const activeBgColor = isDarkMode ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.05)';
+  const checkmarkBgColor = isDarkMode ? 'rgba(255, 255, 255, 1)' : 'rgba(0, 0, 0, 1)';
+  const checkmarkIconColor = isDarkMode ? 'rgba(0, 0, 0, 1)' : 'rgba(255, 255, 255, 1)';
+
   return (
     <FramerSection
       animationType="slideInUp"
       delay={0.22}
     >
-      <div className="w-full p-6 bg-white/50 backdrop-blur rounded-none border border-black/10">
-        <h3 className="text-2xl font-light mb-4">
+      <div
+        className="w-full p-6 backdrop-blur rounded-none border"
+        style={{
+          backgroundColor: cardColor,
+          borderColor: borderColor,
+          color: textColor
+        }}
+      >
+        <h3 className="text-2xl font-light mb-4" style={{ color: textColor }}>
           {t('vzhledAplikace')}
         </h3>
 
@@ -121,37 +139,48 @@ const ThemeSelector = () => {
               <motion.button
                 key={theme.id}
                 onClick={() => handleThemeChange(theme.id)}
-                className={`w-full p-4 rounded-lg border-2 transition-all duration-200 ${
-                  isActive
-                    ? 'border-black bg-black/5'
-                    : 'border-gray-200 bg-white/80 hover:border-gray-300'
-                }`}
+                className="w-full p-4 rounded-lg border-2 transition-all duration-200"
+                style={{
+                  borderColor: isActive ? activeBorderColor : borderColor,
+                  backgroundColor: isActive ? activeBgColor : 'transparent'
+                }}
                 whileTap={{ scale: 0.98 }}
               >
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-3">
                     {/* Barevný náhled */}
                     <div
-                      className="w-12 h-12 rounded-lg border border-gray-200 shadow-sm"
+                      className="w-12 h-12 rounded-lg border shadow-sm"
                       style={{
-                        background: `linear-gradient(135deg, ${theme.colors.primary} 0%, ${theme.colors.background || theme.colors.primary} 100%)`
+                        background: `linear-gradient(135deg, ${theme.colors.primary} 0%, ${theme.colors.background || theme.colors.primary} 100%)`,
+                        borderColor: borderColor
                       }}
                     />
                     <div className="text-left">
-                      <div className={`text-lg font-medium ${isActive ? 'text-black' : 'text-gray-700'}`}>
+                      <div
+                        className="text-lg font-medium"
+                        style={{ color: isActive ? textColor : textSecondaryColor }}
+                      >
                         {themeName}
                       </div>
                       {isActive && (
-                        <div className="text-sm text-gray-500 mt-0.5">
+                        <div
+                          className="text-sm mt-0.5"
+                          style={{ color: textSecondaryColor }}
+                        >
                           {t('vybrany')}
                         </div>
                       )}
                     </div>
                   </div>
                   {isActive && (
-                    <div className="w-6 h-6 rounded-full bg-black flex items-center justify-center">
+                    <div
+                      className="w-6 h-6 rounded-full flex items-center justify-center"
+                      style={{ backgroundColor: checkmarkBgColor }}
+                    >
                       <svg
-                        className="w-4 h-4 text-white"
+                        className="w-4 h-4"
+                        style={{ color: checkmarkIconColor }}
                         fill="none"
                         strokeLinecap="round"
                         strokeLinejoin="round"
@@ -171,14 +200,23 @@ const ThemeSelector = () => {
 
         {/* Vlastní pozadí - pouze pokud aktuální téma podporuje */}
         {allowsCustomBackground && (
-          <div className="border-t border-gray-200 pt-4 mt-4">
-            <h4 className="text-lg font-light mb-3">
+          <div
+            className="border-t pt-4 mt-4"
+            style={{ borderColor: borderColor }}
+          >
+            <h4
+              className="text-lg font-light mb-3"
+              style={{ color: textColor }}
+            >
               {t('vlastniPozadi')}
             </h4>
 
             {customBackground ? (
               <div className="relative">
-                <div className="relative w-full h-32 rounded-lg overflow-hidden border border-gray-200">
+                <div
+                  className="relative w-full h-32 rounded-lg overflow-hidden border"
+                  style={{ borderColor: borderColor }}
+                >
                   <img
                     src={typeof customBackground === 'string' && customBackground.startsWith('{')
                       ? JSON.parse(customBackground).url
@@ -190,7 +228,12 @@ const ThemeSelector = () => {
                 </div>
                 <motion.button
                   onClick={handleRemoveBackground}
-                  className="mt-3 px-4 py-2 bg-gray-200 hover:bg-gray-300 rounded-lg text-sm font-medium transition-colors flex items-center gap-2"
+                  className="mt-3 px-4 py-2 rounded-lg text-sm font-medium transition-colors flex items-center gap-2"
+                  style={{
+                    backgroundColor: isDarkMode ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.05)',
+                    color: textColor
+                  }}
+                  whileHover={{ opacity: 0.8 }}
                   whileTap={{ scale: 0.95 }}
                 >
                   <X className="w-4 h-4" />
@@ -209,7 +252,13 @@ const ThemeSelector = () => {
                 />
                 <motion.label
                   htmlFor="background-image-input"
-                  className="flex items-center justify-center gap-2 px-4 py-3 bg-gray-100 hover:bg-gray-200 rounded-lg cursor-pointer transition-colors border border-gray-200"
+                  className="flex items-center justify-center gap-2 px-4 py-3 rounded-lg cursor-pointer transition-colors border"
+                  style={{
+                    backgroundColor: isDarkMode ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.05)',
+                    borderColor: borderColor,
+                    color: textColor
+                  }}
+                  whileHover={{ opacity: 0.8 }}
                   whileTap={{ scale: 0.98 }}
                 >
                   <ImageIcon className="w-5 h-5" />
@@ -217,14 +266,24 @@ const ThemeSelector = () => {
                     {isProcessing ? t('nahravani') || 'Zpracovávání...' : t('vybratFotku')}
                   </span>
                 </motion.label>
-                <p className="text-xs text-gray-500 mt-2">
+                <p
+                  className="text-xs mt-2"
+                  style={{ color: textSecondaryColor }}
+                >
                   {t('vyberteObrazek') || 'Vyberte libovolný obrázek'}
                 </p>
               </div>
             )}
 
             {error && (
-              <div className="mt-3 p-3 bg-red-50 border border-red-200 rounded-lg text-sm text-red-700">
+              <div
+                className="mt-3 p-3 rounded-lg text-sm border"
+                style={{
+                  backgroundColor: isDarkMode ? 'rgba(220, 38, 38, 0.2)' : 'rgba(254, 242, 242, 1)',
+                  borderColor: isDarkMode ? 'rgba(220, 38, 38, 0.5)' : 'rgba(254, 202, 202, 1)',
+                  color: isDarkMode ? 'rgba(254, 202, 202, 1)' : 'rgba(185, 28, 28, 1)'
+                }}
+              >
                 {error}
               </div>
             )}
