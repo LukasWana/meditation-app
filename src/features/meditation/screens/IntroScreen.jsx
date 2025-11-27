@@ -123,19 +123,22 @@ const IntroScreen = ({ onIntroComplete }) => {
 
             {/* Text "Meditácia" */}
             <motion.h1
-              className="text-7xl font-light tracking-wide"
-              initial={{ scale: 0.5, opacity: 0, y: 30 }}
+              className="text-6xl font-light tracking-normal"
+              initial={{ scale: 0.5, opacity: 0 }}
               animate={{
                 scale: 1,
-                opacity: 1,
-                y: 0
+                opacity: 1
               }}
               transition={{
                 duration: 0.8,
                 ease: "easeOut",
                 delay: 0.3
               }}
-              style={{ color: displayTextColor }}
+              style={{
+                color: displayTextColor,
+                fontSize: '4.05rem',
+                transformOrigin: 'center center'
+              }}
             >
               meditácia
             </motion.h1>

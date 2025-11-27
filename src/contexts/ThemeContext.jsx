@@ -1,6 +1,26 @@
 import React, { createContext, useContext, useState, useEffect, useMemo } from 'react';
 import { THEMES, DEFAULT_THEME_ID, getThemeById } from '@data/themes';
 
+// Import defaultních obrázků pozadí
+import defaultBg1 from '@assets/backgrounds/pexels-arts-1496373.jpg';
+import defaultBg2 from '@assets/backgrounds/pexels-brakou-1723637.jpg';
+import defaultBg3 from '@assets/backgrounds/pexels-eberhardgross-1624496.jpg';
+import defaultBg4 from '@assets/backgrounds/pexels-gabriel-peter-219375-719396.jpg';
+import defaultBg5 from '@assets/backgrounds/pexels-zetong-li-880728-1784578-min.jpg';
+import defaultBg6 from '@assets/backgrounds/samuel-ferrara-dKJXkKCF2D8-unsplash.jpg';
+import defaultBg7 from '@assets/backgrounds/will-turner-KWzUuVg7U-0-unsplash.jpg';
+
+// Seznam defaultních obrázků
+const DEFAULT_BACKGROUNDS = [
+  defaultBg1,
+  defaultBg2,
+  defaultBg3,
+  defaultBg4,
+  defaultBg5,
+  defaultBg6,
+  defaultBg7
+];
+
 export const ThemeContext = createContext();
 
 export const useTheme = () => {
@@ -96,10 +116,27 @@ export const ThemeProvider = ({ children }) => {
     }
   };
 
-  // Získat URL obrázku z customBackground
+  // Získat URL obrázku z customBackground nebo použít defaultní
   const getBackgroundImageUrl = () => {
     const data = getBackgroundData();
-    return data?.url || null;
+    if (data?.url) {
+      return data.url;
+    }
+
+    // Pokud není custom pozadí, použít defaultní obrázek
+    // Použít deterministický výběr podle themeId pro konzistenci
+    if (DEFAULT_BACKGROUNDS.length > 0) {
+      // Vytvořit hash z themeId pro deterministický výběr
+      let hash = 0;
+      for (let i = 0; i < themeId.length; i++) {
+        hash = ((hash << 5) - hash) + themeId.charCodeAt(i);
+        hash = hash & hash; // Convert to 32bit integer
+      }
+      const index = Math.abs(hash) % DEFAULT_BACKGROUNDS.length;
+      return DEFAULT_BACKGROUNDS[index];
+    }
+
+    return null;
   };
 
   // Získat extrahované barvy z customBackground
@@ -228,6 +265,7 @@ export const ThemeProvider = ({ children }) => {
   // Získat styl pro pozadí
   const getBackgroundStyle = () => {
     const backgroundUrl = getBackgroundImageUrl();
+    // Použít obrázek pokud existuje (buď custom nebo defaultní) a téma ho podporuje
     const hasImage = !!backgroundUrl && baseTheme?.allowsCustomBackground;
     const themeColors = getCurrentThemeColors();
 
