@@ -3,19 +3,29 @@ import { motion } from 'framer-motion';
 import { ThemeContext } from '@contexts/ThemeContext';
 import { useLanguage } from '@contexts/LanguageContext';
 import FramerSection from '@components/FramerSection';
-import { Moon, Sun, Monitor } from 'lucide-react';
+import { Moon, Sun } from 'lucide-react';
 
 const ColorModeSelector = () => {
   const { t } = useLanguage();
   const themeContext = useContext(ThemeContext);
-  const { colorMode, changeColorMode } = themeContext || {};
+  const { colorMode, changeColorMode, getCurrentThemeColors } = themeContext || {};
 
   if (!themeContext || !colorMode || !changeColorMode) {
     return null;
   }
 
+  const themeColors = getCurrentThemeColors?.() || {};
+  const isDarkMode = colorMode === 'dark';
+  const cardColor = themeColors.card || (isDarkMode ? 'rgba(15, 15, 15, 0.95)' : 'rgba(255, 255, 255, 0.95)');
+  const textColor = themeColors.text || (isDarkMode ? 'rgba(255, 255, 255, 1)' : 'rgba(0, 0, 0, 1)');
+  const textSecondaryColor = themeColors.textSecondary || (isDarkMode ? 'rgba(180, 180, 180, 1)' : 'rgba(100, 100, 100, 1)');
+  const borderColor = isDarkMode ? 'rgba(255, 255, 255, 0.2)' : 'rgba(0, 0, 0, 0.1)';
+  const activeBorderColor = isDarkMode ? 'rgba(255, 255, 255, 0.5)' : 'rgba(0, 0, 0, 0.3)';
+  const activeBgColor = isDarkMode ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.05)';
+  const checkmarkBgColor = isDarkMode ? 'rgba(255, 255, 255, 1)' : 'rgba(0, 0, 0, 1)';
+  const checkmarkIconColor = isDarkMode ? 'rgba(0, 0, 0, 1)' : 'rgba(255, 255, 255, 1)';
+
   const modes = [
-    { id: 'auto', label: t('automaticky') || 'Automaticky', icon: Monitor },
     { id: 'light', label: t('svetly') || 'Světlý', icon: Sun },
     { id: 'dark', label: t('tmavy') || 'Tmavý', icon: Moon }
   ];
@@ -25,8 +35,15 @@ const ColorModeSelector = () => {
       animationType="slideInUp"
       delay={0.23}
     >
-      <div className="w-full p-6 bg-white/50 backdrop-blur rounded-none border border-black/10">
-        <h3 className="text-2xl font-light mb-4">
+      <div
+        className="w-full p-6 backdrop-blur rounded-none border"
+        style={{
+          backgroundColor: cardColor,
+          borderColor: borderColor,
+          color: textColor
+        }}
+      >
+        <h3 className="text-2xl font-light mb-4" style={{ color: textColor }}>
           {t('barevnyRezim') || 'Barevný režim'}
         </h3>
         <div className="space-y-3">
@@ -38,23 +55,33 @@ const ColorModeSelector = () => {
               <motion.button
                 key={mode.id}
                 onClick={() => changeColorMode(mode.id)}
-                className={`w-full p-4 rounded-lg border-2 transition-all duration-200 flex items-center justify-between ${
-                  isActive
-                    ? 'border-black bg-black/5'
-                    : 'border-gray-200 bg-white/80 hover:border-gray-300'
-                }`}
+                className="w-full p-4 rounded-lg border-2 transition-all duration-200 flex items-center justify-between"
+                style={{
+                  borderColor: isActive ? activeBorderColor : borderColor,
+                  backgroundColor: isActive ? activeBgColor : 'transparent'
+                }}
                 whileTap={{ scale: 0.98 }}
               >
                 <div className="flex items-center gap-3">
-                  <Icon className={`w-5 h-5 ${isActive ? 'text-black' : 'text-gray-600'}`} />
-                  <div className={`text-lg font-medium ${isActive ? 'text-black' : 'text-gray-700'}`}>
+                  <Icon
+                    className="w-5 h-5"
+                    style={{ color: isActive ? textColor : textSecondaryColor }}
+                  />
+                  <div
+                    className="text-lg font-medium"
+                    style={{ color: isActive ? textColor : textSecondaryColor }}
+                  >
                     {mode.label}
                   </div>
                 </div>
                 {isActive && (
-                  <div className="w-6 h-6 rounded-full bg-black flex items-center justify-center">
+                  <div
+                    className="w-6 h-6 rounded-full flex items-center justify-center"
+                    style={{ backgroundColor: checkmarkBgColor }}
+                  >
                     <svg
-                      className="w-4 h-4 text-white"
+                      className="w-4 h-4"
+                      style={{ color: checkmarkIconColor }}
                       fill="none"
                       strokeLinecap="round"
                       strokeLinejoin="round"
