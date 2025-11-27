@@ -22,14 +22,19 @@ export const ThemeProvider = ({ children }) => {
     }
   });
 
-  // Dark/Light mode - 'dark', 'light', nebo 'auto' (automatická detekce)
+  // Dark/Light mode - 'dark' nebo 'light'
   const [colorMode, setColorMode] = useState(() => {
     try {
       const saved = localStorage.getItem('meditation-app-color-mode');
-      return saved || 'auto';
+      // Migrace: pokud je uložený 'auto', převést na 'light'
+      if (saved === 'auto') {
+        localStorage.setItem('meditation-app-color-mode', 'light');
+        return 'light';
+      }
+      return saved === 'dark' || saved === 'light' ? saved : 'light';
     } catch (error) {
       console.warn('Failed to load color mode from localStorage:', error);
-      return 'auto';
+      return 'light';
     }
   });
 
@@ -112,6 +117,38 @@ export const ThemeProvider = ({ children }) => {
     };
   };
 
+  // Helper funkce pro úpravu barvy pro dark mode (ztmaví barvu)
+  const adjustColorForDarkMode = (color) => {
+    // Pokud je barva v rgba/rgb formátu, ztmavit ji
+    const rgbaMatch = color.match(/rgba?\((\d+),\s*(\d+),\s*(\d+)(?:,\s*([\d.]+))?\)/);
+    if (rgbaMatch) {
+      const r = Math.max(0, Math.min(255, Math.floor(parseInt(rgbaMatch[1]) * 0.25)));
+      const g = Math.max(0, Math.min(255, Math.floor(parseInt(rgbaMatch[2]) * 0.25)));
+      const b = Math.max(0, Math.min(255, Math.floor(parseInt(rgbaMatch[3]) * 0.25)));
+      const alpha = rgbaMatch[4] || '1';
+      return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+    }
+    // Fallback pro jiné formáty
+    return 'rgba(30, 30, 30, 1)';
+  };
+
+  // Helper funkce pro úpravu barvy pro light mode (zesvětlí barvu, ale zachová odstín)
+  const adjustColorForLightMode = (color) => {
+    // Pokud je barva v rgba/rgb formátu, zesvětlit ji, ale zachovat odstín
+    const rgbaMatch = color.match(/rgba?\((\d+),\s*(\d+),\s*(\d+)(?:,\s*([\d.]+))?\)/);
+    if (rgbaMatch) {
+      // Pro light mode použít světlejší variantu, ale zachovat odstín původní barvy
+      // Smíchat s bílou (70% původní barvy + 30% bílé)
+      const r = Math.max(0, Math.min(255, Math.floor(parseInt(rgbaMatch[1]) * 0.7 + 255 * 0.3)));
+      const g = Math.max(0, Math.min(255, Math.floor(parseInt(rgbaMatch[2]) * 0.7 + 255 * 0.3)));
+      const b = Math.max(0, Math.min(255, Math.floor(parseInt(rgbaMatch[3]) * 0.7 + 255 * 0.3)));
+      const alpha = rgbaMatch[4] || '1';
+      return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+    }
+    // Fallback pro jiné formáty - použít světlou béžovou
+    return 'rgba(244, 221, 196, 1)';
+  };
+
   // Získat aktuální barvy tématu (buď z fotky, nebo defaultní)
   const getCurrentThemeColors = () => {
     const backgroundUrl = getBackgroundImageUrl();
@@ -134,25 +171,27 @@ export const ThemeProvider = ({ children }) => {
     // Pokud je nastaven colorMode, upravit barvy podle volby
     if (colorMode === 'dark') {
       // Vynutit tmavý režim - tmavší barvy
+      // Vždy použít tmavou barvu pozadí, bez ohledu na původní hodnotu
       colors = {
         ...colors,
         text: 'rgba(255, 255, 255, 1)',
         textSecondary: 'rgba(180, 180, 180, 1)',
-        background: colors.background || 'rgba(10, 10, 10, 1)',
-        card: colors.card || 'rgba(15, 15, 15, 0.95)'
+        background: 'rgba(10, 10, 10, 1)', // Vždy tmavá barva pozadí
+        card: 'rgba(15, 15, 15, 0.95)', // Vždy tmavá barva karty
+        primary: colors.primary ? adjustColorForDarkMode(colors.primary) : 'rgba(30, 30, 30, 1)'
       };
     } else if (colorMode === 'light') {
       // Vynutit světlý režim
+      // Vždy použít světlou barvu pozadí, bez ohledu na původní hodnotu
       colors = {
         ...colors,
         text: 'rgba(0, 0, 0, 1)',
         textSecondary: 'rgba(100, 100, 100, 1)',
-        background: colors.background || 'rgba(255, 255, 255, 1)',
-        card: colors.card || 'rgba(255, 255, 255, 0.95)'
+        background: 'rgba(255, 255, 255, 1)', // Vždy světlá barva pozadí
+        card: 'rgba(255, 255, 255, 0.95)', // Vždy světlá barva karty
+        primary: colors.primary ? adjustColorForLightMode(colors.primary) : 'rgba(244, 221, 196, 1)'
       };
     }
-    // Pokud je 'auto', použít automatickou detekci (stávající logika)
-
     return colors;
   };
 
@@ -220,31 +259,10 @@ export const ThemeProvider = ({ children }) => {
 
       // Pokud je dark mode, použít tmavý overlay
       if (colorMode === 'dark') {
-        overlayColor = 'rgba(0, 0, 0, 0.6)'; // Černá s 60% průhledností
+        overlayColor = 'rgba(0, 0, 0, 0.8)'; // Černá s 80% průhledností pro tmavší efekt
       } else if (colorMode === 'light') {
         // Pro light mode použít světlý overlay
         overlayColor = 'rgba(255, 255, 255, 0.6)'; // Bílá s 60% průhledností
-      } else {
-        // Pro auto mode použít barvu pozadí s 60% průhledností
-        if (backgroundColor.startsWith('rgb(')) {
-          const rgbMatch = backgroundColor.match(/rgb\((\d+),\s*(\d+),\s*(\d+)\)/);
-          if (rgbMatch) {
-            overlayColor = `rgba(${rgbMatch[1]}, ${rgbMatch[2]}, ${rgbMatch[3]}, 0.6)`;
-          } else {
-            overlayColor = 'rgba(0, 0, 0, 0.4)'; // Fallback
-          }
-        } else if (backgroundColor.startsWith('rgba')) {
-          // Pokud už je rgba, upravit alpha na 0.6
-          const rgbaMatch = backgroundColor.match(/rgba\((\d+),\s*(\d+),\s*(\d+),\s*([\d.]+)\)/);
-          if (rgbaMatch) {
-            overlayColor = `rgba(${rgbaMatch[1]}, ${rgbaMatch[2]}, ${rgbaMatch[3]}, 0.6)`;
-          } else {
-            overlayColor = 'rgba(0, 0, 0, 0.4)'; // Fallback
-          }
-        } else {
-          // Pro hex barvy, použít fallback
-          overlayColor = 'rgba(0, 0, 0, 0.4)'; // Tmavý overlay jako fallback
-        }
       }
 
       // Použít linear-gradient pro průhlednost 60% (opacity 0.6) nad dynamickou barvou
@@ -253,7 +271,7 @@ export const ThemeProvider = ({ children }) => {
         ...baseStyle,
         backgroundImage: `linear-gradient(${overlayColor}, ${overlayColor}), url(${backgroundUrl})`,
         backgroundSize: 'cover',
-        backgroundPosition: 'center',
+        backgroundPosition: 'center center',
         backgroundRepeat: 'no-repeat',
         backgroundBlendMode: 'normal'
       };
@@ -501,7 +519,7 @@ export const ThemeProvider = ({ children }) => {
 
   // Funkce pro změnu color mode
   const changeColorMode = (mode) => {
-    if (mode === 'dark' || mode === 'light' || mode === 'auto') {
+    if (mode === 'dark' || mode === 'light') {
       setColorMode(mode);
     }
   };
@@ -567,6 +585,7 @@ export const ThemeProvider = ({ children }) => {
     getBackgroundStyle,
     getScreenBackgroundColor,
     getCurrentThemeColors,
+    getBackgroundImageUrl,
     allowsCustomBackground: baseTheme?.allowsCustomBackground || false,
     colorMode,
     changeColorMode
