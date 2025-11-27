@@ -337,7 +337,7 @@ const BreathProfilesScreen = ({
   return (
     <FramerPageTransition screenKey="breath-profiles">
       <div
-        className="min-h-screen w-full max-w-full flex flex-col items-center justify-start p-2 sm:p-8 pb-20 overflow-x-hidden relative"
+        className="min-h-screen w-full max-w-full flex flex-col items-center justify-start p-2 sm:p-8 pb-20 overflow-x-hidden overflow-y-auto relative"
         style={{ backgroundColor }}
         onTouchStart={onTouchStart}
         onTouchMove={onTouchMove}
@@ -354,7 +354,7 @@ const BreathProfilesScreen = ({
           style={{ display: 'none' }}
         />
 
-        <div className="max-w-2xl w-full" style={{ marginTop: '5rem', paddingTop: 0, position: 'relative', display: 'flex', flexDirection: 'column', alignItems: 'stretch' }}>
+        <div className="max-w-2xl w-full" style={{ marginTop: '5rem', paddingTop: 0, paddingBottom: '2rem', position: 'relative', display: 'flex', flexDirection: 'column', alignItems: 'stretch' }}>
           {/* Nadpis */}
           <FramerSection
             className="text-center mb-6"

@@ -24,26 +24,45 @@ const IntroScreen = ({ onIntroComplete }) => {
   const circleColor = isDarkMode ? 'rgba(255, 255, 255, 1)' : 'rgba(255, 255, 255, 1)';
 
   useEffect(() => {
+    // Zajistit, že se #root nemůže skrolovat během intro animace
+    const rootElement = document.getElementById('root');
+    if (rootElement) {
+      rootElement.style.overflowY = 'hidden';
+    }
+
     const timer = setTimeout(() => {
       setShowIntro(false);
       // Po fade out sa spustí onIntroComplete
       setTimeout(() => {
+        // Obnovit overflow na #root po intro
+        if (rootElement) {
+          rootElement.style.overflowY = '';
+        }
         onIntroComplete();
-      }, 500); // Zkráceno z 1000ms na 500ms
-    }, 2000); // Zkráceno z 3500ms na 2000ms pro lepší LCP
+      }, 800); // Fade out trvá 800ms
+    }, 1000); // Celkem 1.8 sekundy (1s animace + 0.8s fade out)
 
-    return () => clearTimeout(timer);
+    return () => {
+      clearTimeout(timer);
+      // Obnovit overflow při unmount
+      if (rootElement) {
+        rootElement.style.overflowY = '';
+      }
+    };
   }, [onIntroComplete]);
 
   return (
     <AnimatePresence mode="wait">
       {showIntro && (
         <motion.div
-          className="h-screen w-full max-w-full flex items-center justify-center overflow-x-hidden fixed inset-0 z-50"
-          style={{ backgroundColor: getScreenBackgroundColor() }}
+          className="w-full max-w-full flex items-center justify-center overflow-x-hidden overflow-y-hidden fixed inset-0 z-50"
+          style={{
+            backgroundColor: getScreenBackgroundColor(),
+            height: '100dvh' // Dynamic viewport height pro mobilní prohlížeče
+          }}
           initial={{ opacity: 1 }}
           exit={{ opacity: 0 }}
-          transition={{ duration: 0.5, ease: "easeInOut" }}
+          transition={{ duration: 0.8, ease: "easeInOut" }}
         >
           {/* Kompozice s meditující siluetou a bílým kruhem */}
           <motion.div

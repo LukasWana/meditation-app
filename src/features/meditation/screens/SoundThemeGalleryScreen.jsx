@@ -381,7 +381,7 @@ const SoundThemeGalleryScreen = ({
   return (
     <FramerPageTransition screenKey="sound-theme-gallery">
       <div
-        className="min-h-screen w-full max-w-full flex flex-col items-center justify-start p-2 sm:p-8 pb-20 overflow-x-hidden relative"
+        className="min-h-screen w-full max-w-full flex flex-col items-center justify-start p-2 sm:p-8 pb-20 overflow-x-hidden overflow-y-auto relative"
         style={{ backgroundColor }}
         onTouchStart={onTouchStart}
         onTouchMove={onTouchMove}
@@ -389,7 +389,7 @@ const SoundThemeGalleryScreen = ({
       >
         <BackButton onClick={() => onNavigateToScreen('breath')} />
 
-        <div className="max-w-md w-full overflow-y-auto" style={{ marginTop: '5rem', paddingTop: 0, position: 'relative', display: 'flex', flexDirection: 'column', alignItems: 'stretch' }}>
+        <div className="max-w-md w-full" style={{ marginTop: '5rem', paddingTop: 0, paddingBottom: '2rem', position: 'relative', display: 'flex', flexDirection: 'column', alignItems: 'stretch' }}>
           {/* Header */}
           <FramerSection
             className="text-center mb-6"
