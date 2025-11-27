@@ -11,8 +11,11 @@ const HomeScreen = ({
   audioPermission
 }) => {
   const { t } = useLanguage();
-  const { currentTheme, getScreenBackgroundColor, getCurrentThemeColors } = useTheme();
+  const { currentTheme, getCurrentThemeColors, getScreenBackgroundColor, colorMode } = useTheme();
   const themeColors = getCurrentThemeColors();
+
+  // Použít barvy přímo z themeColors, které se aktualizují při změně colorMode
+  const primaryColor = themeColors?.primary || currentTheme?.colors?.primary || '#f4ddc4';
 
   // Získat barvu textu a detekovat dark mode
   const textColor = themeColors?.text || '#000000';
@@ -23,6 +26,45 @@ const HomeScreen = ({
 
   // Všechny texty by měly být bílé v dark mode, černé v light mode
   const displayTextColor = isDarkMode ? '#ffffff' : '#000000';
+
+  // Funkce pro převod barvy na rgba s průhledností (pro sekce, aby background image prosvítal)
+  const getColorWithOpacity = (color, opacity = 0.5) => {
+    const rgbaMatch = color.match(/rgba?\((\d+),\s*(\d+),\s*(\d+)(?:,\s*([\d.]+))?\)/);
+    if (rgbaMatch) {
+      return `rgba(${rgbaMatch[1]}, ${rgbaMatch[2]}, ${rgbaMatch[3]}, ${opacity})`;
+    }
+    // Fallback pro hex nebo jiné formáty
+    return color;
+  };
+
+  // Funkce pro získání stylu sekce s průhledným pozadím
+  const getSectionStyle = (baseColor) => {
+    return {
+      backgroundColor: getColorWithOpacity(baseColor, 0.5),
+      position: 'relative'
+    };
+  };
+
+  // Funkce pro získání stylu sekce hudba/nastavení s průhlednou bílou/černou podle colorMode
+  const getCardSectionStyle = () => {
+    // V light mode: průhledná bílá, v dark mode: průhledná černá
+    let overlayColor;
+    if (colorMode === 'light') {
+      overlayColor = 'rgba(255, 255, 255, 0.5)';  // Průhledná bílá pro light mode
+    } else if (colorMode === 'dark') {
+      overlayColor = 'rgba(0, 0, 0, 0.5)';        // Průhledná černá pro dark mode
+    } else {
+      // Auto mode - použít isDarkMode k rozhodnutí
+      overlayColor = isDarkMode
+        ? 'rgba(0, 0, 0, 0.5)'        // Průhledná černá pro dark mode
+        : 'rgba(255, 255, 255, 0.5)'; // Průhledná bílá pro light mode
+    }
+
+    return {
+      backgroundColor: overlayColor,
+      position: 'relative'
+    };
+  };
 
   // Aktivuj audio permission při prvním renderu HomeScreen
   useEffect(() => {
@@ -35,12 +77,12 @@ const HomeScreen = ({
   return (
     <FramerPageTransition screenKey="home">
       <div
-        className="min-h-screen w-full max-w-full flex flex-col overflow-x-hidden"
+        className="min-h-screen w-full max-w-full flex flex-col overflow-x-hidden overflow-y-hidden"
         onTouchStart={onTouchStart}
         onTouchMove={onTouchMove}
         onTouchEnd={onTouchEnd}
         style={{
-          height: '100vh',
+          height: '100dvh', /* Dynamic viewport height pro mobilní prohlížeče */
           backgroundColor: getScreenBackgroundColor()
         }}
       >
@@ -48,7 +90,7 @@ const HomeScreen = ({
           className="flex-1 flex items-center justify-center cursor-pointer relative"
           onClick={() => onNavigateToScreen('slova')}
           onTouchStart={onTouchStart}
-          style={{ backgroundColor: currentTheme?.colors?.primary || '#f4ddc4' }}
+          style={getSectionStyle(primaryColor)}
         >
           <div className="text-center px-2 sm:px-8 py-4">
             <div
@@ -64,7 +106,7 @@ const HomeScreen = ({
           className="flex-1 flex items-center justify-center cursor-pointer"
           onClick={() => onNavigateToScreen('hudba')}
           onTouchStart={onTouchStart}
-          style={{ backgroundColor: currentTheme?.colors?.card || '#ffffff' }}
+          style={getCardSectionStyle()}
         >
           <div className="text-center px-2 sm:px-8 py-4">
             <div
@@ -79,7 +121,7 @@ const HomeScreen = ({
         <div
           className="flex-1 flex items-center justify-center cursor-pointer"
           onClick={() => onNavigateToScreen('breath')}
-          style={{ backgroundColor: currentTheme?.colors?.primary || '#f4ddc4' }}
+          style={getSectionStyle(primaryColor)}
         >
           <div className="text-center px-2 sm:px-8 py-4">
             <div
@@ -94,7 +136,7 @@ const HomeScreen = ({
         <div
           className="flex-1 flex items-center justify-center cursor-pointer"
           onClick={() => onNavigateToScreen('settings')}
-          style={{ backgroundColor: currentTheme?.colors?.card || '#ffffff' }}
+          style={getCardSectionStyle()}
         >
           <div className="text-center px-2 sm:px-8 py-4">
             <div

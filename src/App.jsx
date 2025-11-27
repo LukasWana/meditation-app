@@ -1,5 +1,6 @@
 import React, { useState, Suspense } from 'react';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import { motion } from 'framer-motion';
 import { PageManager } from '@features/navigation';
 import { useNavigation, useTouchNavigation, useAppState, useTimer, useBreathPhase } from '@hooks';
 import { useAppInitialization } from '@hooks/useAppInitialization';
@@ -492,63 +493,69 @@ function MeditationApp() {
                 <LazyIntroScreen onIntroComplete={handleIntroComplete} />
               )}
 
-              {/* Hlavní aplikace - zobrazí se až po intro */}
+              {/* Hlavní aplikace - zobrazí se s fade-in po intro */}
               {!showIntro && (
-                <PageManager
-                  // Navigation
-                  currentScreen={currentScreen}
-                  onNavigateToScreen={navigateToScreen}
+                <motion.div
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ duration: 0.6, ease: "easeInOut" }}
+                >
+                  <PageManager
+                    // Navigation
+                    currentScreen={currentScreen}
+                    onNavigateToScreen={navigateToScreen}
 
-                  // Touch handling
-                  onTouchStart={handleTouchStart}
-                  onTouchMove={handleTouchMove}
-                  onTouchEnd={handleTouchEnd}
+                    // Touch handling
+                    onTouchStart={handleTouchStart}
+                    onTouchMove={handleTouchMove}
+                    onTouchEnd={handleTouchEnd}
 
-                  // Global state
-                  gender={gender}
-                  onGenderChange={handleGenderChange}
-                  voicePreference={voicePreference}
-                  onVoicePreferenceChange={handleVoicePreferenceChange}
-                  isPlayerActive={isPlayerActive}
+                    // Global state
+                    gender={gender}
+                    onGenderChange={handleGenderChange}
+                    voicePreference={voicePreference}
+                    onVoicePreferenceChange={handleVoicePreferenceChange}
+                    isPlayerActive={isPlayerActive}
 
-                  // Meditace specifické
-                  time={time}
-                  selectedDuration={selectedDuration}
-                  isPlaying={isPlaying}
-                  onDurationChange={handleDurationChange}
-                  onPlayPause={handlePlayPause}
-                  onReset={handleReset}
-                  breathPhase={breathPhase}
-                  setBreathPhase={setBreathPhase}
-                  breathInDuration={breathInDuration}
-                  breathOutDuration={breathOutDuration}
-                  onBreathRhythmChange={handleBreathRhythmChange}
-                  preparationTime={preparationTime}
-                  onPreparationTimeChange={handlePreparationTimeChange}
-                  breathInSound={breathInSound}
-                  breathOutSound={breathOutSound}
-                  breathClickSound={breathClickSound}
-                  breathFinalSound={breathFinalSound}
-                  breathCountdownSound={breathCountdownSound}
-                  onBreathSoundChange={handleBreathSoundChange}
-                  breathSoundFadeEnabled={breathSoundFadeEnabled}
-                  onBreathSoundFadeChange={handleBreathSoundFadeChange}
-                  isPreparing={isPreparing}
-                  preparationCountdown={preparationCountdown}
-                  breathDuration={breathDuration}
-                  breathTime={breathTime}
-                  setBreathTime={setBreathTime}
-                  isBreathing={isBreathing}
-                  setIsBreathing={setIsBreathing}
-                  onBreathDurationChange={handleBreathDurationChange}
+                    // Meditace specifické
+                    time={time}
+                    selectedDuration={selectedDuration}
+                    isPlaying={isPlaying}
+                    onDurationChange={handleDurationChange}
+                    onPlayPause={handlePlayPause}
+                    onReset={handleReset}
+                    breathPhase={breathPhase}
+                    setBreathPhase={setBreathPhase}
+                    breathInDuration={breathInDuration}
+                    breathOutDuration={breathOutDuration}
+                    onBreathRhythmChange={handleBreathRhythmChange}
+                    preparationTime={preparationTime}
+                    onPreparationTimeChange={handlePreparationTimeChange}
+                    breathInSound={breathInSound}
+                    breathOutSound={breathOutSound}
+                    breathClickSound={breathClickSound}
+                    breathFinalSound={breathFinalSound}
+                    breathCountdownSound={breathCountdownSound}
+                    onBreathSoundChange={handleBreathSoundChange}
+                    breathSoundFadeEnabled={breathSoundFadeEnabled}
+                    onBreathSoundFadeChange={handleBreathSoundFadeChange}
+                    isPreparing={isPreparing}
+                    preparationCountdown={preparationCountdown}
+                    breathDuration={breathDuration}
+                    breathTime={breathTime}
+                    setBreathTime={setBreathTime}
+                    isBreathing={isBreathing}
+                    setIsBreathing={setIsBreathing}
+                    onBreathDurationChange={handleBreathDurationChange}
 
-                  // Audio player specifické
-                  activeAudio={activeAudio}
-                  selectedAlbum={selectedAlbum}
-                  onPlayerStateChange={handlePlayerStateChange}
-                  onCloseAudio={handleCloseAudio}
-                  onAlbumClose={handleAlbumClose}
-                />
+                    // Audio player specifické
+                    activeAudio={activeAudio}
+                    selectedAlbum={selectedAlbum}
+                    onPlayerStateChange={handlePlayerStateChange}
+                    onCloseAudio={handleCloseAudio}
+                    onAlbumClose={handleAlbumClose}
+                  />
+                </motion.div>
               )}
 
               {/* Offline Indicator */}
