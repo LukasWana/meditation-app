@@ -11,11 +11,39 @@ const HomeScreen = ({
   audioPermission
 }) => {
   const { t } = useLanguage();
-  const { currentTheme, getCurrentThemeColors, getScreenBackgroundColor, colorMode } = useTheme();
-  const themeColors = getCurrentThemeColors();
+  const { currentTheme, themeColors, getScreenBackgroundColor, colorMode } = useTheme();
 
-  // Použít barvy přímo z themeColors, které se aktualizují při změně colorMode
-  const primaryColor = themeColors?.primary || currentTheme?.colors?.primary || '#f4ddc4';
+  // Debug log pro kontrolu aktualizace barev
+  React.useEffect(() => {
+    console.log('🏠 HomeScreen render - themeColors:', {
+      primary: themeColors?.primary,
+      hasThemeColors: !!themeColors,
+      themeColorsKeys: themeColors ? Object.keys(themeColors) : []
+    });
+  }, [themeColors]);
+
+  // Použít barvy přímo z themeColors, které se aktualizují při změně colorMode nebo customBackground
+  // DŮLEŽITÉ: Použít pouze themeColors, ne currentTheme.colors, protože currentTheme může obsahovat staré barvy
+  // Použít useMemo pro zajištění, že se primaryColor aktualizuje při změně themeColors
+  const primaryColor = React.useMemo(() => {
+    const color = themeColors?.primary || '#f4ddc4';
+    console.log('🏠 HomeScreen - primaryColor memo:', {
+      color,
+      themeColorsPrimary: themeColors?.primary,
+      hasThemeColors: !!themeColors
+    });
+    return color;
+  }, [themeColors?.primary]);
+
+  // Debug log pro primaryColor a themeColors
+  React.useEffect(() => {
+    console.log('🏠 HomeScreen - primaryColor:', {
+      primaryColor,
+      themeColorsPrimary: themeColors?.primary,
+      currentThemePrimary: currentTheme?.colors?.primary,
+      areEqual: themeColors?.primary === currentTheme?.colors?.primary
+    });
+  }, [primaryColor, themeColors, currentTheme]);
 
   // Získat barvu textu a detekovat dark mode
   const textColor = themeColors?.text || '#000000';
@@ -38,12 +66,14 @@ const HomeScreen = ({
   };
 
   // Funkce pro získání stylu sekce s průhledným pozadím
-  const getSectionStyle = (baseColor) => {
+  // Použít useCallback pro zajištění, že se funkce nezmění při každém renderu
+  const getSectionStyle = React.useCallback((baseColor) => {
+    console.log('🏠 HomeScreen - getSectionStyle voláno s barvou:', baseColor);
     return {
       backgroundColor: getColorWithOpacity(baseColor, 0.5),
       position: 'relative'
     };
-  };
+  }, []);
 
   // Funkce pro získání stylu sekce hudba/nastavení s průhlednou bílou/černou podle colorMode
   const getCardSectionStyle = () => {
