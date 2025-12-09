@@ -429,47 +429,11 @@ function createThemeColors(colors, regionAnalysis = null) {
  * @returns {Promise<Object>} - Objekt s extrahovanými barvami
  */
 function extractColorsFromImage(imageUrl, colorCount = 5) {
-  return new Promise(async (resolve, reject) => {
-    // Pro Firebase Storage URL použít fetch jako blob pro obejití CORS
-    const isFirebaseStorage = imageUrl.includes('firebasestorage.googleapis.com') ||
-                              imageUrl.includes('firebase');
-
-    let imageUrlToUse = imageUrl;
-    let objectUrl = null;
-
-    // Pokud je to Firebase Storage URL, načíst přes fetch jako blob
-    if (isFirebaseStorage) {
-      try {
-        const response = await fetch(imageUrl, {
-          mode: 'cors',
-          credentials: 'omit'
-        });
-
-        if (!response.ok) {
-          throw new Error(`Failed to fetch image: ${response.statusText}`);
-        }
-
-        const blob = await response.blob();
-        objectUrl = URL.createObjectURL(blob);
-        imageUrlToUse = objectUrl;
-      } catch (fetchError) {
-        console.warn('Failed to fetch image via fetch, trying direct load without crossOrigin:', fetchError);
-        // Fallback na přímé načtení bez crossOrigin
-      }
-    }
-
+  return new Promise((resolve, reject) => {
     const img = new Image();
+    img.crossOrigin = 'anonymous';
 
-    // Pro Firebase Storage URL nepoužívat crossOrigin (už máme blob nebo použijeme fallback)
-    // Pro ostatní URL použít crossOrigin
-    if (!isFirebaseStorage || objectUrl) {
-      // Pokud máme objectUrl z blobu, nepotřebujeme crossOrigin
-      if (!objectUrl) {
-        img.crossOrigin = 'anonymous';
-      }
-    }
-
-    const extractColors = () => {
+    img.onload = () => {
       try {
         const canvas = document.createElement('canvas');
         const ctx = canvas.getContext('2d');
@@ -502,37 +466,17 @@ function extractColorsFromImage(imageUrl, colorCount = 5) {
         // Vytvořit paletu barev pro téma s analýzou oblastí
         const themeColors = createThemeColors(colors, regionAnalysis);
 
-        // Uvolnit object URL pokud byl vytvořen
-        if (objectUrl) {
-          URL.revokeObjectURL(objectUrl);
-        }
-
         resolve(themeColors);
       } catch (error) {
-        // Uvolnit object URL při chybě
-        if (objectUrl) {
-          URL.revokeObjectURL(objectUrl);
-        }
         reject(error);
       }
     };
 
-    img.onload = extractColors;
-
     img.onerror = () => {
-      // Uvolnit object URL při chybě
-      if (objectUrl) {
-        URL.revokeObjectURL(objectUrl);
-      }
-
-      // Pokud se nepodařilo načíst obrázek s CORS, nemůžeme extrahovat barvy.
-      // Pokus o načtení bez CORS by vedl k "tainted canvas" a chybě při volání getImageData.
-      // Proto rovnou skončíme s chybou.
-      console.warn('Failed to load image for color extraction (likely CORS issue). Returning null colors.');
-      resolve(null);
+      reject(new Error('Failed to load image'));
     };
 
-    img.src = imageUrlToUse;
+    img.src = imageUrl;
   });
 }
 
