@@ -1,26 +1,6 @@
 import React, { createContext, useContext, useState, useEffect, useMemo } from 'react';
 import { THEMES, DEFAULT_THEME_ID, getThemeById } from '@data/themes';
 
-// Import defaultních obrázků pozadí
-import defaultBg1 from '@assets/backgrounds/pexels-arts-1496373.jpg';
-import defaultBg2 from '@assets/backgrounds/pexels-brakou-1723637.jpg';
-import defaultBg3 from '@assets/backgrounds/pexels-eberhardgross-1624496.jpg';
-import defaultBg4 from '@assets/backgrounds/pexels-gabriel-peter-219375-719396.jpg';
-import defaultBg5 from '@assets/backgrounds/pexels-zetong-li-880728-1784578-min.jpg';
-import defaultBg6 from '@assets/backgrounds/samuel-ferrara-dKJXkKCF2D8-unsplash.jpg';
-import defaultBg7 from '@assets/backgrounds/will-turner-KWzUuVg7U-0-unsplash.jpg';
-
-// Seznam defaultních obrázků
-const DEFAULT_BACKGROUNDS = [
-  defaultBg1,
-  defaultBg2,
-  defaultBg3,
-  defaultBg4,
-  defaultBg5,
-  defaultBg6,
-  defaultBg7
-];
-
 export const ThemeContext = createContext();
 
 export const useTheme = () => {
@@ -105,45 +85,38 @@ export const ThemeProvider = ({ children }) => {
 
   // Získat data z customBackground
   const getBackgroundData = () => {
-    if (!customBackground) {
-      console.log('🔍 getBackgroundData: customBackground je null');
-      return null;
-    }
+    if (!customBackground) return null;
 
     try {
       const parsed = JSON.parse(customBackground);
-      console.log('🔍 getBackgroundData: úspěšně parsováno:', {
-        hasUrl: !!parsed.url,
-        hasColors: !!parsed.colors,
-        colorKeys: parsed.colors ? Object.keys(parsed.colors) : [],
-        primaryColor: parsed.colors?.primary
-      });
       return parsed;
     } catch (e) {
-      console.warn('⚠️ getBackgroundData: chyba při parsování:', e);
       // Pokud to není JSON, použít jako URL (starý formát)
       return { url: customBackground };
     }
   };
 
+  // State pro sledování, zda je to první načtení (pro fade-in animaci)
+  const [isFirstLoad, setIsFirstLoad] = useState(true);
+
   // Získat URL obrázku z customBackground nebo použít defaultní
   const getBackgroundImageUrl = () => {
     const data = getBackgroundData();
+
+    // Pokud máme URL přímo (base64 nebo downloadURL), použít ho
     if (data?.url) {
       return data.url;
     }
+    if (data?.downloadURL) {
+      return data.downloadURL;
+    }
 
-    // Pokud není custom pozadí, použít defaultní obrázek
-    // Použít deterministický výběr podle themeId pro konzistenci
-    if (DEFAULT_BACKGROUNDS.length > 0) {
-      // Vytvořit hash z themeId pro deterministický výběr
-      let hash = 0;
-      for (let i = 0; i < themeId.length; i++) {
-        hash = ((hash << 5) - hash) + themeId.charCodeAt(i);
-        hash = hash & hash; // Convert to 32bit integer
+    // Pokud máme firebasePath, použít ho přímo (pokud je to URL)
+    if (data?.firebasePath) {
+      // Pokud firebasePath vypadá jako URL, použít ho
+      if (data.firebasePath.startsWith('http://') || data.firebasePath.startsWith('https://')) {
+        return data.firebasePath;
       }
-      const index = Math.abs(hash) % DEFAULT_BACKGROUNDS.length;
-      return DEFAULT_BACKGROUNDS[index];
     }
 
     return null;
@@ -152,25 +125,7 @@ export const ThemeProvider = ({ children }) => {
   // Získat extrahované barvy z customBackground
   const getExtractedColors = () => {
     const data = getBackgroundData();
-    const colors = data?.colors || null;
-
-    // Debug: zkontrolovat, zda jsou barvy správně načteny
-    if (data && !colors) {
-      console.warn('⚠️ Background data existuje, ale barvy chybí:', data);
-    }
-    if (colors) {
-      console.log('✅ Extrahované barvy načteny:', {
-        keys: Object.keys(colors),
-        primary: colors.primary,
-        hasPrimary: !!colors.primary,
-        isObject: typeof colors === 'object',
-        isEmpty: Object.keys(colors).length === 0
-      });
-    } else {
-      console.log('⚠️ getExtractedColors: žádné barvy nenalezeny');
-    }
-
-    return colors;
+    return data?.colors || null;
   };
 
   // Získat uložené vlastnosti tématu z customBackground (useRoundedStyle, fontFamily)
@@ -216,311 +171,57 @@ export const ThemeProvider = ({ children }) => {
 
   // Získat aktuální barvy tématu (buď z fotky, nebo defaultní)
   const getCurrentThemeColors = () => {
-    const backgroundData = getBackgroundData();
-    // hasCustomBackground je true pouze pokud máme custom pozadí (ne defaultní obrázek)
-    const hasCustomBackground = !!backgroundData && !!backgroundData.url && baseTheme?.allowsCustomBackground;
+    const backgroundUrl = getBackgroundImageUrl();
+    const hasImage = !!backgroundUrl && baseTheme?.allowsCustomBackground;
     const extractedColors = getExtractedColors();
-    const hasExtractedColors = extractedColors && typeof extractedColors === 'object' && Object.keys(extractedColors).length > 0;
     let colors = {};
 
-    // Debug log pro diagnostiku
-    console.log('🎨 getCurrentThemeColors:', {
-      hasCustomBackground,
-      hasExtractedColors,
-      customBackgroundExists: !!customBackground,
-      backgroundData: backgroundData ? { hasUrl: !!backgroundData.url, hasColors: !!backgroundData.colors } : null,
-      extractedColorsPrimary: extractedColors?.primary,
-      extractedColorsKeys: extractedColors ? Object.keys(extractedColors) : [],
-      baseThemePrimary: baseTheme?.colors?.primary,
-      baseThemeId: baseTheme?.id,
-      allowsCustomBackground: baseTheme?.allowsCustomBackground
-    });
-
-    // Pokud máme custom pozadí s extrahovanými barvami, použít je
-    if (hasCustomBackground && hasExtractedColors) {
+    // Pokud máme fotku s extrahovanými barvami, použít je
+    if (hasImage && extractedColors) {
+      console.log('🎨 Používám extrahované barvy z obrázku:', extractedColors);
       // Sloučit extrahované barvy s defaultními (extrahované mají prioritu)
       colors = {
         ...baseTheme?.colors,
         ...extractedColors
       };
-      console.log('✅ Používám extrahované barvy z custom pozadí:', {
-        primary: colors.primary,
-        extractedPrimary: extractedColors.primary,
-        baseThemePrimary: baseTheme?.colors?.primary,
-        allKeys: Object.keys(colors),
-        extractedKeys: Object.keys(extractedColors)
-      });
-
-      // OVĚŘENÍ: Zkontrolovat, zda se extrahované barvy skutečně použily
-      if (colors.primary === baseTheme?.colors?.primary && extractedColors.primary !== baseTheme?.colors?.primary) {
-        console.error('❌ CHYBA: Extrahované barvy se nepoužily!', {
-          colorsPrimary: colors.primary,
-          extractedPrimary: extractedColors.primary,
-          baseThemePrimary: baseTheme?.colors?.primary
-        });
-        // Vynutit použití extrahovaných barev
-        colors = {
-          ...colors,
-          ...extractedColors
-        };
-        console.log('🔧 Opraveno - vynucuji extrahované barvy:', colors.primary);
-      }
-    } else if (hasCustomBackground && !hasExtractedColors) {
-      // Máme custom pozadí, ale barvy se nepodařilo extrahovat - použít defaultní barvy tématu
-      colors = baseTheme?.colors || {};
-      console.warn('⚠️ Máme custom pozadí, ale barvy chybí - používám defaultní barvy:', colors.primary);
     } else {
+      if (hasImage && !extractedColors) {
+        console.log('⚠️ Obrázek máme, ale barvy nebyly extrahovány');
+      }
       // Jinak použít defaultní barvy tématu
       colors = baseTheme?.colors || {};
-      console.log('ℹ️ Používám defaultní barvy tématu:', colors.primary);
     }
 
     // Pokud je nastaven colorMode, upravit barvy podle volby
-    // Zachovat extrahované barvy (primary, progressIndicator, timeIndicator, accent barvy) BEZ úprav
-    const useExtractedColors = hasCustomBackground && hasExtractedColors;
-
-    console.log('🎨 ColorMode úprava:', {
-      colorMode,
-      useExtractedColors,
-      hasCustomBackground,
-      hasExtractedColors,
-      extractedPrimary: extractedColors?.primary,
-      colorsPrimaryBefore: colors.primary,
-      colorsPrimaryIsExtracted: useExtractedColors && colors.primary === extractedColors?.primary
-    });
-
     if (colorMode === 'dark') {
       // Vynutit tmavý režim - tmavší barvy
-      // Pokud máme extrahované barvy, použít je PŘÍMO z extractedColors objektu (ne z colors, který může obsahovat defaultní)
-      // Jinak použít upravené defaultní barvy
-
-      // DŮLEŽITÉ: Použít extrahované barvy PŘÍMO z extractedColors objektu, ne z colors objektu
-      // protože colors může obsahovat defaultní barvy, pokud se extrahovaná barva náhodou shoduje
-      const finalPrimary = useExtractedColors && extractedColors?.primary ? extractedColors.primary : (baseTheme?.colors?.primary ? adjustColorForDarkMode(baseTheme.colors.primary) : 'rgba(30, 30, 30, 1)');
-      const finalProgressIndicator = useExtractedColors && extractedColors?.progressIndicator ? extractedColors.progressIndicator : (finalPrimary || 'rgba(30, 30, 30, 1)');
-      const finalTimeIndicator = useExtractedColors && extractedColors?.timeIndicator ? extractedColors.timeIndicator : 'rgba(255, 255, 255, 1)';
-      const finalAccent1 = useExtractedColors && extractedColors?.accent1 ? extractedColors.accent1 : finalPrimary;
-      const finalAccent2 = useExtractedColors && extractedColors?.accent2 ? extractedColors.accent2 : finalPrimary;
-      const finalAccent3 = useExtractedColors && extractedColors?.accent3 ? extractedColors.accent3 : finalPrimary;
-
-      // Získat extrahovanou barvu karty, pokud existuje
-      const extractedCard = useExtractedColors && extractedColors?.card ? extractedColors.card : null;
-
-      console.log('🌙 Dark mode - zachovávám extrahované barvy:', {
-        useExtractedColors,
-        finalPrimary,
-        finalProgressIndicator,
-        finalTimeIndicator,
-        finalAccent1,
-        extractedCard,
-        colorsPrimaryAfterMerge: colors.primary,
-        baseThemePrimary: baseTheme?.colors?.primary
-      });
-
-      // Helper pro ztmavení barvy karty (méně agresivní než adjustColorForDarkMode)
-      const darkenCardColor = (color) => {
-        const rgbaMatch = color.match(/rgba?\((\d+),\s*(\d+),\s*(\d+)(?:,\s*([\d.]+))?\)/);
-        if (rgbaMatch) {
-          // Ztmavit na cca 30-40% původní světlosti, ale zachovat trochu barvy
-          // + malá příměs šedé pro neutralizaci příliš sytých barev
-          const r = Math.max(15, Math.min(255, Math.floor(parseInt(rgbaMatch[1]) * 0.3 + 10)));
-          const g = Math.max(15, Math.min(255, Math.floor(parseInt(rgbaMatch[2]) * 0.3 + 10)));
-          const b = Math.max(15, Math.min(255, Math.floor(parseInt(rgbaMatch[3]) * 0.3 + 10)));
-          const alpha = 0.95; // Pevná průhlednost pro karty
-          return `rgba(${r}, ${g}, ${b}, ${alpha})`;
-        }
-        return 'rgba(15, 15, 15, 0.95)';
-      };
-
-      // Určit barvu karty - buď ztmavená extrahovaná, nebo defaultní tmavá
-      const finalCardColor = extractedCard
-        ? darkenCardColor(extractedCard)
-        : 'rgba(15, 15, 15, 0.95)';
-
-      // Vytvořit nový objekt s barvami - NEPOUŽÍVAT ...colors, protože může obsahovat staré/defaultní hodnoty
+      // Vždy použít tmavou barvu pozadí, bez ohledu na původní hodnotu
       colors = {
-        // Základní barvy pro dark mode
+        ...colors,
         text: 'rgba(255, 255, 255, 1)',
         textSecondary: 'rgba(180, 180, 180, 1)',
         background: 'rgba(10, 10, 10, 1)', // Vždy tmavá barva pozadí
-        card: finalCardColor, // Použít vypočítanou barvu karty
-        // POUŽÍT EXTRAHOVANÉ BARVY - ty mají prioritu
-        primary: finalPrimary,
-        progressIndicator: finalProgressIndicator,
-        timeIndicator: finalTimeIndicator,
-        // Zachovat accent barvy
-        accent1: finalAccent1,
-        accent2: finalAccent2,
-        accent3: finalAccent3,
-        // Zachovat ostatní barvy z baseTheme, pokud nejsou extrahované
-        secondary: colors.secondary || baseTheme?.colors?.secondary,
-        border: colors.border || baseTheme?.colors?.border
+        card: 'rgba(15, 15, 15, 0.95)', // Vždy tmavá barva karty
+        primary: colors.primary ? adjustColorForDarkMode(colors.primary) : 'rgba(30, 30, 30, 1)'
       };
-
-      console.log('🌙 Dark mode - výsledná primary barva:', colors.primary);
     } else if (colorMode === 'light') {
       // Vynutit světlý režim
-      // Pokud máme extrahované barvy, použít je PŘÍMO z extractedColors objektu (ne z colors, který může obsahovat defaultní)
-      // Jinak použít upravené defaultní barvy
-
-      // DŮLEŽITÉ: Použít extrahované barvy PŘÍMO z extractedColors objektu, ne z colors objektu
-      // protože colors může obsahovat defaultní barvy, pokud se extrahovaná barva náhodou shoduje
-      const finalPrimary = useExtractedColors && extractedColors?.primary ? extractedColors.primary : (baseTheme?.colors?.primary ? adjustColorForLightMode(baseTheme.colors.primary) : 'rgba(244, 221, 196, 1)');
-      const finalProgressIndicator = useExtractedColors && extractedColors?.progressIndicator ? extractedColors.progressIndicator : (finalPrimary || 'rgba(244, 221, 196, 1)');
-      const finalTimeIndicator = useExtractedColors && extractedColors?.timeIndicator ? extractedColors.timeIndicator : 'rgba(0, 0, 0, 1)';
-      const finalAccent1 = useExtractedColors && extractedColors?.accent1 ? extractedColors.accent1 : finalPrimary;
-      const finalAccent2 = useExtractedColors && extractedColors?.accent2 ? extractedColors.accent2 : finalPrimary;
-      const finalAccent3 = useExtractedColors && extractedColors?.accent3 ? extractedColors.accent3 : finalPrimary;
-
-      // Získat extrahovanou barvu karty, pokud existuje
-      const extractedCard = useExtractedColors && extractedColors?.card ? extractedColors.card : null;
-
-      console.log('☀️ Light mode - zachovávám extrahované barvy:', {
-        useExtractedColors,
-        finalPrimary,
-        finalProgressIndicator,
-        finalTimeIndicator,
-        finalAccent1,
-        extractedCard,
-        colorsPrimaryAfterMerge: colors.primary,
-        baseThemePrimary: baseTheme?.colors?.primary
-      });
-
-      // Helper pro zesvětlení barvy karty
-      const lightenCardColor = (color) => {
-        const rgbaMatch = color.match(/rgba?\((\d+),\s*(\d+),\s*(\d+)(?:,\s*([\d.]+))?\)/);
-        if (rgbaMatch) {
-          // Zesvětlit - mix s bílou (cca 85% bílé, 15% původní barvy)
-          const r = Math.min(255, Math.floor(parseInt(rgbaMatch[1]) * 0.15 + 255 * 0.85));
-          const g = Math.min(255, Math.floor(parseInt(rgbaMatch[2]) * 0.15 + 255 * 0.85));
-          const b = Math.min(255, Math.floor(parseInt(rgbaMatch[3]) * 0.15 + 255 * 0.85));
-          const alpha = 0.95;
-          return `rgba(${r}, ${g}, ${b}, ${alpha})`;
-        }
-        return 'rgba(255, 255, 255, 0.95)';
-      };
-
-      // Určit barvu karty - buď zesvětlená extrahovaná, nebo defaultní světlá
-      const finalCardColor = extractedCard
-        ? lightenCardColor(extractedCard)
-        : 'rgba(255, 255, 255, 0.95)';
-
-      // Vytvořit nový objekt s barvami - NEPOUŽÍVAT ...colors, protože může obsahovat staré/defaultní hodnoty
+      // Vždy použít světlou barvu pozadí, bez ohledu na původní hodnotu
       colors = {
-        // Základní barvy pro light mode
+        ...colors,
         text: 'rgba(0, 0, 0, 1)',
         textSecondary: 'rgba(100, 100, 100, 1)',
         background: 'rgba(255, 255, 255, 1)', // Vždy světlá barva pozadí
-        card: finalCardColor, // Použít vypočítanou barvu karty
-        // POUŽÍT EXTRAHOVANÉ BARVY - ty mají prioritu
-        primary: finalPrimary,
-        progressIndicator: finalProgressIndicator,
-        timeIndicator: finalTimeIndicator,
-        // Zachovat accent barvy
-        accent1: finalAccent1,
-        accent2: finalAccent2,
-        accent3: finalAccent3,
-        // Zachovat ostatní barvy z baseTheme, pokud nejsou extrahované
-        secondary: colors.secondary || baseTheme?.colors?.secondary,
-        border: colors.border || baseTheme?.colors?.border
+        card: 'rgba(255, 255, 255, 0.95)', // Vždy světlá barva karty
+        primary: colors.primary ? adjustColorForLightMode(colors.primary) : 'rgba(244, 221, 196, 1)'
       };
-
-      console.log('☀️ Light mode - výsledná primary barva:', colors.primary);
     }
     return colors;
   };
 
   // Dynamické barvy (buď z fotky, nebo defaultní) - přepočítá se při změně colorMode
   // Použít useMemo pro optimalizaci - přepočítá se při změně colorMode, themeId, customBackground nebo baseTheme
-  // Poznámka: getCurrentThemeColors() čte customBackground a baseTheme přímo, takže není potřeba ho přidat do dependencies
-  const themeColors = useMemo(() => {
-    // Zavolat getCurrentThemeColors() přímo, aby použil aktuální hodnoty
-    // Tato funkce čte customBackground a baseTheme přímo, takže když se změní, useMemo se přepočítá
-    const colors = getCurrentThemeColors();
-
-    // Debug: zkontrolovat, zda customBackground obsahuje barvy
-    let customBgHasColors = false;
-    let customBgPrimary = null;
-    if (customBackground) {
-      try {
-        const parsed = JSON.parse(customBackground);
-        customBgHasColors = !!parsed?.colors;
-        customBgPrimary = parsed?.colors?.primary;
-      } catch (e) {
-        // Ignorovat chyby parsování
-      }
-    }
-
-    console.log('🔄 themeColors memo aktualizován:', {
-      primary: colors.primary,
-      customBackground: customBackground ? 'exists' : 'null',
-      customBackgroundLength: customBackground ? customBackground.length : 0,
-      customBgHasColors,
-      customBgPrimary,
-      colorMode,
-      themeId,
-      baseThemeId: baseTheme?.id,
-      baseThemePrimary: baseTheme?.colors?.primary
-    });
-
-    // FINÁLNÍ OVĚŘENÍ: Pokud máme custom pozadí s barvami, VŽDY použít extrahované barvy
-    // Toto je poslední kontrola, která zajistí, že se extrahované barvy použijí i když se něco pokazilo
-    if (customBgHasColors && customBgPrimary) {
-      const backgroundData = getBackgroundData();
-      if (backgroundData?.colors) {
-        const extractedColors = backgroundData.colors;
-        console.log('🔍 Finální ověření - kontroluji extrahované barvy:', {
-          extractedPrimary: extractedColors.primary,
-          currentPrimary: colors.primary,
-          baseThemePrimary: baseTheme?.colors?.primary,
-          customBgHasColors,
-          customBgPrimary
-        });
-
-        // VŽDY použít extrahované barvy, pokud existují - přepsat jakékoliv defaultní barvy
-        if (extractedColors.primary) {
-          // Pokud je primary barva stále defaultní (nebo upravená defaultní), použít extrahovanou
-          const isDefaultPrimary = colors.primary === baseTheme?.colors?.primary ||
-                                   colors.primary === adjustColorForDarkMode(baseTheme?.colors?.primary) ||
-                                   colors.primary === adjustColorForLightMode(baseTheme?.colors?.primary);
-
-          if (isDefaultPrimary && extractedColors.primary !== baseTheme?.colors?.primary) {
-            console.warn('⚠️ Primary barva je stále defaultní - VYNUCUJI extrahovanou:', {
-              currentPrimary: colors.primary,
-              extractedPrimary: extractedColors.primary,
-              baseThemePrimary: baseTheme?.colors?.primary
-            });
-            // Použít extrahovanou barvu PŘÍMO
-            colors.primary = extractedColors.primary;
-          }
-        }
-        // Vždy použít extrahované barvy pro ostatní vlastnosti
-        if (extractedColors.progressIndicator) {
-          colors.progressIndicator = extractedColors.progressIndicator;
-        }
-        if (extractedColors.timeIndicator) {
-          colors.timeIndicator = extractedColors.timeIndicator;
-        }
-        if (extractedColors.accent1) {
-          colors.accent1 = extractedColors.accent1;
-        }
-        if (extractedColors.accent2) {
-          colors.accent2 = extractedColors.accent2;
-        }
-        if (extractedColors.accent3) {
-          colors.accent3 = extractedColors.accent3;
-        }
-        console.log('✅ Finální ověření - extrahované barvy:', {
-          primary: colors.primary,
-          extractedPrimary: extractedColors.primary,
-          baseThemePrimary: baseTheme?.colors?.primary,
-          areEqual: colors.primary === extractedColors.primary
-        });
-      }
-    }
-
-    return colors;
-  }, [colorMode, themeId, customBackground, baseTheme]);
+  const themeColors = useMemo(() => getCurrentThemeColors(), [colorMode, themeId, customBackground, baseTheme]);
 
   // Aktuální téma s dynamickými barvami a uloženými vlastnostmi
   const currentTheme = useMemo(() => {
@@ -757,10 +458,40 @@ export const ThemeProvider = ({ children }) => {
       }
     }
 
-    body.style.transition = 'background-color 0.3s ease, background-image 0.3s ease, font-family 0.3s ease, color 0.3s ease';
-    root.style.transition = 'background-color 0.3s ease, background-image 0.3s ease, font-family 0.3s ease, color 0.3s ease';
+    // Nastavit transition - při prvním načtení použít 2s fade-in, jinak 0.3s
+    const transitionDuration = isFirstLoad ? '2s' : '0.3s';
+    const backgroundTransition = `background-color ${transitionDuration} ease, background-image ${transitionDuration} ease`;
+    body.style.transition = `${backgroundTransition}, font-family 0.3s ease, color 0.3s ease`;
+    root.style.transition = `${backgroundTransition}, font-family 0.3s ease, color 0.3s ease`;
     if (appRoot) {
-      appRoot.style.transition = 'background-color 0.3s ease, background-image 0.3s ease, font-family 0.3s ease, color 0.3s ease';
+      appRoot.style.transition = `${backgroundTransition}, font-family 0.3s ease, color 0.3s ease`;
+    }
+
+    // Při prvním načtení použít CSS pro fade-in efekt pozadí pomocí ::before pseudo-elementu
+    if (isFirstLoad) {
+      // Vytvořit nebo aktualizovat style element pro fade-in
+      let fadeInStyle = document.getElementById('background-fade-in');
+      if (!fadeInStyle) {
+        fadeInStyle = document.createElement('style');
+        fadeInStyle.id = 'background-fade-in';
+        document.head.appendChild(fadeInStyle);
+      }
+      fadeInStyle.textContent = `
+        body::before,
+        html::before,
+        #root::before {
+          content: '';
+          position: fixed;
+          top: 0;
+          left: 0;
+          width: 100%;
+          height: 100%;
+          z-index: -1;
+          opacity: 0;
+          transition: opacity 2s ease;
+          pointer-events: none;
+        }
+      `;
     }
 
     // Nastavit pozadí na body, root a #root
@@ -773,6 +504,10 @@ export const ThemeProvider = ({ children }) => {
     }
 
     if (bgStyle.backgroundImage) {
+      // Pokud máme obrázek, zajistit, aby #root měl transparentní pozadí, aby bylo vidět pozadí z body
+      if (appRoot) {
+        appRoot.style.setProperty('background-color', 'transparent', 'important');
+      }
       // Aplikovat pozadí s !important pro zajištění, že se správně aplikuje
       // background-size: cover zachovává poměr stran a vyplní celý prostor bez deformace
       // Použít scroll místo fixed pro lepší kompatibilitu
@@ -807,7 +542,33 @@ export const ThemeProvider = ({ children }) => {
         appRoot.style.backgroundImage = '';
       }
     }
-  }, [themeId, customBackground, baseTheme, themeColors, colorMode, currentTheme]);
+
+    // Při prvním načtení spustit fade-in animaci
+    if (isFirstLoad && (bgStyle.backgroundColor || bgStyle.backgroundImage)) {
+      // Použít requestAnimationFrame pro zajištění, že se styly aplikují před animací
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+          // Animovat opacity z 0 na 1
+          body.style.opacity = '1';
+          root.style.opacity = '1';
+          if (appRoot) {
+            appRoot.style.opacity = '1';
+          }
+
+          // Po dokončení animace označit, že už není první načtení
+          setTimeout(() => {
+            setIsFirstLoad(false);
+            // Odstranit opacity style, aby neovlivňovalo další změny
+            body.style.opacity = '';
+            root.style.opacity = '';
+            if (appRoot) {
+              appRoot.style.opacity = '';
+            }
+          }, 4000); // 2 sekundy pro fade-in
+        });
+      });
+    }
+  }, [themeId, customBackground, baseTheme, themeColors, colorMode, currentTheme, isFirstLoad]);
 
   // Uložit theme ID do localStorage při změně
   useEffect(() => {
@@ -818,39 +579,14 @@ export const ThemeProvider = ({ children }) => {
     }
   }, [themeId]);
 
-  // Debug: sledovat změny customBackground
-  useEffect(() => {
-    console.log('🔄 customBackground změněn:', {
-      exists: !!customBackground,
-      length: customBackground?.length,
-      themeId
-    });
-
-    if (customBackground) {
-      try {
-        const parsed = JSON.parse(customBackground);
-        console.log('🔄 customBackground obsahuje:', {
-          hasUrl: !!parsed.url,
-          hasColors: !!parsed.colors,
-          primaryColor: parsed.colors?.primary,
-          colorKeys: parsed.colors ? Object.keys(parsed.colors) : []
-        });
-      } catch (e) {
-        console.warn('🔄 Chyba při parsování customBackground:', e);
-      }
-    }
-  }, [customBackground, themeId]);
-
   // Uložit custom background do localStorage při změně (pro aktuální téma)
   useEffect(() => {
     try {
       const key = getBackgroundStorageKey(themeId);
       if (customBackground) {
         localStorage.setItem(key, customBackground);
-        console.log('💾 Uloženo do localStorage:', key);
       } else {
         localStorage.removeItem(key);
-        console.log('🗑️ Odstraněno z localStorage:', key);
       }
     } catch (error) {
       console.warn('Failed to save custom background to localStorage:', error);
@@ -904,40 +640,11 @@ export const ThemeProvider = ({ children }) => {
 
   // Funkce pro nastavení custom pozadí
   const setCustomBackgroundImage = (imageUrl) => {
-    console.log('📸 setCustomBackgroundImage voláno:', {
-      imageUrlType: typeof imageUrl,
-      imageUrlLength: imageUrl?.length,
-      allowsCustomBackground: baseTheme?.allowsCustomBackground,
-      baseThemeId: baseTheme?.id
-    });
-
     // Ověřit, zda aktuální téma podporuje custom pozadí
     if (baseTheme?.allowsCustomBackground) {
-      // Zkontrolovat, zda imageUrl obsahuje barvy
-      let hasColors = false;
-      let primaryColor = null;
-      if (imageUrl && typeof imageUrl === 'string') {
-        try {
-          const parsed = JSON.parse(imageUrl);
-          hasColors = !!parsed?.colors;
-          primaryColor = parsed?.colors?.primary;
-          console.log('📸 Parsování imageUrl:', {
-            hasUrl: !!parsed.url,
-            hasColors,
-            primaryColor
-          });
-        } catch (e) {
-          console.warn('📸 Chyba při parsování imageUrl:', e);
-        }
-      }
-
       setCustomBackground(imageUrl);
-      console.log('📸 setCustomBackground voláno s:', {
-        hasColors,
-        primaryColor
-      });
     } else {
-      console.warn('⚠️ Current theme does not support custom background');
+      console.warn('Current theme does not support custom background');
     }
   };
 
@@ -966,8 +673,7 @@ export const ThemeProvider = ({ children }) => {
     getBackgroundImageUrl,
     allowsCustomBackground: baseTheme?.allowsCustomBackground || false,
     colorMode,
-    changeColorMode,
-    themeColors // Přidat memoizované themeColors pro reaktivní aktualizace
+    changeColorMode
   };
 
   return (
