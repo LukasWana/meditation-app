@@ -112,7 +112,9 @@ class InitializationManager {
       errors: []
     };
 
-    for (const entry of categoryServices) {
+    // Paralelní inicializace services v rámci kategorie (pokud nejsou závislé)
+    // Services se stejnou prioritou můžou běžet paralelně
+    const initPromises = categoryServices.map(async (entry) => {
       const serviceName = this._getServiceName(entry);
 
       try {
@@ -135,7 +137,10 @@ class InitializationManager {
         });
         log.error(`❌ ${category}.${serviceName} initialization failed:`, error);
       }
-    }
+    });
+
+    // Počkej na dokončení všech inicializací
+    await Promise.all(initPromises);
 
     log.success(`✅ ${category} initialization completed: ${results.successful} successful, ${results.failed} failed`);
     return results;

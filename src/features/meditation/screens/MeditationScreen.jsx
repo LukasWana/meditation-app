@@ -8,9 +8,23 @@ import { useLanguage } from '@contexts/LanguageContext';
 import { useTheme } from '@contexts/ThemeContext';
 import { useBreathSounds } from '@hooks';
 
-// Lazy loading modálů pro lepší performance
-const WheelPickerModal = lazy(() => import('@components/TimePickerModal').then(m => ({ default: m.WheelPickerModal })));
-const SoundThemeGallery = lazy(() => import('@components/SoundThemeGallery'));
+// Lazy loading modálů - načítají se až při otevření (on-demand)
+let WheelPickerModalComponent = null;
+let SoundThemeGalleryComponent = null;
+
+const loadWheelPickerModal = () => {
+  if (!WheelPickerModalComponent) {
+    WheelPickerModalComponent = lazy(() => import('@components/TimePickerModal').then(m => ({ default: m.WheelPickerModal })));
+  }
+  return WheelPickerModalComponent;
+};
+
+const loadSoundThemeGallery = () => {
+  if (!SoundThemeGalleryComponent) {
+    SoundThemeGalleryComponent = lazy(() => import('@components/SoundThemeGallery'));
+  }
+  return SoundThemeGalleryComponent;
+};
 
 const MeditationScreen = ({
   time,
@@ -40,6 +54,8 @@ const MeditationScreen = ({
   const { currentTheme, getScreenBackgroundColor } = useTheme();
   const [showGallery, setShowGallery] = useState(false);
   const [showDurationPicker, setShowDurationPicker] = useState(false);
+  const [wheelPickerLoaded, setWheelPickerLoaded] = useState(false);
+  const [soundGalleryLoaded, setSoundGalleryLoaded] = useState(false);
   const [breathCycleTime, setBreathCycleTime] = useState(0); // Čas v aktuálním cyklu dýchání (0 až breathInDuration + breathOutDuration)
   const breathCircleRef = useRef(null);
 
@@ -435,7 +451,13 @@ const MeditationScreen = ({
             >
               <div className="flex justify-center">
                 <button
-                  onClick={() => setShowDurationPicker(true)}
+                  onClick={() => {
+                    if (!wheelPickerLoaded) {
+                      loadWheelPickerModal();
+                      setWheelPickerLoaded(true);
+                    }
+                    setShowDurationPicker(true);
+                  }}
                   className="text-4xl font-light text-gray-800 hover:text-black transition-colors cursor-pointer px-6 py-4"
                 >
                   {selectedDuration}
@@ -445,10 +467,12 @@ const MeditationScreen = ({
                 </span>
               </div>
 
-              {(showDurationPicker || showGallery) && (
+              {showDurationPicker && wheelPickerLoaded && (
                 <Suspense fallback={null}>
-                  {showDurationPicker && (
-                    <WheelPickerModal
+                  {(() => {
+                    const WheelPickerModal = loadWheelPickerModal();
+                    return (
+                      <WheelPickerModal
                       isOpen={showDurationPicker}
                       onClose={() => setShowDurationPicker(false)}
                       value={selectedDuration}
@@ -458,8 +482,9 @@ const MeditationScreen = ({
                       step={1}
                       label={t('dlzkaMeditacie')}
                       title={t('dlzkaMeditacie')}
-                    />
-                  )}
+                      />
+                    );
+                  })()}
                 </Suspense>
               )}
             </FramerSection>
@@ -478,7 +503,13 @@ const MeditationScreen = ({
               <RotateCcw size={28} />
             </FramerButton>
             <FramerButton
-              onClick={() => setShowGallery(true)}
+              onClick={() => {
+                if (!soundGalleryLoaded) {
+                  loadSoundThemeGallery();
+                  setSoundGalleryLoaded(true);
+                }
+                setShowGallery(true);
+              }}
               variant="secondary"
               className="w-20 h-20 rounded-full flex items-center justify-center p-0"
             >
@@ -489,19 +520,22 @@ const MeditationScreen = ({
         </div>
 
         {/* Galerie zvukových témat */}
-        {(showDurationPicker || showGallery) && (
+        {showGallery && soundGalleryLoaded && (
           <Suspense fallback={null}>
-            {showGallery && (
-              <SoundThemeGallery
-                isOpen={showGallery}
-                onClose={() => setShowGallery(false)}
-                onSelectSound={onBreathSoundChange}
-                selectedInSound={breathInSound}
-                selectedOutSound={breathOutSound}
-                selectedClickSound={breathClickSound}
-                selectedFinalSound={breathFinalSound}
-              />
-            )}
+            {(() => {
+              const SoundThemeGallery = loadSoundThemeGallery();
+              return (
+                <SoundThemeGallery
+                  isOpen={showGallery}
+                  onClose={() => setShowGallery(false)}
+                  onSelectSound={onBreathSoundChange}
+                  selectedInSound={breathInSound}
+                  selectedOutSound={breathOutSound}
+                  selectedClickSound={breathClickSound}
+                  selectedFinalSound={breathFinalSound}
+                />
+              );
+            })()}
           </Suspense>
         )}
       </div>

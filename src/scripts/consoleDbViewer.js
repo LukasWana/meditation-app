@@ -1,7 +1,7 @@
 
 
 import { collection, getDocs, query, orderBy, limit } from 'firebase/firestore';
-import { db } from '../services/firebase.js';
+import { db } from '../config/secure-firebase.js';
 
 // Globální funkce pro konzoli
 window.showDatabaseData = async () => {

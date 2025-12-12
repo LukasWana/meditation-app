@@ -1,6 +1,6 @@
 import log from './logger';
 import mp3MetadataExtractor from './mp3MetadataExtractor';
-import { storage } from './firebase';
+import { storage } from '@config/secure-firebase';
 import { ref, listAll, getDownloadURL } from 'firebase/storage';
 
 class GlobalMetadataPreloader {

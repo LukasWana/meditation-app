@@ -1,9 +1,8 @@
 
 
 import { collection, doc, setDoc, getDocs, query, orderBy } from 'firebase/firestore';
-import { db } from '@services/firebase';
+import { db, storage } from '@config/secure-firebase';
 import { ref, listAll, getDownloadURL, getMetadata } from 'firebase/storage';
-import { storage } from '@services/firebase';
 
 // Ukázková metadata pro testování
 const sampleMetadata = {

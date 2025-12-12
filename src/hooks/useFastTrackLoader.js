@@ -127,7 +127,7 @@ export const useFastTrackLoader = (items, options = {}) => {
       // Pro Firebase Storage soubory použij metadata loader
       if (fileName.includes('.mp3') || fileName.includes('.wav') || fileName.includes('.m4a')) {
         const { ref, getMetadata } = await import('firebase/storage');
-        const { storage } = await import('@services/firebase');
+        const { storage } = await import('@config/secure-firebase');
 
         const audioRef = ref(storage, fileName);
         const metadataResult = await Promise.race([
@@ -238,7 +238,7 @@ export const useLazyMetadataLoader = (items, containerRef, options = {}) => {
 
             // Načti metadata
             const { ref, getMetadata } = await import('firebase/storage');
-            const { storage } = await import('@services/firebase');
+            const { storage } = await import('@config/secure-firebase');
 
             const audioRef = ref(storage, fileName);
             const metadataResult = await getMetadata(audioRef);

@@ -5,7 +5,7 @@
 
 import { generateWaveformFromUrl } from './waveformGenerator';
 import { realtimeMetadataService } from '@services/realtimeMetadataService';
-import { database } from '@services/firebase';
+import { database } from '@config/secure-firebase';
 import { ref, set } from 'firebase/database';
 
 /**

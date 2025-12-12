@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { ref, listAll, getDownloadURL, getMetadata } from 'firebase/storage';
-import { storage } from '@services/firebase';
+import { storage } from '@config/secure-firebase';
 import { parseAudioFileName } from '@utils/hudbaParser';
 import cacheService from '@services/cacheServiceRefactored';
 import log from '@services/logger';

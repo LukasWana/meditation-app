@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { ref, listAll, getDownloadURL, getMetadata } from 'firebase/storage';
-import { storage } from '@services/firebase';
+import { storage } from '@config/secure-firebase';
 import cacheService from '@services/cacheServiceRefactored';
 import log from '@services/logger';
 import { performanceMonitor } from '@services/performanceMonitor';

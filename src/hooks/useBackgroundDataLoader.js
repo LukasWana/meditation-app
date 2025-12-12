@@ -162,13 +162,17 @@ export const useBackgroundDataLoader = ({ enabled = true } = {}) => {
 
         let lastUpdateTime = 0;
         let isProcessingUpdate = false;
+        const DEBOUNCE_DELAY = 2000; // 2 sekundy debounce pro Realtime Database updates
 
         stopWatching = realtimeMetadataService.watchMetadata((data) => {
           const now = Date.now();
-          if (now - lastUpdateTime < 2000) {
+
+          // Debounce: ignoruj update, pokud proběhl příliš brzy po předchozím
+          if (now - lastUpdateTime < DEBOUNCE_DELAY) {
             return;
           }
 
+          // Pokud už probíhá zpracování, ignoruj
           if (isProcessingUpdate) {
             return;
           }
@@ -176,10 +180,12 @@ export const useBackgroundDataLoader = ({ enabled = true } = {}) => {
           lastUpdateTime = now;
           isProcessingUpdate = true;
 
+          // Zruš předchozí timeout, pokud existuje
           if (updateTimeout) {
             clearTimeout(updateTimeout);
           }
 
+          // Debounced zpracování update
           updateTimeout = setTimeout(async () => {
             if (data.files && Array.isArray(data.files)) {
               data.files.forEach(file => {
@@ -189,22 +195,33 @@ export const useBackgroundDataLoader = ({ enabled = true } = {}) => {
               });
 
               try {
-                // Refresh fast metadata a slova services
-                const fastMetadataEntry = getService('metadata', 'fast');
-                if (fastMetadataEntry) {
-                  await initializationManager.initializeService(fastMetadataEntry, false);
-                }
-              } catch (err) {
-                log.warn('⚠️ Failed to refresh fast metadata:', err);
-              }
+                // Refresh fast metadata a slova services (paralelně)
+                const [fastMetadataEntry, slovaEntry] = await Promise.all([
+                  Promise.resolve(getService('metadata', 'fast')),
+                  Promise.resolve(getService('data', 'slova'))
+                ]);
 
-              try {
-                const slovaEntry = getService('data', 'slova');
-                if (slovaEntry) {
-                  await initializationManager.initializeService(slovaEntry, false);
+                const refreshPromises = [];
+
+                if (fastMetadataEntry) {
+                  refreshPromises.push(
+                    initializationManager.initializeService(fastMetadataEntry, false)
+                      .catch(err => log.warn('⚠️ Failed to refresh fast metadata:', err))
+                  );
                 }
+
+                if (slovaEntry) {
+                  refreshPromises.push(
+                    initializationManager.initializeService(slovaEntry, false)
+                      .catch(err => log.warn('⚠️ Failed to refresh slova service:', err))
+                  );
+                }
+
+                // Počkej na dokončení všech refresh operací
+                await Promise.all(refreshPromises);
+
               } catch (err) {
-                log.warn('⚠️ Failed to refresh slova service:', err);
+                log.warn('⚠️ Failed to refresh services:', err);
               }
 
               safelySetState(prev => ({

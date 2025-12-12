@@ -1,7 +1,7 @@
 
 
 import { ref, listAll, getDownloadURL } from 'firebase/storage';
-import { storage } from './firebase';
+import { storage } from '@config/secure-firebase';
 import log from './logger';
 import { parseAudioFileName } from '@utils/hudbaParser';
 import { realtimeMetadataService } from './realtimeMetadataService';
@@ -10,6 +10,7 @@ class FastMetadataService {
   constructor() {
     this.metadata = new Map();
     this.isLoading = false;
+    this.isInitialized = false;
     this.lastUpdate = null;
     this.cacheKey = 'fast-metadata-cache';
     this.cacheExpiry = 7 * 24 * 60 * 60 * 1000; // 7 dní - delší cache pro lepší performance
@@ -763,6 +764,11 @@ class FastMetadataService {
   }
 
   async initialize(forceReload = false) {
+    // Guard proti vícenásobné inicializaci
+    if (this.isInitialized && !forceReload) {
+      return;
+    }
+
     // Pokud už inicializace probíhá, počkej na ni
     if (this.isLoading) {
       console.log('⏳ FastMetadataService already initializing, waiting...');
@@ -772,7 +778,7 @@ class FastMetadataService {
         await new Promise(resolve => setTimeout(resolve, 100));
         waitCount++;
       }
-      if (!this.isLoading) {
+      if (this.isInitialized) {
         console.log('✅ FastMetadataService initialization completed');
         return;
       }
@@ -784,6 +790,7 @@ class FastMetadataService {
     if (forceReload) {
       log.info('Force reloading metadata from Firebase...');
       this.metadata.clear();
+      this.isInitialized = false;
       localStorage.removeItem(this.cacheKey);
     }
 

@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { ref, getMetadata } from 'firebase/storage';
-import { storage } from '@services/firebase';
+import { storage } from '@config/secure-firebase';
 import cacheService from '@services/cacheServiceRefactored';
 
 export const useMetadataLoader = (audioFileName, options = {}) => {
