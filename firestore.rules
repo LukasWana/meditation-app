@@ -24,11 +24,32 @@ service cloud.firestore {
                       request.auth.token.admin == true;
     }
 
-    // Pravidla pro uživatelské preference (pokud existují)
+    // Pravidla pro uživatelské preference
     match /users/{userId} {
       // Uživatel může číst a upravovat pouze svá vlastní data
-      allow read, write: if request.auth != null &&
-                            request.auth.uid == userId;
+      allow read: if request.auth != null && request.auth.uid == userId;
+      allow create: if request.auth != null && request.auth.uid == userId;
+      allow update: if request.auth != null && request.auth.uid == userId;
+      allow delete: if request.auth != null && request.auth.uid == userId;
+    }
+
+    // Premium content kolekce (pro budoucí použití)
+    match /premium-content/{docId} {
+      // Veřejné čtení, ale write pouze pro adminy
+      allow read: if true;
+      allow write: if request.auth != null &&
+                    request.auth.token.admin == true;
+    }
+
+    // Premium přístup - kontrola subscription
+    function hasPremiumAccess() {
+      return request.auth != null && (
+        // Admin má vždy přístup
+        request.auth.token.admin == true ||
+        // Premium subscription v custom claims
+        request.auth.token.subscription == 'premium' ||
+        request.auth.token.subscription == 'pro'
+      );
     }
 
     // Výchozí pravidlo - zamítnout vše ostatní
