@@ -9,6 +9,7 @@ import { ImageIcon, X } from 'lucide-react';
 import { ref, listAll, getDownloadURL, getMetadata } from 'firebase/storage';
 import { storage } from '@config/secure-firebase';
 import log from '@services/logger';
+import cacheService from '@services/cacheServiceRefactored';
 
 const ThemeSelector = () => {
   const { t, language } = useLanguage();
@@ -22,14 +23,31 @@ const ThemeSelector = () => {
   const [firebaseBackgroundsLoading, setFirebaseBackgroundsLoading] = useState(false);
   const [firebaseBackgroundsError, setFirebaseBackgroundsError] = useState(null);
 
-  // Funkce pro načtení náhledu pro pozadí
+  // Funkce pro načtení náhledu pro pozadí s cachováním
   const loadThumbnailForBackground = useCallback(async (imageName) => {
     try {
-      const thumbnailRef = ref(storage, `background/thumbnails/${imageName}`);
+      const cacheKey = `background/thumbnails/${imageName}`;
+
+      // Zkontroluj cache PRVNÍ
+      const cachedUrl = cacheService.getImageUrl(cacheKey);
+      if (cachedUrl) {
+        console.log(`✅ Thumbnail cache hit for: ${imageName}`);
+        return cachedUrl;
+      }
+
+      // Pokud není v cache, načti z Firebase
+      console.log(`🔄 Loading thumbnail from Firebase: ${imageName}`);
+      const thumbnailRef = ref(storage, cacheKey);
       const thumbnailURL = await getDownloadURL(thumbnailRef);
+
+      // Ulož do cache
+      cacheService.setImageUrl(cacheKey, thumbnailURL);
+      console.log(`✅ Thumbnail cached: ${imageName}`);
+
       return thumbnailURL;
     } catch (error) {
       // Náhled neexistuje - není to chyba
+      console.log(`⚠️ Thumbnail not found: ${imageName}`);
       return null;
     }
   }, []);
@@ -69,10 +87,24 @@ const ThemeSelector = () => {
       for (const itemRef of imageFiles) {
         try {
           console.log(`🔄 Processing image: ${itemRef.name}`);
-          const metadata = await getMetadata(itemRef);
-          const downloadURL = await getDownloadURL(itemRef);
+          const imageCacheKey = `background/${itemRef.name}`;
 
-          // Zkusit načíst náhled
+          // Zkontroluj cache pro plný obrázek
+          let downloadURL = cacheService.getImageUrl(imageCacheKey);
+          if (!downloadURL) {
+            // Pokud není v cache, načti z Firebase
+            downloadURL = await getDownloadURL(itemRef);
+            // Ulož do cache
+            cacheService.setImageUrl(imageCacheKey, downloadURL);
+            console.log(`✅ Full image cached: ${itemRef.name}`);
+          } else {
+            console.log(`✅ Full image cache hit: ${itemRef.name}`);
+          }
+
+          // Získat metadata (potřebujeme pro velikost a contentType)
+          const metadata = await getMetadata(itemRef);
+
+          // Zkusit načíst náhled (s cachováním)
           const thumbnailURL = await loadThumbnailForBackground(itemRef.name);
           console.log(`✅ Loaded ${itemRef.name}, thumbnail: ${thumbnailURL ? 'yes' : 'no'}`);
 
@@ -112,7 +144,7 @@ const ThemeSelector = () => {
     console.log('🔄 ThemeSelector: useEffect triggered, loading Firebase backgrounds...');
     console.log('🔄 Storage instance:', storage);
     console.log('🔄 ThemeContext available:', !!themeContext);
-    
+
     // Načti pozadí z Firebase vždy, nezávisle na theme contextu
     loadFirebaseBackgrounds().catch(err => {
       console.error('❌ Failed to load Firebase backgrounds in useEffect:', err);
