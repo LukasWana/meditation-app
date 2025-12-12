@@ -1,6 +1,7 @@
 import React from 'react';
 import { motion } from 'framer-motion';
 import { useLanguage } from '@contexts/LanguageContext';
+import UserProfile from '@components/UserProfile';
 import SlovakiaFlagUrl from '@assets/flags/003-slovakia.svg';
 import CzechFlagUrl from '@assets/flags/002-czech-republic.svg';
 import UKFlagUrl from '@assets/flags/001-united-kingdom.svg';
@@ -50,6 +51,9 @@ const Layout = ({
       {/* Top Right Controls - Hidden when player is active, show on all pages */}
       {!isPlayerActive && (
         <div className="fixed top-6 right-6 z-50 flex items-center space-x-3">
+          {/* User Profile */}
+          <UserProfile />
+
           {/* Language Switcher - desktop/tablet */}
           <motion.div
             className="hidden sm:flex bg-white/90 backdrop-blur-sm border border-gray-200 rounded-full p-1 shadow-sm"

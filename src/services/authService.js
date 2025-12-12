@@ -11,6 +11,9 @@ import log from './logger';
 
 const provider = new GoogleAuthProvider();
 provider.setCustomParameters({ prompt: 'select_account' });
+// Přidat scopes pro získání profilu a fotky
+provider.addScope('profile');
+provider.addScope('email');
 
 export async function signInWithGoogle() {
   try {
