@@ -8,21 +8,25 @@ import { LazyIntroScreen, NewAdminScreen } from '@config/lazyComponents';
 import { LanguageProvider } from '@contexts/LanguageContext';
 import { UIConfigProvider } from '@contexts/UIConfigContext';
 import { ThemeProvider } from '@contexts/ThemeContext';
+import { AuthProvider } from '@contexts/AuthContext';
 import MonitoringDashboard from '@components/MonitoringDashboard';
 import OfflineIndicator from '@components/OfflineIndicator';
+import AdminGuard from '@components/AdminGuard';
 
 import ErrorBoundary from '@components/ErrorBoundary';
 
 // Hlavní aplikace s routingem
 export default function App() {
   return (
-    <BrowserRouter>
-      <Routes>
-        <Route path="/admin" element={<AdminApp />} />
-        <Route path="/admin/*" element={<AdminApp />} />
-        <Route path="/*" element={<MeditationApp />} />
-      </Routes>
-    </BrowserRouter>
+    <AuthProvider>
+      <BrowserRouter>
+        <Routes>
+          <Route path="/admin" element={<AdminGuard><AdminApp /></AdminGuard>} />
+          <Route path="/admin/*" element={<AdminGuard><AdminApp /></AdminGuard>} />
+          <Route path="/*" element={<MeditationApp />} />
+        </Routes>
+      </BrowserRouter>
+    </AuthProvider>
   );
 }
 

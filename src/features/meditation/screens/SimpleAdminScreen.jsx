@@ -5,7 +5,6 @@ import { storage, db, database, auth } from '@config/secure-firebase';
 import { ref, listAll, getMetadata, getDownloadURL } from 'firebase/storage';
 import { collection, getDocs, query, orderBy } from 'firebase/firestore';
 import { ref as dbRef, set, get } from 'firebase/database';
-import { signInAnonymously } from 'firebase/auth';
 import DataStorageCharts from '@components/admin/DataStorageCharts';
 import { extractAudioMetadata } from '@utils/audioMetadataExtractor';
 import { generateWaveformViaFunction } from '@utils/generateWaveformViaFunction';
@@ -83,12 +82,10 @@ const SimpleAdminScreen = () => {
     setStatus('🔄 Synchronizuji...');
 
     try {
-      // Přihlásit se anonymně
-      try {
-        await signInAnonymously(auth);
-        console.log('✅ Anonymous authentication successful');
-      } catch (authError) {
-        console.warn('⚠️ Anonymous auth failed:', authError.message);
+      if (!auth.currentUser) {
+        setStatus('❌ Přihlaste se admin účtem.');
+        setLoading(false);
+        return;
       }
 
       // Načti všechna metadata z Firestore
@@ -198,12 +195,10 @@ const SimpleAdminScreen = () => {
     setStatus('🔄 Spouštím kompletní synchronizaci...');
 
     try {
-      // 1. Přihlásit se anonymně
-      try {
-        await signInAnonymously(auth);
-        console.log('✅ Anonymous authentication successful');
-      } catch (authError) {
-        console.warn('⚠️ Anonymous auth failed:', authError.message);
+      if (!auth.currentUser) {
+        setStatus('❌ Přihlaste se admin účtem.');
+        setLoading(false);
+        return;
       }
 
       // 2. Skenovat Firebase Storage
