@@ -3,7 +3,7 @@
 import { firestoreMetadataService } from './firestoreMetadataService';
 import { mp3MetadataExtractor } from './mp3MetadataExtractor';
 import { ref, listAll, getMetadata } from 'firebase/storage';
-import { storage } from './firebase';
+import { storage } from '@config/secure-firebase';
 import log from './logger';
 
 class MetadataSyncService {

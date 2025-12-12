@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { ref, getDownloadURL } from 'firebase/storage';
-import { storage } from '@services/firebase';
+import { storage } from '@config/secure-firebase';
 import cacheService from '@services/cacheServiceRefactored';
 import enhancedOfflineCacheService from '@services/enhancedOfflineCacheService';
 

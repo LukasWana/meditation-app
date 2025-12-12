@@ -281,7 +281,7 @@ class CacheServiceRefactored {
 
       // Import Firebase Storage dynamicky
       const { ref, listAll, getDownloadURL } = await import('firebase/storage');
-      const { storage } = await import('./firebase.js');
+        const { storage } = await import('@config/secure-firebase');
 
       // Místo root složky, načti přímo slova/ a hudba/ složky
       log.firebase('📂 Listing Firebase Storage folders...');

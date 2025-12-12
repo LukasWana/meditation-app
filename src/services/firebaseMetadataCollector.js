@@ -1,7 +1,7 @@
 
 
 import { ref, listAll, getMetadata, getDownloadURL } from 'firebase/storage';
-import { storage } from './firebase';
+import { storage } from '@config/secure-firebase';
 import { parseAudioFileName } from '@utils/audioParser';
 import { parseAudioFileName as parseHudbaFileName } from '@utils/hudbaParser';
 import cacheService from './cacheServiceRefactored';

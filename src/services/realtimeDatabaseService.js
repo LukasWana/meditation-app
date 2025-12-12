@@ -12,7 +12,7 @@ import {
   equalTo,
   limitToLast
 } from 'firebase/database';
-import { database } from './firebase';
+import { database } from '@config/secure-firebase';
 import log from './logger';
 
 class RealtimeDatabaseService {

@@ -1,5 +1,5 @@
 import { auth } from '../config/secure-firebase';
-import { database } from '../services/firebase';
+import { database } from '../config/secure-firebase';
 import { ref, get, push, update, remove } from 'firebase/database';
 import { realtimeMetadataService } from './realtimeMetadataService';
 import log from './logger';

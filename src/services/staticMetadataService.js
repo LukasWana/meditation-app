@@ -4,6 +4,7 @@ class StaticMetadataService {
   constructor() {
     this.metadata = null;
     this.isLoading = false;
+    this.isInitialized = false;
     this.cache = new Map();
     this.localStorageKey = 'audio-metadata-cache';
     this.cacheExpiry = 24 * 60 * 60 * 1000; // 24 hodin
@@ -133,23 +134,43 @@ class StaticMetadataService {
   }
 
   async initialize(forceReload = false) {
+    // Guard proti vícenásobné inicializaci
+    if (this.isInitialized && !forceReload) {
+      return;
+    }
+
+    // Pokud už probíhá načítání, počkej
+    if (this.isLoading) {
+      let waitCount = 0;
+      while (this.isLoading && waitCount < 50) {
+        await new Promise(resolve => setTimeout(resolve, 100));
+        waitCount++;
+      }
+      if (this.isInitialized) {
+        return;
+      }
+    }
+
     console.log('Initializing StaticMetadataService...');
 
     if (forceReload) {
       this.cache.clear();
       this.metadata = null;
+      this.isInitialized = false;
       localStorage.removeItem(this.localStorageKey);
     }
 
     // Nejdříve zkus načíst z localStorage
     if (!forceReload && this.loadFromLocalCache()) {
       console.log('Metadata loaded from local cache');
+      this.isInitialized = true;
       return;
     }
 
     // Pokud není v localStorage, načti z JSON souboru
     try {
       await this.getAllMetadata();
+      this.isInitialized = true;
     } catch (error) {
       console.warn('Failed to initialize metadata service:', error);
     }

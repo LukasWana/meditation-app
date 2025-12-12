@@ -1,7 +1,7 @@
 
 
 import { collection, doc, getDoc, getDocs, query, orderBy } from 'firebase/firestore';
-import { db } from './firebase';
+import { db } from '@config/secure-firebase';
 import log from './logger';
 
 class OptimizedMetadataService {

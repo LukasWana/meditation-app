@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { realtimeMetadataService } from '@services/realtimeMetadataService';
 import { ref, getDownloadURL } from 'firebase/storage';
-import { storage } from '@services/firebase';
+import { storage } from '@config/secure-firebase';
 
 /**
  * Hook pro přehrávání zvuků dýchání s fade in/out efekty

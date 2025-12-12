@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Moon, Sun, Database, Upload, BarChart3, FileAudio, FileText, RefreshCw, Download, Wifi, WifiOff, HardDrive } from 'lucide-react';
-import { storage, db, database, auth } from '@services/firebase';
+import { storage, db, database, auth } from '@config/secure-firebase';
 import { ref, listAll, getMetadata, getDownloadURL } from 'firebase/storage';
 import { collection, getDocs, addDoc, query, orderBy } from 'firebase/firestore';
 import { ref as dbRef, set, get } from 'firebase/database';
@@ -542,6 +542,10 @@ const NewAdminScreen = () => {
     }
   };
 
+  useEffect(() => {
+    loadAudioStats();
+  }, []);
+
   const themeClasses = isDarkMode
     ? 'bg-gray-900 text-white'
     : 'bg-white text-gray-900';
@@ -567,8 +571,8 @@ const NewAdminScreen = () => {
           <button
             onClick={() => setIsDarkMode(!isDarkMode)}
             className={`p-3 rounded-lg transition-colors ${isDarkMode
-                ? 'bg-gray-700 hover:bg-gray-600'
-                : 'bg-gray-200 hover:bg-gray-300'
+              ? 'bg-gray-700 hover:bg-gray-600'
+              : 'bg-gray-200 hover:bg-gray-300'
               }`}
           >
             {isDarkMode ? <Sun size={24} /> : <Moon size={24} />}
@@ -901,8 +905,8 @@ const NewAdminScreen = () => {
                 onClick={saveToRealtimeDB}
                 disabled={loading || !preparedData || updateStatus !== 'needs-update'}
                 className={`w-full py-2 px-4 rounded-lg transition-colors ${updateStatus === 'needs-update'
-                    ? 'bg-green-500 hover:bg-green-600 text-white'
-                    : 'bg-gray-400 text-gray-600 cursor-not-allowed'
+                  ? 'bg-green-500 hover:bg-green-600 text-white'
+                  : 'bg-gray-400 text-gray-600 cursor-not-allowed'
                   }`}
               >
                 {loading ? <RefreshCw className="animate-spin mx-auto" size={20} /> : 'Uložit do Realtime DB'}
@@ -911,8 +915,8 @@ const NewAdminScreen = () => {
                 onClick={saveToFirestore}
                 disabled={loading || !preparedData || updateStatus !== 'needs-update'}
                 className={`w-full py-2 px-4 rounded-lg transition-colors ${updateStatus === 'needs-update'
-                    ? 'bg-purple-500 hover:bg-purple-600 text-white'
-                    : 'bg-gray-400 text-gray-600 cursor-not-allowed'
+                  ? 'bg-purple-500 hover:bg-purple-600 text-white'
+                  : 'bg-gray-400 text-gray-600 cursor-not-allowed'
                   }`}
               >
                 {loading ? <RefreshCw className="animate-spin mx-auto" size={20} /> : 'Uložit do Firestore'}
@@ -934,8 +938,8 @@ const NewAdminScreen = () => {
                       }}
                       disabled={loading || !preparedData}
                       className={`w-full py-2 px-4 rounded-lg transition-colors ${preparedData
-                          ? 'bg-orange-500 hover:bg-orange-600 text-white'
-                          : 'bg-gray-400 text-gray-600 cursor-not-allowed'
+                        ? 'bg-orange-500 hover:bg-orange-600 text-white'
+                        : 'bg-gray-400 text-gray-600 cursor-not-allowed'
                         }`}
                     >
                       {loading ? <RefreshCw className="animate-spin mx-auto" size={20} /> : '⚠️ Vynutit aktualizaci Realtime DB'}
@@ -948,8 +952,8 @@ const NewAdminScreen = () => {
                       }}
                       disabled={loading || !preparedData}
                       className={`w-full py-2 px-4 rounded-lg transition-colors ${preparedData
-                          ? 'bg-purple-500 hover:bg-purple-600 text-white'
-                          : 'bg-gray-400 text-gray-600 cursor-not-allowed'
+                        ? 'bg-purple-500 hover:bg-purple-600 text-white'
+                        : 'bg-gray-400 text-gray-600 cursor-not-allowed'
                         }`}
                     >
                       {loading ? <RefreshCw className="animate-spin mx-auto" size={20} /> : '⚠️ Vynutit aktualizaci Firestore'}

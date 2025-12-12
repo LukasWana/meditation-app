@@ -33,7 +33,7 @@ export const useFinalSound = (breathFinalSound, isBreathing) => {
     try {
       const { realtimeMetadataService } = await import('@services/realtimeMetadataService');
       const { ref, getDownloadURL } = await import('firebase/storage');
-      const { storage } = await import('@services/firebase');
+      const { storage } = await import('@config/secure-firebase');
 
       let url = null;
 

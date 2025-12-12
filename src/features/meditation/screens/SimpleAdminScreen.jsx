@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { motion } from 'framer-motion';
 import { Moon, Sun, Database, Download, RefreshCw, Upload, FileAudio, BarChart3, Play, Pause, Save, Edit } from 'lucide-react';
-import { storage, db, database, auth } from '@services/firebase';
+import { storage, db, database, auth } from '@config/secure-firebase';
 import { ref, listAll, getMetadata, getDownloadURL } from 'firebase/storage';
 import { collection, getDocs, query, orderBy } from 'firebase/firestore';
 import { ref as dbRef, set, get } from 'firebase/database';

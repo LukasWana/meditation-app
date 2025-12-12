@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { ref, listAll, getDownloadURL } from 'firebase/storage';
-import { storage } from '@services/firebase';
+import { storage } from '@config/secure-firebase';
 import { parseAudioFileName } from '@utils/hudbaParser';
 import cacheService from '@services/cacheServiceRefactored';
 import log from '@services/logger';
@@ -51,7 +51,7 @@ export const useFirebaseCDNScanner = () => {
       for (const folderRef of result.prefixes) {
         try {
           const folderResult = await listAll(folderRef);
-          
+
           // Přidej soubory z podsložky s prefixem složky
           folderResult.items.forEach(item => {
             allFiles.push({
@@ -87,9 +87,9 @@ export const useFirebaseCDNScanner = () => {
           const name = item.name;
           const isMp3 = name.toLowerCase().endsWith('.mp3');
           // Soubory ze slova/ složky, jazykových podsložek (CZ/, SK/, EN/) nebo začínající "muzsky" nebo "zensky"
-          const isSlova = name.startsWith('slova/') || 
-                         name.startsWith('slova/CZ/') || 
-                         name.startsWith('slova/SK/') || 
+          const isSlova = name.startsWith('slova/') ||
+                         name.startsWith('slova/CZ/') ||
+                         name.startsWith('slova/SK/') ||
                          name.startsWith('slova/EN/') ||
                          /^(muzsky|zensky)/.test(name);
           const isNotMusic = !name.startsWith('00--00--00--');

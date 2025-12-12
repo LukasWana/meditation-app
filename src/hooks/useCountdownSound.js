@@ -23,7 +23,7 @@ export const useCountdownSound = (breathCountdownSound, isPreparing, preparation
       try {
         const { realtimeMetadataService } = await import('@services/realtimeMetadataService');
         const { ref, getDownloadURL } = await import('firebase/storage');
-        const { storage } = await import('@services/firebase');
+        const { storage } = await import('@config/secure-firebase');
 
         const metadata = await realtimeMetadataService.getFileMetadata(breathCountdownSound);
         if (metadata && (metadata.downloadURL || metadata.audioSrc)) {
