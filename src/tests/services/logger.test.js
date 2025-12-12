@@ -27,7 +27,7 @@ describe('Logger', () => {
     });
 
     it('should log debug messages in development', () => {
-      log.debug('Test debug message');
+      logger.debug('Test debug message');
 
       expect(mockConsole.log).toHaveBeenCalledWith(
         expect.stringContaining('[DEBUG] Test debug message')
@@ -35,7 +35,7 @@ describe('Logger', () => {
     });
 
     it('should log info messages in development', () => {
-      log.info('Test info message');
+      logger.info('Test info message');
 
       expect(mockConsole.log).toHaveBeenCalledWith(
         expect.stringContaining('[INFO] Test info message')
@@ -43,7 +43,7 @@ describe('Logger', () => {
     });
 
     it('should log success messages in development', () => {
-      log.success('Test success message');
+      logger.success('Test success message');
 
       expect(mockConsole.log).toHaveBeenCalledWith(
         expect.stringContaining('[SUCCESS] Test success message')
@@ -51,7 +51,7 @@ describe('Logger', () => {
     });
 
     it('should log audio messages with audio emoji', () => {
-      log.audio('Test audio message');
+      logger.audio('Test audio message');
 
       expect(mockConsole.log).toHaveBeenCalledWith(
         expect.stringContaining('🎵 [AUDIO] Test audio message')
@@ -59,7 +59,7 @@ describe('Logger', () => {
     });
 
     it('should log cache messages with cache emoji', () => {
-      log.cache('Test cache message');
+      logger.cache('Test cache message');
 
       expect(mockConsole.log).toHaveBeenCalledWith(
         expect.stringContaining('💾 [CACHE] Test cache message')
@@ -67,7 +67,7 @@ describe('Logger', () => {
     });
 
     it('should log firebase messages with firebase emoji', () => {
-      log.firebase('Test firebase message');
+      logger.firebase('Test firebase message');
 
       expect(mockConsole.log).toHaveBeenCalledWith(
         expect.stringContaining('🔥 [FIREBASE] Test firebase message')
@@ -75,7 +75,7 @@ describe('Logger', () => {
     });
 
     it('should log performance messages with color indicators', () => {
-      log.performance('Test operation', 500);
+      logger.performance('Test operation', 500);
 
       expect(mockConsole.log).toHaveBeenCalledWith(
         expect.stringContaining('🟢 [PERF] Test operation (500ms)')
@@ -92,19 +92,19 @@ describe('Logger', () => {
     });
 
     it('should not log debug messages in production', () => {
-      log.debug('Test debug message');
+      logger.debug('Test debug message');
 
       expect(mockConsole.log).not.toHaveBeenCalled();
     });
 
     it('should not log info messages in production', () => {
-      log.info('Test info message');
+      logger.info('Test info message');
 
       expect(mockConsole.log).not.toHaveBeenCalled();
     });
 
     it('should still log warnings in production', () => {
-      log.warn('Test warning message');
+      logger.warn('Test warning message');
 
       expect(mockConsole.warn).toHaveBeenCalledWith(
         expect.stringContaining('[WARN] Test warning message')
@@ -113,7 +113,7 @@ describe('Logger', () => {
 
     it('should still log errors in production', () => {
       const error = new Error('Test error');
-      log.error('Test error message', error);
+      logger.error('Test error message', error);
 
       expect(mockConsole.error).toHaveBeenCalledWith(
         expect.stringContaining('[ERROR] Test error message'),
@@ -129,8 +129,8 @@ describe('Logger', () => {
     });
 
     it('should maintain log history', () => {
-      log.info('Test message 1');
-      log.warn('Test message 2');
+      logger.info('Test message 1');
+      logger.warn('Test message 2');
 
       const history = logger.getHistory();
 
@@ -140,9 +140,9 @@ describe('Logger', () => {
     });
 
     it('should filter history by level', () => {
-      log.info('Info message');
-      log.warn('Warning message');
-      log.error('Error message');
+      logger.info('Info message');
+      logger.warn('Warning message');
+      logger.error('Error message');
 
       const errorHistory = logger.getHistory('error');
 
@@ -153,7 +153,7 @@ describe('Logger', () => {
     it('should limit history size', () => {
       // Přidej více položek než maxHistorySize
       for (let i = 0; i < 150; i++) {
-        log.info(`Message ${i}`);
+        logger.info(`Message ${i}`);
       }
 
       const history = logger.getHistory();
@@ -162,7 +162,7 @@ describe('Logger', () => {
     });
 
     it('should clear history', () => {
-      log.info('Test message');
+      logger.info('Test message');
       expect(logger.getHistory()).toHaveLength(1);
 
       logger.clearHistory();
@@ -173,7 +173,7 @@ describe('Logger', () => {
   describe('Error handling', () => {
     it('should capture error details in history', () => {
       const error = new Error('Test error');
-      log.error('Test error message', error);
+      logger.error('Test error message', error);
 
       const history = logger.getHistory('error');
       const errorEntry = history[0];
@@ -186,7 +186,7 @@ describe('Logger', () => {
     });
 
     it('should handle errors without error object', () => {
-      log.error('Test error message');
+      logger.error('Test error message');
 
       const history = logger.getHistory('error');
       const errorEntry = history[0];
@@ -203,7 +203,7 @@ describe('Logger', () => {
     });
 
     it('should export logs as JSON', () => {
-      log.info('Test message');
+      logger.info('Test message');
 
       const exportedLogs = logger.exportLogs();
       const parsedLogs = JSON.parse(exportedLogs);

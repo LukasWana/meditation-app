@@ -16,13 +16,11 @@ export const useTimer = (isPlaying, time, setTime, setIsPlaying) => {
           setTime(t => {
             const newTime = t - 1;
             if (newTime <= 0) {
-              // Použij setTimeout pro asynchronní aktualizaci stavu
-              setTimeout(() => {
-                setIsPlaying(false);
-              }, 0);
+              // Zastav přehrávání okamžitě (bez setTimeout) a timer clamping na 0
+              setIsPlaying(false);
             }
             isUpdatingRef.current = false;
-            return newTime;
+            return Math.max(0, newTime);
           });
         }
       }, 1000);

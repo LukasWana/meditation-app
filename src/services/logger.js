@@ -1,11 +1,44 @@
 
 
-class Logger {
-  constructor() {
-    this.isDevelopment = import.meta.env.MODE === 'development';
-    this.isProduction = import.meta.env.MODE === 'production';
+const DEFAULT_MAX_HISTORY_SIZE = 100;
+
+function getEnvMode() {
+  // Vitest/Node
+  if (typeof process !== 'undefined' && process?.env?.NODE_ENV) {
+    return process.env.NODE_ENV;
+  }
+  // Vite runtime
+  return import.meta?.env?.MODE || 'production';
+}
+
+export class Logger {
+  constructor({ maxHistorySize = DEFAULT_MAX_HISTORY_SIZE } = {}) {
+    this.maxHistorySize = maxHistorySize;
+    this.history = [];
+
+    const mode = getEnvMode();
+    this._isDevelopment = mode === 'development';
+    this._isProduction = mode === 'production';
+
     // Úrovně: 'silent', 'error', 'warn', 'info', 'debug'
-    this.logLevel = this.isDevelopment ? 'silent' : 'error';
+    this.logLevel = this._isDevelopment ? 'debug' : 'warn';
+  }
+
+  get isDevelopment() {
+    return this._isDevelopment;
+  }
+
+  set isDevelopment(value) {
+    this._isDevelopment = Boolean(value);
+    this.logLevel = this._isDevelopment ? 'debug' : 'warn';
+  }
+
+  get isProduction() {
+    return this._isProduction;
+  }
+
+  set isProduction(value) {
+    this._isProduction = Boolean(value);
   }
 
   setLogLevel(level) {
@@ -16,130 +49,132 @@ class Logger {
     const levels = ['silent', 'error', 'warn', 'info', 'debug'];
     const currentLevelIndex = levels.indexOf(this.logLevel);
     const messageLevelIndex = levels.indexOf(level);
+    if (currentLevelIndex === -1 || messageLevelIndex === -1) return false;
     return messageLevelIndex <= currentLevelIndex;
   }
 
+  _pushHistory(entry) {
+    this.history.push(entry);
+    if (this.history.length > this.maxHistorySize) {
+      this.history.splice(0, this.history.length - this.maxHistorySize);
+    }
+  }
+
+  _addHistory(level, message, args = [], error = null) {
+    const entry = {
+      timestamp: Date.now(),
+      level,
+      message,
+      args,
+      error: error
+        ? {
+          name: error?.name || 'Error',
+          message: error?.message || String(error),
+          stack: error?.stack || ''
+        }
+        : null
+    };
+    this._pushHistory(entry);
+  }
+
+  getHistory(level = null) {
+    if (!level) return [...this.history];
+    return this.history.filter((e) => e.level === level);
+  }
+
+  clearHistory() {
+    this.history = [];
+  }
+
+  exportLogs() {
+    const environment = getEnvMode();
+    const userAgent =
+      typeof navigator !== 'undefined' && navigator?.userAgent ? navigator.userAgent : 'unknown';
+
+    return JSON.stringify({
+      timestamp: Date.now(),
+      environment,
+      userAgent,
+      logs: this.getHistory()
+    });
+  }
+
+  debug(message, ...args) {
+    this._addHistory('debug', message, args);
+    if (this.shouldLog('debug')) {
+      console.log(`🐛 [DEBUG] ${message}`, ...args);
+    }
+  }
+
   info(message, ...args) {
+    this._addHistory('info', message, args);
     if (this.shouldLog('info')) {
       console.log(`ℹ️ [INFO] ${message}`, ...args);
     }
   }
 
-  warn(message, ...args) {
-    if (this.shouldLog('warn')) {
-      console.warn(`⚠️ [WARN] ${message}`, ...args);
-    }
-  }
-
-  error(message, ...args) {
-    if (this.shouldLog('error')) {
-      console.error(`❌ [ERROR] ${message}`, ...args);
-    }
-  }
-
   success(message, ...args) {
+    this._addHistory('info', message, args);
     if (this.shouldLog('info')) {
       console.log(`✅ [SUCCESS] ${message}`, ...args);
     }
   }
 
-  debug(message, ...args) {
-    if (this.shouldLog('debug')) {
-      console.debug(`🐛 [DEBUG] ${message}`, ...args);
-    }
-  }
-
-  performance(metric, value, unit = 'ms') {
-    if (this.shouldLog('debug')) {
-      console.log(`⚡ [PERF] ${metric}: ${value}${unit}`);
-    }
-  }
-
-  api(method, url, status, duration) {
-    if (this.shouldLog('info')) {
-      const statusIcon = status >= 200 && status < 300 ? '✅' : '❌';
-      console.log(`${statusIcon} [API] ${method} ${url} - ${status} (${duration}ms)`);
-    }
-  }
-
-  cache(operation, key, hit = null) {
-    if (this.shouldLog('debug')) {
-      const hitIcon = hit === true ? '🎯' : hit === false ? '💾' : '📦';
-      console.log(`${hitIcon} [CACHE] ${operation}: ${key}`);
-    }
-  }
-
-  firebase(operation, collection, docId = null) {
-    if (this.shouldLog('info')) {
-      console.log(`🔥 [FIREBASE] ${operation} ${collection}${docId ? `/${docId}` : ''}`);
-    }
-  }
-
-  sw(operation, details = '') {
-    if (this.shouldLog('debug')) {
-      console.log(`🔧 [SW] ${operation} ${details}`);
-    }
-  }
-
-  metadata(operation, fileName, details = '') {
-    if (this.shouldLog('debug')) {
-      console.log(`📊 [METADATA] ${operation}: ${fileName} ${details}`);
-    }
-  }
-
-  audio(operation, fileName, details = '') {
+  warn(message, ...args) {
+    this._addHistory('warn', message, args);
     if (this.shouldLog('warn')) {
-      console.log(`🎵 [AUDIO] ${operation}: ${fileName} ${details}`);
+      console.warn(`⚠️ [WARN] ${message}`, ...args);
     }
   }
 
-  ui(operation, component, details = '') {
-    if (this.shouldLog('debug')) {
-      console.log(`🎨 [UI] ${operation}: ${component} ${details}`);
-    }
-  }
-
-  navigation(from, to, method = 'click') {
-    if (this.shouldLog('debug')) {
-      console.log(`🧭 [NAV] ${from} → ${to} (${method})`);
-    }
-  }
-
-  errorWithStack(error, context = '') {
+  error(message, error = null, ...args) {
+    this._addHistory('error', message, args, error instanceof Error ? error : null);
     if (this.shouldLog('error')) {
-      console.error(`❌ [ERROR] ${context}`, error);
-      if (error.stack) {
-        console.error('Stack trace:', error.stack);
+      if (error instanceof Error) {
+        console.error(`❌ [ERROR] ${message}`, error, ...args);
+      } else {
+        console.error(`❌ [ERROR] ${message}`, error, ...args);
       }
     }
   }
 
-  group(name, fn) {
-    if (this.shouldLog('debug')) {
-      console.group(`📁 ${name}`);
-      fn();
-      console.groupEnd();
-    } else {
-      fn();
+  audio(message, ...args) {
+    this._addHistory('info', message, args);
+    if (this.shouldLog('info')) {
+      console.log(`🎵 [AUDIO] ${message}`, ...args);
     }
   }
 
-  table(data, title = 'Data') {
+  cache(message, ...args) {
+    this._addHistory('debug', message, args);
     if (this.shouldLog('debug')) {
-      console.log(`📋 ${title}:`);
-      console.table(data);
+      console.log(`💾 [CACHE] ${message}`, ...args);
     }
   }
 
-  time(label) {
-    if (this.shouldLog('debug')) {
-      console.time(`⏱️ ${label}`);
+  firebase(message, ...args) {
+    this._addHistory('info', message, args);
+    if (this.shouldLog('info')) {
+      console.log(`🔥 [FIREBASE] ${message}`, ...args);
     }
   }
 
-  timeEnd(label) {
+  performance(operation, durationMs) {
+    this._addHistory('debug', operation, [durationMs]);
     if (this.shouldLog('debug')) {
-      console.timeEnd(`⏱️ ${label}`);
+      const d = Number(durationMs);
+      const icon = Number.isFinite(d) ? (d < 1000 ? '🟢' : d < 3000 ? '🟡' : '🔴') : '⚪';
+      const display = Number.isFinite(d) ? `${d}ms` : 'unknown';
+      console.log(`${icon} [PERF] ${operation} (${display})`);
+    }
+  }
+
+  errorWithStack(error, context = '') {
+    const err = error instanceof Error ? error : new Error(String(error));
+    this._addHistory('error', context || err.message, [], err);
+    if (this.shouldLog('error')) {
+      console.error(`❌ [ERROR] ${context}`, err);
+      if (err.stack) console.error('Stack trace:', err.stack);
     }
   }
 }
@@ -148,4 +183,3 @@ class Logger {
 const log = new Logger();
 
 export default log;
-export { Logger };

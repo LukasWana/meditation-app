@@ -6,14 +6,20 @@ export class BaseCache {
     this.type = type;
     this.limit = limit;
     this.ttl = ttl;
-    this.enablePersistence = enablePersistence;
+    const isTestEnv =
+      (typeof process !== 'undefined' && process?.env?.NODE_ENV === 'test') ||
+      (import.meta?.env?.MODE === 'test');
+
+    // V testech vypni persistenci, aby se cache nemíchala mezi běhy přes localStorage.
+    this.enablePersistence = enablePersistence && !isTestEnv;
     this.storageKey = `cache_${type}`;
 
     // Načti data z localStorage při inicializaci
     if (this.enablePersistence) {
       this.loadFromStorage();
     }
-  }
+  }
+
   set(key, value, customTTL = null) {
     // Pokud je cache plná, odstraň nejstarší položky
     if (this.cache.size >= this.limit) {
@@ -32,7 +38,8 @@ export class BaseCache {
     if (this.enablePersistence) {
       this.saveToStorage();
     }
-  }
+  }
+
   get(key) {
     const entry = this.cache.get(key);
 
@@ -47,10 +54,12 @@ export class BaseCache {
     }
 
     return entry.value;
-  }
+  }
+
   has(key) {
     return this.get(key) !== null;
-  }
+  }
+
   delete(key) {
     this.cache.delete(key);
 
@@ -58,7 +67,8 @@ export class BaseCache {
     if (this.enablePersistence) {
       this.saveToStorage();
     }
-  }
+  }
+
   clear() {
     this.cache.clear();
 
@@ -66,12 +76,14 @@ export class BaseCache {
     if (this.enablePersistence) {
       this.clearStorage();
     }
-  }
+  }
+
   cleanupOldEntries() {
     const entries = Array.from(this.cache.entries());
     const toRemove = entries.slice(0, Math.floor(this.limit * 0.2));
     toRemove.forEach(([key]) => this.cache.delete(key));
-  }
+  }
+
   cleanupExpired() {
     const now = Date.now();
     const entries = Array.from(this.cache.entries());
@@ -81,7 +93,8 @@ export class BaseCache {
         this.cache.delete(key);
       }
     });
-  }
+  }
+
   getStats() {
     return {
       type: this.type,
@@ -90,7 +103,8 @@ export class BaseCache {
       ttl: this.ttl,
       persistence: this.enablePersistence
     };
-  }
+  }
+
   saveToStorage() {
     if (!this.enablePersistence || typeof window === 'undefined') {
       return;
@@ -111,7 +125,8 @@ export class BaseCache {
     } catch (error) {
       console.warn(`Failed to save ${this.type} cache to localStorage:`, error);
     }
-  }
+  }
+
   loadFromStorage() {
     if (!this.enablePersistence || typeof window === 'undefined') {
       return;
@@ -133,7 +148,8 @@ export class BaseCache {
     } catch (error) {
       console.warn(`Failed to load ${this.type} cache from localStorage:`, error);
     }
-  }
+  }
+
   clearStorage() {
     if (!this.enablePersistence || typeof window === 'undefined') {
       return;
