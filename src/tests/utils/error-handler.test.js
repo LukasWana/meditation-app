@@ -174,10 +174,11 @@ describe('ErrorHandler', () => {
       });
 
       // Add some errors to queue
-      errorHandler.errorQueue = [
+      const seededErrors = [
         { id: 'error1', message: 'Error 1' },
         { id: 'error2', message: 'Error 2' }
       ];
+      errorHandler.errorQueue = [...seededErrors];
 
       await errorHandler.flushErrors();
 
@@ -187,7 +188,7 @@ describe('ErrorHandler', () => {
           'Content-Type': 'application/json',
           'X-Session-ID': errorHandler.sessionId
         },
-        body: JSON.stringify({ errors: errorHandler.errorQueue })
+        body: JSON.stringify({ errors: seededErrors })
       });
 
       expect(errorHandler.errorQueue).toHaveLength(0);

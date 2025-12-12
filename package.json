@@ -6,12 +6,12 @@
   "scripts": {
     "dev": "npx vite",
     "build": "npx vite build",
-    "lint": "eslint . --ext js,jsx --report-unused-disable-directives --max-warnings 0",
+    "lint": "eslint . --ext js,jsx --report-unused-disable-directives --max-warnings 0 --ignore-pattern dist --ignore-pattern coverage",
     "preview": "npx vite preview",
-    "test": "vitest",
-    "test:ui": "vitest --ui",
-    "test:coverage": "vitest --coverage",
-    "test:run": "vitest run",
+    "test": "cross-env NODE_ENV=test vitest",
+    "test:ui": "cross-env NODE_ENV=test vitest --ui",
+    "test:coverage": "cross-env NODE_ENV=test vitest --coverage",
+    "test:run": "cross-env NODE_ENV=test vitest run",
     "prepare": "husky install"
   },
   "dependencies": {
@@ -34,9 +34,11 @@
     "@types/react": "^18.2.15",
     "@types/react-dom": "^18.2.7",
     "@vitejs/plugin-react": "^4.7.0",
-    "@vitest/coverage-v8": "^1.0.4",
-    "@vitest/ui": "^1.0.4",
+    "@vitest/coverage-v8": "^4.0.15",
+    "@vitest/ui": "^4.0.15",
     "autoprefixer": "^10.4.14",
+    "baseline-browser-mapping": "^2.9.6",
+    "cross-env": "^7.0.3",
     "eslint": "^8.57.1",
     "eslint-plugin-react": "^7.37.5",
     "eslint-plugin-react-hooks": "^4.6.0",
@@ -50,6 +52,6 @@
     "typescript-eslint": "^8.46.1",
     "vite": "^7.1.11",
     "vite-plugin-svgr": "^4.5.0",
-    "vitest": "^1.0.4"
+    "vitest": "^4.0.15"
   }
 }

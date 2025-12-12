@@ -1,4 +1,6 @@
 module.exports = {
+  root: true,
+  ignorePatterns: ['dist/**', 'coverage/**', 'node_modules/**', 'public/**', '*.config.js', '*.config.mjs'],
   env: {
     browser: true,
     es2021: true,
@@ -26,5 +28,19 @@ module.exports = {
     react: {
       version: 'detect'
     }
-  }
+  },
+  overrides: [
+    {
+      files: ['**/*.test.js', '**/*.test.jsx', 'src/tests/**/*.js'],
+      globals: {
+        describe: 'readonly',
+        it: 'readonly',
+        expect: 'readonly',
+        beforeEach: 'readonly',
+        afterEach: 'readonly',
+        vi: 'readonly',
+        test: 'readonly'
+      }
+    }
+  ]
 };

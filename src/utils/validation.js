@@ -117,7 +117,7 @@ export const validateFirebaseDocId = (docId) => {
   if (docId !== docId.trim()) return false;
 
   // Nesmí obsahovat některé speciální znaky
-  const forbiddenChars = /[\/\s]/;
+  const forbiddenChars = /[/\s]/;
   if (forbiddenChars.test(docId)) return false;
 
   return true;
@@ -162,6 +162,7 @@ export const validateStoragePath = (path) => {
   if (path.includes('//')) return false;
 
   // Nesmí obsahovat zakázané znaky
+  // eslint-disable-next-line no-control-regex
   const forbiddenChars = /[<>:"|?*\x00-\x1f]/;
   if (forbiddenChars.test(path)) return false;
 
@@ -346,7 +347,10 @@ export const validateInput = (input, schema) => {
     }
 
     result.isValid = result.isValid && fieldResult.isValid;
-    result.errors[field] = fieldResult.errors || [];
+    const fieldErrors = fieldResult.errors || [];
+    if (fieldErrors.length > 0) {
+      result.errors[field] = fieldErrors;
+    }
 
     if (fieldResult.sanitizedValue !== undefined) {
       result.sanitizedData[field] = fieldResult.sanitizedValue;
