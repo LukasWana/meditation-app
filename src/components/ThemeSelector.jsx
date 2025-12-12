@@ -1,4 +1,4 @@
-import React, { useState, useContext } from 'react';
+import React, { useState, useContext, useEffect, useCallback } from 'react';
 import { motion } from 'framer-motion';
 import { ThemeContext } from '@contexts/ThemeContext';
 import { useLanguage } from '@contexts/LanguageContext';
@@ -6,26 +6,9 @@ import { getThemeName } from '@data/themes';
 // Omezení odstraněna - obrázky se nahrávají bez validace a zpracování
 import FramerSection from '@components/FramerSection';
 import { ImageIcon, X } from 'lucide-react';
-
-// Import defaultních obrázků pozadí
-import defaultBg1 from '@assets/backgrounds/pexels-arts-1496373.jpg';
-import defaultBg2 from '@assets/backgrounds/pexels-brakou-1723637.jpg';
-import defaultBg3 from '@assets/backgrounds/pexels-eberhardgross-1624496.jpg';
-import defaultBg4 from '@assets/backgrounds/pexels-gabriel-peter-219375-719396.jpg';
-import defaultBg5 from '@assets/backgrounds/pexels-zetong-li-880728-1784578-min.jpg';
-import defaultBg6 from '@assets/backgrounds/samuel-ferrara-dKJXkKCF2D8-unsplash.jpg';
-import defaultBg7 from '@assets/backgrounds/will-turner-KWzUuVg7U-0-unsplash.jpg';
-
-// Seznam defaultních obrázků
-const DEFAULT_BACKGROUNDS = [
-  defaultBg1,
-  defaultBg2,
-  defaultBg3,
-  defaultBg4,
-  defaultBg5,
-  defaultBg6,
-  defaultBg7
-];
+import { ref, listAll, getDownloadURL, getMetadata } from 'firebase/storage';
+import { storage } from '@config/secure-firebase';
+import log from '@services/logger';
 
 const ThemeSelector = () => {
   const { t, language } = useLanguage();
@@ -35,6 +18,106 @@ const ThemeSelector = () => {
   const { themes, currentTheme, themeId, changeTheme, customBackground, setCustomBackground, removeCustomBackground, allowsCustomBackground } = themeContext || {};
   const [isProcessing, setIsProcessing] = useState(false);
   const [error, setError] = useState(null);
+  const [firebaseBackgrounds, setFirebaseBackgrounds] = useState([]);
+  const [firebaseBackgroundsLoading, setFirebaseBackgroundsLoading] = useState(false);
+  const [firebaseBackgroundsError, setFirebaseBackgroundsError] = useState(null);
+
+  // Funkce pro načtení náhledu pro pozadí
+  const loadThumbnailForBackground = useCallback(async (imageName) => {
+    try {
+      const thumbnailRef = ref(storage, `background/thumbnails/${imageName}`);
+      const thumbnailURL = await getDownloadURL(thumbnailRef);
+      return thumbnailURL;
+    } catch (error) {
+      // Náhled neexistuje - není to chyba
+      return null;
+    }
+  }, []);
+
+  // Funkce pro načtení pozadí z Firebase Storage
+  const loadFirebaseBackgrounds = useCallback(async () => {
+    try {
+      setFirebaseBackgroundsLoading(true);
+      setFirebaseBackgroundsError(null);
+
+      console.log('🔄 Loading backgrounds from Firebase Storage...');
+      console.log('🔄 Storage:', storage);
+      log.info('🔄 Loading backgrounds from Firebase Storage...');
+
+      // Načti soubory ze složky background/
+      const backgroundRef = ref(storage, 'background');
+      console.log('🔄 Background ref:', backgroundRef);
+
+      const backgroundResult = await listAll(backgroundRef);
+      console.log('🔄 Background result:', {
+        items: backgroundResult.items.length,
+        prefixes: backgroundResult.prefixes.length,
+        itemsList: backgroundResult.items.map(item => item.name)
+      });
+
+      // Filtruj pouze obrázky (ne složky)
+      const imageFiles = backgroundResult.items.filter(item => {
+        const name = item.name.toLowerCase();
+        return name.endsWith('.jpg') || name.endsWith('.jpeg') || name.endsWith('.png') || name.endsWith('.webp');
+      });
+
+      console.log('🔄 Filtered image files:', imageFiles.length, imageFiles.map(f => f.name));
+
+      const backgrounds = [];
+
+      // Pro každý obrázek získat metadata, downloadURL a náhled
+      for (const itemRef of imageFiles) {
+        try {
+          console.log(`🔄 Processing image: ${itemRef.name}`);
+          const metadata = await getMetadata(itemRef);
+          const downloadURL = await getDownloadURL(itemRef);
+
+          // Zkusit načíst náhled
+          const thumbnailURL = await loadThumbnailForBackground(itemRef.name);
+          console.log(`✅ Loaded ${itemRef.name}, thumbnail: ${thumbnailURL ? 'yes' : 'no'}`);
+
+          backgrounds.push({
+            name: itemRef.name,
+            fullPath: itemRef.fullPath,
+            downloadURL: downloadURL,
+            thumbnailURL: thumbnailURL,
+            size: metadata.size,
+            contentType: metadata.contentType
+          });
+        } catch (metaError) {
+          console.warn(`❌ Failed to get metadata for ${itemRef.name}:`, metaError);
+          log.warn(`Failed to get metadata for ${itemRef.name}:`, metaError.message);
+        }
+      }
+
+      console.log(`✅ Loaded ${backgrounds.length} backgrounds from Firebase Storage:`, backgrounds);
+      setFirebaseBackgrounds(backgrounds);
+      log.success(`✅ Loaded ${backgrounds.length} backgrounds from Firebase Storage`);
+    } catch (error) {
+      console.error('❌ Failed to load backgrounds from Firebase Storage:', error);
+      console.error('❌ Error details:', {
+        code: error.code,
+        message: error.message,
+        stack: error.stack
+      });
+      log.error('Failed to load backgrounds from Firebase Storage:', error);
+      setFirebaseBackgroundsError(`Chyba při načítání pozadí: ${error.message}`);
+    } finally {
+      setFirebaseBackgroundsLoading(false);
+    }
+  }, [loadThumbnailForBackground]);
+
+  // Načti Firebase pozadí při mount komponenty
+  useEffect(() => {
+    console.log('🔄 ThemeSelector: useEffect triggered, loading Firebase backgrounds...');
+    console.log('🔄 Storage instance:', storage);
+    console.log('🔄 ThemeContext available:', !!themeContext);
+    
+    // Načti pozadí z Firebase vždy, nezávisle na theme contextu
+    loadFirebaseBackgrounds().catch(err => {
+      console.error('❌ Failed to load Firebase backgrounds in useEffect:', err);
+    });
+  }, [loadFirebaseBackgrounds]);
 
   // Fallback pokud data nejsou dostupná
   if (!themeContext || !themes || !currentTheme || !themeId) {
@@ -340,36 +423,70 @@ const ThemeSelector = () => {
                   {t('vyberteObrazek') || 'Vyberte libovolný obrázek'}
                 </p>
 
-                {/* Defaultní obrázky jako malé čtverečky */}
+                {/* Firebase pozadí */}
                 <div className="mt-4">
                   <p
                     className="text-xs mb-2"
                     style={{ color: textSecondaryColor }}
                   >
-                    {t('vychoziObrazky') || 'Výchozí obrázky:'}
+                    {t('pozadiZFirebase') || 'Pozadí z Firebase:'}
                   </p>
-                  <div className="grid grid-cols-4 gap-2">
-                    {DEFAULT_BACKGROUNDS.map((bgUrl, index) => (
-                      <motion.button
-                        key={index}
-                        onClick={() => handleDefaultImageSelect(bgUrl)}
-                        className="relative w-full aspect-square rounded-lg overflow-hidden border-2"
-                        style={{
-                          borderColor: borderColor
-                        }}
-                        whileHover={{ scale: 1.05 }}
-                        whileTap={{ scale: 0.95 }}
-                        disabled={isProcessing}
-                      >
-                        <img
-                          src={bgUrl}
-                          alt={`Default background ${index + 1}`}
-                          className="w-full h-full object-cover"
-                        />
-                        <div className="absolute inset-0 bg-black/0 hover:bg-black/10 transition-colors" />
-                      </motion.button>
-                    ))}
-                  </div>
+                  {firebaseBackgroundsLoading && (
+                    <div className="flex items-center justify-center py-4">
+                      <div className="text-center">
+                        <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-current mx-auto" style={{ color: textSecondaryColor }}></div>
+                        <p className="mt-2 text-xs" style={{ color: textSecondaryColor }}>
+                          {t('nacitani') || 'Načítání...'}
+                        </p>
+                      </div>
+                    </div>
+                  )}
+                  {firebaseBackgroundsError && (
+                    <div
+                      className="mb-3 p-2 rounded-lg text-xs border"
+                      style={{
+                        backgroundColor: isDarkMode ? 'rgba(220, 38, 38, 0.2)' : 'rgba(254, 242, 242, 1)',
+                        borderColor: isDarkMode ? 'rgba(220, 38, 38, 0.5)' : 'rgba(254, 202, 202, 1)',
+                        color: isDarkMode ? 'rgba(254, 202, 202, 1)' : 'rgba(185, 28, 28, 1)'
+                      }}
+                    >
+                      {firebaseBackgroundsError}
+                      {import.meta.env.MODE === 'development' && (
+                        <div className="mt-2 text-xs opacity-75">
+                          Zkontrolujte konzoli pro více informací
+                        </div>
+                      )}
+                    </div>
+                  )}
+                  {!firebaseBackgroundsLoading && firebaseBackgrounds.length === 0 && !firebaseBackgroundsError && (
+                    <p className="text-xs py-2" style={{ color: textSecondaryColor }}>
+                      Žádná pozadí v Firebase Storage
+                    </p>
+                  )}
+                  {!firebaseBackgroundsLoading && firebaseBackgrounds.length > 0 && (
+                    <div className="grid grid-cols-4 gap-2">
+                      {firebaseBackgrounds.map((bg, index) => (
+                        <motion.button
+                          key={index}
+                          onClick={() => handleDefaultImageSelect(bg.downloadURL)}
+                          className="relative w-full aspect-square rounded-lg overflow-hidden border-2"
+                          style={{
+                            borderColor: borderColor
+                          }}
+                          whileHover={{ scale: 1.05 }}
+                          whileTap={{ scale: 0.95 }}
+                          disabled={isProcessing}
+                        >
+                          <img
+                            src={bg.thumbnailURL || bg.downloadURL}
+                            alt={`Firebase background ${bg.name}`}
+                            className="w-full h-full object-cover"
+                          />
+                          <div className="absolute inset-0 bg-black/0 hover:bg-black/10 transition-colors" />
+                        </motion.button>
+                      ))}
+                    </div>
+                  )}
                 </div>
               </div>
             )}

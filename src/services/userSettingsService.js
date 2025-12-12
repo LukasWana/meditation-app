@@ -387,3 +387,4 @@ class UserSettingsService {
 const userSettingsService = new UserSettingsService();
 export default userSettingsService;
 
+
