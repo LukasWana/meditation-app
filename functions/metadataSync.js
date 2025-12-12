@@ -5,7 +5,6 @@
 
 const functions = require('firebase-functions');
 const admin = require('firebase-admin');
-const cors = require('cors')({ origin: true });
 const path = require('path');
 const os = require('os');
 const fs = require('fs');
@@ -40,7 +39,7 @@ exports.testMetadata = functions
     memory: '128MB'
   })
   .https
-  .onCall(async (data, context) => {
+  .onCall(async (_data, _context) => {
     return {
       success: true,
       message: 'Metadata service is working',
@@ -69,7 +68,7 @@ async function extractAudioMetadata(fileName, bucketName) {
       let duration = null;
       try {
         const { spawn } = require('child_process');
-        duration = await new Promise((resolve, reject) => {
+        duration = await new Promise((resolve, _reject) => {
           const ffprobe = spawn('ffprobe', [
             '-v', 'quiet',
             '-print_format', 'json',
@@ -78,14 +77,14 @@ async function extractAudioMetadata(fileName, bucketName) {
           ]);
 
           let output = '';
-          let errorOutput = '';
+          let _errorOutput = '';
 
           ffprobe.stdout.on('data', (data) => {
             output += data.toString();
           });
 
           ffprobe.stderr.on('data', (data) => {
-            errorOutput += data.toString();
+            _errorOutput += data.toString();
           });
 
           ffprobe.on('close', (code) => {
@@ -486,14 +485,14 @@ async function extractImageMetadata(fileName, bucketName) {
           ]);
 
           let output = '';
-          let errorOutput = '';
+          let _errorOutput = '';
 
           ffprobe.stdout.on('data', (data) => {
             output += data.toString();
           });
 
           ffprobe.stderr.on('data', (data) => {
-            errorOutput += data.toString();
+            _errorOutput += data.toString();
           });
 
           ffprobe.on('close', (code) => {
@@ -728,7 +727,7 @@ exports.syncAllFiles = functions
     memory: '1GB'
   })
   .https
-  .onCall(async (data, context) => {
+  .onCall(async (_data, _context) => {
     try {
       console.log('🚀 Starting manual sync for all files...');
 
@@ -969,7 +968,7 @@ exports.syncStorage = functions
     memory: '512MB'
   })
   .https
-  .onCall(async (data, context) => {
+  .onCall(async (_data, _context) => {
     try {
       console.log('🚀 Starting manual metadata sync...');
 
@@ -1026,7 +1025,7 @@ exports.getFileStats = functions
     memory: '128MB'
   })
   .https
-  .onCall(async (data, context) => {
+  .onCall(async (_data, _context) => {
     try {
       const snapshot = await db.collection('audio-metadata').limit(1000).get();
       const stats = {
@@ -1071,7 +1070,7 @@ exports.saveScrapedMetadata = functions
     memory: '256MB'
   })
   .https
-  .onCall(async (data, context) => {
+  .onCall(async (data, _context) => {
     try {
       const { fileName, metadata } = data || {};
 
@@ -1101,7 +1100,7 @@ exports.cleanupMetadata = functions
     memory: '256MB'
   })
   .https
-  .onCall(async (data, context) => {
+  .onCall(async (_data, _context) => {
     try {
       console.log('🧹 Starting metadata cleanup...');
 

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import cacheService from '@services/cacheServiceRefactored';
 import log from '@services/logger';
 

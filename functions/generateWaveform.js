@@ -5,7 +5,6 @@
 
 const functions = require('firebase-functions');
 const admin = require('firebase-admin');
-const { Storage } = require('@google-cloud/storage');
 const path = require('path');
 const os = require('os');
 const fs = require('fs');
@@ -171,54 +170,6 @@ async function generateWaveformFromFile(tempFilePath, samples = 800) {
   }
 }
 
-/**
- * Fallback: Generuje waveform data z raw audio bufferu (pokud ffmpeg selže)
- * @param {Buffer} audioBuffer - Audio data jako Buffer
- * @param {number} samples - Počet vzorků pro waveformu (default: 800)
- * @returns {Array<number>} - Pole amplitud (0-1)
- */
-function generateWaveformFromBuffer(audioBuffer, samples = 150) {
-  try {
-    const fileSize = audioBuffer.length;
-    const waveform = [];
-    const bytesPerSample = Math.floor(fileSize / samples);
-
-    // Analyzuj raw audio data - vezmeme průměrné hodnoty z různých částí souboru
-    for (let i = 0; i < samples; i++) {
-      const startByte = i * bytesPerSample;
-      const endByte = Math.min(startByte + bytesPerSample, fileSize);
-
-      let sum = 0;
-      let count = 0;
-      let maxValue = 0;
-      let minValue = 255;
-
-      // Vypočítej statistiku z této části souboru
-      for (let j = startByte; j < endByte; j++) {
-        const byteValue = audioBuffer[j];
-        sum += byteValue;
-        count++;
-        maxValue = Math.max(maxValue, byteValue);
-        minValue = Math.min(minValue, byteValue);
-      }
-
-      // Vypočítej amplitudu z rozsahu hodnot (bez umělého vzoru!)
-      const range = maxValue - minValue;
-      const average = count > 0 ? sum / count : 128;
-
-      // Normalizuj na 0-1 (použijeme pouze rozsah a průměr - BEZ Math.sin!)
-      const amplitude = (range / 255) * 0.7 + (Math.abs(average - 128) / 128) * 0.3;
-      const waveformValue = Math.min(Math.max(amplitude, 0.1), 1);
-
-      waveform.push(waveformValue);
-    }
-
-    return waveform;
-  } catch (error) {
-    console.error('Error generating waveform from buffer:', error);
-    return new Array(samples).fill(0.5);
-  }
-}
 
 /**
  * HTTP Callable Function pro generování waveformy
@@ -233,7 +184,7 @@ exports.generateWaveform = functions
     memory: '512MB'
   })
   .https
-  .onCall(async (data, context) => {
+  .onCall(async (data, _context) => {
     try {
       // ✅ OPRAVA: Zvýšeno z 150 na 800 pro lepší detail
       const { fileName, samples = 800 } = data || {};
@@ -261,11 +212,9 @@ exports.generateWaveform = functions
       try {
         // Vygeneruj waveformu pomocí ffmpeg (správná metoda)
         let waveformData = null;
-        let usedMethod = 'unknown';
 
         try {
           waveformData = await generateWaveformFromFile(tempFilePath, samples);
-          usedMethod = 'ffmpeg-pcm';
           console.log(`✅ Waveform generated using ffmpeg PCM for ${fileName}`);
 
           // Debug: zobraz statistiku pro kontrolu
@@ -280,7 +229,6 @@ exports.generateWaveform = functions
           // NEPOUŽÍVEJME fallback metodu - vytváří syntetický vzor, který není skutečný!
           // Raději vrať null a nech uživatele znovu vygenerovat waveform pomocí ffmpeg
           waveformData = null;
-          usedMethod = 'failed';
           console.error(`❌ Waveform generation failed for ${fileName} - ffmpeg required`);
         }
 

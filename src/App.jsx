@@ -222,8 +222,11 @@ function MeditationApp() {
       window.setLogLevel = async (level) => {
         const { default: log } = await import('./services/logger');
         log.setLogLevel(level);
-        console.log(`🔧 Log level nastaven na: ${level}`);
-        console.log('Dostupné úrovně: silent, error, warn, info, debug');
+        // Použij originální console pro tento log, aby se vždy zobrazil
+        const originalConsole = window.console;
+        originalConsole.log(`🔧 Log level nastaven na: ${level}`);
+        originalConsole.log('Dostupné úrovně: silent, error, warn, info, debug');
+        originalConsole.log('Poznámka: console.error() a console.warn() se vždy zobrazí');
       };
 
       // Funkce pro synchronizaci všech souborů pomocí Firebase Function
