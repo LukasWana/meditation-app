@@ -1,5 +1,4 @@
-import React, { useState, useEffect } from 'react';
-import cacheService from '@services/cacheServiceRefactored';
+import React, { useState } from 'react';
 
 const DurationDisplayTest = () => {
   const [testResults, setTestResults] = useState([]);
@@ -48,7 +47,7 @@ const DurationDisplayTest = () => {
   };
 
   const runTest = () => {
-    const results = testItems.map((item, index) => {
+    const results = testItems.map((item, _index) => {
       const displayDuration = getDisplayDuration(item);
       const formattedDuration = formatDuration(displayDuration);
 

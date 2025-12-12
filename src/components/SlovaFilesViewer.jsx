@@ -212,7 +212,7 @@ const SlovaFilesViewer = () => {
     }
   };
 
-  const renderFileList = (files, title, folder) => (
+  const renderFileList = (files, title, _folder) => (
     <div className="border rounded-lg p-4 mb-4">
       <h3 className="text-lg font-semibold mb-3 flex items-center">
         📁 {title}

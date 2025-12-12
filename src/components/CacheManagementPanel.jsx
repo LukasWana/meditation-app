@@ -40,7 +40,7 @@ const CacheManagementPanel = () => {
       log.info('🔄 Loading all cache data from Realtime Database...');
 
       const dbRef = ref(realtimeDatabase);
-      
+
       // Načti audio_metadata
       const audioMetadataSnapshot = await get(child(dbRef, 'audio_metadata'));
       const audioMetadata = audioMetadataSnapshot.exists() ? audioMetadataSnapshot.val() : null;
@@ -83,33 +83,33 @@ const CacheManagementPanel = () => {
 
   const scanAndCreateCache = async () => {
     if (creatingCache || !user) return;
-    
+
     try {
       setCreatingCache(true);
       setScanningFiles(true);
       setCacheError(null);
-      
+
       log.info('🔄 Starting cache creation process...');
-      
+
       // Import Firebase Storage functions
       const { ref: storageRef, listAll } = await import('firebase/storage');
       const { storage } = await import('../config/secure-firebase');
-      
+
       // Skenuj všechny soubory
       const allFiles = [];
       const rootRef = storageRef(storage, '');
       const rootResult = await listAll(rootRef);
-      
+
       // Skenuj všechny složky
       for (const folderRef of rootResult.prefixes) {
         const folderResult = await listAll(folderRef);
-        
+
         // Přidej soubory z hlavní složky
         for (const itemRef of folderResult.items) {
           try {
             const metadata = await itemRef.getMetadata();
             const downloadURL = await itemRef.getDownloadURL();
-            
+
             allFiles.push({
               name: itemRef.name,
               fullPath: itemRef.fullPath,
@@ -120,24 +120,24 @@ const CacheManagementPanel = () => {
               downloadURL: downloadURL,
               folder: folderRef.name,
               category: folderRef.name === 'hudba' ? 'hudba' : 'slova',
-              language: folderRef.name.includes('CZ') ? 'CZ' : 
-                       folderRef.name.includes('SK') ? 'SK' : 
+              language: folderRef.name.includes('CZ') ? 'CZ' :
+                       folderRef.name.includes('SK') ? 'SK' :
                        folderRef.name.includes('EN') ? 'EN' : null
             });
           } catch (error) {
             log.warn(`Failed to process file ${itemRef.name}:`, error.message);
           }
         }
-        
+
         // Skenuj podsložky (např. slova/CZ, slova/SK, slova/EN)
         for (const subFolderRef of folderResult.prefixes) {
           const subFolderResult = await listAll(subFolderRef);
-          
+
           for (const itemRef of subFolderResult.items) {
             try {
               const metadata = await itemRef.getMetadata();
               const downloadURL = await itemRef.getDownloadURL();
-              
+
               allFiles.push({
                 name: itemRef.name,
                 fullPath: itemRef.fullPath,
@@ -156,20 +156,20 @@ const CacheManagementPanel = () => {
           }
         }
       }
-      
+
       setScanProgress({ current: 0, total: allFiles.length });
       log.info(`📁 Found ${allFiles.length} audio files to process`);
-      
+
       // Extrahuj metadata pro každý soubor
       const filesWithMetadata = [];
       for (let i = 0; i < allFiles.length; i++) {
         const file = allFiles[i];
         setScanProgress({ current: i + 1, total: allFiles.length });
-        
+
         try {
           log.info(`⏱️ Extracting metadata for ${file.name} (${i + 1}/${allFiles.length})`);
           const metadata = await extractAudioMetadata(file.downloadURL);
-          
+
           filesWithMetadata.push({
             ...file,
             duration: metadata.duration,
@@ -188,23 +188,23 @@ const CacheManagementPanel = () => {
           });
         }
       }
-      
+
       setScanningFiles(false);
       log.info('💾 Saving metadata to Realtime Database...');
-      
+
       // Ulož do Realtime Database
       const result = await audioMetadataStorageService.saveBatchMetadata(filesWithMetadata);
-      
+
       if (result.success) {
         log.success(`✅ Cache creation completed: ${result.savedCount}/${result.totalCount} files saved`);
         alert(`✅ Cache úspěšně vytvořen! Uloženo ${result.savedCount}/${result.totalCount} souborů do Realtime Database.`);
-        
+
         // Reload cache data
         await loadAllCacheData();
       } else {
         throw new Error('Failed to save cache to database');
       }
-      
+
     } catch (error) {
       log.error('Failed to create cache:', error);
       setCacheError(`Error creating cache: ${error.message}`);
@@ -229,7 +229,7 @@ const CacheManagementPanel = () => {
     const hours = Math.floor(seconds / 3600);
     const minutes = Math.floor((seconds % 3600) / 60);
     const remainingSeconds = seconds % 60;
-    
+
     if (hours > 0) {
       return `${hours}:${minutes.toString().padStart(2, '0')}:${remainingSeconds.toString().padStart(2, '0')}`;
     }
@@ -247,7 +247,7 @@ const CacheManagementPanel = () => {
         <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
           <h3 className="text-lg font-semibold text-yellow-800 mb-2">⚠️ Cache není vytvořen</h3>
           <p className="text-yellow-700">
-            Realtime Database cache neobsahuje žádná data. Klikněte na "Vytvořit Cache" pro skenování a vytvoření cache.
+            Realtime Database cache neobsahuje žádná data. Klikněte na &quot;Vytvořit Cache&quot; pro skenování a vytvoření cache.
           </p>
         </div>
       );
@@ -256,7 +256,7 @@ const CacheManagementPanel = () => {
     const files = Object.values(cacheData.audio_metadata).filter(file => file && typeof file === 'object');
     const slovaFiles = files.filter(file => file.category === 'slova');
     const hudbaFiles = files.filter(file => file.category === 'hudba');
-    
+
     const slovaByLanguage = {
       CZ: slovaFiles.filter(file => file.language === 'CZ'),
       SK: slovaFiles.filter(file => file.language === 'SK'),
@@ -397,7 +397,7 @@ const CacheManagementPanel = () => {
         >
           {cacheLoading ? '🔄 Loading...' : '🔄 Refresh Cache Data'}
         </button>
-        
+
         <button
           onClick={scanAndCreateCache}
           disabled={creatingCache || cacheLoading || !user}
@@ -412,7 +412,7 @@ const CacheManagementPanel = () => {
         <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
           <h3 className="text-lg font-semibold text-blue-800 mb-2">⏱️ Extracting Audio Metadata</h3>
           <div className="w-full bg-gray-200 rounded-full h-2 mb-2">
-            <div 
+            <div
               className="bg-blue-600 h-2 rounded-full transition-all duration-300"
               style={{ width: `${(scanProgress.current / scanProgress.total) * 100}%` }}
             ></div>

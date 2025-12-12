@@ -21,7 +21,8 @@ export class Logger {
     this._isProduction = mode === 'production';
 
     // Úrovně: 'silent', 'error', 'warn', 'info', 'debug'
-    this.logLevel = this._isDevelopment ? 'debug' : 'warn';
+    // Výchozí: 'silent' pro tichý režim (můžete změnit na 'warn' pro více logů)
+    this.logLevel = this._isDevelopment ? 'silent' : 'silent';
   }
 
   get isDevelopment() {
@@ -30,7 +31,8 @@ export class Logger {
 
   set isDevelopment(value) {
     this._isDevelopment = Boolean(value);
-    this.logLevel = this._isDevelopment ? 'debug' : 'warn';
+    // Výchozí: 'silent' pro tichý režim
+    this.logLevel = this._isDevelopment ? 'silent' : 'silent';
   }
 
   get isProduction() {
@@ -181,5 +183,106 @@ export class Logger {
 
 // Singleton instance
 const log = new Logger();
+
+// Console wrapper pro centrální ovládání všech logů
+let originalConsole = null;
+let consoleWrapper = null;
+
+/**
+ * Inicializuje console wrapper, který zachytí všechna console.log() volání
+ * a bude je filtrovat podle log levelu z loggeru
+ */
+export function initConsoleWrapper() {
+  if (typeof window === 'undefined' || originalConsole) {
+    return; // Už inicializováno nebo nejsme v browseru
+  }
+
+  // Ulož originální console
+  originalConsole = {
+    log: console.log.bind(console),
+    warn: console.warn.bind(console),
+    error: console.error.bind(console),
+    info: console.info.bind(console),
+    debug: console.debug.bind(console),
+    trace: console.trace.bind(console),
+    table: console.table.bind(console),
+    group: console.group.bind(console),
+    groupEnd: console.groupEnd.bind(console),
+    groupCollapsed: console.groupCollapsed?.bind(console),
+    time: console.time.bind(console),
+    timeEnd: console.timeEnd.bind(console),
+    timeLog: console.timeLog?.bind(console),
+    clear: console.clear.bind(console),
+    dir: console.dir?.bind(console),
+    dirxml: console.dirxml?.bind(console),
+    assert: console.assert?.bind(console),
+    count: console.count?.bind(console),
+    countReset: console.countReset?.bind(console)
+  };
+
+  // Mapování console metod na log levels
+  const consoleLevelMap = {
+    log: 'info',
+    info: 'info',
+    debug: 'debug',
+    warn: 'warn',
+    error: 'error'
+  };
+
+  // Vytvoř wrapper funkci
+  const createWrappedMethod = (method, level) => {
+    return (...args) => {
+      // Vždy povol error a warn (důležité pro debugging)
+      if (method === 'error' || method === 'warn') {
+        originalConsole[method](...args);
+        return;
+      }
+
+      // Pro log/info/debug kontroluj log level
+      if (log.shouldLog(level)) {
+        originalConsole[method](...args);
+      }
+    };
+  };
+
+  // Vytvoř wrapper objekt
+  consoleWrapper = new Proxy(console, {
+    get(target, prop) {
+      // Pokud je to metoda, kterou chceme wrapovat
+      if (prop in consoleLevelMap) {
+        return createWrappedMethod(prop, consoleLevelMap[prop]);
+      }
+
+      // Pro ostatní metody vrať originál
+      if (prop in originalConsole) {
+        return originalConsole[prop];
+      }
+
+      return target[prop];
+    }
+  });
+
+  // Nahraď globální console
+  Object.defineProperty(window, 'console', {
+    value: consoleWrapper,
+    writable: false,
+    configurable: false
+  });
+}
+
+/**
+ * Obnoví originální console (pro testování)
+ */
+export function restoreConsole() {
+  if (originalConsole && typeof window !== 'undefined') {
+    Object.defineProperty(window, 'console', {
+      value: originalConsole,
+      writable: false,
+      configurable: false
+    });
+    originalConsole = null;
+    consoleWrapper = null;
+  }
+}
 
 export default log;
