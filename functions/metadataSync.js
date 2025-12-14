@@ -15,7 +15,42 @@ if (!admin.apps.length) {
 }
 
 const db = admin.firestore();
-const rtdb = admin.database();
+let rtdb;
+
+/**
+ * RTDB init musí být lazy.
+ * Firebase CLI při deploy/analýze může načítat kód bez plné konfigurace (FIREBASE_CONFIG),
+ * a admin.database() pak spadne na "Can't determine Firebase Database URL."
+ */
+function getRTDB() {
+  if (rtdb) return rtdb;
+
+  try {
+    rtdb = admin.database();
+    return rtdb;
+  } catch (error) {
+    // Fallback: zkus vzít databaseURL z FIREBASE_CONFIG / env / projectId
+    let cfg = {};
+    try {
+      cfg = process.env.FIREBASE_CONFIG ? JSON.parse(process.env.FIREBASE_CONFIG) : {};
+    } catch (_e) {
+      cfg = {};
+    }
+
+    const projectId = cfg.projectId || process.env.GCLOUD_PROJECT || process.env.GCP_PROJECT;
+    const databaseURL =
+      cfg.databaseURL ||
+      process.env.FIREBASE_DATABASE_URL ||
+      (projectId ? `https://${projectId}-default-rtdb.europe-west1.firebasedatabase.app` : undefined);
+
+    if (!databaseURL) {
+      throw error;
+    }
+
+    rtdb = admin.database(databaseURL);
+    return rtdb;
+  }
+}
 
 // Exportuj základní funkce pro testování
 exports.helloWorld = functions.https.onRequest((req, res) => {
@@ -225,7 +260,7 @@ async function updateRealtimeDatabase(fileName, metadata) {
     // Sanitizuj cestu pro Realtime Database
     const safePath = sanitizePath(fileName);
 
-    const rtdbRef = rtdb.ref(`audio-metadata/${safePath}`);
+    const rtdbRef = getRTDB().ref(`audio-metadata/${safePath}`);
 
     // Získej aktuální metadata, pokud existují
     const snapshot = await rtdbRef.once('value');
@@ -646,7 +681,7 @@ exports.onFileUpload = functions
             if (waveformData && Array.isArray(waveformData) && waveformData.length > 0) {
               // Aktualizuj metadata s waveformou v Realtime Database
               const safePath = sanitizePath(fileName);
-              const rtdbRef = rtdb.ref(`audio-metadata/${safePath}`);
+              const rtdbRef = getRTDB().ref(`audio-metadata/${safePath}`);
 
               // Vypočítej metadata pro lepší porovnání
               const waveformMin = waveformData.length > 0 ? Math.min(...waveformData) : 0;
@@ -692,7 +727,7 @@ exports.onFileUpload = functions
         if (metadata) {
           // Ulož do Realtime Database
           const safePath = sanitizePath(fileName);
-          const rtdbRef = rtdb.ref(`image-metadata/${safePath}`);
+          const rtdbRef = getRTDB().ref(`image-metadata/${safePath}`);
 
           await rtdbRef.set({
             ...metadata,
@@ -888,7 +923,7 @@ exports.syncAllFiles = functions
               const waveformData = await generateWaveformForFile(fileName, bucket.name);
               if (waveformData && Array.isArray(waveformData) && waveformData.length > 0) {
                 const safePath = sanitizePath(fileName);
-                const rtdbRef = rtdb.ref(`audio-metadata/${safePath}`);
+                const rtdbRef = getRTDB().ref(`audio-metadata/${safePath}`);
 
                 // Aktualizuj pouze waveform data (zachovej existující metadata)
                 await rtdbRef.update({
@@ -915,7 +950,7 @@ exports.syncAllFiles = functions
             const metadata = await extractImageMetadata(fileName, bucket.name);
             if (metadata) {
               const safePath = sanitizePath(fileName);
-              const rtdbRef = rtdb.ref(`image-metadata/${safePath}`);
+              const rtdbRef = getRTDB().ref(`image-metadata/${safePath}`);
               await rtdbRef.set(metadata);
               await db.collection('image-metadata').doc(fileName).set(metadata, { merge: true });
               results.processedImages++;

@@ -7,7 +7,9 @@ const os = require('os');
 const fs = require('fs');
 
 // Inicializace Firebase Admin
-admin.initializeApp();
+if (!admin.apps.length) {
+  admin.initializeApp();
+}
 
 const storage = new Storage();
 
