@@ -31,6 +31,15 @@ service cloud.firestore {
       allow create: if request.auth != null && request.auth.uid == userId;
       allow update: if request.auth != null && request.auth.uid == userId;
       allow delete: if request.auth != null && request.auth.uid == userId;
+
+      // Pravidla pro historii aktivity uživatele
+      match /activityHistory/{activityId} {
+        // Uživatel může číst a upravovat pouze svou vlastní historii
+        allow read: if request.auth != null && request.auth.uid == userId;
+        allow create: if request.auth != null && request.auth.uid == userId;
+        allow update: if request.auth != null && request.auth.uid == userId;
+        allow delete: if request.auth != null && request.auth.uid == userId;
+      }
     }
 
     // Premium content kolekce (pro budoucí použití)
