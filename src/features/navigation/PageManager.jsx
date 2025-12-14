@@ -8,6 +8,7 @@ import {
   MeditationScreen,
   BreathScreen,
   SettingsScreen,
+  ActivityHistoryScreen,
   HelpScreen,
   HudbaScreen,
   SlovaScreen,
@@ -64,6 +65,15 @@ const SCREEN_REGISTRY = {
     component: SettingsScreen,
     requiresLayout: true,
     props: ['onNavigateToScreen', 'onTouchStart', 'onTouchMove', 'onTouchEnd', 'onPlayerStateChange', 'gender', 'onGenderChange'],
+    transition: {
+      type: 'fade',
+      duration: 0.2
+    }
+  },
+  'activity-history': {
+    component: ActivityHistoryScreen,
+    requiresLayout: true,
+    props: ['onNavigateToScreen', 'onTouchStart', 'onTouchMove', 'onTouchEnd'],
     transition: {
       type: 'fade',
       duration: 0.2

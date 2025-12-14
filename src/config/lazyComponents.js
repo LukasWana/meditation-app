@@ -16,6 +16,7 @@ export const HudbaScreen = lazy(() => import('@features/meditation/screens/Hudba
 export const SlovaScreen = lazy(() => import('@features/meditation/screens/SlovaScreen'));
 export const HelpScreen = lazy(() => import('@features/meditation/screens/HelpScreen'));
 export const SettingsScreen = lazy(() => import('@features/meditation/screens/SettingsScreen'));
+export const ActivityHistoryScreen = lazy(() => import('@features/meditation/screens/ActivityHistoryScreen'));
 export const AlbumDetailScreen = lazy(() => import('@features/meditation/screens/AlbumDetailScreen'));
 export const SimpleAdminScreen = lazy(() => import('@features/meditation/screens/SimpleAdminScreen'));
 export const NewAdminScreen = lazy(() => import('@features/meditation/screens/NewAdminScreen'));
