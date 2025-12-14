@@ -100,7 +100,7 @@ export function isSupportedFile(fileName) {
  * Získá konfiguraci pro složku
  */
 export function getFolderConfig(fileName) {
-  for (const [key, config] of Object.entries(AUDIO_METADATA_CONFIG.folders)) {
+  for (const [_key, config] of Object.entries(AUDIO_METADATA_CONFIG.folders)) {
     if (fileName.startsWith(`${config.path}/`)) {
       return config;
     }
@@ -114,7 +114,7 @@ export function getFolderConfig(fileName) {
 export function getFormatConfig(fileName) {
   const fileNameLower = fileName.toLowerCase();
 
-  for (const [key, config] of Object.entries(AUDIO_METADATA_CONFIG.supportedFormats)) {
+  for (const [_key, config] of Object.entries(AUDIO_METADATA_CONFIG.supportedFormats)) {
     if (config.extensions.some(ext => fileNameLower.endsWith(ext))) {
       return config;
     }

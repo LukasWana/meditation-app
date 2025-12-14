@@ -284,17 +284,17 @@ const SoundThemeGalleryScreen = ({
 
       // KROK 2: Vypočítej globální maximum ze všech souborů pro globální normalizaci
       let globalMax = 0;
-      let hasAbsoluteValues = false;
+      let _hasAbsoluteValues = false;
 
       mappedFiles.forEach(file => {
         if (file.waveformData && Array.isArray(file.waveformData) && file.waveformData.length > 0) {
           const maxValue = Math.max(...file.waveformData);
 
           if (maxValue > 1) {
-            hasAbsoluteValues = true;
+            _hasAbsoluteValues = true;
             globalMax = Math.max(globalMax, maxValue);
           } else if (file.waveformMax && file.waveformMax > 1) {
-            hasAbsoluteValues = true;
+            _hasAbsoluteValues = true;
             globalMax = Math.max(globalMax, file.waveformMax);
           } else {
             globalMax = Math.max(globalMax, maxValue);

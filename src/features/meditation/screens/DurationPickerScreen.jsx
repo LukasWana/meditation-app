@@ -1,5 +1,4 @@
 import React, { useState, Suspense, lazy } from 'react';
-import { motion } from 'framer-motion';
 import { Music2 } from 'lucide-react';
 import { FramerPageTransition, BackButton } from '@components';
 import { useLanguage } from '@contexts/LanguageContext';

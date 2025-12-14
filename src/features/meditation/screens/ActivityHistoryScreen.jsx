@@ -13,7 +13,7 @@ const ActivityHistoryScreen = ({
   onTouchMove,
   onTouchEnd
 }) => {
-  const { t } = useLanguage();
+  const { t: _t } = useLanguage();
   const { getScreenBackgroundColor, getCurrentThemeColors, colorMode } = useTheme();
   const { user } = useAuth();
   const themeColors = getCurrentThemeColors?.() || {};

@@ -481,7 +481,7 @@ class OfflineCacheService {
 
   // Fallback metoda s XMLHttpRequest
   async cacheFileWithXHR(fileName, audioUrl) {
-    return new Promise((resolve, reject) => {
+    return new Promise((resolve, _reject) => {
       const xhr = new XMLHttpRequest();
       xhr.open('GET', audioUrl, true);
       xhr.responseType = 'blob';

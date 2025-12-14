@@ -13,7 +13,7 @@ const HudbaScreen = ({
   onTouchStart,
   onTouchMove,
   onTouchEnd,
-  gender = 'none',
+  gender: _gender = 'none',
   onPlayerStateChange
 }) => {
   const [activeAudio, setActiveAudio] = useState(null);
@@ -27,7 +27,7 @@ const HudbaScreen = ({
     error,
     stats,
     isLoadingCovers,
-    isLoadingDurations,
+    isLoadingDurations: _isLoadingDurations,
     getDisplayDuration
   } = useHudbaScreenData();
 
