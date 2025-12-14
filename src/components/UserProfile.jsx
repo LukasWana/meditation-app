@@ -6,10 +6,6 @@ import { useAuth } from '@contexts/AuthContext';
 const UserProfile = () => {
   const { user, isLoading, signInWithGoogle, signOut, syncLocalToCloud, syncCloudToLocal } = useAuth();
 
-  // Debug: zkontroluj, jestli signOut existuje
-  useEffect(() => {
-    console.warn('🔍 UserProfile - signOut function:', typeof signOut, signOut);
-  }, [signOut]);
   const [showMenu, setShowMenu] = useState(false);
   const [isSyncing, setIsSyncing] = useState(false);
   const [menuPosition, setMenuPosition] = useState({ top: 0, right: 0 });
