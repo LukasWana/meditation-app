@@ -2,6 +2,7 @@ import React, { createContext, useContext, useEffect, useMemo, useState, useCall
 import { authService } from '@services/authService';
 import userSettingsService from '@services/userSettingsService';
 import subscriptionService from '@services/subscriptionService';
+import activityHistoryService from '@services/activityHistoryService';
 
 const AuthContext = createContext(null);
 
@@ -74,6 +75,20 @@ export const AuthProvider = ({ children }) => {
           await loadUserProfile(user.uid, tokenResult);
         } catch (syncError) {
           console.error('Failed to sync settings:', syncError);
+        }
+
+        // Synchronizace historie aktivity:
+        // 1) stáhni z Firestore do localStorage
+        // 2) přenes případné "anonymous" záznamy do userId
+        // 3) pushni merged historii zpět do Firestore
+        try {
+          await activityHistoryService.syncFromFirestore(user.uid);
+          const migrated = activityHistoryService.migrateAnonymousHistoryToUser(user.uid);
+          if (migrated) {
+            await activityHistoryService.syncToFirestore(user.uid);
+          }
+        } catch (historyError) {
+          console.error('Failed to sync activity history:', historyError);
         }
       } else {
         // Při odhlášení vymaž profil
