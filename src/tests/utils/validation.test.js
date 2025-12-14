@@ -1,4 +1,3 @@
-import { describe, it, expect } from 'vitest';
 import {
   sanitizeHtml,
   validateEmail,
@@ -11,7 +10,7 @@ import {
   validateNumber,
   validateString,
   validateInput
-} from '../../utils/validation';
+} from '@utils/validation';
 
 describe('Validation Utils', () => {
   describe('sanitizeHtml', () => {

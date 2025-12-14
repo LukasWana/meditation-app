@@ -1,5 +1,5 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
-import errorHandler from '../../utils/error-handler';
+import { vi } from 'vitest';
+import errorHandler from '@utils/error-handler';
 
 // Mock fetch
 global.fetch = vi.fn();
