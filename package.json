@@ -6,7 +6,9 @@
   "scripts": {
     "dev": "npx vite",
     "build": "npx vite build",
-    "lint": "eslint . --ext js,jsx --report-unused-disable-directives --max-warnings 0 --ignore-pattern dist --ignore-pattern coverage",
+    "lint": "npm run lint:app",
+    "lint:app": "eslint src --ext js,jsx --report-unused-disable-directives --max-warnings 0 --ignore-pattern dist --ignore-pattern coverage",
+    "lint:all": "eslint . --ext js,jsx --report-unused-disable-directives --max-warnings 0 --ignore-pattern dist --ignore-pattern coverage",
     "preview": "npx vite preview",
     "test": "cross-env NODE_ENV=test vitest",
     "test:ui": "cross-env NODE_ENV=test vitest --ui",
