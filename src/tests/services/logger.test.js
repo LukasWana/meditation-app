@@ -24,6 +24,8 @@ describe('Logger', () => {
       process.env.NODE_ENV = 'development';
       // Reset logger instance pro nové testy
       logger.isDevelopment = true;
+      // Povolit logování pro testy (logger má defaultně silent)
+      logger.setLogLevel('debug');
     });
 
     it('should log debug messages in development', () => {
@@ -89,6 +91,8 @@ describe('Logger', () => {
       process.env.NODE_ENV = 'production';
       // Reset logger instance pro nové testy
       logger.isDevelopment = false;
+      // V produkci očekáváme alespoň warn/error
+      logger.setLogLevel('warn');
     });
 
     it('should not log debug messages in production', () => {
