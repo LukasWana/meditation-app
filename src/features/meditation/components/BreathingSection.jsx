@@ -27,6 +27,9 @@ import BreathActionButtons from './BreathActionButtons';
  * @param {Function} formatTime - Funkce pro formátování času
  * @param {Function} formatPreparationTime - Funkce pro formátování času přípravy
  * @param {Function} t - Funkce pro překlad
+ * @param {boolean} continueAfterEnd - Zda pokračovat v počítání po skončení
+ * @param {Function} onContinueAfterEndChange - Handler pro změnu volby pokračování
+ * @param {number} extraTime - Čas navíc po skončení nastaveného času v sekundách
  */
 const BreathingSection = ({
   isBreathing,
@@ -47,6 +50,9 @@ const BreathingSection = ({
   onProfilesClick,
   formatTime,
   formatPreparationTime,
+  continueAfterEnd,
+  onContinueAfterEndChange,
+  extraTime,
   t
 }) => {
   return (
@@ -62,9 +68,11 @@ const BreathingSection = ({
       <BreathHeader
         isBreathing={isBreathing}
         breathPhase={breathPhase}
-        currentTime={totalTime - breathTime}
+        currentTime={continueAfterEnd && extraTime > 0 ? totalTime + extraTime : totalTime - breathTime}
         totalTime={totalTime}
         formatTime={formatTime}
+        extraTime={extraTime || 0}
+        continueAfterEnd={continueAfterEnd || false}
         t={t}
       />
 
@@ -97,11 +105,13 @@ const BreathingSection = ({
         t={t}
       />
 
-      {/* Reset tlačítko, tlačítko pro zvukovou galerii a tlačítko pro profily */}
+      {/* Reset tlačítko, tlačítko pro zvukovou galerii, tlačítko pro profily a pokračování */}
       <BreathActionButtons
         onReset={onReset}
         onGalleryClick={onGalleryClick}
         onProfilesClick={onProfilesClick}
+        continueAfterEnd={continueAfterEnd}
+        onContinueAfterEndChange={onContinueAfterEndChange}
         t={t}
       />
     </motion.div>

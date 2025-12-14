@@ -1,20 +1,24 @@
 import React from 'react';
-import { RotateCcw, Music2, Bookmark } from 'lucide-react';
+import { RotateCcw, Music2, Bookmark, Clock } from 'lucide-react';
 import { FramerSection } from '@components';
 import { useTheme } from '@contexts/ThemeContext';
 
 /**
- * Komponenta pro tlačítka reset, galerie a profily
+ * Komponenta pro tlačítka reset, galerie, profily a pokračování
  *
  * @param {Function} onReset - Handler pro reset
  * @param {Function} onGalleryClick - Handler pro otevření galerie
  * @param {Function} onProfilesClick - Handler pro otevření profilů
  * @param {Function} t - Funkce pro překlad
+ * @param {boolean} continueAfterEnd - Zda pokračovat v počítání po skončení
+ * @param {Function} onContinueAfterEndChange - Handler pro změnu volby pokračování
  */
 const BreathActionButtons = ({
   onReset,
   onGalleryClick,
   onProfilesClick,
+  continueAfterEnd,
+  onContinueAfterEndChange,
   t
 }) => {
   const { getCurrentThemeColors } = useTheme();
@@ -61,6 +65,23 @@ const BreathActionButtons = ({
         title={t('profilyDychani') || 'Profily dýchání'}
       >
         <Bookmark size={28} style={{ color: iconColor }} />
+      </button>
+
+      {/* Tlačítko pro pokračování v počítání po skončení */}
+      <button
+        onClick={() => onContinueAfterEndChange?.(!continueAfterEnd)}
+        className="w-20 h-20 rounded-full flex items-center justify-center shadow-sm hover:shadow-md transition-all cursor-pointer"
+        style={{
+          backgroundColor: continueAfterEnd
+            ? (isDarkMode ? '#ffffff' : '#000000')
+            : (isDarkMode ? '#000000' : '#ffffff'),
+          color: continueAfterEnd
+            ? (isDarkMode ? '#000000' : '#ffffff')
+            : (isDarkMode ? '#ffffff' : '#000000')
+        }}
+        title={t('pokracovatPoSkonceni') || 'Pokračovat v počítání po skončení'}
+      >
+        <Clock size={28} />
       </button>
     </FramerSection>
   );
