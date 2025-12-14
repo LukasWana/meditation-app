@@ -11,7 +11,6 @@ import {
   ActivityHistoryScreen,
   HelpScreen,
   HudbaScreen,
-  SlovaScreen,
   AlbumDetailScreen,
   AudioPlayer,
   SimpleAdminScreen,
@@ -43,10 +42,19 @@ const SCREEN_REGISTRY = {
       duration: 0.2
     }
   },
-  'meditation': {
+  'meditace': {
     component: MeditationScreen,
     requiresLayout: true,
-    props: ['time', 'selectedDuration', 'isPlaying', 'onDurationChange', 'onPlayPause', 'onReset', 'onNavigateToScreen', 'onTouchStart', 'onTouchMove', 'onTouchEnd', 'breathPhase', 'breathInDuration', 'breathOutDuration', 'breathInSound', 'breathOutSound', 'breathClickSound', 'breathFinalSound', 'breathSoundFadeEnabled', 'onBreathSoundChange', 'isPreparing', 'preparationCountdown', 'preparationTime'],
+    props: ['onNavigateToScreen', 'onTouchStart', 'onTouchMove', 'onTouchEnd', 'gender', 'onPlayerStateChange', 'onGenderChange'],
+    transition: {
+      type: 'fade',
+      duration: 0.2
+    }
+  },
+  'dychani': {
+    component: BreathScreen,
+    requiresLayout: true,
+    props: ['breathPhase', 'setBreathPhase', 'onNavigateToScreen', 'onTouchStart', 'onTouchMove', 'onTouchEnd', 'breathInDuration', 'breathOutDuration', 'onBreathRhythmChange', 'preparationTime', 'onPreparationTimeChange', 'isPreparing', 'preparationCountdown', 'breathDuration', 'breathTime', 'setBreathTime', 'isBreathing', 'setIsBreathing', 'onBreathDurationChange', 'onReset', 'breathInSound', 'breathOutSound', 'breathClickSound', 'breathFinalSound', 'breathCountdownSound', 'breathSoundFadeEnabled', 'onBreathSoundChange'],
     transition: {
       type: 'fade',
       duration: 0.2
@@ -92,15 +100,6 @@ const SCREEN_REGISTRY = {
     component: HudbaScreen,
     requiresLayout: true,
     props: ['onNavigateToScreen', 'onTouchStart', 'onTouchMove', 'onTouchEnd', 'gender', 'onPlayerStateChange', 'onAlbumSelect'],
-    transition: {
-      type: 'fade',
-      duration: 0.2
-    }
-  },
-  'slova': {
-    component: SlovaScreen,
-    requiresLayout: true,
-    props: ['onNavigateToScreen', 'onTouchStart', 'onTouchMove', 'onTouchEnd', 'gender', 'onPlayerStateChange', 'onGenderChange'],
     transition: {
       type: 'fade',
       duration: 0.2
