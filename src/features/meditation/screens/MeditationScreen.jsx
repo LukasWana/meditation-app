@@ -7,6 +7,7 @@ import PlayPauseButton from '@features/audio/components/PlayPauseButton';
 import { useLanguage } from '@contexts/LanguageContext';
 import { useTheme } from '@contexts/ThemeContext';
 import { useBreathSounds } from '@hooks';
+import { useActivityTracking } from '@hooks/useActivityTracking';
 
 // Lazy loading modálů - načítají se až při otevření (on-demand)
 let WheelPickerModalComponent = null;
@@ -84,6 +85,20 @@ const MeditationScreen = ({
     breathInDuration,
     breathOutDuration
   );
+
+  // Trackování aktivity meditace
+  // Použij useMemo pro metadata, aby se neměnila při každém renderu
+  const meditationMetadata = React.useMemo(() => ({
+    selectedDuration,
+    breathInDuration,
+    breathOutDuration
+  }), [selectedDuration, breathInDuration, breathOutDuration]);
+
+  useActivityTracking({
+    section: 'meditation',
+    isActive: isPlaying,
+    metadata: meditationMetadata
+  });
 
   // Sledování času v cyklu dýchání - synchronizováno s fázemi
   const phaseStartTimeRef = useRef(Date.now());

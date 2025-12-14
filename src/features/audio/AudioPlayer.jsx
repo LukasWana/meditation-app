@@ -1,10 +1,11 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { useAudioPlayer, useAudioPlayerLogic } from './hooks';
 import {
   AudioControls,
   CloseButton,
   AudioPlayerAnimations
 } from './components';
+import { useActivityTracking } from '@hooks/useActivityTracking';
 
 
 const AudioPlayer = ({
@@ -56,6 +57,64 @@ const AudioPlayer = ({
     fadeOutAndClose,
     cachedAudioUrl
   } = useAudioPlayer(audioUrl, albumTracks, currentTrackIndex, onTrackChange, autoplayEnabled);
+
+  // Extrahuj název alba z audioSrc (pokud je v cestě hudba/albumName/track.mp3)
+  const albumName = useMemo(() => {
+    if (!audioSrc) return null;
+    try {
+      // Zkus extrahovat z cesty
+      const match = audioSrc.match(/hudba\/([^\/]+)\//);
+      if (match && match[1]) {
+        return match[1];
+      }
+      // Pokud máme albumTracks s více než jednou skladbou, je to album
+      if (albumTracks && albumTracks.length > 1) {
+        // Zkus najít album name v prvním tracku
+        const firstTrack = albumTracks[0];
+        if (firstTrack.audioSrc) {
+          const trackMatch = firstTrack.audioSrc.match(/hudba\/([^\/]+)\//);
+          if (trackMatch && trackMatch[1]) {
+            return trackMatch[1];
+          }
+        }
+      }
+      return null;
+    } catch {
+      return null;
+    }
+  }, [audioSrc, albumTracks]);
+
+  const rawSrc = audioSrc || audioUrl || '';
+  const isSlova = rawSrc.includes('slova');
+  const isHudba = rawSrc.includes('hudba');
+
+  // Trackování aktivity pro AudioPlayer:
+  // - slova/* patří do sekce "meditation" (uživatel to vnímá jako meditace/afirmace)
+  // - hudba/* patří do sekce "music"
+  // - ostatní audio netrackujeme (aby se nám to nemíchalo)
+  const shouldTrackAudio = isPlaying && !!rawSrc && (isSlova || isHudba);
+  const activitySection = isSlova ? 'meditation' : 'music';
+
+  const getAudioDescription = (md) => {
+    const title = md?.title || actualTitle || 'Audio';
+    if (isSlova) return `Slova: ${title}`;
+    // hudba
+    if (md?.albumName) return `${title} - ${md.albumName}`;
+    return title;
+  };
+
+  useActivityTracking({
+    section: activitySection,
+    isActive: shouldTrackAudio,
+    metadata: {
+      title: actualTitle,
+      audioSrc: rawSrc,
+      albumName: albumName,
+      duration: duration,
+      contentType: isSlova ? 'slova' : (isHudba ? 'hudba' : 'audio')
+    },
+    getDescription: getAudioDescription
+  });
 
   return (
     <AudioPlayerAnimations
