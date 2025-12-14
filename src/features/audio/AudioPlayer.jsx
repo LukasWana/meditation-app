@@ -19,17 +19,23 @@ const AudioPlayer = ({
   onTrackChange = null,
   allFiles = [],
   autoplayEnabled = true,
-  onAutoplayChange = null
+  onAutoplayChange = null,
+  fileName: fileNameProp = null,
+  gender = null
 }) => {
+  const isDev = import.meta?.env?.MODE === 'development';
+
   // Hlavní logika komponenty
   const {
     audioUrl,
     firebaseError,
     selectedVoice,
+    currentVoice,
     hasVariants,
     availableVoices,
     handleVoiceChange,
-    dataSource
+    dataSource,
+    fileName
   } = useAudioPlayerLogic({
     audioSrc,
     albumTracks,
@@ -84,20 +90,82 @@ const AudioPlayer = ({
     }
   }, [audioSrc, albumTracks]);
 
-  const rawSrc = audioSrc || audioUrl || '';
-  const isSlova = rawSrc.includes('slova');
-  const isHudba = rawSrc.includes('hudba');
+  // Pro detekci typu aktivity použij více způsobů:
+  // 1. Zkontroluj folder z allFiles (nejspolehlivější - každý slova soubor má folder: 'slova')
+  // 2. Zkontroluj fileName prop nebo fileName z hooku (může obsahovat cestu "slova/...")
+  // 3. Heuristika: pokud fileName obsahuje "muzsky" nebo "zensky", je to slova soubor
+  // 4. Fallback na rawSrc
+  // Důležité: použij audioUrl z hooku (aktualizuje se při změně hlasu), ne audioSrc prop (který zůstává stejný)
+  const rawSrc = audioUrl || audioSrc || '';
+  // Priorita pro detekci: fileName z hooku (aktualizuje se při změně hlasu) > fileNameProp > rawSrc
+  const sourceForDetection = fileName || fileNameProp || rawSrc || '';
+
+  // Detekce podle folder z allFiles (nejspolehlivější)
+  const isSlovaByFolder = allFiles && allFiles.length > 0 && allFiles[0]?.folder === 'slova';
+
+  // Detekce podle cesty v fileName
+  const isSlovaByPath = sourceForDetection.includes('slova');
+
+  // Heuristika: soubory s prefixy muzsky/zensky jsou slova soubory
+  const isSlovaByHeuristic = sourceForDetection.includes('muzsky') || sourceForDetection.includes('zensky');
+
+  // Kombinace všech způsobů detekce
+  const isSlova = isSlovaByFolder || isSlovaByPath || isSlovaByHeuristic;
+  const isHudba = sourceForDetection.includes('hudba');
+
+  // Debug logování pro meditaci (jen v dev nebo když je problém)
+  if (isDev && (isSlova || isHudba)) {
+    console.log('🎵 AudioPlayer activity detection:', {
+      isSlova,
+      isSlovaByFolder,
+      isSlovaByPath,
+      isSlovaByHeuristic,
+      isHudba,
+      fileNameProp,
+      fileName,
+      sourceForDetection,
+      rawSrc,
+      audioSrc,
+      audioUrl,
+      allFilesFolder: allFiles?.[0]?.folder,
+      isPlaying,
+      shouldTrackAudio,
+      activitySection: isSlova ? 'meditation' : 'music',
+      currentGender,
+      selectedVoice,
+      currentVoice
+    });
+  }
 
   // Trackování aktivity pro AudioPlayer:
   // - slova/* patří do sekce "meditation" (uživatel to vnímá jako meditace/afirmace)
   // - hudba/* patří do sekce "music"
   // - ostatní audio netrackujeme (aby se nám to nemíchalo)
-  const shouldTrackAudio = isPlaying && !!rawSrc && (isSlova || isHudba);
+  const shouldTrackAudio = isPlaying && !!sourceForDetection && (isSlova || isHudba);
   const activitySection = isSlova ? 'meditation' : 'music';
+
+  // Získej aktuální gender pro ukládání do historie
+  // Priorita: selectedVoice (z useVoiceSwitcher, aktualizuje se okamžitě při změně hlasu)
+  // > currentVoice (odvozený z aktuálně přehrávaného souboru) > gender prop > allFiles
+  // Použij useMemo, aby se přepočítal při změně selectedVoice nebo currentVoice
+  const currentGender = useMemo(() => {
+    if (!isSlova) return null;
+    return selectedVoice || currentVoice || gender || allFiles?.[0]?.parsed?.gender || allFiles?.[0]?.gender || null;
+  }, [isSlova, selectedVoice, currentVoice, gender, allFiles]);
 
   const getAudioDescription = (md) => {
     const title = md?.title || actualTitle || 'Audio';
-    if (isSlova) return `Slova: ${title}`;
+    if (isSlova) {
+      // Pro meditace (slova) přidej informaci o pohlaví hlasu
+      // Použij currentGender (který už má správnou prioritu)
+      const voiceGender = md?.gender || currentGender;
+      if (voiceGender === 'male') {
+        return `Slova: ${title} (muž)`;
+      } else if (voiceGender === 'female') {
+        return `Slova: ${title} (žena)`;
+      }
+      return `Slova: ${title}`;
+    }
     // hudba
     if (md?.albumName) return `${title} - ${md.albumName}`;
     return title;
@@ -111,7 +179,8 @@ const AudioPlayer = ({
       audioSrc: rawSrc,
       albumName: albumName,
       duration: duration,
-      contentType: isSlova ? 'slova' : (isHudba ? 'hudba' : 'audio')
+      contentType: isSlova ? 'slova' : (isHudba ? 'hudba' : 'audio'),
+      gender: currentGender
     },
     getDescription: getAudioDescription
   });
