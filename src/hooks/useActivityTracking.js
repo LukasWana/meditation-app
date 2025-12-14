@@ -28,12 +28,17 @@ export const useActivityTracking = ({
   const sectionRef = useRef(section);
   const metadataRef = useRef(metadata);
   const getDescriptionRef = useRef(getDescription);
+  const extraTimeRef = useRef(0); // Ref pro uchování extraTime při ukončení aktivity
 
   // Aktualizuj refy při změně
   useEffect(() => {
     sectionRef.current = section;
     metadataRef.current = metadata;
     getDescriptionRef.current = getDescription;
+    // Aktualizuj extraTime ref při změně metadat
+    if (metadata?.extraTime !== undefined) {
+      extraTimeRef.current = metadata.extraTime || 0;
+    }
   }, [section, metadata, getDescription]);
 
   // Sleduj změny isActive
@@ -95,6 +100,8 @@ export const useActivityTracking = ({
     // Aktivita skončila
     if (wasActive && !isNowActive && startTimeRef.current !== null) {
       const duration = Math.floor((Date.now() - startTimeRef.current) / 1000); // v sekundách
+      // extraTime ukládáme jako samostatnou proměnnou (NEpřičítat k duration, duration už je reálný čas aktivity)
+      const extraTime = extraTimeRef.current || 0;
 
       // Ulož aktivitu pouze pokud trvala alespoň 1 sekundu (aby se neukládaly velmi krátké aktivity)
       if (duration >= 1) {
@@ -128,9 +135,11 @@ export const useActivityTracking = ({
         section: currentSection,
         description,
         duration,
+        extraTime: extraTime > 0 ? extraTime : 0, // Čas navíc jako top-level proměnná
         metadata: {
           ...currentMetadata,
-          durationSeconds: duration
+          durationSeconds: duration,
+          extraTime: extraTime > 0 ? extraTime : undefined // Ulož extraTime také v metadatech, pokud je větší než 0
         }
       }).then(() => {
         if (isDev || currentSection === 'meditation') {
@@ -165,6 +174,9 @@ export const useActivityTracking = ({
         const currentMetadata = metadataRef.current;
         const currentGetDescription = getDescriptionRef.current;
 
+        // Použij extraTime z refu (duration už extra zahrnuje)
+        const extraTime = extraTimeRef.current || 0;
+
         let description = '';
         if (currentGetDescription && typeof currentGetDescription === 'function') {
           description = currentGetDescription(currentMetadata, duration);
@@ -177,9 +189,11 @@ export const useActivityTracking = ({
           section: currentSection,
           description,
           duration,
+          extraTime: extraTime > 0 ? extraTime : 0, // Čas navíc jako top-level proměnná
           metadata: {
             ...currentMetadata,
-            durationSeconds: duration
+            durationSeconds: duration,
+            extraTime: extraTime > 0 ? extraTime : undefined // Ulož extraTime také v metadatech, pokud je větší než 0
           }
         }).catch(error => {
           log.error('Failed to save activity on unmount:', error);

@@ -49,6 +49,7 @@ class ActivityHistoryService {
       timestamp,
       description: activityData.description || '',
       duration: activityData.duration || 0,
+      extraTime: activityData.extraTime !== undefined ? activityData.extraTime : 0, // Čas navíc jako samostatná top-level proměnná
       metadata: activityData.metadata || {},
       createdAt: timestamp
     };
@@ -242,6 +243,7 @@ class ActivityHistoryService {
           timestamp: timestamp || data.timestamp,
           description: data.description || '',
           duration: data.duration || 0,
+          extraTime: data.extraTime || data.metadata?.extraTime || 0,
           metadata: data.metadata || {}
         });
       });
