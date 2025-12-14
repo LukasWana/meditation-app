@@ -88,7 +88,7 @@ const HomeScreen = ({
       >
         <div
           className="flex-1 flex items-center justify-center cursor-pointer relative"
-          onClick={() => onNavigateToScreen('slova')}
+          onClick={() => onNavigateToScreen('meditace')}
           onTouchStart={onTouchStart}
           style={{
             backgroundColor: hasImage
@@ -128,7 +128,7 @@ const HomeScreen = ({
 
         <div
           className="flex-1 flex items-center justify-center cursor-pointer"
-          onClick={() => onNavigateToScreen('breath')}
+          onClick={() => onNavigateToScreen('dychani')}
           style={{
             backgroundColor: hasImage
               ? addOpacityToColor(currentTheme?.colors?.primary || '#f4ddc4', 0.8) // Přidat průhlednost pokud je obrázek

@@ -180,7 +180,7 @@ const BreathScreen = ({
   const { getScreenBackgroundColor } = useTheme();
 
   return (
-    <FramerPageTransition screenKey="breath">
+    <FramerPageTransition screenKey="dychani">
       <div
         className="min-h-screen w-full max-w-full flex flex-col items-center justify-start p-2 sm:p-8 pb-20 overflow-x-hidden overflow-y-hidden relative"
         style={{ backgroundColor: getScreenBackgroundColor() }}

@@ -108,7 +108,7 @@ const Layout = ({
           </motion.button>
 
           {/* Gender Switcher - desktop/tablet - zobraz pouze v sekci meditace */}
-          {currentScreen === 'slova' && (
+          {currentScreen === 'meditace' && (
             <motion.div
               className="hidden sm:flex bg-white/90 backdrop-blur-sm border border-gray-200 rounded-full p-1 shadow-sm"
               initial={{ opacity: 0, scale: 0.9 }}
@@ -141,7 +141,7 @@ const Layout = ({
           )}
 
           {/* Gender Switcher - mobile (show only current selection, tap toggles) - zobraz pouze v sekci meditace */}
-          {currentScreen === 'slova' && (
+          {currentScreen === 'meditace' && (
             <motion.button
               onClick={() => handleGenderSelect(gender === 'male' ? 'female' : 'male')}
               className="sm:hidden px-3 py-2 bg-gray-800 backdrop-blur-sm border border-gray-200 rounded-full shadow-sm text-sm font-medium text-white"
