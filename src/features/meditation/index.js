@@ -3,11 +3,11 @@
 export {
   HomeScreen,
   MeditationScreen,
+  BreathMeditationScreen,
   BreathScreen,
   SettingsScreen,
   HelpScreen,
   HudbaScreen,
-  SlovaScreen,
   IntroScreen,
   AlbumDetailScreen,
   NewAdminScreen

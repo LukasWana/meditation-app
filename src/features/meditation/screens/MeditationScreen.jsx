@@ -1,260 +1,138 @@
-import React, { useState, useEffect, useRef, Suspense, lazy } from 'react';
-import { motion } from 'framer-motion';
-import { RotateCcw, Image as ImageIcon } from 'lucide-react';
+import React, { useState, useMemo } from 'react';
+import { AnimatePresence } from 'framer-motion';
 import { FramerButton, FramerSection, FramerPageTransition, BackButton } from '@components';
-import CircularProgress from '@features/audio/components/CircularProgress';
-import PlayPauseButton from '@features/audio/components/PlayPauseButton';
 import { useLanguage } from '@contexts/LanguageContext';
 import { useTheme } from '@contexts/ThemeContext';
-import { useBreathSounds } from '@hooks';
-import { useActivityTracking } from '@hooks/useActivityTracking';
-
-// Lazy loading modálů - načítají se až při otevření (on-demand)
-let WheelPickerModalComponent = null;
-let SoundThemeGalleryComponent = null;
-
-const loadWheelPickerModal = () => {
-  if (!WheelPickerModalComponent) {
-    WheelPickerModalComponent = lazy(() => import('@components/TimePickerModal').then(m => ({ default: m.WheelPickerModal })));
-  }
-  return WheelPickerModalComponent;
-};
-
-const loadSoundThemeGallery = () => {
-  if (!SoundThemeGalleryComponent) {
-    SoundThemeGalleryComponent = lazy(() => import('@components/SoundThemeGallery'));
-  }
-  return SoundThemeGalleryComponent;
-};
+// Odstraněny skeleton loadery
+import { AudioPlayer } from '@features/audio';
+// Preloadery odstraněny - data se načítají při startu
+import { useRealtimeMeditationFilter } from '@hooks/useRealtimeMeditationFilter';
 
 const MeditationScreen = ({
-  time,
-  selectedDuration,
-  isPlaying,
-  breathPhase,
-  breathInDuration,
-  breathOutDuration,
-  breathInSound,
-  breathOutSound,
-  breathClickSound,
-  breathFinalSound,
-  breathSoundFadeEnabled,
-  onDurationChange,
-  onPlayPause,
-  onReset,
   onNavigateToScreen,
   onTouchStart,
   onTouchMove,
   onTouchEnd,
-  onBreathSoundChange,
-  isPreparing,
-  preparationCountdown,
-  preparationTime
+  gender = 'none', // Přidáme gender prop pro filtrování
+  onPlayerStateChange, // Callback pro předání stavu přehrávače
+  onGenderChange // Callback pro změnu pohlaví
 }) => {
-  const { t } = useLanguage();
-  const { currentTheme, getScreenBackgroundColor } = useTheme();
-  const [showGallery, setShowGallery] = useState(false);
-  const [showDurationPicker, setShowDurationPicker] = useState(false);
-  const [wheelPickerLoaded, setWheelPickerLoaded] = useState(false);
-  const [soundGalleryLoaded, setSoundGalleryLoaded] = useState(false);
-  const [breathCycleTime, setBreathCycleTime] = useState(0); // Čas v aktuálním cyklu dýchání (0 až breathInDuration + breathOutDuration)
-  const breathCircleRef = useRef(null);
+  const [activeAudio, setActiveAudio] = useState(null);
+  const { t, language } = useLanguage();
+  const { getScreenBackgroundColor } = useTheme();
 
-  // Vynutit, aby kruh byl vždy kulatý - nastavit okamžitě a při každé změně
-  useEffect(() => {
-    if (breathCircleRef.current) {
-      breathCircleRef.current.style.setProperty('border-radius', '50%', 'important');
-    }
-  }, [breathPhase, isPlaying]);
+  // Debug: zobraz aktuální jazyk a gender
+  console.log(`🔍 MeditationScreen - Current language: ${language}`);
+  console.log(`🔍 MeditationScreen - Current gender: ${gender}`);
 
-  // Nastavit border-radius také při mount a při každém renderu
-  const setBorderRadius = (element) => {
-    if (element) {
-      element.style.setProperty('border-radius', '50%', 'important');
+  // Stabilizuj language hodnotu
+  const normalizedLanguage = useMemo(() => language.toLowerCase(), [language]);
+
+  // Použij nový Realtime Database filtrovací systém
+  const { meditationItems, isLoading, error, audioFiles } = useRealtimeMeditationFilter(gender, normalizedLanguage);
+
+  // Debug: zobraz informace o načtených datech
+  console.log(`🔍 MeditationScreen - meditationItems:`, meditationItems);
+  console.log(`🔍 MeditationScreen - isLoading:`, isLoading);
+  console.log(`🔍 MeditationScreen - error:`, error);
+  console.log(`🔍 MeditationScreen - audioFiles:`, audioFiles);
+
+  // Preloading odstraněn - data se načítají při startu aplikace
+
+  const handleItemClick = (item) => {
+    // Použij audioSrc nebo fileName jako fallback
+    const audioSrc = item.audioSrc || item.fileName;
+    if (audioSrc) {
+      // Extrahuj gender z parsed nebo přímo z item
+      const gender = item.parsed?.gender || item.gender || null;
+
+      // Vytvoř "album" s jednou skladbou pro autoplay funkcionalitu
+      setActiveAudio({
+        audioSrc: audioSrc,
+        title: item.title,
+        fileName: item.fileName || item.audioSrc,
+        gender: gender, // Předaj gender pro ukládání do historie
+        albumTracks: [{
+          audioSrc: audioSrc,
+          trackName: item.title,
+          fileName: item.fileName || item.audioSrc
+        }],
+        currentTrackIndex: 0,
+        allFiles: item.allFiles || [] // Předaj všechny soubory pro dané téma
+      });
+      onPlayerStateChange?.(true); // Informuj o aktivním přehrávači
     }
   };
 
-  // Použij hook pro přehrávání zvuků dýchání
-  useBreathSounds(
-    isPlaying,
-    breathPhase,
-    breathInSound || 'none',
-    breathOutSound || 'none',
-    breathClickSound || 'none',
-    breathSoundFadeEnabled,
-    breathInDuration,
-    breathOutDuration
-  );
-
-  // Trackování aktivity meditace
-  // Použij useMemo pro metadata, aby se neměnila při každém renderu
-  const meditationMetadata = React.useMemo(() => ({
-    selectedDuration,
-    breathInDuration,
-    breathOutDuration
-  }), [selectedDuration, breathInDuration, breathOutDuration]);
-
-  useActivityTracking({
-    section: 'meditation',
-    isActive: isPlaying,
-    metadata: meditationMetadata
-  });
-
-  // Sledování času v cyklu dýchání - synchronizováno s fázemi
-  const phaseStartTimeRef = useRef(Date.now());
-  const previousPhaseRef = useRef(breathPhase);
-
-  useEffect(() => {
-    if (!isPlaying) {
-      setBreathCycleTime(0);
-      return;
-    }
-
-    // Pokud se změnila fáze, resetuj čas začátku fáze
-    if (previousPhaseRef.current !== breathPhase) {
-      phaseStartTimeRef.current = Date.now();
-      previousPhaseRef.current = breathPhase;
-
-      // Pokud začínáme nový cyklus (nádech), resetuj čas cyklu
-      if (breathPhase === 'in') {
-        setBreathCycleTime(0);
-      } else {
-        // Pokud začíná výdech, nastav čas na začátek výdechové části
-        setBreathCycleTime(breathInDuration);
-      }
-    }
-
-    const interval = setInterval(() => {
-      const now = Date.now();
-      const elapsed = (now - phaseStartTimeRef.current) / 1000; // sekundy
-      const cycleDuration = breathInDuration + breathOutDuration;
-
-      if (breathPhase === 'in') {
-        // Během nádechu: čas cyklu = elapsed (0 až breathInDuration)
-        setBreathCycleTime(Math.min(elapsed, breathInDuration));
-      } else {
-        // Během výdechu: čas cyklu = breathInDuration + elapsed (breathInDuration až cycleDuration)
-        setBreathCycleTime(Math.min(breathInDuration + elapsed, cycleDuration));
-      }
-    }, 100);
-
-    return () => clearInterval(interval);
-  }, [isPlaying, breathPhase, breathInDuration, breathOutDuration]);
-
-  // Vypočítat progress pro CircularProgress (0-100)
-  const totalTime = selectedDuration * 60; // v sekundách
-  const progress = totalTime > 0 ? ((totalTime - time) / totalTime) * 100 : 0;
-
-  // Vypočítat progress pro rytmus dýchání (vnitřní kruhový ukazatel)
-  const cycleDuration = breathInDuration + breathOutDuration;
-  const breathRhythmProgress = isPlaying && cycleDuration > 0 ? (breathCycleTime / cycleDuration) * 100 : 0;
-
-  // Pro výpočet, kde jsme v cyklu (nádech nebo výdech část)
-  const inPhaseProgress = cycleDuration > 0 ? (breathInDuration / cycleDuration) * 100 : 50; // Procenta pro nádech část
-
-
-  // Formátování času
-  const formatTime = (seconds) => {
-    const mins = Math.floor(seconds / 60);
-    const secs = Math.floor(seconds % 60);
-    return `${mins}:${secs.toString().padStart(2, '0')}`;
+  const handleCloseAudio = () => {
+    setActiveAudio(null);
+    onPlayerStateChange?.(false); // Informuj o zavřeném přehrávači
   };
 
-  // Pokud probíhá příprava, zobraz odpočítávání přípravy
-  if (isPreparing) {
+  // Loading state - show loading during data fetch
+  if (isLoading) {
     return (
-      <FramerPageTransition screenKey="meditation">
+      <FramerPageTransition screenKey="meditace">
         <div
-          className="min-h-screen w-full max-w-full flex flex-col items-center justify-start p-2 sm:p-8 pb-20 overflow-x-hidden relative"
+          className="min-h-screen w-full max-w-full flex flex-col items-center justify-center p-2 sm:p-8 pb-20 overflow-x-hidden relative"
           style={{ backgroundColor: getScreenBackgroundColor() }}
-          onTouchStart={onTouchStart}
-          onTouchMove={onTouchMove}
-          onTouchEnd={onTouchEnd}
         >
           <BackButton onClick={() => onNavigateToScreen('home')} />
-
-          <div className="max-w-md w-full" style={{ marginTop: '4rem', paddingTop: 0, position: 'relative', display: 'flex', flexDirection: 'column', alignItems: 'stretch' }}>
-            <FramerSection
-              className="text-center mb-6"
-              animationType="fadeIn"
-              delay={0.1}
-            >
-              <div style={{ height: '3.5rem', display: 'flex', flexDirection: 'column', justifyContent: 'flex-start', alignItems: 'center', marginBottom: '0.5rem' }}>
-                <h1 className="text-4xl font-light" style={{ minHeight: '2.5rem', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                  {t('priprava')}
-                </h1>
-              </div>
-              <div className="flex justify-center gap-2 mt-4 mb-4">
-                <div className="w-2 h-2 bg-black rounded-full"></div>
-                <div className="w-2 h-2 bg-black rounded-full"></div>
-                <div className="w-2 h-2 bg-black rounded-full"></div>
-              </div>
-            </FramerSection>
-
-            <FramerSection
-              className="mb-12"
-              animationType="scaleIn"
-              delay={0.2}
-            >
-              {/* CircularProgress pro přípravu */}
-              <div className="relative flex-shrink-0 flex items-center justify-center">
-                <CircularProgress
-                  progress={preparationCountdown > 0 && preparationTime > 0 ? ((preparationTime - preparationCountdown) / preparationTime) * 100 : 0}
-                  onSeek={null}
-                  className="w-[50vw] h-[50vw] max-w-[400px] max-h-[400px] min-w-[250px] min-h-[250px]"
-                />
-
-                {/* Odpočítávání v centru */}
-                <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
-                  <motion.div
-                    key={preparationCountdown}
-                    className="text-6xl font-light text-black"
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    exit={{ opacity: 0 }}
-                    transition={{ duration: 0.2 }}
-                  >
-                    {preparationCountdown}
-                  </motion.div>
-                </div>
-              </div>
-
-              {/* Text pod odpočítáváním */}
-              <div className="mt-6 text-center">
-                <div className="text-black font-medium text-xl">
-                  {t('pripravaNaMeditaci')}
-                </div>
-              </div>
-            </FramerSection>
-
-            <FramerSection
-              className="flex justify-center gap-6 mb-6"
-              animationType="fadeIn"
-              delay={0.3}
-            >
-              <FramerButton
-                onClick={onPlayPause}
-                variant="secondary"
-                className="w-20 h-20 rounded-full flex items-center justify-center p-0"
-              >
-                <RotateCcw size={28} />
-              </FramerButton>
-            </FramerSection>
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-gray-700 mx-auto mb-4"></div>
+            <p className="text-xl text-gray-700">Načítám meditácie...</p>
           </div>
         </div>
       </FramerPageTransition>
     );
   }
+
+  // Error state
+  if (error) {
+    return (
+      <FramerPageTransition screenKey="meditace">
+        <div
+          className="min-h-screen w-full max-w-full flex flex-col items-center justify-center p-2 sm:p-8 pb-20 overflow-x-hidden relative"
+          style={{ backgroundColor: getScreenBackgroundColor() }}
+        >
+          <BackButton onClick={() => onNavigateToScreen('home')} />
+          <div className="text-center">
+            <p className="text-xl text-red-600 mb-4">Chyba při načítání</p>
+            <p className="text-gray-700">{error}</p>
+          </div>
+        </div>
+      </FramerPageTransition>
+    );
+  }
+
   return (
-    <FramerPageTransition screenKey="meditation">
+    <FramerPageTransition screenKey="meditace">
       <div
-        className="min-h-screen w-full max-w-full flex flex-col items-center justify-start p-2 sm:p-8 pb-20 overflow-x-hidden relative"
+        className={`min-h-screen w-full max-w-full flex flex-col items-center justify-start p-2 sm:p-8 pb-20 overflow-x-hidden relative ${
+          activeAudio ? 'pointer-events-none' : ''
+        }`}
         style={{ backgroundColor: getScreenBackgroundColor() }}
-        onTouchStart={onTouchStart}
-        onTouchMove={onTouchMove}
-        onTouchEnd={onTouchEnd}
+        onTouchStart={activeAudio ? undefined : onTouchStart}
+        onTouchMove={activeAudio ? undefined : onTouchMove}
+        onTouchEnd={activeAudio ? undefined : onTouchEnd}
       >
-        <BackButton onClick={() => onNavigateToScreen('home')} />
+        {/* Top row with Back Button, Dropdowns and Settings */}
+        <div className="absolute top-4 left-4 right-4 flex items-center justify-between z-10 px-2">
+          {/* Left - Back Button */}
+          <div className="flex-shrink-0">
+            <button
+              onClick={() => onNavigateToScreen('home')}
+              className={`w-12 h-12 rounded-full bg-white/20 backdrop-blur-sm border border-black/10 hover:bg-white/30 flex items-center justify-center p-0 transition-colors ${
+                activeAudio ? 'pointer-events-none opacity-50' : ''
+              }`}
+            >
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="m12 19-7-7 7-7"/>
+                <path d="M19 12H5"/>
+              </svg>
+            </button>
+          </div>
+        </div>
 
         <div className="max-w-md w-full" style={{ marginTop: '4rem', paddingTop: 0, position: 'relative', display: 'flex', flexDirection: 'column', alignItems: 'stretch' }}>
           <FramerSection
@@ -264,295 +142,112 @@ const MeditationScreen = ({
           >
             <div style={{ height: '3.5rem', display: 'flex', flexDirection: 'column', justifyContent: 'flex-start', alignItems: 'center', marginBottom: '0.5rem' }}>
               <h1 className="text-4xl font-light" style={{ minHeight: '2.5rem', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                {t('meditacia')}
+                {t('slova')}
               </h1>
             </div>
-            <div className="flex justify-center gap-2 mt-4 mb-4">
-              <div className="w-2 h-2 bg-black rounded-full"></div>
-              <div className="w-2 h-2 bg-black rounded-full"></div>
-              <div className="w-2 h-2 bg-black rounded-full"></div>
-            </div>
-            {/* Zobrazení aktuálního rytmu dýchání z nastavení */}
-            <div className="mt-4 text-sm text-gray-600">
-              <span className="font-medium">{t('rytmusDychania')}:</span>{' '}
-              <span className="font-light">
-                {breathInDuration}:{breathOutDuration} ({t('nadech')}:{t('vydech')})
-              </span>
-            </div>
-          </FramerSection>
+            <p className="text-xl text-center text-gray-700 mb-8">
+              {t('mluvene')}
+            </p>
 
-          <FramerSection
-            className="mb-12"
-            animationType="scaleIn"
-            delay={0.2}
-          >
-            {/* Title a Duration nad CircularProgress */}
-            <div className="mb-6 z-10 w-full flex flex-col items-center space-y-0">
-              {/* Duration - Total Time */}
-              {totalTime > 0 && (
-                <div className="text-gray-600 text-center mb-2 text-lg">
-                  {formatTime(totalTime)}
-                </div>
-              )}
-              {/* Textový indikátor fáze dýchání */}
-              {isPlaying && (
-                <motion.p
-                  key={breathPhase}
-                  className="text-2xl font-light text-gray-600"
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  exit={{ opacity: 0 }}
-                  transition={{ duration: 0.2 }}
-                >
-                  {breathPhase === 'in' ? t('nadech') : t('vydech')}
-                </motion.p>
-              )}
-            </div>
 
-            {/* CircularProgress s Play/Pause Button - stejný jako v přehrávači */}
-            <div className="relative flex-shrink-0 flex items-center justify-center" style={{ overflow: 'visible' }}>
-              {/* Dýchací animace během meditace - SPODNÍ vrstva - pod kruhovým ukazatelem a play tlačítkem */}
-              {isPlaying && (
-                <div
-                  className="absolute inset-0 flex items-center justify-center pointer-events-none"
-                  style={{
-                    zIndex: 1,
-                    overflow: 'visible'
-                  }}
-                >
-                  {/* Animace s maskou - bílý kruh uprostřed, černý okolo, vycentrovaná na tlačítko - pod play tlačítkem */}
-                  <motion.div
-                    ref={(el) => {
-                      breathCircleRef.current = el;
-                      setBorderRadius(el);
-                    }}
-                    className="rounded-full breath-animation-circle"
-                    style={{
-                      // Velikost play tlačítka jako základní velikost (responzivní)
-                      width: '18vw',
-                      height: '18vw',
-                      maxWidth: '120px',
-                      maxHeight: '120px',
-                      minWidth: '80px',
-                      minHeight: '80px',
-                      background: 'radial-gradient(circle, rgba(255,255,255,1) 0%, rgba(255,255,255,1) 25%, rgba(255,255,255,1) 25%, rgba(255,255,255,1) 100%)',
-                      transformOrigin: 'center center',
-                      position: 'absolute',
-                      zIndex: 1,
-                      willChange: 'transform, opacity',
-                      borderRadius: '50%',
-                      overflow: 'visible',
-                      pointerEvents: 'none'
-                    }}
-                    initial={{
-                      scale: 1.0,  // Začínáme ve velikosti play tlačítka (scale 1.0)
-                      opacity: 0.9
-                    }}
-                    animate={isPlaying ? {
-                      scale: breathPhase === 'in'
-                        ? [1.0, 2.9]  // Nádech - zvětšování z velikosti play tlačítka (1.0) až na 2.9x (45vw / 18vw ≈ 2.5, ale pro větší obrazovky 16vw → 45vw ≈ 2.8)
-                        : breathPhase === 'out'
-                        ? [2.9, 1.0]  // Výdech - zmenšování z 2.9x zpět na velikost play tlačítka (1.0)
-                        : 1.0,  // Výchozí stav je velikost play tlačítka
-                      opacity: [0.9, 1, 0.9]
-                    } : {
-                      scale: 1.0,
-                      opacity: 0.9
-                    }}
-                    transition={isPlaying ? {
-                      duration: breathPhase === 'in' ? breathInDuration : breathOutDuration,
-                      delay: breathPhase === 'out' ? 3 : 0,
-                      ease: "easeInOut",
-                      repeat: Infinity,
-                      repeatType: "reverse"
-                    } : {
-                      duration: 0.5
-                    }}
-                    onAnimationStart={() => {
-                      if (breathCircleRef.current) {
-                        breathCircleRef.current.style.setProperty('border-radius', '50%', 'important');
-                      }
-                    }}
-                    onUpdate={() => {
-                      if (breathCircleRef.current) {
-                        breathCircleRef.current.style.setProperty('border-radius', '50%', 'important');
-                      }
-                    }}
-                  />
-                </div>
-              )}
 
-              {/* CircularProgress - nad animací - vytvoří nový stacking context s vyšším z-index */}
-              <div style={{ position: 'relative', zIndex: 10, isolation: 'isolate', transform: 'translateZ(0)' }}>
-                <CircularProgress
-                  progress={progress}
-                  onSeek={null} // Pro meditaci nepotřebujeme seek
-                  className="w-[50vw] h-[50vw] max-w-[400px] max-h-[400px] min-w-[250px] min-h-[250px]"
-                  style={{ position: 'relative', zIndex: 10 }}
-                />
-                {/* Vnitřní kruhový ukazatel pro rytmus dýchání - tenký černý */}
-                {isPlaying && cycleDuration > 0 && (
-                  <div className="absolute inset-0 flex items-center justify-center pointer-events-none" style={{ zIndex: 1 }}>
-                    <svg
-                      className="w-[40vw] h-[40vw] max-w-[320px] max-h-[320px] min-w-[200px] min-h-[200px] transform -rotate-90"
-                      viewBox="0 0 450 450"
-                      style={{ aspectRatio: '1/1', position: 'absolute' }}
-                    >
-                      {/* Pozadí - celý kruh */}
-                      <circle
-                        cx="225"
-                        cy="225"
-                        r="200"
-                        stroke="rgba(0,0,0,0.15)"
-                        strokeWidth="6"
-                        fill="none"
-                      />
-                      {/* Nádech část - zvýrazněná podle poměru */}
-                      <circle
-                        cx="225"
-                        cy="225"
-                        r="200"
-                        stroke="rgba(0,0,0,0.4)"
-                        strokeWidth="6"
-                        fill="none"
-                        strokeDasharray={`${2 * Math.PI * 200 * (inPhaseProgress / 100)} ${2 * Math.PI * 200}`}
-                        strokeDashoffset="0"
-                        style={{ strokeLinecap: 'butt' }}
-                      />
-                      {/* Progress - aktuální pozice v cyklu - černý */}
-                      <motion.circle
-                        cx="225"
-                        cy="225"
-                        r="200"
-                        stroke="black"
-                        strokeWidth="8"
-                        fill="none"
-                        strokeDasharray={`${2 * Math.PI * 200}`}
-                        strokeDashoffset={`${2 * Math.PI * 200 * (1 - breathRhythmProgress / 100)}`}
-                        style={{ strokeLinecap: 'round' }}
-                        transition={{ duration: 0.1 }}
-                      />
-                    </svg>
-                  </div>
+            {/* Zobraz statistiky pro uživatele - ZAKOMENTOVÁNO kvůli poskakování */}
+            {/* {userStats && (
+              <div className="text-center mb-8 p-4 bg-white/30 rounded-lg">
+                <p className="text-sm text-gray-600 mb-2">
+                  Dostupné meditácie: {userStats.filteredForUser} z {userStats.totalAvailable}
+                </p>
+                <p className="text-xs text-gray-500 mb-1 h-4 flex items-center justify-center">
+                  {gender === 'none' ? 'Obecný obsah' :
+                   gender === 'female' ? 'Personalizované pro ženy' :
+                   'Personalizované pro muže'}
+                </p>
+                {userStats.lastUpdated && (
+                  <p className="text-xs text-gray-400">
+                    Aktualizováno: {new Date(userStats.lastUpdated).toLocaleTimeString('sk-SK')}
+                  </p>
                 )}
               </div>
-
-              {/* Play/Pause Button - Center - nejvyšší z-index */}
-              <div className="absolute inset-0 flex items-center justify-center pointer-events-none" style={{ zIndex: 100 }}>
-                <PlayPauseButton
-                  isPlaying={isPlaying}
-                  onToggle={onPlayPause}
-                  className="w-[18vw] h-[18vw] max-w-[120px] max-h-[120px] min-w-[80px] min-h-[80px] sm:w-[16vw] sm:h-[16vw] sm:max-w-[140px] sm:max-h-[140px] sm:min-w-[100px] sm:min-h-[100px]"
-                />
-              </div>
-            </div>
-
-            {/* Current Time Display - pod CircularProgress */}
-            <div className="mt-6 text-center">
-              <div
-                className="font-medium text-2xl"
-                style={{ color: currentTheme?.colors?.timeIndicator || '#000000' }}
-              >
-                {formatTime(time)}
-              </div>
-            </div>
+            )} */}
           </FramerSection>
 
-          {!isPlaying && (
-            <FramerSection
-              className="mb-12"
-              animationType="fadeIn"
-              delay={0.3}
-            >
-              <div className="flex justify-center">
-                <button
-                  onClick={() => {
-                    if (!wheelPickerLoaded) {
-                      loadWheelPickerModal();
-                      setWheelPickerLoaded(true);
-                    }
-                    setShowDurationPicker(true);
-                  }}
-                  className="text-4xl font-light text-gray-800 hover:text-black transition-colors cursor-pointer px-6 py-4"
+          <div className="space-y-4">
+            {meditationItems.length === 0 ? (
+              <div className="text-center py-8">
+                <p className="text-gray-600 text-lg">Žiadne meditácie nie sú dostupné</p>
+                <p className="text-gray-500 text-sm mt-2">Skúste zmeniť nastavenia v menu</p>
+              </div>
+            ) : (
+              meditationItems.map((item, idx) => (
+                <FramerSection
+                  key={item.key || idx}
+                  animationType="slideInUp"
+                  delay={0.2 + idx * 0.1}
                 >
-                  {selectedDuration}
-                </button>
-                <span className="text-3xl font-light text-gray-600 pt-4 px-2">
-                  {t('minut')}
-                </span>
-              </div>
-
-              {showDurationPicker && wheelPickerLoaded && (
-                <Suspense fallback={null}>
-                  {(() => {
-                    const WheelPickerModal = loadWheelPickerModal();
-                    return (
-                      <WheelPickerModal
-                      isOpen={showDurationPicker}
-                      onClose={() => setShowDurationPicker(false)}
-                      value={selectedDuration}
-                      onChange={onDurationChange}
-                      min={1}
-                      max={60}
-                      step={1}
-                      label={t('dlzkaMeditacie')}
-                      title={t('dlzkaMeditacie')}
-                      />
-                    );
-                  })()}
-                </Suspense>
-              )}
-            </FramerSection>
-          )}
-
-          <FramerSection
-            className="flex justify-center gap-6 mb-6"
-            animationType="fadeIn"
-            delay={0.4}
-          >
-            <FramerButton
-              onClick={onReset}
-              variant="secondary"
-              className="w-20 h-20 rounded-full flex items-center justify-center p-0"
-            >
-              <RotateCcw size={28} />
-            </FramerButton>
-            <FramerButton
-              onClick={() => {
-                if (!soundGalleryLoaded) {
-                  loadSoundThemeGallery();
-                  setSoundGalleryLoaded(true);
-                }
-                setShowGallery(true);
-              }}
-              variant="secondary"
-              className="w-20 h-20 rounded-full flex items-center justify-center p-0"
-            >
-              <ImageIcon size={28} />
-            </FramerButton>
-          </FramerSection>
+                  <FramerButton
+                    variant="ghost"
+                    className={`w-full p-6 text-left bg-white/50 backdrop-blur rounded-none border border-black/10 ${
+                      activeAudio ? 'pointer-events-none opacity-50' : ''
+                    }`}
+                    onClick={activeAudio ? undefined : () => handleItemClick(item)}
+                    // Hover preloading odstraněn
+                  >
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center space-x-3">
+                        <div>
+                          <h3 className="text-2xl font-light">
+                            {item.title}
+                          </h3>
+                          {/* {item.voiceInfo && (
+                            <p className="text-sm text-gray-500 mt-1">
+                              {item.voiceInfo}
+                            </p>
+                          )} */}
+                        </div>
+                      </div>
+                      <div className="flex items-center space-x-3">
+                        <span className="text-2xl font-light text-gray-500">
+                          {item.duration}
+                        </span>
+                      </div>
+                    </div>
+                  </FramerButton>
+                </FramerSection>
+              ))
+            )}
+          </div>
 
         </div>
 
-        {/* Galerie zvukových témat */}
-        {showGallery && soundGalleryLoaded && (
-          <Suspense fallback={null}>
-            {(() => {
-              const SoundThemeGallery = loadSoundThemeGallery();
-              return (
-                <SoundThemeGallery
-                  isOpen={showGallery}
-                  onClose={() => setShowGallery(false)}
-                  onSelectSound={onBreathSoundChange}
-                  selectedInSound={breathInSound}
-                  selectedOutSound={breathOutSound}
-                  selectedClickSound={breathClickSound}
-                  selectedFinalSound={breathFinalSound}
-                />
-              );
-            })()}
-          </Suspense>
-        )}
+        {/* Audio Player Modal */}
+        <AnimatePresence>
+          {activeAudio && (
+            <AudioPlayer
+              key="audio-player"
+              audioSrc={activeAudio.audioSrc}
+              title={activeAudio.title}
+              fileName={activeAudio.fileName}
+              gender={activeAudio.gender}
+              onClose={handleCloseAudio}
+              albumTracks={activeAudio.albumTracks}
+              currentTrackIndex={activeAudio.currentTrackIndex}
+              onTrackChange={(newIndex) => {
+                if (activeAudio.albumTracks && activeAudio.albumTracks[newIndex]) {
+                  const track = activeAudio.albumTracks[newIndex];
+                  setActiveAudio({
+                    ...activeAudio,
+                    audioSrc: track.audioSrc,
+                    title: track.trackName,
+                    fileName: track.fileName,
+                    currentTrackIndex: newIndex
+                  });
+                }
+              }}
+              allFiles={activeAudio.allFiles || []}
+              autoplayEnabled={true}
+            />
+          )}
+        </AnimatePresence>
       </div>
     </FramerPageTransition>
   );
