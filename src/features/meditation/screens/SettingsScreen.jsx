@@ -4,7 +4,7 @@ import { FramerButton, FramerSection, FramerPageTransition, BackButton } from '@
 import LanguageSwitcher from '@components/LanguageSwitcher';
 import { useLanguage } from '@contexts/LanguageContext';
 import { useTheme } from '@contexts/ThemeContext';
-import { Download, Wifi, WifiOff, HardDrive, RefreshCw, Trash2 } from 'lucide-react';
+import { Download, Wifi, WifiOff, HardDrive, RefreshCw, Trash2, History } from 'lucide-react';
 import useOfflineCache from '@hooks/useOfflineCache';
 import { useFirebaseHudbaScanner } from '@hooks/useFirebaseHudbaScanner';
 import { realtimeMetadataService } from '@services/realtimeMetadataService';
@@ -278,6 +278,47 @@ const SettingsScreen = ({
                     {t('obecnyObsah')}
                   </motion.button>
                 </motion.div>
+              </div>
+            </FramerSection>
+
+            {/* Historie aktivity */}
+            <FramerSection
+              animationType="slideInUp"
+              delay={0.24}
+            >
+              <div
+                className="w-full p-6 backdrop-blur rounded-none border"
+                style={{
+                  backgroundColor: themeColors?.card || (colorMode === 'dark' ? 'rgba(15, 15, 15, 0.95)' : 'rgba(255, 255, 255, 0.95)'),
+                  borderColor: colorMode === 'dark' ? 'rgba(255, 255, 255, 0.2)' : 'rgba(0, 0, 0, 0.1)',
+                  color: themeColors?.text || (colorMode === 'dark' ? 'rgba(255, 255, 255, 1)' : 'rgba(0, 0, 0, 1)')
+                }}
+              >
+                <h3
+                  className="text-2xl font-light mb-4"
+                  style={{ color: themeColors?.text || (colorMode === 'dark' ? 'rgba(255, 255, 255, 1)' : 'rgba(0, 0, 0, 1)') }}
+                >
+                  Historie aktivity
+                </h3>
+                <FramerButton
+                  onClick={() => onNavigateToScreen('activity-history')}
+                  variant="ghost"
+                  className="w-full p-4 text-left flex items-center gap-3"
+                  style={{
+                    backgroundColor: colorMode === 'dark' ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.05)',
+                    border: `1px solid ${colorMode === 'dark' ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.1)'}`
+                  }}
+                >
+                  <History size={20} style={{ color: themeColors?.textSecondary || (colorMode === 'dark' ? 'rgba(180, 180, 180, 1)' : 'rgba(100, 100, 100, 1)') }} />
+                  <div className="flex-1">
+                    <p className="text-base font-medium" style={{ color: themeColors?.text || (colorMode === 'dark' ? 'rgba(255, 255, 255, 1)' : 'rgba(0, 0, 0, 1)') }}>
+                      Zobrazit historii
+                    </p>
+                    <p className="text-sm" style={{ color: themeColors?.textSecondary || (colorMode === 'dark' ? 'rgba(180, 180, 180, 1)' : 'rgba(100, 100, 100, 1)') }}>
+                      Meditace, hudba, dýchání
+                    </p>
+                  </div>
+                </FramerButton>
               </div>
             </FramerSection>
 

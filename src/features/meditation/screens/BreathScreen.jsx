@@ -9,6 +9,7 @@ import { useCountdownSound } from '@hooks/useCountdownSound';
 import { useFinalSound } from '@hooks/useFinalSound';
 import { useBreathTimer } from '@hooks/useBreathTimer';
 import { usePreparationTimer } from '@hooks/usePreparationTimer';
+import { useActivityTracking } from '@hooks/useActivityTracking';
 import PreparationSection from '@features/meditation/components/PreparationSection';
 import BreathingSection from '@features/meditation/components/BreathingSection';
 
@@ -95,6 +96,18 @@ const BreathScreen = ({
     setBreathTime,
     setIsBreathing
   );
+
+  // Trackování aktivity dýchání
+  useActivityTracking({
+    section: 'breathing',
+    isActive: isBreathing,
+    metadata: {
+      breathDuration,
+      breathInDuration,
+      breathOutDuration,
+      preparationTime
+    }
+  });
 
   // Handler pro play/pause s podporou přípravného času
   const handlePlayPause = () => {
