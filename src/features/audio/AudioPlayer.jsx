@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useRef, useEffect } from 'react';
 import { useAudioPlayer, useAudioPlayerLogic } from './hooks';
 import {
   AudioControls,
@@ -64,31 +64,52 @@ const AudioPlayer = ({
     cachedAudioUrl
   } = useAudioPlayer(audioUrl, albumTracks, currentTrackIndex, onTrackChange, autoplayEnabled);
 
-  // Extrahuj název alba z audioSrc (pokud je v cestě hudba/albumName/track.mp3)
+  // Extrahuj název alba z různých zdrojů (priorita: fileName > audioSrc > albumTracks)
   const albumName = useMemo(() => {
-    if (!audioSrc) return null;
-    try {
-      // Zkus extrahovat z cesty
-      const match = audioSrc.match(/hudba\/([^\/]+)\//);
+    // 1. Zkus extrahovat z fileName (nejspolehlivější - obsahuje správnou cestu)
+    if (fileName) {
+      const fileNameMatch = fileName.match(/hudba\/([^/]+)\//);
+      if (fileNameMatch && fileNameMatch[1]) {
+        return fileNameMatch[1];
+      }
+    }
+
+    // 2. Zkus extrahovat z fileNameProp
+    if (fileNameProp) {
+      const propMatch = fileNameProp.match(/hudba\/([^/]+)\//);
+      if (propMatch && propMatch[1]) {
+        return propMatch[1];
+      }
+    }
+
+    // 3. Zkus extrahovat z audioSrc (pokud je to cesta, ne URL)
+    if (audioSrc && !audioSrc.startsWith('http')) {
+      const match = audioSrc.match(/hudba\/([^/]+)\//);
       if (match && match[1]) {
         return match[1];
       }
-      // Pokud máme albumTracks s více než jednou skladbou, je to album
-      if (albumTracks && albumTracks.length > 1) {
-        // Zkus najít album name v prvním tracku
-        const firstTrack = albumTracks[0];
-        if (firstTrack.audioSrc) {
-          const trackMatch = firstTrack.audioSrc.match(/hudba\/([^\/]+)\//);
-          if (trackMatch && trackMatch[1]) {
-            return trackMatch[1];
-          }
+    }
+
+    // 4. Pokud máme albumTracks s více než jednou skladbou, zkus najít album name v tracku
+    if (albumTracks && albumTracks.length > 1) {
+      // Zkus najít album name v prvním tracku (fileName nebo audioSrc)
+      const firstTrack = albumTracks[0];
+      if (firstTrack.fileName) {
+        const trackMatch = firstTrack.fileName.match(/hudba\/([^/]+)\//);
+        if (trackMatch && trackMatch[1]) {
+          return trackMatch[1];
         }
       }
-      return null;
-    } catch {
-      return null;
+      if (firstTrack.audioSrc && !firstTrack.audioSrc.startsWith('http')) {
+        const trackMatch = firstTrack.audioSrc.match(/hudba\/([^/]+)\//);
+        if (trackMatch && trackMatch[1]) {
+          return trackMatch[1];
+        }
+      }
     }
-  }, [audioSrc, albumTracks]);
+
+    return null;
+  }, [fileName, fileNameProp, audioSrc, albumTracks]);
 
   // Pro detekci typu aktivity použij více způsobů:
   // 1. Zkontroluj folder z allFiles (nejspolehlivější - každý slova soubor má folder: 'slova')
@@ -141,8 +162,41 @@ const AudioPlayer = ({
   // - slova/* patří do sekce "meditation" (uživatel to vnímá jako meditace/afirmace)
   // - hudba/* patří do sekce "music"
   // - ostatní audio netrackujeme (aby se nám to nemíchalo)
-  const shouldTrackAudio = isPlaying && !!sourceForDetection && (isSlova || isHudba);
   const activitySection = isSlova ? 'meditation' : 'music';
+
+  // Ref pro sledování, zda byla aktivita aktivní před změnou hlasu
+  // Toto zabrání přerušení aktivity při změně hlasu (když se dočasně resetuje isPlaying)
+  const wasTrackingRef = useRef(false);
+  const isValidActivityRef = useRef(false);
+
+  // Zjisti, zda je to platná aktivita pro tracking
+  const isValidActivity = !!sourceForDetection && (isSlova || isHudba);
+
+  // Aktualizuj refy při změně
+  useEffect(() => {
+    isValidActivityRef.current = isValidActivity;
+  }, [isValidActivity]);
+
+  // Sleduj změny isPlaying a zachovej tracking pokud je to stále meditace/hudba
+  useEffect(() => {
+    if (isPlaying && isValidActivity) {
+      wasTrackingRef.current = true;
+    } else if (!isPlaying && wasTrackingRef.current && isValidActivityRef.current) {
+      // Pokud se isPlaying změnil na false, ale stále je to platná aktivita (např. při změně hlasu),
+      // zachovej tracking po dobu 3 sekund (aby se aktivita nepřerušila při krátkých změnách)
+      const timeoutId = setTimeout(() => {
+        if (!isPlaying && wasTrackingRef.current && isValidActivityRef.current) {
+          wasTrackingRef.current = false;
+        }
+      }, 3000);
+      return () => clearTimeout(timeoutId);
+    } else if (!isValidActivity) {
+      wasTrackingRef.current = false;
+    }
+  }, [isPlaying, isValidActivity]);
+
+  // shouldTrackAudio: trackuj pokud je aktivní přehrávání NEBO pokud byla aktivita aktivní před změnou hlasu
+  const shouldTrackAudio = (isPlaying || wasTrackingRef.current) && isValidActivity;
 
   // Získej aktuální gender pro ukládání do historie
   // Priorita: selectedVoice (z useVoiceSwitcher, aktualizuje se okamžitě při změně hlasu)

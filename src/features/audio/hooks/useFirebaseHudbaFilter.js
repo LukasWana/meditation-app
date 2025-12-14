@@ -148,8 +148,24 @@ export const useFirebaseHudbaFilter = () => {
         return trackName.replace(/^\d+[\s\-.]+/, '').trim();
       };
 
-      // Vytvoř tracks pro album
-      const tracks = songs.map(file => {
+      // Filtruj pouze audio soubory (vyfiltruj cover.jpg a jiné ne-audio soubory)
+      const audioFiles = songs.filter(file => {
+        const fileName = file.fileName || file.fileNameOnly || '';
+        const lowerFileName = fileName.toLowerCase();
+        // Povol pouze audio soubory (mp3, ogg, oga, wav, m4a, flac)
+        const isAudioFile = /\.(mp3|ogg|oga|wav|m4a|flac)$/i.test(fileName);
+        // Vylouč cover obrázky a jiné ne-audio soubory
+        const isNotCoverImage = !lowerFileName.includes('cover') &&
+                                !lowerFileName.endsWith('.jpg') &&
+                                !lowerFileName.endsWith('.jpeg') &&
+                                !lowerFileName.endsWith('.png') &&
+                                !lowerFileName.endsWith('.gif') &&
+                                !lowerFileName.endsWith('.webp');
+        return isAudioFile && isNotCoverImage;
+      });
+
+      // Vytvoř tracks pro album (pouze z audio souborů)
+      const tracks = audioFiles.map(file => {
         // Získej skutečnou délku z fastMetadataService
         const actualDuration = file.duration || 'N/A';
 
@@ -163,7 +179,7 @@ export const useFirebaseHudbaFilter = () => {
         const cleanName = cleanTrackName(rawTrackName);
 
         return {
-          trackNumber: songs.indexOf(file) + 1,
+          trackNumber: audioFiles.indexOf(file) + 1,
           trackName: cleanName,
           duration: actualDuration,
           audioSrc: file.downloadURL,
