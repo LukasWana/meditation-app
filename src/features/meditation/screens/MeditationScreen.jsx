@@ -15,7 +15,7 @@ const MeditationScreen = ({
   onTouchEnd,
   gender = 'none', // Přidáme gender prop pro filtrování
   onPlayerStateChange, // Callback pro předání stavu přehrávače
-  onGenderChange // Callback pro změnu pohlaví
+  onGenderChange: _onGenderChange // Callback pro změnu pohlaví
 }) => {
   const [activeAudio, setActiveAudio] = useState(null);
   const { t, language } = useLanguage();

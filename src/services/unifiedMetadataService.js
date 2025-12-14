@@ -1,5 +1,5 @@
 import { collection, doc, getDoc, getDocs, setDoc, query, orderBy } from 'firebase/firestore';
-import { ref, listAll, getDownloadURL } from 'firebase/storage';
+import { ref, getDownloadURL } from 'firebase/storage';
 import { db, storage } from '@config/secure-firebase';
 import log from './logger';
 

@@ -1,4 +1,4 @@
-import { ref, set, get, push, update, remove } from 'firebase/database';
+import { ref, set, get, update, remove } from 'firebase/database';
 import { realtimeDatabase } from '../config/secure-firebase';
 import log from './logger';
 

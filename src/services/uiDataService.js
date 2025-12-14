@@ -316,7 +316,7 @@ class UIDataService {
    * @param {string} language - Jazyk kódu (SK, CZ, EN)
    * @returns {Object} Texty pro daný jazyk
    */
-  getTexts(language) {
+  getTexts(_language) {
     if (!this.uiData || !this.uiData.texts) {
       const defaults = this.getDefaultUIData();
       return defaults.texts;

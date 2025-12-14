@@ -206,7 +206,7 @@ class FirebaseMetadataCollector {
   createAlbumsFromHudba() {
     const albumsMap = new Map();
 
-    this.collectedMetadata.hudba.forEach((metadata, fileName) => {
+    this.collectedMetadata.hudba.forEach((metadata, _fileName) => {
       const albumName = metadata.album || 'Unknown Album';
 
       if (!albumsMap.has(albumName)) {

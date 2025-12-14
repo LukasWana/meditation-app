@@ -166,9 +166,9 @@ export const useHudbaScreenData = () => {
 
     // Debug: vypiš detaily každé položky s duration informacemi
     if (hudbaItems && hudbaItems.length > 0) {
-      hudbaItems.forEach((item, index) => {
-        const cachedDuration = item.audioSrc ? cacheService.getDuration(item.audioSrc) : null;
-        const stateDuration = item.audioSrc ? durations.get(item.audioSrc) : null;
+      hudbaItems.forEach((item, _index) => {
+        const _cachedDuration = item.audioSrc ? cacheService.getDuration(item.audioSrc) : null;
+        const _stateDuration = item.audioSrc ? durations.get(item.audioSrc) : null;
 
         // log.debug(`🎵 Item ${index + 1}:`, {
         //   title: item.title,

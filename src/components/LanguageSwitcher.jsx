@@ -20,15 +20,6 @@ const LanguageSwitcher = ({ className = "" }) => {
     changeLanguage(newLanguage);
   };
 
-  const getFlagUrl = (lang) => {
-    switch (lang) {
-      case 'SK': return SlovakiaFlagUrl;
-      case 'CZ': return CzechFlagUrl;
-      case 'EN': return UKFlagUrl;
-      default: return SlovakiaFlagUrl;
-    }
-  };
-
   return (
     <div className={`flex items-center space-x-3 ${className}`}>
       <motion.div
