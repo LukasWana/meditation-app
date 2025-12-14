@@ -3,7 +3,7 @@
  * Běží na serveru, takže nemá CORS problémy
  */
 
-const functions = require('firebase-functions');
+const functions = require('firebase-functions/v1');
 const admin = require('firebase-admin');
 const path = require('path');
 const os = require('os');

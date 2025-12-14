@@ -3,7 +3,7 @@
  * Sleduje změny ve Firebase Storage a aktualizuje metadata v databázi
  */
 
-const functions = require('firebase-functions');
+const functions = require('firebase-functions/v1');
 const admin = require('firebase-admin');
 const path = require('path');
 const os = require('os');
