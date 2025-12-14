@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { AnimatePresence } from 'framer-motion';
 import { FramerPageTransition, BackButton } from '@components';
 import { useLanguage } from '@contexts/LanguageContext';
@@ -47,6 +47,25 @@ const BreathScreen = ({
   const [localIsPreparing, setLocalIsPreparing] = useState(false);
   const [localPreparationCountdown, setLocalPreparationCountdown] = useState(0);
 
+  // State pro pokračování v počítání po skončení
+  const [continueAfterEnd, setContinueAfterEnd] = useState(() => {
+    try {
+      const saved = localStorage.getItem('meditation-app-continue-after-end');
+      return saved === 'true';
+    } catch (error) {
+      return false;
+    }
+  });
+
+  // Uložit do localStorage při změně
+  React.useEffect(() => {
+    try {
+      localStorage.setItem('meditation-app-continue-after-end', continueAfterEnd.toString());
+    } catch (error) {
+      console.warn('Failed to save continueAfterEnd to localStorage:', error);
+    }
+  }, [continueAfterEnd]);
+
   // Pro BreathScreen vždy používáme lokální state (protože globální state z useAppState je pro meditaci)
   const currentIsPreparing = localIsPreparing;
   const currentPreparationCountdown = localPreparationCountdown;
@@ -73,7 +92,7 @@ const BreathScreen = ({
   const playFinalSound = useFinalSound(breathFinalSound, isBreathing);
 
   // Použij hook pro timer dýchání
-  const { waitingForCycleCompletionRef, completionTimeoutRef } = useBreathTimer(
+  const { waitingForCycleCompletionRef, completionTimeoutRef, extraTime } = useBreathTimer(
     isBreathing,
     breathTime,
     setBreathTime,
@@ -82,7 +101,8 @@ const BreathScreen = ({
     breathOutDuration,
     breathFinalSound,
     playFinalSound,
-    setIsBreathing
+    setIsBreathing,
+    continueAfterEnd
   );
 
   // Použij hook pro timer přípravy
@@ -97,16 +117,21 @@ const BreathScreen = ({
     setIsBreathing
   );
 
+  // Metadata pro trackování aktivity - použijeme useMemo, aby se aktualizovalo při změně extraTime
+  const trackingMetadata = useMemo(() => ({
+    breathDuration,
+    breathInDuration,
+    breathOutDuration,
+    preparationTime,
+    extraTime: extraTime || 0, // Čas navíc po skončení nastaveného času
+    continueAfterEnd: continueAfterEnd || false
+  }), [breathDuration, breathInDuration, breathOutDuration, preparationTime, extraTime, continueAfterEnd]);
+
   // Trackování aktivity dýchání
   useActivityTracking({
     section: 'breathing',
     isActive: isBreathing,
-    metadata: {
-      breathDuration,
-      breathInDuration,
-      breathOutDuration,
-      preparationTime
-    }
+    metadata: trackingMetadata
   });
 
   // Handler pro play/pause s podporou přípravného času
@@ -232,6 +257,9 @@ const BreathScreen = ({
                 onProfilesClick={() => onNavigateToScreen('breath-profiles')}
                 formatTime={formatTime}
                 formatPreparationTime={formatPreparationTime}
+                continueAfterEnd={continueAfterEnd}
+                onContinueAfterEndChange={setContinueAfterEnd}
+                extraTime={extraTime || 0}
                 t={t}
               />
             )}
