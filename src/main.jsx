@@ -26,6 +26,11 @@ import './index.css'
 // Tím se zachytí všechna console.log() volání a budou filtrována podle log levelu
 initConsoleWrapper();
 
+// Načti helper pro aktualizaci Firebase překladů (dostupný v konzoli)
+import('./utils/updateFirebaseTranslationsHelper.js').catch(() => {
+  // Ignoruj chyby při načítání (není kritické)
+});
+
 ReactDOM.createRoot(document.getElementById('root')).render(
   <React.StrictMode>
     <ErrorBoundary>
