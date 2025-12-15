@@ -3,10 +3,11 @@
  * Poskytuje offline podporu a cache strategie
  */
 
-// const CACHE_NAME = 'meditation-app-v1'; // Není používán
-const STATIC_CACHE = 'static-v1';
-const DYNAMIC_CACHE = 'dynamic-v1';
-const AUDIO_CACHE = 'audio-v1';
+// Verze cache – při změně se smažou staré cache a natáhne se nový index.html
+const CACHE_VERSION = 'v2';
+const STATIC_CACHE = `static-${CACHE_VERSION}`;
+const DYNAMIC_CACHE = `dynamic-${CACHE_VERSION}`;
+const AUDIO_CACHE = `audio-${CACHE_VERSION}`;
 
 // Statické soubory k cache
 const STATIC_ASSETS = [
