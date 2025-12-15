@@ -55,6 +55,17 @@ export const useFinalSound = (breathFinalSound, isBreathing) => {
       }
 
       if (url) {
+        // Aktivovat AudioContext před přehráním (pro přehrávání i bez focusu)
+        let audioContext = window.globalAudioContext;
+        if (!audioContext) {
+          audioContext = new (window.AudioContext || window.webkitAudioContext)();
+          window.globalAudioContext = audioContext;
+        }
+
+        if (audioContext.state === 'suspended') {
+          await audioContext.resume();
+        }
+
         const audio = new Audio(url);
         audio.volume = 1;
         audio.play().catch((error) => {

@@ -26,6 +26,8 @@ export const usePreparationTimer = (
 ) => {
   const previousCountdownRef = useRef(null);
   const intervalRef = useRef(null);
+  const startTimeRef = useRef(null);
+  const initialCountdownRef = useRef(null);
 
   // Odpočítávání času přípravy
   useEffect(() => {
@@ -37,42 +39,55 @@ export const usePreparationTimer = (
 
     if (!isPreparing) {
       previousCountdownRef.current = null;
+      startTimeRef.current = null;
+      initialCountdownRef.current = null;
       return;
     }
 
     if (isPreparing && preparationCountdown > 0) {
-      // Přehrát zvuk pro počáteční hodnotu countdownu při startu přípravy (pouze pokud se countdown změnil)
-      if (playCountdownSound && typeof playCountdownSound === 'function' && previousCountdownRef.current !== preparationCountdown) {
-        playCountdownSound(preparationCountdown);
-        previousCountdownRef.current = preparationCountdown;
+      // Při startu uložit čas a počáteční countdown
+      if (!startTimeRef.current) {
+        startTimeRef.current = Date.now();
+        initialCountdownRef.current = preparationCountdown;
+        // Přehrát zvuk pro počáteční hodnotu countdownu při startu přípravy
+        if (playCountdownSound && typeof playCountdownSound === 'function') {
+          playCountdownSound(preparationCountdown);
+          previousCountdownRef.current = preparationCountdown;
+        }
       }
 
+      // Interval, který kontroluje čas pomocí Date.now() (nezávislé na throttlingu)
       intervalRef.current = setInterval(() => {
-        setPreparationCountdown(prev => {
-          const newCountdown = prev - 1;
+        if (!startTimeRef.current || !initialCountdownRef.current) {
+          return;
+        }
 
-          // Spusť countdown zvuk přímo v intervalu při změně countdownu (před aktualizací state)
-          // Toto zajistí, že se zvuk přehrává přesně v momentě změny, ne až po renderu
-          if (playCountdownSound && typeof playCountdownSound === 'function' && newCountdown > 0 && previousCountdownRef.current !== newCountdown) {
-            playCountdownSound(newCountdown);
-            previousCountdownRef.current = newCountdown;
-          }
+        const now = Date.now();
+        const elapsed = Math.floor((now - startTimeRef.current) / 1000); // uplynulý čas v sekundách
+        const newCountdown = Math.max(0, initialCountdownRef.current - elapsed);
 
-          if (newCountdown <= 0) {
-            // Po dokončení přípravy spusť dýchání - použij setTimeout, aby se to nestalo během renderu
-            setTimeout(() => {
-              setIsPreparing(false);
-              if (breathTime <= 0) {
-                const newTime = breathDuration * 60;
-                setBreathTime(newTime);
-              }
-              setIsBreathing(true);
-            }, 0);
-            return 0;
-          }
-          return newCountdown;
-        });
-      }, 1000);
+        // Spustit zvuk při změně countdownu
+        if (playCountdownSound && typeof playCountdownSound === 'function' && newCountdown > 0 && previousCountdownRef.current !== newCountdown) {
+          playCountdownSound(newCountdown);
+          previousCountdownRef.current = newCountdown;
+        }
+
+        // Aktualizovat countdown
+        setPreparationCountdown(newCountdown);
+
+        // Po dokončení přípravy spusť dýchání
+        if (newCountdown <= 0) {
+          // Použij setTimeout, aby se to nestalo během renderu
+          setTimeout(() => {
+            setIsPreparing(false);
+            if (breathTime <= 0) {
+              const newTime = breathDuration * 60;
+              setBreathTime(newTime);
+            }
+            setIsBreathing(true);
+          }, 0);
+        }
+      }, 100); // Kontrola každých 100ms pro přesnější timing
     }
 
     return () => {

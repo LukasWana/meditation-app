@@ -73,6 +73,19 @@ export const useCountdownSound = (breathCountdownSound, isPreparing) => {
     }
 
     try {
+      // Aktivovat AudioContext před přehráním (pro přehrávání i bez focusu)
+      let audioContext = window.globalAudioContext;
+      if (!audioContext) {
+        audioContext = new (window.AudioContext || window.webkitAudioContext)();
+        window.globalAudioContext = audioContext;
+      }
+
+      if (audioContext.state === 'suspended') {
+        audioContext.resume().catch((error) => {
+          console.warn('Failed to resume AudioContext:', error);
+        });
+      }
+
       // Vytvoř nový audio element a přehraj ho
       const audio = new Audio(countdownSoundUrlRef.current);
       audio.volume = 1; // Začni na plné hlasitosti (bez fade in)
