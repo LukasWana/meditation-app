@@ -1,5 +1,5 @@
 import { realtimeDatabase as database } from '@config/secure-firebase';
-import { ref, get, onValue, off } from 'firebase/database';
+import { ref, get, set, onValue, off } from 'firebase/database';
 import log from './logger';
 
 const wait = (ms) => new Promise(resolve => setTimeout(resolve, ms));
@@ -109,10 +109,10 @@ class UIDataService {
     return {
       translations: {
         SK: {
-          hudba: 'hudba',
-          slova: 'meditácia',
-          meditacia: 'dýchanie',
-          nastavenie: 'nastavenie',
+          hudba: 'Hudba',
+          slova: 'Meditácia',
+          meditacia: 'Dýchanie',
+          nastavenie: 'Nastavenie',
           pomoc: 'pomoc',
           loading: 'načítam...',
           galeriaZvukovychTemat: 'galéria zvukových tém',
@@ -123,10 +123,10 @@ class UIDataService {
           zobrazitGaleriu: 'zobraziť galériu'
         },
         CZ: {
-          hudba: 'hudba',
-          slova: 'meditace',
-          meditacia: 'dýchání',
-          nastavenie: 'nastavení',
+          hudba: 'Hudba',
+          slova: 'Meditace',
+          meditacia: 'Dýchání',
+          nastavenie: 'Nastavení',
           pomoc: 'pomoc',
           loading: 'načítám...',
           galeriaZvukovychTemat: 'galerie zvukových témat',
@@ -137,10 +137,10 @@ class UIDataService {
           zobrazitGaleriu: 'zobrazit galerii'
         },
         EN: {
-          hudba: 'music',
-          slova: 'meditation',
-          meditacia: 'breathing',
-          nastavenie: 'settings',
+          hudba: 'Music',
+          slova: 'Meditation',
+          meditacia: 'Breathing',
+          nastavenie: 'Settings',
           pomoc: 'help',
           loading: 'loading...',
           galeriaZvukovychTemat: 'sound theme gallery',
@@ -322,6 +322,91 @@ class UIDataService {
       return defaults.texts;
     }
     return this.uiData.texts;
+  }
+
+  /**
+   * Uloží UI data do Firebase Realtime Database
+   * @param {Object} data - UI data k uložení (musí obsahovat translations, config, texts)
+   * @returns {Promise<boolean>} True pokud bylo úspěšně uloženo
+   */
+  async saveUIData(data) {
+    try {
+      const dbInstance = await this.ensureDatabaseReady();
+      const uiDataRef = ref(dbInstance, 'ui-data');
+
+      const dataToSave = {
+        ...data,
+        lastUpdated: new Date().toISOString(),
+        version: data.version || '1.0.0'
+      };
+
+      await set(uiDataRef, dataToSave);
+      log.success('✅ UI data saved to Firebase Realtime Database');
+
+      // Aktualizuj cache
+      this.saveToCache(dataToSave);
+      this.uiData = dataToSave;
+
+      return true;
+    } catch (error) {
+      log.error('❌ Failed to save UI data:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Aktualizuje překlady v Firebase z aktuálního slovníku v LanguageContext
+   * @returns {Promise<boolean>} True pokud bylo úspěšně uloženo
+   */
+  async updateTranslationsFromContext() {
+    try {
+      // Dynamicky importuj DEFAULT_TRANSLATIONS (aby se vyhnul circular dependency)
+      const { DEFAULT_TRANSLATIONS } = await import('@contexts/LanguageContext');
+
+      log.info('🔄 Aktualizuji překlady v Firebase z LanguageContext...');
+
+      const uiData = {
+        translations: {
+          SK: { ...DEFAULT_TRANSLATIONS.SK },
+          CZ: { ...DEFAULT_TRANSLATIONS.CZ },
+          EN: { ...DEFAULT_TRANSLATIONS.EN }
+        },
+        config: {
+          colors: {
+            primary: '#f4ddc4',
+            secondary: '#000000',
+            background: '#f4ddc4'
+          },
+          layout: {
+            defaultLayout: 'grid'
+          }
+        },
+        texts: {
+          emptyState: {
+            SK: 'Žiadne súbory nenájdené',
+            CZ: 'Žádné soubory nenalezeny',
+            EN: 'No files found'
+          },
+          selected: {
+            SK: '✓ Vybraté',
+            CZ: '✓ Vybráno',
+            EN: '✓ Selected'
+          }
+        },
+        version: '1.0.0',
+        lastUpdated: new Date().toISOString()
+      };
+
+      log.info(`📤 Ukládám do Firebase Realtime Database...`);
+      log.info(`   - SK: ${Object.keys(uiData.translations.SK).length} klíčů`);
+      log.info(`   - CZ: ${Object.keys(uiData.translations.CZ).length} klíčů`);
+      log.info(`   - EN: ${Object.keys(uiData.translations.EN).length} klíčů`);
+
+      return await this.saveUIData(uiData);
+    } catch (error) {
+      log.error('❌ Chyba při aktualizaci překladů:', error);
+      throw error;
+    }
   }
 
   /**
