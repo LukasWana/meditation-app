@@ -60,7 +60,14 @@ describe('useBreathTimer', () => {
   });
 
   it('should cancel final sound when isBreathing is set to false before timeout expires', () => {
-    const setBreathTime = vi.fn();
+    let currentBreathTime = 1;
+    const setBreathTime = vi.fn((updater) => {
+      if (typeof updater === 'function') {
+        currentBreathTime = updater(currentBreathTime);
+        return currentBreathTime;
+      }
+      return currentBreathTime;
+    });
     const playFinalSound = vi.fn();
     const setIsBreathing = vi.fn();
 
@@ -86,19 +93,15 @@ describe('useBreathTimer', () => {
       }
     );
 
-    // Simuluj odpočet času - breathTime se změní na 0
+    // Simuluj interval - sníží breathTime z 1 na 0
     act(() => {
-      rerender({ isBreathing: true, breathTime: 0 });
+      vi.advanceTimersByTime(1000);
+      rerender({ isBreathing: true, breathTime: currentBreathTime });
     });
 
-    // Počkej trochu, ale ne dost na to, aby timeout vypršel (50ms)
+    // Okamžitě zastav dýchání před vypršením timeoutu (setTimeout(0))
     act(() => {
-      vi.advanceTimersByTime(30);
-    });
-
-    // Zastav dýchání před vypršením timeoutu
-    act(() => {
-      rerender({ isBreathing: false, breathTime: 0 });
+      rerender({ isBreathing: false, breathTime: currentBreathTime });
     });
 
     // Počkej až do konce timeoutu
