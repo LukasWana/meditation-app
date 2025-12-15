@@ -13,7 +13,7 @@ const ActivityHistoryScreen = ({
   onTouchMove,
   onTouchEnd
 }) => {
-  const { t: _t } = useLanguage();
+  const { t } = useLanguage();
   const { getScreenBackgroundColor, getCurrentThemeColors, colorMode } = useTheme();
   const { user } = useAuth();
   const themeColors = getCurrentThemeColors?.() || {};
@@ -48,7 +48,7 @@ const ActivityHistoryScreen = ({
       setHistory(activities);
     } catch (err) {
       console.error('Failed to load activity history:', err);
-      setError('Nepodařilo se načíst historii');
+      setError(t('nepodariloSeNacistHistorie'));
     } finally {
       setIsLoading(false);
     }
@@ -56,8 +56,8 @@ const ActivityHistoryScreen = ({
 
   const handleClearHistory = async (section = null) => {
     const confirmMessage = section
-      ? `Opravdu chcete vymazat historii pro sekci ${getSectionName(section)}?`
-      : 'Opravdu chcete vymazat celou historii?';
+      ? t('opravduVymazatHistorieProSekci').replace('{section}', getSectionName(section))
+      : t('opravduVymazatCelouHistorie');
 
     if (window.confirm(confirmMessage)) {
       try {
@@ -65,7 +65,7 @@ const ActivityHistoryScreen = ({
         await loadHistory();
       } catch (err) {
         console.error('Failed to clear history:', err);
-        alert('Nepodařilo se vymazat historii');
+        alert(t('nepodariloSeVymazatHistorie'));
       }
     }
   };
@@ -73,11 +73,11 @@ const ActivityHistoryScreen = ({
   const getSectionName = (section) => {
     switch (section) {
       case 'meditation':
-        return 'Meditace';
+        return t('meditace');
       case 'music':
-        return 'Hudba';
+        return t('hudba');
       case 'breathing':
-        return 'Dýchání';
+        return t('dychanie');
       default:
         return section;
     }
@@ -121,10 +121,10 @@ const ActivityHistoryScreen = ({
   };
 
   const sections = [
-    { id: null, name: 'Vše', key: 'vse' },
-    { id: 'meditation', name: 'Meditace', key: 'meditacia' },
-    { id: 'music', name: 'Hudba', key: 'hudba' },
-    { id: 'breathing', name: 'Dýchání', key: 'dychanie' }
+    { id: null, name: t('vse'), key: 'vse' },
+    { id: 'meditation', name: t('meditace'), key: 'meditacia' },
+    { id: 'music', name: t('hudba'), key: 'hudba' },
+    { id: 'breathing', name: t('dychanie'), key: 'dychanie' }
   ];
 
   return (
@@ -148,7 +148,7 @@ const ActivityHistoryScreen = ({
           >
             <div style={{ height: '3.5rem', display: 'flex', flexDirection: 'column', justifyContent: 'flex-start', alignItems: 'center', marginBottom: '0.5rem' }}>
               <h1 className="text-4xl font-light" style={{ minHeight: '2.5rem', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                Historie aktivity
+                {t('historieAktivity')}
               </h1>
             </div>
           </FramerSection>
@@ -169,7 +169,7 @@ const ActivityHistoryScreen = ({
               <div className="flex items-center gap-2 mb-3">
                 <Filter size={18} style={{ color: themeColors?.textSecondary || (colorMode === 'dark' ? 'rgba(180, 180, 180, 1)' : 'rgba(100, 100, 100, 1)') }} />
                 <span className="text-sm font-medium" style={{ color: themeColors?.textSecondary || (colorMode === 'dark' ? 'rgba(180, 180, 180, 1)' : 'rgba(100, 100, 100, 1)') }}>
-                  Filtrovat podle sekce:
+                  {t('filtrovatPodleSekce')}
                 </span>
               </div>
               <div className="flex flex-wrap gap-2">
@@ -219,7 +219,7 @@ const ActivityHistoryScreen = ({
                 whileTap={{ scale: 0.98 }}
               >
                 <Trash2 size={18} />
-                <span>Vymazat {selectedSection ? getSectionName(selectedSection) : 'všechnu'} historii</span>
+                <span>{t('vymazatHistorie').replace('{section}', selectedSection ? getSectionName(selectedSection) : t('vsechnu'))}</span>
               </motion.button>
             </FramerSection>
           )}
@@ -238,7 +238,7 @@ const ActivityHistoryScreen = ({
                   color: themeColors?.text || (colorMode === 'dark' ? 'rgba(255, 255, 255, 1)' : 'rgba(0, 0, 0, 1)')
                 }}
               >
-                <p>Načítání historie...</p>
+                <p>{t('nacitaniHistorie')}</p>
               </div>
             </FramerSection>
           ) : error ? (
@@ -263,7 +263,7 @@ const ActivityHistoryScreen = ({
                     color: themeColors?.text
                   }}
                 >
-                  Zkusit znovu
+                  {t('zkusitZnovu')}
                 </button>
               </div>
             </FramerSection>
@@ -280,7 +280,7 @@ const ActivityHistoryScreen = ({
                   color: themeColors?.textSecondary || (colorMode === 'dark' ? 'rgba(180, 180, 180, 1)' : 'rgba(100, 100, 100, 1)')
                 }}
               >
-                <p>Žádná historie k zobrazení</p>
+                <p>{t('zadnaHistorieKZobrazeni')}</p>
               </div>
             </FramerSection>
           ) : (
@@ -317,7 +317,7 @@ const ActivityHistoryScreen = ({
                             className="text-base font-medium"
                             style={{ color: themeColors?.text || (colorMode === 'dark' ? 'rgba(255, 255, 255, 1)' : 'rgba(0, 0, 0, 1)') }}
                           >
-                            {activity.description || 'Aktivita'}
+                            {activity.description || t('aktivita')}
                           </p>
                         </div>
                       </div>
@@ -336,12 +336,10 @@ const ActivityHistoryScreen = ({
                           <div className="flex items-center gap-1">
                             <span>⏱</span>
                             <span>
-                              {formatDuration(activity.duration + (activity.extraTime || 0))}
-                              {activity.extraTime > 0 && (
-                                <span className="ml-1 opacity-75">
-                                  ({formatDuration(activity.duration)} + {formatDuration(activity.extraTime)})
-                                </span>
-                              )}
+                              {activity.extraTime > 0
+                                ? `+${formatDuration(activity.extraTime)}`
+                                : formatDuration(activity.duration)
+                              }
                             </span>
                           </div>
                         )}

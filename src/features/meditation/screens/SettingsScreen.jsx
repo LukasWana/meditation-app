@@ -236,10 +236,10 @@ const SettingsScreen = ({
         oneTime: true
       });
       setGeneratedShare(data);
-      setShareSuccess('Kód pro sdílení byl vygenerován.');
+      setShareSuccess(t('kodProSdileniBylVygenerovan'));
     } catch (error) {
       console.error('Failed to create shared settings:', error);
-      setShareError(error?.message || 'Nepodařilo se vytvořit sdílení.');
+      setShareError(error?.message || t('nepodariloSeVytvoritSdileni'));
     } finally {
       setShareLoading(false);
     }
@@ -250,17 +250,17 @@ const SettingsScreen = ({
     setShareSuccess('');
     setImportPreview(null);
     if (!shareCodeInput.trim()) {
-      setShareError('Zadej kód sdílení.');
+      setShareError(t('zadejKodSdileni'));
       return;
     }
     setImportLoading(true);
     try {
       const data = await consumeSharedSettings(shareCodeInput.trim());
       setImportPreview(data);
-      setShareSuccess('Nastavení načteno, zkontroluj náhled a potvrď.');
+      setShareSuccess(t('nastaveniNacteno'));
     } catch (error) {
       console.error('Failed to load shared settings:', error);
-      setShareError(error?.message || 'Načtení sdílení se nepovedlo.');
+      setShareError(error?.message || t('naciteniSdileniSeNepovedlo'));
     } finally {
       setImportLoading(false);
     }
@@ -407,7 +407,7 @@ const SettingsScreen = ({
                   className="text-2xl font-light"
                   style={{ color: themeColors?.text || (colorMode === 'dark' ? 'rgba(255, 255, 255, 1)' : 'rgba(0, 0, 0, 1)') }}
                 >
-                  Sdílení nastavení
+                  {t('sdileniNastaveni')}
                 </h3>
 
                 {shareError && (
@@ -428,7 +428,7 @@ const SettingsScreen = ({
                       disabled={shareLoading}
                       className="px-4 py-2 rounded border shadow-sm hover:shadow bg-black text-white disabled:opacity-50"
                     >
-                      {shareLoading ? 'Generuji...' : 'Vygenerovat kód'}
+                      {shareLoading ? t('generuji') : t('vygenerovatKod')}
                     </button>
                     {generatedShare?.shareId && (
                       <div className="flex-1 flex items-center gap-2">
@@ -439,25 +439,25 @@ const SettingsScreen = ({
                           onClick={() => navigator.clipboard?.writeText(generatedShare.shareId)}
                           className="px-3 py-2 rounded border shadow-sm hover:shadow bg-white text-black"
                         >
-                          Kopírovat
+                          {t('kopirovat')}
                         </button>
                       </div>
                     )}
                   </div>
                   {generatedShare?.expiresAt && (
                     <div className="text-xs text-gray-500">
-                      Platnost do: {new Date(generatedShare.expiresAt).toLocaleString()}
+                      {t('platnostDo')} {new Date(generatedShare.expiresAt).toLocaleString()}
                     </div>
                   )}
                 </div>
 
                 <div className="space-y-2 pt-2">
-                  <label className="text-sm text-gray-600">Import kódu</label>
+                  <label className="text-sm text-gray-600">{t('importKodu')}</label>
                   <div className="flex flex-col sm:flex-row gap-2">
                     <input
                       value={shareCodeInput}
                       onChange={(e) => setShareCodeInput(e.target.value)}
-                      placeholder="Zadej kód"
+                      placeholder={t('zadejKod')}
                       className="flex-1 px-3 py-2 rounded border border-gray-300 bg-white text-black"
                     />
                     <button
@@ -465,31 +465,31 @@ const SettingsScreen = ({
                       disabled={importLoading}
                       className="px-4 py-2 rounded border shadow-sm hover:shadow bg-black text-white disabled:opacity-50"
                     >
-                      {importLoading ? 'Načítám...' : 'Načíst'}
+                      {importLoading ? t('nacitam') : t('nacist')}
                     </button>
                   </div>
                 </div>
 
                 {importPreview?.preview && (
                   <div className="p-3 border rounded bg-white/60 text-black space-y-2">
-                    <div className="text-sm font-semibold">Náhled importu</div>
-                    <div className="text-sm">Jazyk: {importPreview.preview.language || '—'}</div>
-                    <div className="text-sm">Téma: {importPreview.preview.themeId || '—'}</div>
-                    <div className="text-sm">Profilů: {importPreview.preview.profiles ?? 0}</div>
-                    <div className="text-sm">Pokračovat po konci: {importPreview.preview.continueAfterEnd ? 'Ano' : 'Ne'}</div>
+                    <div className="text-sm font-semibold">{t('nahledImportu')}</div>
+                    <div className="text-sm">{t('jazyk')}: {importPreview.preview.language || '—'}</div>
+                    <div className="text-sm">{t('tema')}: {importPreview.preview.themeId || '—'}</div>
+                    <div className="text-sm">{t('profilu')}: {importPreview.preview.profiles ?? 0}</div>
+                    <div className="text-sm">{t('pokracovatPoKonce')}: {importPreview.preview.continueAfterEnd ? t('ano') : t('ne')}</div>
                     <div className="flex gap-2 pt-2">
                       <button
                         onClick={applyImportedSettings}
                         disabled={importLoading}
                         className="px-4 py-2 rounded border shadow-sm hover:shadow bg-black text-white disabled:opacity-50"
                       >
-                        {importLoading ? 'Importuji...' : 'Použít nastavení'}
+                        {importLoading ? t('importuji') : t('pouzitNastaveni')}
                       </button>
                       <button
                         onClick={() => setImportPreview(null)}
                         className="px-3 py-2 rounded border shadow-sm bg-white text-black"
                       >
-                        Zrušit
+                        {t('zrusit')}
                       </button>
                     </div>
                   </div>
@@ -576,7 +576,7 @@ const SettingsScreen = ({
                   className="text-2xl font-light mb-4"
                   style={{ color: themeColors?.text || (colorMode === 'dark' ? 'rgba(255, 255, 255, 1)' : 'rgba(0, 0, 0, 1)') }}
                 >
-                  Historie aktivity
+                  {t('historieAktivity')}
                 </h3>
                 <FramerButton
                   onClick={() => onNavigateToScreen('activity-history')}
@@ -590,10 +590,10 @@ const SettingsScreen = ({
                   <History size={20} style={{ color: themeColors?.textSecondary || (colorMode === 'dark' ? 'rgba(180, 180, 180, 1)' : 'rgba(100, 100, 100, 1)') }} />
                   <div className="flex-1">
                     <p className="text-base font-medium" style={{ color: themeColors?.text || (colorMode === 'dark' ? 'rgba(255, 255, 255, 1)' : 'rgba(0, 0, 0, 1)') }}>
-                      Zobrazit historii
+                      {t('zobrazitHistorie')}
                     </p>
                     <p className="text-sm" style={{ color: themeColors?.textSecondary || (colorMode === 'dark' ? 'rgba(180, 180, 180, 1)' : 'rgba(100, 100, 100, 1)') }}>
-                      Meditace, hudba, dýchání
+                      {t('meditace')}, {t('hudba')}, {t('dychanie')}
                     </p>
                   </div>
                 </FramerButton>
