@@ -11,7 +11,7 @@ const HomeScreen = ({
   audioPermission
 }) => {
   const { t } = useLanguage();
-  const { currentTheme, getScreenBackgroundColor, getCurrentThemeColors, getBackgroundStyle, getBackgroundImageUrl, allowsCustomBackground } = useTheme();
+  const { currentTheme, getScreenBackgroundColor, getCurrentThemeColors, getBackgroundStyle, getBackgroundImageUrl, allowsCustomBackground, colorMode } = useTheme();
   const themeColors = getCurrentThemeColors();
 
   // Zkontrolovat, zda máme obrázek pozadí
@@ -20,7 +20,14 @@ const HomeScreen = ({
   const bgStyle = getBackgroundStyle();
 
   // Helper funkce pro přidání průhlednosti k barvě
-  const addOpacityToColor = (color, opacity = 0.8) => {
+  // Pro light mode použít nižší opacity (světlejší efekt), pro dark mode vyšší
+  const getOpacityForMode = () => {
+    return colorMode === 'light' ? 0.5 : 0.8; // Light mode: 50% průhlednost (světlejší), Dark mode: 80%
+  };
+
+  const addOpacityToColor = (color, opacity = null) => {
+    // Pokud není opacity specifikována, použít hodnotu podle colorMode
+    const finalOpacity = opacity !== null ? opacity : getOpacityForMode();
     if (!color) return color;
     // Pokud je barva v rgba formátu, upravit alpha hodnotu
     if (color.startsWith('rgba')) {
@@ -28,22 +35,22 @@ const HomeScreen = ({
         const parts = values.split(',').map(v => v.trim());
         if (parts.length === 4) {
           // Už máme alpha hodnotu, nahradit ji
-          return `rgba(${parts[0]}, ${parts[1]}, ${parts[2]}, ${opacity})`;
+          return `rgba(${parts[0]}, ${parts[1]}, ${parts[2]}, ${finalOpacity})`;
         } else if (parts.length === 3) {
           // Přidat alpha hodnotu
-          return `rgba(${parts[0]}, ${parts[1]}, ${parts[2]}, ${opacity})`;
+          return `rgba(${parts[0]}, ${parts[1]}, ${parts[2]}, ${finalOpacity})`;
         }
         return match;
       });
     }
     // Pokud je barva v rgb formátu, převést na rgba
     if (color.startsWith('rgb(')) {
-      return color.replace('rgb(', 'rgba(').replace(')', `, ${opacity})`);
+      return color.replace('rgb(', 'rgba(').replace(')', `, ${finalOpacity})`);
     }
     // Pokud je barva v hex formátu, přidat alpha hodnotu
     if (color.startsWith('#')) {
       const hex = color.slice(1);
-      const alphaHex = Math.round(opacity * 255).toString(16).padStart(2, '0');
+      const alphaHex = Math.round(finalOpacity * 255).toString(16).padStart(2, '0');
       return `#${hex}${alphaHex}`;
     }
     return color;
@@ -92,7 +99,7 @@ const HomeScreen = ({
           onTouchStart={onTouchStart}
           style={{
             backgroundColor: hasImage
-              ? addOpacityToColor(currentTheme?.colors?.primary || '#f4ddc4', 0.8) // Přidat průhlednost pokud je obrázek
+              ? addOpacityToColor(currentTheme?.colors?.primary || '#f4ddc4') // Průhlednost podle colorMode (light: 0.5, dark: 0.8)
               : (currentTheme?.colors?.primary || '#f4ddc4')
           }}
         >
@@ -112,7 +119,7 @@ const HomeScreen = ({
           onTouchStart={onTouchStart}
           style={{
             backgroundColor: hasImage
-              ? addOpacityToColor(currentTheme?.colors?.card || '#ffffff', 0.8) // Přidat průhlednost pokud je obrázek
+              ? addOpacityToColor(currentTheme?.colors?.card || '#ffffff') // Průhlednost podle colorMode (light: 0.5, dark: 0.8)
               : (currentTheme?.colors?.card || '#ffffff')
           }}
         >
@@ -131,7 +138,7 @@ const HomeScreen = ({
           onClick={() => onNavigateToScreen('dychani')}
           style={{
             backgroundColor: hasImage
-              ? addOpacityToColor(currentTheme?.colors?.primary || '#f4ddc4', 0.8) // Přidat průhlednost pokud je obrázek
+              ? addOpacityToColor(currentTheme?.colors?.primary || '#f4ddc4') // Průhlednost podle colorMode (light: 0.5, dark: 0.8)
               : (currentTheme?.colors?.primary || '#f4ddc4')
           }}
         >
@@ -150,7 +157,7 @@ const HomeScreen = ({
           onClick={() => onNavigateToScreen('settings')}
           style={{
             backgroundColor: hasImage
-              ? addOpacityToColor(currentTheme?.colors?.card || '#ffffff', 0.8) // Přidat průhlednost pokud je obrázek
+              ? addOpacityToColor(currentTheme?.colors?.card || '#ffffff') // Průhlednost podle colorMode (light: 0.5, dark: 0.8)
               : (currentTheme?.colors?.card || '#ffffff')
           }}
         >
