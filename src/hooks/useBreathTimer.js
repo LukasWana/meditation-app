@@ -42,6 +42,16 @@ export const useBreathTimer = (
   // Indikace, že nastavený čas už doběhl (breathTime <= 0) a jedeme extraTime
   const reachedEndRef = useRef(false);
   const endSoundScheduledRef = useRef(false);
+  
+  // Refy pro aktuální hodnoty finálního zvuku (pro použití v intervalu)
+  const breathFinalSoundRef = useRef(breathFinalSound);
+  const playFinalSoundRef = useRef(playFinalSound);
+  
+  // Aktualizuj refy při změně
+  useEffect(() => {
+    breathFinalSoundRef.current = breathFinalSound;
+    playFinalSoundRef.current = playFinalSound;
+  }, [breathFinalSound, playFinalSound]);
 
   // Aktualizuj ref při změně fáze
   useEffect(() => {
@@ -78,10 +88,37 @@ export const useBreathTimer = (
         return;
       }
 
-      // Standardní odpočet
+      // Standardní odpočet s detekcí přesného okamžiku dosažení 0
       setBreathTime(prev => {
         if (prev <= 0) return 0;
-        return prev - 1;
+        const newTime = prev - 1;
+        
+        // Detekuj přesný okamžik, kdy breathTime dosáhne 0 (přechod z 1 na 0)
+        // Toto zajistí, že finální zvuk se spustí přesně v momentě, kdy nastavená délka doběhne
+        if (continueAfterEnd && newTime === 0 && !reachedEndRef.current) {
+          reachedEndRef.current = true;
+          extraTimeRef.current = 0;
+          setExtraTime(0);
+          
+          // Spusť finální zvuk okamžitě při dosažení 0
+          // Použijeme setTimeout(0) pro okamžité spuštění, ale stále zrušitelné
+          if (!endSoundScheduledRef.current && breathFinalSoundRef.current && breathFinalSoundRef.current !== 'none') {
+            endSoundScheduledRef.current = true;
+            
+            // Vyčisti předchozí timeout, pokud existuje
+            if (completionTimeoutRef.current) {
+              clearTimeout(completionTimeoutRef.current);
+            }
+            
+            // setTimeout(0) spustí zvuk prakticky okamžitě, ale je zrušitelný
+            completionTimeoutRef.current = setTimeout(() => {
+              playFinalSoundRef.current();
+              completionTimeoutRef.current = null;
+            }, 0);
+          }
+        }
+        
+        return newTime;
       });
     }, 1000);
 
@@ -97,31 +134,18 @@ export const useBreathTimer = (
   useEffect(() => {
     if (!isBreathing) return;
 
-    // Režim "pokračovat po skončení": jakmile breathTime dojde na 0, okamžitě začni extraTime od 0
+    // Režim "pokračovat po skončení": finální zvuk se spouští přímo v intervalu při přechodu z 1 na 0
+    // Tento useEffect slouží jen jako fallback pro případ, že by se breathTime nastavil na 0 jinak
     if (continueAfterEnd) {
       if (!reachedEndRef.current && breathTime <= 0) {
         reachedEndRef.current = true;
         extraTimeRef.current = 0;
         setExtraTime(0);
 
-        // Naplánuj finální zvuk okamžitě při doběhnutí nastavené délky (trigger)
-        // Použijeme krátký timeout (50ms) pro spolehlivé zrušení při Stop, ale zvuk se spustí prakticky okamžitě
-        if (!endSoundScheduledRef.current) {
+        // Fallback: pokud se breathTime nastavil na 0 jinak než přes interval
+        if (!endSoundScheduledRef.current && breathFinalSound && breathFinalSound !== 'none') {
           endSoundScheduledRef.current = true;
-
-          if (completionTimeoutRef.current) {
-            clearTimeout(completionTimeoutRef.current);
-            completionTimeoutRef.current = null;
-          }
-
-          // Okamžitý trigger - finální zvuk se spustí prakticky hned po doběhnutí breathTime
-          // Krátký timeout umožňuje zrušení při rychlém kliknutí na Stop
-          completionTimeoutRef.current = setTimeout(() => {
-            if (breathFinalSound && breathFinalSound !== 'none') {
-              playFinalSound();
-            }
-            completionTimeoutRef.current = null;
-          }, 50); // 50ms - prakticky okamžitě, ale stále zrušitelné
+          playFinalSound();
         }
       }
 
