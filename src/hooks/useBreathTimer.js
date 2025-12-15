@@ -104,27 +104,24 @@ export const useBreathTimer = (
         extraTimeRef.current = 0;
         setExtraTime(0);
 
-        // Naplánuj finální zvuk po dokončení aktuální fáze (ale NEzastavuj dýchání ani extraTime)
+        // Naplánuj finální zvuk okamžitě při doběhnutí nastavené délky (trigger)
+        // Použijeme krátký timeout (50ms) pro spolehlivé zrušení při Stop, ale zvuk se spustí prakticky okamžitě
         if (!endSoundScheduledRef.current) {
           endSoundScheduledRef.current = true;
-
-          const currentPhase = currentPhaseRef.current;
-          const currentPhaseDuration = currentPhase === 'in' ? breathInDuration : breathOutDuration;
-          const fadeOutDuration = 1.5;
-          const silenceDuration = 1.0;
-          const totalWaitTime = (currentPhaseDuration + fadeOutDuration + silenceDuration) * 1000;
 
           if (completionTimeoutRef.current) {
             clearTimeout(completionTimeoutRef.current);
             completionTimeoutRef.current = null;
           }
 
+          // Okamžitý trigger - finální zvuk se spustí prakticky hned po doběhnutí breathTime
+          // Krátký timeout umožňuje zrušení při rychlém kliknutí na Stop
           completionTimeoutRef.current = setTimeout(() => {
             if (breathFinalSound && breathFinalSound !== 'none') {
               playFinalSound();
             }
             completionTimeoutRef.current = null;
-          }, totalWaitTime);
+          }, 50); // 50ms - prakticky okamžitě, ale stále zrušitelné
         }
       }
 
