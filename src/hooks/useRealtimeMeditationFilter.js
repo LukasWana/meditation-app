@@ -95,3 +95,4 @@ export const useRealtimeMeditationFilter = (userGender, userLanguage = 'sk') => 
     slovaItems: meditationItems
   };
 };
+
