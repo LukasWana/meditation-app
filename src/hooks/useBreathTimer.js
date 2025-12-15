@@ -42,15 +42,15 @@ export const useBreathTimer = (
   // Indikace, že nastavený čas už doběhl (breathTime <= 0) a jedeme extraTime
   const reachedEndRef = useRef(false);
   const endSoundScheduledRef = useRef(false);
-  
+
   // Refy pro aktuální hodnoty finálního zvuku (pro použití v intervalu)
   const breathFinalSoundRef = useRef(breathFinalSound);
   const playFinalSoundRef = useRef(playFinalSound);
-  
+
   // Ref pro čas začátku dýchání (pro přesné měření času)
   const startTimeRef = useRef(null);
   const totalDurationRef = useRef(null); // Celková nastavená délka v sekundách
-  
+
   // Aktualizuj refy při změně
   useEffect(() => {
     breathFinalSoundRef.current = breathFinalSound;
@@ -90,16 +90,16 @@ export const useBreathTimer = (
     if (isBreathing && !startTimeRef.current) {
       startTimeRef.current = Date.now();
       totalDurationRef.current = breathTime; // breathTime obsahuje zbývající čas (celkovou délku při startu)
-      
+
       // Pokud je zapnuté pokračovat po skončení a je nastaven finální zvuk, naplánuj ho přesně na správný čas
       if (continueAfterEnd && breathFinalSoundRef.current && breathFinalSoundRef.current !== 'none' && !endSoundScheduledRef.current) {
         endSoundScheduledRef.current = true;
-        
+
         // Vyčisti předchozí timeout, pokud existuje
         if (completionTimeoutRef.current) {
           clearTimeout(completionTimeoutRef.current);
         }
-        
+
         // Naplánuj finální zvuk přesně na konec nastavené délky (nezávisle na fázích nádech/výdech)
         const targetTime = totalDurationRef.current * 1000; // převeď na milisekundy
         completionTimeoutRef.current = setTimeout(() => {
