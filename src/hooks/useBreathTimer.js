@@ -90,49 +90,60 @@ export const useBreathTimer = (
     if (isBreathing && !startTimeRef.current) {
       startTimeRef.current = Date.now();
       totalDurationRef.current = breathTime; // breathTime obsahuje zbývající čas (celkovou délku při startu)
-
-      // Pokud je zapnuté pokračovat po skončení a je nastaven finální zvuk, naplánuj ho přesně na správný čas
-      if (continueAfterEnd && breathFinalSoundRef.current && breathFinalSoundRef.current !== 'none' && !endSoundScheduledRef.current) {
-        endSoundScheduledRef.current = true;
-
-        // Vyčisti předchozí timeout, pokud existuje
-        if (completionTimeoutRef.current) {
-          clearTimeout(completionTimeoutRef.current);
-        }
-
-        // Naplánuj finální zvuk přesně na konec nastavené délky (nezávisle na fázích nádech/výdech)
-        const targetTime = totalDurationRef.current * 1000; // převeď na milisekundy
-        completionTimeoutRef.current = setTimeout(() => {
-          if (breathFinalSoundRef.current && breathFinalSoundRef.current !== 'none') {
-            playFinalSoundRef.current();
-          }
-          completionTimeoutRef.current = null;
-        }, targetTime);
-      }
+      endSoundScheduledRef.current = false; // Reset flagu pro finální zvuk
     }
 
+    // Interval, který kontroluje čas pomocí Date.now() (nezávislé na throttlingu)
     breathTimerIntervalRef.current = setInterval(() => {
-      // Pokud už jedeme extra režim, zvyšuj extraTime každou sekundu
-      if (continueAfterEnd && reachedEndRef.current) {
-        extraTimeRef.current += 1;
-        setExtraTime(extraTimeRef.current);
+      if (!startTimeRef.current) {
         return;
       }
 
-      // Standardní odpočet
-      setBreathTime(prev => {
-        if (prev <= 0) {
-          // Detekuj přesný okamžik, kdy breathTime dosáhne 0
-          if (continueAfterEnd && !reachedEndRef.current) {
-            reachedEndRef.current = true;
-            extraTimeRef.current = 0;
-            setExtraTime(0);
-          }
-          return 0;
+      const now = Date.now();
+      const elapsed = (now - startTimeRef.current) / 1000; // uplynulý čas v sekundách
+
+      // Kontrola finálního zvuku (pouze pokud je zapnuté pokračovat po skončení)
+      if (continueAfterEnd &&
+          breathFinalSoundRef.current &&
+          breathFinalSoundRef.current !== 'none' &&
+          !endSoundScheduledRef.current &&
+          elapsed >= totalDurationRef.current) {
+        // Přehraj finální zvuk přesně v momentě, kdy uplyne nastavená délka
+        endSoundScheduledRef.current = true;
+        playFinalSoundRef.current();
+      }
+
+      // Pokud už jedeme extra režim, počítáme extraTime na základě skutečného času
+      if (continueAfterEnd && elapsed >= totalDurationRef.current) {
+        if (!reachedEndRef.current) {
+          reachedEndRef.current = true;
+          extraTimeRef.current = 0;
+          setExtraTime(0);
         }
-        return prev - 1;
-      });
-    }, 1000);
+        // ExtraTime = skutečný uplynulý čas minus nastavená délka
+        const newExtraTime = Math.floor(elapsed - totalDurationRef.current);
+        if (newExtraTime !== extraTimeRef.current) {
+          extraTimeRef.current = newExtraTime;
+          setExtraTime(newExtraTime);
+        }
+        // Nastav breathTime na 0
+        setBreathTime(0);
+        return;
+      }
+
+      // Standardní odpočet - použij elapsed time pro přesnější měření
+      const remaining = Math.max(0, totalDurationRef.current - elapsed);
+      const newBreathTime = Math.floor(remaining);
+
+      // Detekuj přesný okamžik, kdy breathTime dosáhne 0
+      if (continueAfterEnd && newBreathTime <= 0 && !reachedEndRef.current) {
+        reachedEndRef.current = true;
+        extraTimeRef.current = 0;
+        setExtraTime(0);
+      }
+
+      setBreathTime(newBreathTime);
+    }, 100); // Kontrola každých 100ms pro přesnější timing (místo 1000ms)
 
     return () => {
       if (breathTimerIntervalRef.current) {

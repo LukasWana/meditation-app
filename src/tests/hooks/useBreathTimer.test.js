@@ -12,18 +12,11 @@ describe('useBreathTimer', () => {
   });
 
   it('should trigger final sound exactly at the set duration with continueAfterEnd=true', () => {
-    let currentBreathTime = 60; // 1 minuta
-    const setBreathTime = vi.fn((updater) => {
-      if (typeof updater === 'function') {
-        currentBreathTime = updater(currentBreathTime);
-        return currentBreathTime;
-      }
-      return currentBreathTime;
-    });
+    const setBreathTime = vi.fn();
     const playFinalSound = vi.fn();
     const setIsBreathing = vi.fn();
 
-    const { result, rerender } = renderHook(
+    const { result } = renderHook(
       ({ isBreathing, breathTime }) =>
         useBreathTimer(
           isBreathing,
@@ -45,15 +38,10 @@ describe('useBreathTimer', () => {
       }
     );
 
-    // Finální zvuk by se měl naplánovat při startu dýchání
-    // Počkej přesně 60 sekund (nastavená délka)
+    // Finální zvuk by se měl spustit přesně po 60 sekundách (nastavená délka)
+    // Nová logika používá Date.now() a kontroluje každých 100ms
     act(() => {
       vi.advanceTimersByTime(60000); // 60 sekund
-      // Aktualizuj breathTime podle intervalu
-      for (let i = 0; i < 60; i++) {
-        setBreathTime(prev => prev - 1);
-      }
-      rerender({ isBreathing: true, breathTime: currentBreathTime });
     });
 
     // playFinalSound by měl být zavolán přesně po 60 sekundách
@@ -61,22 +49,14 @@ describe('useBreathTimer', () => {
 
     // extraTime by měl začít růst
     act(() => {
-      vi.advanceTimersByTime(2000);
-      rerender({ isBreathing: true, breathTime: currentBreathTime });
+      vi.advanceTimersByTime(2000); // další 2 sekundy
     });
 
     expect(result.current.extraTime).toBeGreaterThan(0);
   });
 
   it('should cancel final sound when isBreathing is set to false before duration expires', () => {
-    let currentBreathTime = 60; // 1 minuta
-    const setBreathTime = vi.fn((updater) => {
-      if (typeof updater === 'function') {
-        currentBreathTime = updater(currentBreathTime);
-        return currentBreathTime;
-      }
-      return currentBreathTime;
-    });
+    const setBreathTime = vi.fn();
     const playFinalSound = vi.fn();
     const setIsBreathing = vi.fn();
 
@@ -105,7 +85,7 @@ describe('useBreathTimer', () => {
     // Zastav dýchání po 30 sekundách (před vypršením 60 sekund)
     act(() => {
       vi.advanceTimersByTime(30000); // 30 sekund
-      rerender({ isBreathing: false, breathTime: currentBreathTime });
+      rerender({ isBreathing: false, breathTime: 30 });
     });
 
     // Počkej až do konce původní délky (60 sekund)
@@ -113,24 +93,19 @@ describe('useBreathTimer', () => {
       vi.advanceTimersByTime(30000); // dalších 30 sekund
     });
 
-    // playFinalSound by NEMĚL být zavolán, protože jsme zastavili před vypršením timeoutu
+    // playFinalSound by NEMĚL být zavolán, protože jsme zastavili před vypršením
     expect(playFinalSound).not.toHaveBeenCalled();
   });
 
   it('should start counting extraTime when breathTime reaches 0 with continueAfterEnd=true', () => {
-    const setBreathTime = vi.fn((updater) => {
-      if (typeof updater === 'function') {
-        const prev = 0;
-        return updater(prev);
-      }
-    });
+    const setBreathTime = vi.fn();
     const playFinalSound = vi.fn();
     const setIsBreathing = vi.fn();
 
     const { result } = renderHook(() =>
       useBreathTimer(
         true,
-        0, // breathTime už je na 0
+        60, // Start s 60 sekundami
         setBreathTime,
         'in',
         4,
@@ -142,13 +117,13 @@ describe('useBreathTimer', () => {
       )
     );
 
-    // Počkej na interval, který zvyšuje extraTime
+    // Počkej až do konce nastavené délky (60 sekund) + další 2 sekundy pro extraTime
     act(() => {
-      vi.advanceTimersByTime(2000);
+      vi.advanceTimersByTime(62000); // 60 sekund + 2 sekundy navíc
     });
 
-    // extraTime by měl být větší než 0
-    expect(result.current.extraTime).toBeGreaterThan(0);
+    // extraTime by měl být větší než 0 (2 sekundy)
+    expect(result.current.extraTime).toBeGreaterThanOrEqual(2);
   });
 
   it('should reset extraTime when isBreathing is set to false', () => {
@@ -173,14 +148,14 @@ describe('useBreathTimer', () => {
       {
         initialProps: {
           isBreathing: true,
-          breathTime: 0
+          breathTime: 60 // Start s 60 sekundami
         }
       }
     );
 
-    // Počkej, aby extraTime začal růst
+    // Počkej až do konce nastavené délky + další 3 sekundy pro extraTime
     act(() => {
-      vi.advanceTimersByTime(3000);
+      vi.advanceTimersByTime(63000); // 60 sekund + 3 sekundy navíc
     });
 
     expect(result.current.extraTime).toBeGreaterThan(0);
