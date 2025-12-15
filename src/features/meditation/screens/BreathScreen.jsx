@@ -85,8 +85,8 @@ const BreathScreen = ({
   // Použij hook pro správu fází dýchání
   useBreathPhase(isBreathing, breathTime, setBreathPhase, breathInDuration, breathOutDuration);
 
-  // Použij hook pro countdown zvuk
-  useCountdownSound(breathCountdownSound, currentIsPreparing, currentPreparationCountdown);
+  // Použij hook pro countdown zvuk (vrací funkci pro přehrání)
+  const playCountdownSound = useCountdownSound(breathCountdownSound, currentIsPreparing);
 
   // Použij hook pro finální zvuk
   const playFinalSound = useFinalSound(breathFinalSound, isBreathing);
@@ -105,7 +105,7 @@ const BreathScreen = ({
     continueAfterEnd
   );
 
-  // Použij hook pro timer přípravy
+  // Použij hook pro timer přípravy (předáme funkci pro přehrání countdown zvuku)
   usePreparationTimer(
     currentIsPreparing,
     currentPreparationCountdown,
@@ -114,7 +114,8 @@ const BreathScreen = ({
     breathTime,
     breathDuration,
     setBreathTime,
-    setIsBreathing
+    setIsBreathing,
+    playCountdownSound
   );
 
   // Metadata pro trackování aktivity - použijeme useMemo, aby se aktualizovalo při změně extraTime
@@ -165,6 +166,7 @@ const BreathScreen = ({
       console.log('🔄 Starting preparation', preparationTime);
       setLocalIsPreparing(true);
       setLocalPreparationCountdown(preparationTime);
+      // Zvuk pro počáteční hodnotu se přehraje v usePreparationTimer při startu
       return;
     }
 

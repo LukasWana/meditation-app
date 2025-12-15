@@ -3,14 +3,14 @@ import uiDataService from '@services/uiDataService';
 
 const PROTECTED_TRANSLATION_KEYS = ['slova', 'meditacia'];
 
-const DEFAULT_TRANSLATIONS = {
+export const DEFAULT_TRANSLATIONS = {
   SK: {
     // Hlavná navigácia
-    hudba: 'hudba',
-    slova: 'meditácia',
-    meditacia: 'dýchanie',
-    meditace: 'meditácia',
-    nastavenie: 'nastavenie',
+    hudba: 'Hudba',
+    slova: 'Meditácia',
+    meditacia: 'Dýchanie',
+    meditace: 'Meditácia',
+    nastavenie: 'Nastavenie',
     pomoc: 'pomoc',
 
     // Podrobné názvy
@@ -27,7 +27,7 @@ const DEFAULT_TRANSLATIONS = {
     informacieText: 'Keď liečime vlastnú vnútornú krajinu, vlny uzdravenia sa šíria ďalej – do tela, ktoré ožíva, do vzťahov, ktoré prehĺbavajú, do priestoru, ktorý naplňujeme. Meditácia je návratom domov. Domov k sebe, kde čaká pokoj, z ktorého môže vyrásť skutočná radosť a autentické stretnutie s druhými. Nestávame sa niekým iným. Len odhaľujeme to, čo bolo vždy prítomné – čistú esenciu bytia. A v tejto esencii rezonujeme s univerzálnou frekvenciou lásky, ktorá lieči a spája všetko živé.',
 
     // Dýchanie a rytmus
-    dychanie: 'dýchanie',
+    dychanie: 'Dýchanie',
     nadechVydech: 'nádech výdech',
     rytmusDychania: 'rytmus dýchania',
     nadech: 'nádech',
@@ -131,13 +131,59 @@ const DEFAULT_TRANSLATIONS = {
     vlastniPozadi: 'Vlastné pozadie',
     vybratFotku: 'Vybrať fotku',
     odstranitPozadi: 'Odstrániť pozadie',
+
+    // Historie aktivit
+    historieAktivity: 'História aktivity',
+    filtrovatPodleSekce: 'Filtrovať podľa sekcie:',
+    vse: 'Všetko',
+    vymazatHistorie: 'Vymazať {section} históriu',
+    vsechnu: 'všetku',
+    nacitaniHistorie: 'Načítanie histórie...',
+    nepodariloSeNacistHistorie: 'Nepodarilo sa načítať históriu',
+    zkusitZnovu: 'Skúsiť znova',
+    zadnaHistorieKZobrazeni: 'Žiadna história k zobrazeniu',
+    aktivita: 'Aktivita',
+    opravduVymazatHistorieProSekci: 'Naozaj chcete vymazať históriu pre sekciu {section}?',
+    opravduVymazatCelouHistorie: 'Naozaj chcete vymazať celú históriu?',
+    nepodariloSeVymazatHistorie: 'Nepodarilo sa vymazať históriu',
+
+    // Barevný režim
+    barevnyRezim: 'Barevný režim',
+    svetly: 'Svetlý',
+    tmavy: 'Tmavý',
+
+    // Sdílení nastavení
+    sdileniNastaveni: 'Zdieľanie nastavení',
+    generuji: 'Generujem...',
+    vygenerovatKod: 'Vygenerovať kód',
+    kopirovat: 'Kopírovať',
+    platnostDo: 'Platnosť do:',
+    importKodu: 'Import kódu',
+    zadejKod: 'Zadaj kód',
+    nacitam: 'Načítavam...',
+    nacist: 'Načítať',
+    nahledImportu: 'Náhľad importu',
+    profilu: 'Profilov',
+    pokracovatPoKonce: 'Pokračovať po konci',
+    ano: 'Áno',
+    ne: 'Nie',
+    pouzitNastaveni: 'Použiť nastavení',
+    importuji: 'Importujem...',
+    kodProSdileniBylVygenerovan: 'Kód pre zdieľanie bol vygenerovaný.',
+    nepodariloSeVytvoritSdileni: 'Nepodarilo sa vytvoriť zdieľanie.',
+    zadejKodSdileni: 'Zadaj kód zdieľania.',
+    nastaveniNacteno: 'Nastavení načítané, skontroluj náhľad a potvrď.',
+    naciteniSdileniSeNepovedlo: 'Načítanie zdieľania sa nepodarilo.',
+    nastaveniByloImportovano: 'Nastavení bolo importované.',
+    importNastaveniSeNepovedl: 'Import nastavení sa nepodaril.',
+    zobrazitHistorie: 'Zobraziť históriu',
   },
   CZ: {
     // Hlavní navigace
-    hudba: 'hudba',
-    slova: 'meditace',
-    meditacia: 'dýchání',
-    nastavenie: 'nastavení',
+    hudba: 'Hudba',
+    slova: 'Meditace',
+    meditacia: 'Dýchání',
+    nastavenie: 'Nastavení',
     pomoc: 'pomoc',
 
     // Podrobné názvy
@@ -154,7 +200,7 @@ const DEFAULT_TRANSLATIONS = {
     informacieText: 'Když léčíme vlastní vnitřní krajinu, vlny uzdravení se šíří dál – do těla, které ožívá, do vztahů, které prohlubují, do prostoru, který naplňujeme. Meditace je návratem domů. Domů k sobě, kde čeká klid, ze kterého může vyrůst pravá radost a autentické setkání s druhými. Nestáváme se někým jiným. Pouze odhalujeme to, co bylo vždy přítomné – čistou esenci bytí. A v této esenci rezonujeme s univerzální frekvencí lásky, která léčí a spojuje vše živé.',
 
     // Dýchání a rytmus
-    dychanie: 'dýchání',
+    dychanie: 'Dýchání',
     nadechVydech: 'nádech výdech',
     rytmusDychania: 'rytmus dýchání',
     nadech: 'nádech',
@@ -258,13 +304,59 @@ const DEFAULT_TRANSLATIONS = {
     vlastniPozadi: 'Vlastní pozadí',
     vybratFotku: 'Vybrat fotku',
     odstranitPozadi: 'Odstranit pozadí',
+
+    // Historie aktivit
+    historieAktivity: 'Historie aktivity',
+    filtrovatPodleSekce: 'Filtrovat podle sekce:',
+    vse: 'Vše',
+    vymazatHistorie: 'Vymazat {section} historii',
+    vsechnu: 'všechnu',
+    nacitaniHistorie: 'Načítání historie...',
+    nepodariloSeNacistHistorie: 'Nepodařilo se načíst historii',
+    zkusitZnovu: 'Zkusit znovu',
+    zadnaHistorieKZobrazeni: 'Žádná historie k zobrazení',
+    aktivita: 'Aktivita',
+    opravduVymazatHistorieProSekci: 'Opravdu chcete vymazat historii pro sekci {section}?',
+    opravduVymazatCelouHistorie: 'Opravdu chcete vymazat celou historii?',
+    nepodariloSeVymazatHistorie: 'Nepodařilo se vymazat historii',
+
+    // Barevný režim
+    barevnyRezim: 'Barevný režim',
+    svetly: 'Světlý',
+    tmavy: 'Tmavý',
+
+    // Sdílení nastavení
+    sdileniNastaveni: 'Sdílení nastavení',
+    generuji: 'Generuji...',
+    vygenerovatKod: 'Vygenerovat kód',
+    kopirovat: 'Kopírovat',
+    platnostDo: 'Platnost do:',
+    importKodu: 'Import kódu',
+    zadejKod: 'Zadej kód',
+    nacitam: 'Načítám...',
+    nacist: 'Načíst',
+    nahledImportu: 'Náhled importu',
+    profilu: 'Profilů',
+    pokracovatPoKonce: 'Pokračovat po konci',
+    ano: 'Ano',
+    ne: 'Ne',
+    pouzitNastaveni: 'Použít nastavení',
+    importuji: 'Importuji...',
+    kodProSdileniBylVygenerovan: 'Kód pro sdílení byl vygenerován.',
+    nepodariloSeVytvoritSdileni: 'Nepodařilo se vytvořit sdílení.',
+    zadejKodSdileni: 'Zadej kód sdílení.',
+    nastaveniNacteno: 'Nastavení načteno, zkontroluj náhled a potvrď.',
+    naciteniSdileniSeNepovedlo: 'Načtení sdílení se nepovedlo.',
+    nastaveniByloImportovano: 'Nastavení bylo importováno.',
+    importNastaveniSeNepovedl: 'Import nastavení se nepovedl.',
+    zobrazitHistorie: 'Zobrazit historii',
   },
   EN: {
     // Main navigation
-    hudba: 'music',
-    slova: 'meditation',
-    meditacia: 'breathing',
-    nastavenie: 'settings',
+    hudba: 'Music',
+    slova: 'Meditation',
+    meditacia: 'Breathing',
+    nastavenie: 'Settings',
     pomoc: 'help',
 
     // Detailed names
@@ -281,7 +373,7 @@ const DEFAULT_TRANSLATIONS = {
     informacieText: 'When we heal our own inner landscape, waves of healing spread further – into the body that comes alive, into relationships that deepen, into the space we fill. Meditation is a return home. Home to ourselves, where peace awaits, from which true joy and authentic encounters with others can grow. We do not become someone else. We only reveal what has always been present – the pure essence of being. And in this essence, we resonate with the universal frequency of love that heals and connects all that is alive.',
 
     // Breathing and rhythm
-    dychanie: 'breathing',
+    dychanie: 'Breathing',
     nadechVydech: 'inhale exhale',
     rytmusDychania: 'breathing rhythm',
     nadech: 'inhale',
@@ -385,6 +477,52 @@ const DEFAULT_TRANSLATIONS = {
     vlastniPozadi: 'Custom Background',
     vybratFotku: 'Select Photo',
     odstranitPozadi: 'Remove Background',
+
+    // Activity history
+    historieAktivity: 'Activity History',
+    filtrovatPodleSekce: 'Filter by section:',
+    vse: 'All',
+    vymazatHistorie: 'Delete {section} history',
+    vsechnu: 'all',
+    nacitaniHistorie: 'Loading history...',
+    nepodariloSeNacistHistorie: 'Failed to load history',
+    zkusitZnovu: 'Try again',
+    zadnaHistorieKZobrazeni: 'No history to display',
+    aktivita: 'Activity',
+    opravduVymazatHistorieProSekci: 'Do you really want to delete history for section {section}?',
+    opravduVymazatCelouHistorie: 'Do you really want to delete all history?',
+    nepodariloSeVymazatHistorie: 'Failed to delete history',
+
+    // Color mode
+    barevnyRezim: 'Color Mode',
+    svetly: 'Light',
+    tmavy: 'Dark',
+
+    // Share settings
+    sdileniNastaveni: 'Share Settings',
+    generuji: 'Generating...',
+    vygenerovatKod: 'Generate Code',
+    kopirovat: 'Copy',
+    platnostDo: 'Valid until:',
+    importKodu: 'Import Code',
+    zadejKod: 'Enter code',
+    nacitam: 'Loading...',
+    nacist: 'Load',
+    nahledImportu: 'Import Preview',
+    profilu: 'Profiles',
+    pokracovatPoKonce: 'Continue after end',
+    ano: 'Yes',
+    ne: 'No',
+    pouzitNastaveni: 'Apply Settings',
+    importuji: 'Importing...',
+    kodProSdileniBylVygenerovan: 'Share code generated.',
+    nepodariloSeVytvoritSdileni: 'Failed to create share.',
+    zadejKodSdileni: 'Enter share code.',
+    nastaveniNacteno: 'Settings loaded, check preview and confirm.',
+    naciteniSdileniSeNepovedlo: 'Failed to load share.',
+    nastaveniByloImportovano: 'Settings imported.',
+    importNastaveniSeNepovedl: 'Failed to import settings.',
+    zobrazitHistorie: 'View History',
   }
 };
 
