@@ -61,6 +61,11 @@ service cloud.firestore {
       );
     }
 
+    // Sdílená nastavení - přístup pouze přes Cloud Functions (klient nemá číst/psát)
+    match /sharedSettings/{docId} {
+      allow read, write: if false;
+    }
+
     // Výchozí pravidlo - zamítnout vše ostatní
     match /{document=**} {
       allow read, write: if false;

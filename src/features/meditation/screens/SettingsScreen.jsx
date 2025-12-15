@@ -8,6 +8,8 @@ import { Download, Wifi, WifiOff, HardDrive, RefreshCw, Trash2, History } from '
 import useOfflineCache from '@hooks/useOfflineCache';
 import { useFirebaseHudbaScanner } from '@hooks/useFirebaseHudbaScanner';
 import { realtimeMetadataService } from '@services/realtimeMetadataService';
+import { createSharedSettings, consumeSharedSettings } from '@services/sharedSettingsService';
+import breathProfilesService from '@services/breathProfilesService';
 
 // Lazy loading ThemeSelector pro lepší pořadí načítání - načte se až po inicializaci ThemeProvider
 const ThemeSelector = lazy(() => import('@components/ThemeSelector'));
@@ -22,8 +24,8 @@ const SettingsScreen = ({
   gender = 'none',
   onGenderChange
 }) => {
-  const { t } = useLanguage();
-  const { getScreenBackgroundColor, getCurrentThemeColors, colorMode } = useTheme();
+  const { t, language, changeLanguage } = useLanguage();
+  const { getScreenBackgroundColor, getCurrentThemeColors, colorMode, themeId, changeTheme, changeColorMode } = useTheme();
   const themeColors = getCurrentThemeColors?.() || {};
 
   // Offline cache hook
@@ -41,6 +43,17 @@ const SettingsScreen = ({
   // Získej audio soubory pro cache
   const { audioFiles } = useFirebaseHudbaScanner();
   const [allAudioFiles, setAllAudioFiles] = useState([]);
+  const [breathProfiles, setBreathProfiles] = useState([]);
+  const [continueAfterEnd, setContinueAfterEnd] = useState(false);
+
+  // Sdílení nastavení
+  const [shareCodeInput, setShareCodeInput] = useState('');
+  const [generatedShare, setGeneratedShare] = useState(null);
+  const [shareLoading, setShareLoading] = useState(false);
+  const [importLoading, setImportLoading] = useState(false);
+  const [importPreview, setImportPreview] = useState(null);
+  const [shareError, setShareError] = useState('');
+  const [shareSuccess, setShareSuccess] = useState('');
 
   // Debug: Sleduj změny cache stats
   useEffect(() => {
@@ -95,6 +108,26 @@ const SettingsScreen = ({
     loadAllAudioFiles();
   }, [audioFiles]);
 
+  // Načti profily dýchání a continueAfterEnd
+  useEffect(() => {
+    const loadBreathing = async () => {
+      try {
+        const profiles = await breathProfilesService.getAllProfiles();
+        setBreathProfiles(Array.isArray(profiles) ? profiles : []);
+      } catch (error) {
+        console.warn('Failed to load breath profiles for sharing:', error);
+        setBreathProfiles([]);
+      }
+      try {
+        const saved = localStorage.getItem('meditation-app-continue-after-end');
+        setContinueAfterEnd(saved === 'true');
+      } catch (error) {
+        console.warn('Failed to load continueAfterEnd flag:', error);
+      }
+    };
+    loadBreathing();
+  }, []);
+
   // Spusť stahování všech souborů
   const handleCacheAllFiles = async () => {
     console.log('🔄 handleCacheAllFiles called:', {
@@ -129,6 +162,144 @@ const SettingsScreen = ({
   const handleClearCache = async () => {
     if (window.confirm(t('potvrditVymazaniCache'))) {
       await clearCache();
+    }
+  };
+
+  const ensureProfileId = (profile) => {
+    if (profile.id) return profile.id;
+    if (typeof crypto !== 'undefined' && crypto.randomUUID) {
+      return crypto.randomUUID();
+    }
+    return `profile-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+  };
+
+  const buildSharePayload = () => {
+    return {
+      schemaVersion: 1,
+      ui: {
+        language,
+        themeId,
+        colorMode
+      },
+      breathing: {
+        continueAfterEnd,
+        breathProfiles
+      }
+    };
+  };
+
+  const mergeBreathProfiles = async (incomingProfiles = []) => {
+    const existing = await breathProfilesService.getAllProfiles();
+    const result = [...existing];
+
+    for (const incoming of incomingProfiles) {
+      const profile = { ...incoming };
+      const profileId = ensureProfileId(profile);
+      profile.id = profileId;
+
+      let targetName = profile.name || 'Profil';
+      const nameExists = (name) => result.some(p => p.name === name && p.id !== profileId);
+      if (nameExists(targetName)) {
+        let counter = 2;
+        const baseName = targetName;
+        while (nameExists(targetName)) {
+          targetName = `${baseName} (${counter})`;
+          counter += 1;
+        }
+      }
+      profile.name = targetName;
+
+      const idx = result.findIndex(p => p.id === profileId);
+      if (idx >= 0) {
+        result[idx] = { ...result[idx], ...profile };
+      } else {
+        result.push(profile);
+      }
+
+      await breathProfilesService.saveProfile(profile, profileId);
+    }
+
+    setBreathProfiles(result);
+  };
+
+  const handleGenerateShare = async () => {
+    setShareError('');
+    setShareSuccess('');
+    setGeneratedShare(null);
+    setShareLoading(true);
+    try {
+      const payload = buildSharePayload();
+      const data = await createSharedSettings({
+        payload,
+        scope: { ui: true, breathing: true },
+        ttlHours: 24,
+        oneTime: true
+      });
+      setGeneratedShare(data);
+      setShareSuccess('Kód pro sdílení byl vygenerován.');
+    } catch (error) {
+      console.error('Failed to create shared settings:', error);
+      setShareError(error?.message || 'Nepodařilo se vytvořit sdílení.');
+    } finally {
+      setShareLoading(false);
+    }
+  };
+
+  const handleLoadShare = async () => {
+    setShareError('');
+    setShareSuccess('');
+    setImportPreview(null);
+    if (!shareCodeInput.trim()) {
+      setShareError('Zadej kód sdílení.');
+      return;
+    }
+    setImportLoading(true);
+    try {
+      const data = await consumeSharedSettings(shareCodeInput.trim());
+      setImportPreview(data);
+      setShareSuccess('Nastavení načteno, zkontroluj náhled a potvrď.');
+    } catch (error) {
+      console.error('Failed to load shared settings:', error);
+      setShareError(error?.message || 'Načtení sdílení se nepovedlo.');
+    } finally {
+      setImportLoading(false);
+    }
+  };
+
+  const applyImportedSettings = async () => {
+    if (!importPreview?.payload) return;
+    setImportLoading(true);
+    setShareError('');
+    setShareSuccess('');
+    try {
+      const { ui, breathing } = importPreview.payload;
+      if (ui) {
+        if (ui.language) {
+          changeLanguage(ui.language);
+        }
+        if (ui.themeId) {
+          changeTheme(ui.themeId);
+        }
+        if (ui.colorMode) {
+          changeColorMode(ui.colorMode);
+        }
+      }
+      if (breathing) {
+        if (Array.isArray(breathing.breathProfiles)) {
+          await mergeBreathProfiles(breathing.breathProfiles);
+        }
+        if (breathing.continueAfterEnd !== undefined) {
+          localStorage.setItem('meditation-app-continue-after-end', breathing.continueAfterEnd ? 'true' : 'false');
+          setContinueAfterEnd(!!breathing.continueAfterEnd);
+        }
+      }
+      setImportPreview(null);
+      setShareSuccess('Nastavení bylo importováno.');
+    } catch (error) {
+      console.error('Failed to apply shared settings:', error);
+      setShareError(error?.message || 'Import nastavení se nepovedl.');
+    } finally {
+      setImportLoading(false);
     }
   };
 
@@ -218,6 +389,113 @@ const SettingsScreen = ({
             }>
               <ColorModeSelector />
             </Suspense>
+
+            {/* Sdílení nastavení */}
+            <FramerSection
+              animationType="slideInUp"
+              delay={0.24}
+            >
+              <div
+                className="w-full p-6 backdrop-blur rounded-none border space-y-3"
+                style={{
+                  backgroundColor: themeColors?.card || (colorMode === 'dark' ? 'rgba(15, 15, 15, 0.95)' : 'rgba(255, 255, 255, 0.95)'),
+                  borderColor: colorMode === 'dark' ? 'rgba(255, 255, 255, 0.2)' : 'rgba(0, 0, 0, 0.1)',
+                  color: themeColors?.text || (colorMode === 'dark' ? 'rgba(255, 255, 255, 1)' : 'rgba(0, 0, 0, 1)')
+                }}
+              >
+                <h3
+                  className="text-2xl font-light"
+                  style={{ color: themeColors?.text || (colorMode === 'dark' ? 'rgba(255, 255, 255, 1)' : 'rgba(0, 0, 0, 1)') }}
+                >
+                  Sdílení nastavení
+                </h3>
+
+                {shareError && (
+                  <div className="text-sm text-red-500">
+                    {shareError}
+                  </div>
+                )}
+                {shareSuccess && (
+                  <div className="text-sm text-green-600">
+                    {shareSuccess}
+                  </div>
+                )}
+
+                <div className="space-y-2">
+                  <div className="flex flex-col sm:flex-row gap-2">
+                    <button
+                      onClick={handleGenerateShare}
+                      disabled={shareLoading}
+                      className="px-4 py-2 rounded border shadow-sm hover:shadow bg-black text-white disabled:opacity-50"
+                    >
+                      {shareLoading ? 'Generuji...' : 'Vygenerovat kód'}
+                    </button>
+                    {generatedShare?.shareId && (
+                      <div className="flex-1 flex items-center gap-2">
+                        <div className="px-3 py-2 bg-white/70 text-black rounded border border-black/10 truncate">
+                          {generatedShare.shareId}
+                        </div>
+                        <button
+                          onClick={() => navigator.clipboard?.writeText(generatedShare.shareId)}
+                          className="px-3 py-2 rounded border shadow-sm hover:shadow bg-white text-black"
+                        >
+                          Kopírovat
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                  {generatedShare?.expiresAt && (
+                    <div className="text-xs text-gray-500">
+                      Platnost do: {new Date(generatedShare.expiresAt).toLocaleString()}
+                    </div>
+                  )}
+                </div>
+
+                <div className="space-y-2 pt-2">
+                  <label className="text-sm text-gray-600">Import kódu</label>
+                  <div className="flex flex-col sm:flex-row gap-2">
+                    <input
+                      value={shareCodeInput}
+                      onChange={(e) => setShareCodeInput(e.target.value)}
+                      placeholder="Zadej kód"
+                      className="flex-1 px-3 py-2 rounded border border-gray-300 bg-white text-black"
+                    />
+                    <button
+                      onClick={handleLoadShare}
+                      disabled={importLoading}
+                      className="px-4 py-2 rounded border shadow-sm hover:shadow bg-black text-white disabled:opacity-50"
+                    >
+                      {importLoading ? 'Načítám...' : 'Načíst'}
+                    </button>
+                  </div>
+                </div>
+
+                {importPreview?.preview && (
+                  <div className="p-3 border rounded bg-white/60 text-black space-y-2">
+                    <div className="text-sm font-semibold">Náhled importu</div>
+                    <div className="text-sm">Jazyk: {importPreview.preview.language || '—'}</div>
+                    <div className="text-sm">Téma: {importPreview.preview.themeId || '—'}</div>
+                    <div className="text-sm">Profilů: {importPreview.preview.profiles ?? 0}</div>
+                    <div className="text-sm">Pokračovat po konci: {importPreview.preview.continueAfterEnd ? 'Ano' : 'Ne'}</div>
+                    <div className="flex gap-2 pt-2">
+                      <button
+                        onClick={applyImportedSettings}
+                        disabled={importLoading}
+                        className="px-4 py-2 rounded border shadow-sm hover:shadow bg-black text-white disabled:opacity-50"
+                      >
+                        {importLoading ? 'Importuji...' : 'Použít nastavení'}
+                      </button>
+                      <button
+                        onClick={() => setImportPreview(null)}
+                        className="px-3 py-2 rounded border shadow-sm bg-white text-black"
+                      >
+                        Zrušit
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </FramerSection>
 
             {/* Gender Settings */}
             <FramerSection
