@@ -282,12 +282,12 @@ export const ThemeProvider = ({ children }) => {
       // Určit barvu overlay podle colorMode
       let overlayColor;
 
-      // Pokud je dark mode, použít tmavý overlay
+      // Pokud je dark mode, použít tmavý overlay (upraveno pro lepší efekt)
       if (colorMode === 'dark') {
-        overlayColor = 'rgba(0, 0, 0, 0.8)'; // Černá s 80% průhledností pro tmavší efekt
+        overlayColor = 'rgba(0, 0, 0, 0.6)'; // Černá s 60% průhledností pro jemnější tmavý efekt
       } else if (colorMode === 'light') {
         // Pro light mode použít světlý overlay
-        overlayColor = 'rgba(255, 255, 255, 0.6)'; // Bílá s 60% průhledností
+        overlayColor = 'rgba(255, 255, 255, 0.5)'; // Bílá s 50% průhledností pro světlejší efekt
       }
 
       // Použít linear-gradient pro průhlednost 60% (opacity 0.6) nad dynamickou barvou
@@ -306,14 +306,15 @@ export const ThemeProvider = ({ children }) => {
   };
 
   // Získat backgroundColor pro obrazovky - transparent když je obrázek
+  // Vrací rgba(0,0,0,0) místo 'transparent' pro kompatibilitu s Framer Motion animacemi
   const getScreenBackgroundColor = () => {
     const backgroundUrl = getBackgroundImageUrl();
     const hasImage = !!backgroundUrl && baseTheme?.allowsCustomBackground;
     const themeColors = getCurrentThemeColors();
 
-    // Pokud je obrázek, vrátit transparent, aby bylo vidět pozadí z body
+    // Pokud je obrázek, vrátit rgba(0,0,0,0) místo 'transparent' pro animovatelnost
     if (hasImage) {
-      return 'transparent';
+      return 'rgba(0, 0, 0, 0)';
     }
 
     // Použít barvy z fotky pokud jsou, jinak defaultní
