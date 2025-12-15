@@ -136,11 +136,6 @@ export const createSecurityHeaders = (options = {}) => {
     headers['Strict-Transport-Security'] = 'max-age=31536000; includeSubDomains; preload';
   }
 
-  // Cross-Origin policies
-  headers['Cross-Origin-Embedder-Policy'] = 'require-corp';
-  headers['Cross-Origin-Opener-Policy'] = 'same-origin';
-  headers['Cross-Origin-Resource-Policy'] = 'same-origin';
-
   return headers;
 };
 
