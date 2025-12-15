@@ -335,7 +335,14 @@ const ActivityHistoryScreen = ({
                         {activity.duration > 0 && (
                           <div className="flex items-center gap-1">
                             <span>⏱</span>
-                            <span>{formatDuration(activity.duration)}</span>
+                            <span>
+                              {formatDuration(activity.duration + (activity.extraTime || 0))}
+                              {activity.extraTime > 0 && (
+                                <span className="ml-1 opacity-75">
+                                  ({formatDuration(activity.duration)} + {formatDuration(activity.extraTime)})
+                                </span>
+                              )}
+                            </span>
                           </div>
                         )}
                       </div>

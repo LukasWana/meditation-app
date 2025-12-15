@@ -101,7 +101,8 @@ export const useActivityTracking = ({
     if (wasActive && !isNowActive && startTimeRef.current !== null) {
       const duration = Math.floor((Date.now() - startTimeRef.current) / 1000); // v sekundách
       // extraTime ukládáme jako samostatnou proměnnou (NEpřičítat k duration, duration už je reálný čas aktivity)
-      const extraTime = extraTimeRef.current || 0;
+      // Použij aktuální extraTime z metadat (může být aktuálnější než ref)
+      const extraTime = currentMetadata?.extraTime !== undefined ? currentMetadata.extraTime : (extraTimeRef.current || 0);
 
       // Ulož aktivitu pouze pokud trvala alespoň 1 sekundu (aby se neukládaly velmi krátké aktivity)
       if (duration >= 1) {
