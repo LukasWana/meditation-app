@@ -183,6 +183,38 @@ function MeditationApp() {
         }
       };
 
+      // Debug funkce pro image cache (Cache Storage)
+      window.debugImageCache = async () => {
+        console.log('🔍 Debugging image cache...');
+        try {
+          if (!('caches' in window)) {
+            console.warn('⚠️ Cache Storage API not supported');
+            return null;
+          }
+          const cache = await caches.open('meditation-image-cache-v1');
+          const keys = await cache.keys();
+          console.log('🖼️ Image cache entries:', keys.length);
+          console.log('🖼️ Image cache keys:', keys.map(k => k.url));
+          return { total: keys.length, keys: keys.map(k => k.url) };
+        } catch (error) {
+          console.error('❌ Error debugging image cache:', error);
+          return null;
+        }
+      };
+
+      window.clearImageCache = async () => {
+        console.log('🧹 Clearing image cache...');
+        try {
+          if (!('caches' in window)) return false;
+          const ok = await caches.delete('meditation-image-cache-v1');
+          console.log('✅ Image cache cleared:', ok);
+          return ok;
+        } catch (error) {
+          console.error('❌ Error clearing image cache:', error);
+          return false;
+        }
+      };
+
       // Funkce pro vymazání cache
       window.clearCache = async () => {
         console.log('🧹 Clearing cache...');

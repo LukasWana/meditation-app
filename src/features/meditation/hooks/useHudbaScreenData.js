@@ -61,6 +61,32 @@ export const useHudbaScreenData = () => {
   // Použij hudební filtrovací systém z Firebase
   const { hudbaItems, isLoading, error, stats, isLoadingCovers, isLoadingDurations, refreshAudioFiles } = useFirebaseHudbaFilter();
 
+  // Přednačti cover obrázky alb (primárně náhledy) po startu, aby grid nečekal na síť.
+  useEffect(() => {
+    if (!hudbaItems || hudbaItems.length === 0) return;
+    if (isLoading) return;
+
+    const coverUrls = hudbaItems
+      .filter(item => item?.type === 'album' && item.coverImage)
+      .map(item => item.coverImage);
+
+    const unique = Array.from(new Set(coverUrls));
+    const firstBatch = unique.slice(0, 12); // typicky počet položek viditelných v gridu
+
+    const run = () => {
+      firstBatch.forEach((url, idx) => {
+        cacheService.preloadImage(url, `album-cover:${idx}`).catch(() => {});
+      });
+    };
+
+    if (typeof window !== 'undefined' && typeof window.requestIdleCallback === 'function') {
+      const id = window.requestIdleCallback(run, { timeout: 2000 });
+      return () => window.cancelIdleCallback?.(id);
+    }
+
+    run();
+  }, [hudbaItems, isLoading]);
+
   // Funkce pro refresh dat (vymaže cache a znovu načte)
   const handleRefresh = async () => {
     log.info('🔄 Manual refresh triggered - clearing cache and reloading...');

@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useEffect, useMemo } from 'react';
 import { THEMES, DEFAULT_THEME_ID, getThemeById } from '@data/themes';
+import cacheService from '@services/cacheServiceRefactored';
 
 export const ThemeContext = createContext();
 
@@ -82,6 +83,37 @@ export const ThemeProvider = ({ children }) => {
 
   // Základní téma (statické) - memoizovat, aby se neměnilo při každém renderu
   const baseTheme = useMemo(() => getThemeById(themeId), [themeId]);
+
+  // Přednačti aktuální pozadí do Cache Storage hned po startu / změně pozadí,
+  // aby se při zobrazení už nemuselo čekat na síť.
+  useEffect(() => {
+    const backgroundUrl = (() => {
+      try {
+        const data = (() => {
+          if (!customBackground) return null;
+          try {
+            return JSON.parse(customBackground);
+          } catch (_e) {
+            return { url: customBackground };
+          }
+        })();
+
+        if (data?.url) return data.url;
+        if (data?.downloadURL) return data.downloadURL;
+        if (data?.firebasePath && (data.firebasePath.startsWith('http://') || data.firebasePath.startsWith('https://'))) {
+          return data.firebasePath;
+        }
+        return null;
+      } catch (_err) {
+        return null;
+      }
+    })();
+
+    if (!backgroundUrl) return;
+    if (!baseTheme?.allowsCustomBackground) return;
+
+    cacheService.preloadImage(backgroundUrl, `theme-background:${themeId}`).catch(() => {});
+  }, [customBackground, baseTheme, themeId]);
 
   // Získat data z customBackground
   const getBackgroundData = () => {

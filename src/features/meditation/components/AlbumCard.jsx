@@ -31,6 +31,9 @@ export const AlbumCard = ({
                     src={item.coverImage}
                     alt={item.title}
                     className="w-full h-full object-cover"
+                    loading="lazy"
+                    decoding="async"
+                    fetchPriority="low"
                     onError={(e) => {
                       e.target.style.display = 'none';
                       e.target.nextSibling.style.display = 'flex';

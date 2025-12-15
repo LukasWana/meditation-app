@@ -153,6 +153,81 @@ class CacheServiceRefactored {
     return promise;
   }
 
+  async preloadImage(url, cacheKey = null) {
+    if (!url) return Promise.resolve(null);
+
+    const promiseKey = `image:${url}`;
+    if (this.preloadPromises.has(promiseKey)) {
+      return this.preloadPromises.get(promiseKey);
+    }
+
+    const promise = this._preloadImageInternal(url, cacheKey);
+    this.preloadPromises.set(promiseKey, promise);
+
+    promise.finally(() => {
+      this.preloadPromises.delete(promiseKey);
+    });
+
+    return promise;
+  }
+
+  async _preloadImageInternal(url, cacheKey = null) {
+    try {
+      // 1) Ulož URL do in-memory image cache (kvůli rychlému přístupu v aplikaci)
+      if (cacheKey) {
+        this.imageCache.setImageUrl(cacheKey, url);
+      }
+
+      // 2) Ulož do Cache Storage (kvůli tomu, aby další zobrazení už nečekalo na síť)
+      if (typeof window !== 'undefined' && 'caches' in window) {
+        const cache = await caches.open('meditation-image-cache-v1');
+        const cached = await cache.match(url);
+        if (!cached) {
+          let response = null;
+          try {
+            // Preferuj CORS (lepší kompatibilita a budoucí čitelnost response), fallback na no-cors (opaque).
+            response = await fetch(url, {
+              method: 'GET',
+              mode: 'cors',
+              credentials: 'omit',
+              cache: 'force-cache'
+            });
+          } catch (_corsErr) {
+            response = await fetch(url, {
+              method: 'GET',
+              mode: 'no-cors',
+              credentials: 'omit'
+            });
+          }
+
+          // response.ok je false pro opaque, proto povol i opaque
+          if (response && (response.ok || response.type === 'opaque')) {
+            await cache.put(url, response.clone());
+          }
+        }
+      }
+
+      // 3) Před-dekoduj do memory cache pro okamžité vykreslení (když je to možné)
+      await new Promise((resolve) => {
+        const img = new Image();
+        const done = () => resolve(null);
+        img.onload = done;
+        img.onerror = done;
+        img.src = url;
+
+        // decode() je nejlepší varianta, ale není všude
+        if (typeof img.decode === 'function') {
+          img.decode().then(done).catch(done);
+        }
+      });
+
+      return url;
+    } catch (error) {
+      log.warn('Image preload failed:', { url, error: error?.message || error });
+      return null;
+    }
+  }
+
   async _preloadAudioInternal(url, fileName) {
     try {
       // Validace parametrů
