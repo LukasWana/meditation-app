@@ -11,6 +11,7 @@ import { generateWaveformViaFunction } from '@utils/generateWaveformViaFunction'
 import { syncAllFilesViaFunction } from '@utils/syncAllFilesViaFunction';
 import Waveform from '@components/Waveform';
 import { realtimeMetadataService } from '@services/realtimeMetadataService';
+import uiDataService from '@services/uiDataService';
 
 const SimpleAdminScreen = () => {
   const [isDarkMode, setIsDarkMode] = useState(false);
@@ -1413,6 +1414,30 @@ const SimpleAdminScreen = () => {
             >
               <BarChart3 className="w-4 h-4 mr-2" />
               {showCharts ? 'Skrýt grafy' : 'Zobrazit grafy úložišť'}
+            </button>
+            <button
+              onClick={async () => {
+                setLoading(true);
+                setStatus('🔄 Aktualizuji překlady v Firebase...');
+                try {
+                  await uiDataService.updateTranslationsFromContext();
+                  setStatus('✅ Překlady úspěšně aktualizovány v Firebase!');
+                } catch (error) {
+                  setStatus(`❌ Chyba při aktualizaci překladů: ${error.message}`);
+                  console.error('❌ Update translations failed:', error);
+                } finally {
+                  setLoading(false);
+                }
+              }}
+              disabled={loading}
+              className="px-4 py-2 bg-green-500 hover:bg-green-600 text-white rounded-lg transition-colors flex items-center disabled:bg-gray-400"
+            >
+              {loading ? (
+                <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
+              ) : (
+                <Database className="w-4 h-4 mr-2" />
+              )}
+              Aktualizovat překlady v Firebase
             </button>
           </div>
         </motion.div>
