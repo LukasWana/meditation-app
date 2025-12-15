@@ -47,6 +47,10 @@ export const useBreathTimer = (
   const breathFinalSoundRef = useRef(breathFinalSound);
   const playFinalSoundRef = useRef(playFinalSound);
   
+  // Ref pro čas začátku dýchání (pro přesné měření času)
+  const startTimeRef = useRef(null);
+  const totalDurationRef = useRef(null); // Celková nastavená délka v sekundách
+  
   // Aktualizuj refy při změně
   useEffect(() => {
     breathFinalSoundRef.current = breathFinalSound;
@@ -73,11 +77,38 @@ export const useBreathTimer = (
       waitingForCycleCompletionRef.current = false;
       extraTimeRef.current = 0;
       setExtraTime(0);
+      startTimeRef.current = null;
+      totalDurationRef.current = null;
       if (completionTimeoutRef.current) {
         clearTimeout(completionTimeoutRef.current);
         completionTimeoutRef.current = null;
       }
       return;
+    }
+
+    // Při startu dýchání ulož čas začátku a celkovou délku
+    if (isBreathing && !startTimeRef.current) {
+      startTimeRef.current = Date.now();
+      totalDurationRef.current = breathTime; // breathTime obsahuje zbývající čas (celkovou délku při startu)
+      
+      // Pokud je zapnuté pokračovat po skončení a je nastaven finální zvuk, naplánuj ho přesně na správný čas
+      if (continueAfterEnd && breathFinalSoundRef.current && breathFinalSoundRef.current !== 'none' && !endSoundScheduledRef.current) {
+        endSoundScheduledRef.current = true;
+        
+        // Vyčisti předchozí timeout, pokud existuje
+        if (completionTimeoutRef.current) {
+          clearTimeout(completionTimeoutRef.current);
+        }
+        
+        // Naplánuj finální zvuk přesně na konec nastavené délky (nezávisle na fázích nádech/výdech)
+        const targetTime = totalDurationRef.current * 1000; // převeď na milisekundy
+        completionTimeoutRef.current = setTimeout(() => {
+          if (breathFinalSoundRef.current && breathFinalSoundRef.current !== 'none') {
+            playFinalSoundRef.current();
+          }
+          completionTimeoutRef.current = null;
+        }, targetTime);
+      }
     }
 
     breathTimerIntervalRef.current = setInterval(() => {
@@ -88,37 +119,18 @@ export const useBreathTimer = (
         return;
       }
 
-      // Standardní odpočet s detekcí přesného okamžiku dosažení 0
+      // Standardní odpočet
       setBreathTime(prev => {
-        if (prev <= 0) return 0;
-        const newTime = prev - 1;
-        
-        // Detekuj přesný okamžik, kdy breathTime dosáhne 0 (přechod z 1 na 0)
-        // Toto zajistí, že finální zvuk se spustí přesně v momentě, kdy nastavená délka doběhne
-        if (continueAfterEnd && newTime === 0 && !reachedEndRef.current) {
-          reachedEndRef.current = true;
-          extraTimeRef.current = 0;
-          setExtraTime(0);
-          
-          // Spusť finální zvuk okamžitě při dosažení 0
-          // Použijeme setTimeout(0) pro okamžité spuštění, ale stále zrušitelné
-          if (!endSoundScheduledRef.current && breathFinalSoundRef.current && breathFinalSoundRef.current !== 'none') {
-            endSoundScheduledRef.current = true;
-            
-            // Vyčisti předchozí timeout, pokud existuje
-            if (completionTimeoutRef.current) {
-              clearTimeout(completionTimeoutRef.current);
-            }
-            
-            // setTimeout(0) spustí zvuk prakticky okamžitě, ale je zrušitelný
-            completionTimeoutRef.current = setTimeout(() => {
-              playFinalSoundRef.current();
-              completionTimeoutRef.current = null;
-            }, 0);
+        if (prev <= 0) {
+          // Detekuj přesný okamžik, kdy breathTime dosáhne 0
+          if (continueAfterEnd && !reachedEndRef.current) {
+            reachedEndRef.current = true;
+            extraTimeRef.current = 0;
+            setExtraTime(0);
           }
+          return 0;
         }
-        
-        return newTime;
+        return prev - 1;
       });
     }, 1000);
 
@@ -128,7 +140,7 @@ export const useBreathTimer = (
         breathTimerIntervalRef.current = null;
       }
     };
-  }, [isBreathing, continueAfterEnd, setBreathTime]);
+  }, [isBreathing, continueAfterEnd, setBreathTime, breathTime]);
 
   // Reakce na doběhnutí nastaveného času
   useEffect(() => {
