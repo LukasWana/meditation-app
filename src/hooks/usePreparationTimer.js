@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 
 /**
  * Hook pro timer přípravy - odpočítávání času a spuštění dýchání po dokončení
@@ -11,6 +11,7 @@ import { useEffect } from 'react';
  * @param {number} breathDuration - Délka dýchání v minutách
  * @param {Function} setBreathTime - Funkce pro aktualizaci času dýchání
  * @param {Function} setIsBreathing - Funkce pro spuštění dýchání
+ * @param {Function} playCountdownSound - Funkce pro přehrání countdown zvuku (volitelné)
  */
 export const usePreparationTimer = (
   isPreparing,
@@ -20,15 +21,43 @@ export const usePreparationTimer = (
   breathTime,
   breathDuration,
   setBreathTime,
-  setIsBreathing
+  setIsBreathing,
+  playCountdownSound = null
 ) => {
+  const previousCountdownRef = useRef(null);
+  const intervalRef = useRef(null);
+
   // Odpočítávání času přípravy
   useEffect(() => {
-    let interval;
+    // Cleanup předchozího intervalu
+    if (intervalRef.current) {
+      clearInterval(intervalRef.current);
+      intervalRef.current = null;
+    }
+
+    if (!isPreparing) {
+      previousCountdownRef.current = null;
+      return;
+    }
+
     if (isPreparing && preparationCountdown > 0) {
-      interval = setInterval(() => {
+      // Přehrát zvuk pro počáteční hodnotu countdownu při startu přípravy (pouze pokud se countdown změnil)
+      if (playCountdownSound && typeof playCountdownSound === 'function' && previousCountdownRef.current !== preparationCountdown) {
+        playCountdownSound(preparationCountdown);
+        previousCountdownRef.current = preparationCountdown;
+      }
+
+      intervalRef.current = setInterval(() => {
         setPreparationCountdown(prev => {
           const newCountdown = prev - 1;
+
+          // Spusť countdown zvuk přímo v intervalu při změně countdownu (před aktualizací state)
+          // Toto zajistí, že se zvuk přehrává přesně v momentě změny, ne až po renderu
+          if (playCountdownSound && typeof playCountdownSound === 'function' && newCountdown > 0 && previousCountdownRef.current !== newCountdown) {
+            playCountdownSound(newCountdown);
+            previousCountdownRef.current = newCountdown;
+          }
+
           if (newCountdown <= 0) {
             // Po dokončení přípravy spusť dýchání - použij setTimeout, aby se to nestalo během renderu
             setTimeout(() => {
@@ -47,10 +76,11 @@ export const usePreparationTimer = (
     }
 
     return () => {
-      if (interval) {
-        clearInterval(interval);
+      if (intervalRef.current) {
+        clearInterval(intervalRef.current);
+        intervalRef.current = null;
       }
     };
-  }, [isPreparing, preparationCountdown, breathTime, breathDuration, setBreathTime, setIsBreathing, setIsPreparing, setPreparationCountdown]);
+  }, [isPreparing, preparationCountdown, breathTime, breathDuration, setBreathTime, setIsBreathing, setIsPreparing, setPreparationCountdown, playCountdownSound]);
 };
 
