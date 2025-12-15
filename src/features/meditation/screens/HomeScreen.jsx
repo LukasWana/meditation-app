@@ -101,7 +101,7 @@ const HomeScreen = ({
               className="text-5xl font-light tracking-wide py-4 leading-loose"
               style={{ color: displayTextColor }}
             >
-              {t('meditace') || 'meditace'}
+              {t('slova')}
             </div>
           </div>
         </div>
