@@ -456,11 +456,6 @@ export const ThemeProvider = ({ children }) => {
             .border-black\\/10, .border-gray-200, .border-gray-300 {
               border-color: rgba(255, 255, 255, 0.3) !important;
             }
-
-            /* Zajistit, aby text na kartách měl správnou barvu */
-            [style*="background-color"] {
-              color: ${themeColors.text} !important;
-            }
           `;
         } else {
           // CSS pro světlé pozadí (černý text)
