@@ -34,6 +34,16 @@ const BreathActionButtons = ({
   // Všechny texty by měly být bílé v dark mode, černé v light mode
   const iconColor = isDarkMode ? '#ffffff' : '#000000';
 
+  // Speciální barvy pro tlačítko "pokračovat po skončení"
+  // Pozor: v ThemeContext je globální override `[style*="background-color"] { color: ... !important; }`,
+  // takže tady nepoužíváme inline `backgroundColor`, aby se nám nepřebila barva ikonky.
+  const continueBg = continueAfterEnd
+    ? (isDarkMode ? '#ffffff' : '#000000')
+    : (isDarkMode ? '#000000' : '#ffffff');
+  const continueFg = continueAfterEnd
+    ? (isDarkMode ? '#000000' : '#ffffff')
+    : (isDarkMode ? '#ffffff' : '#000000');
+
   return (
     <FramerSection
       className="flex justify-center gap-4"
@@ -72,16 +82,12 @@ const BreathActionButtons = ({
         onClick={() => onContinueAfterEndChange?.(!continueAfterEnd)}
         className="w-20 h-20 rounded-full flex items-center justify-center shadow-sm hover:shadow-md transition-all cursor-pointer"
         style={{
-          backgroundColor: continueAfterEnd
-            ? (isDarkMode ? '#ffffff' : '#000000')
-            : (isDarkMode ? '#000000' : '#ffffff'),
-          color: continueAfterEnd
-            ? (isDarkMode ? '#000000' : '#ffffff')
-            : (isDarkMode ? '#ffffff' : '#000000')
+          background: continueBg,
+          color: continueFg
         }}
         title={t('pokracovatPoSkonceni') || 'Pokračovat v počítání po skončení'}
       >
-        <Clock size={28} />
+        <Clock size={28} style={{ color: continueFg }} />
       </button>
     </FramerSection>
   );

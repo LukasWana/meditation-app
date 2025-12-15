@@ -42,6 +42,8 @@ const ThemeSelector = () => {
 
       // Ulož do cache
       cacheService.setImageUrl(cacheKey, thumbnailURL);
+      // A rovnou přednačti do Cache Storage, aby se později nezdržovalo renderování gridu
+      cacheService.preloadImage(thumbnailURL, cacheKey).catch(() => {});
       console.log(`✅ Thumbnail cached: ${imageName}`);
 
       return thumbnailURL;
@@ -107,6 +109,10 @@ const ThemeSelector = () => {
           // Zkusit načíst náhled (s cachováním)
           const thumbnailURL = await loadThumbnailForBackground(itemRef.name);
           console.log(`✅ Loaded ${itemRef.name}, thumbnail: ${thumbnailURL ? 'yes' : 'no'}`);
+
+          // Prefetch: thumbnail (nebo fallback plný obrázek) do Cache Storage
+          const bestPreviewUrl = thumbnailURL || downloadURL;
+          cacheService.preloadImage(bestPreviewUrl, `background-preview:${itemRef.name}`).catch(() => {});
 
           backgrounds.push({
             name: itemRef.name,
