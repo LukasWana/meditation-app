@@ -47,6 +47,9 @@ const BreathScreen = ({
   const [localIsPreparing, setLocalIsPreparing] = useState(false);
   const [localPreparationCountdown, setLocalPreparationCountdown] = useState(0);
 
+  // State pro aktivní parametr (pro vizuální indikaci)
+  const [activeParameter, setActiveParameter] = useState(null);
+
   // State pro pokračování v počítání po skončení
   const [continueAfterEnd, setContinueAfterEnd] = useState(() => {
     try {
@@ -192,6 +195,7 @@ const BreathScreen = ({
     setBreathTime(breathDuration * 60);
   };
 
+
   // Vypočítat progress pro CircularProgress (0-100)
   const totalTime = breathDuration * 60; // v sekundách
   const progress = totalTime > 0 ? ((totalTime - breathTime) / totalTime) * 100 : 0;
@@ -222,6 +226,8 @@ const BreathScreen = ({
       setLocalIsPreparing(false);
       setLocalPreparationCountdown(0);
     }
+    // Reset aktivního parametru
+    setActiveParameter(null);
     // Naviguj zpět
     onNavigateToScreen('home');
   };
@@ -267,14 +273,18 @@ const BreathScreen = ({
                 onPlayPause={handlePlayPause}
                 onReset={handleReset}
                 onPreparationClick={() => {
+                  setActiveParameter('preparation');
                   onNavigateToScreen('preparation-time-picker');
                 }}
                 onDurationClick={() => {
+                  setActiveParameter('duration');
                   onNavigateToScreen('duration-picker');
                 }}
                 onRhythmClick={() => {
+                  setActiveParameter('rhythm');
                   onNavigateToScreen('rhythm-picker');
                 }}
+                activeParameter={activeParameter}
                 onGalleryClick={() => onNavigateToScreen('sound-theme-gallery')}
                 onProfilesClick={() => onNavigateToScreen('breath-profiles')}
                 formatTime={formatTime}

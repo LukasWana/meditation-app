@@ -30,6 +30,7 @@ import BreathActionButtons from './BreathActionButtons';
  * @param {boolean} continueAfterEnd - Zda pokračovat v počítání po skončení
  * @param {Function} onContinueAfterEndChange - Handler pro změnu volby pokračování
  * @param {number} extraTime - Čas navíc po skončení nastaveného času v sekundách
+ * @param {string} activeParameter - Aktuálně aktivní parametr
  */
 const BreathingSection = ({
   isBreathing,
@@ -53,7 +54,8 @@ const BreathingSection = ({
   continueAfterEnd,
   onContinueAfterEndChange,
   extraTime,
-  t
+  t,
+  activeParameter
 }) => {
   return (
     <motion.div
@@ -103,6 +105,7 @@ const BreathingSection = ({
         formatTime={formatTime}
         formatPreparationTime={formatPreparationTime}
         t={t}
+        activeParameter={activeParameter}
       />
 
       {/* Reset tlačítko, tlačítko pro zvukovou galerii, tlačítko pro profily a pokračování */}

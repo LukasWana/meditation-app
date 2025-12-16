@@ -7,19 +7,30 @@ const WheelPicker = ({
   max = 60,
   step = 1,
   label = '',
-  className = ''
+  className = '',
+  itemHeight = 50,
+  visibleItems = 5,
+  pickerWidth = 80
 }) => {
   const [isDragging, setIsDragging] = useState(false);
   const [scrollY, setScrollY] = useState(0);
   const containerRef = useRef(null);
   const rafRef = useRef(null);
   const onChangeTimeoutRef = useRef(null);
+  const scrollEndTimeoutRef = useRef(null);
   const isScrollingRef = useRef(false);
   const isInitializedRef = useRef(false);
-  const itemHeight = 50;
+  const lastValueRef = useRef(value);
+  const externalChangeRef = useRef(false);
+  // Haptic feedback helper
+  const triggerHaptic = useCallback(() => {
+    if ('vibrate' in navigator) {
+      // Krátká vibrace při změně hodnoty
+      navigator.vibrate(10);
+    }
+  }, []);
 
-  // Počet položek k zobrazení (5 položek podle obrázku)
-  const visibleItems = 5;
+  // Počet položek k zobrazení
   const itemsToShow = visibleItems;
 
   // Generuj všechny možné hodnoty pomocí useMemo pro optimalizaci
@@ -49,18 +60,41 @@ const WheelPicker = ({
 
   // Aktualizuj scroll při změně hodnoty zvenčí (jen když uživatel neposouvá)
   useEffect(() => {
-    if (containerRef.current && !isDragging && !isScrollingRef.current && currentIndex >= 0) {
+    if (containerRef.current && !isDragging && currentIndex >= 0) {
       const newScrollY = currentIndex * itemHeight;
       const currentScrollY = containerRef.current.scrollTop;
       const difference = Math.abs(currentScrollY - newScrollY);
 
       // Aktualizuj pouze pokud je rozdíl větší než 1px (aby nedošlo k nekonečnému loop)
       if (difference > 1) {
-        containerRef.current.scrollTop = newScrollY;
+        // Pokud je to externí změna (např. z +/- tlačítka), resetuj scrolling flag
+        if (externalChangeRef.current) {
+          isScrollingRef.current = false;
+          externalChangeRef.current = false;
+        }
+
+        // Pokud uživatel neposouvá, použij smooth scroll
+        if (!isScrollingRef.current) {
+          containerRef.current.scrollTo({
+            top: newScrollY,
+            behavior: 'smooth'
+          });
+        } else {
+          // Pokud probíhá scroll, nastav přímo
+          containerRef.current.scrollTop = newScrollY;
+        }
         setScrollY(newScrollY);
       }
     }
-  }, [value, currentIndex, isDragging]);
+  }, [value, currentIndex, isDragging, itemHeight]);
+
+  // Detekuj externí změnu hodnoty (zvenčí, ne z scrollování)
+  useEffect(() => {
+    if (lastValueRef.current !== value && !isDragging) {
+      externalChangeRef.current = true;
+      lastValueRef.current = value;
+    }
+  }, [value, isDragging]);
 
   // Optimalizovaný handleScroll s requestAnimationFrame
   const handleScroll = useCallback((e) => {
@@ -68,6 +102,16 @@ const WheelPicker = ({
     if (!isScrollingRef.current) isScrollingRef.current = true;
 
     const scrollTop = e.target.scrollTop;
+
+    // Scroll "end" debounce: po chvíli bez scroll eventů považuj scroll za ukončený.
+    // Bez toho může zůstat isDragging=true a externí změny (tlačítka +/-) se neprojeví v UI.
+    if (scrollEndTimeoutRef.current) {
+      clearTimeout(scrollEndTimeoutRef.current);
+    }
+    scrollEndTimeoutRef.current = setTimeout(() => {
+      isScrollingRef.current = false;
+      setIsDragging(false);
+    }, 140);
 
     // Zruš předchozí RAF pokud existuje
     if (rafRef.current) {
@@ -93,10 +137,15 @@ const WheelPicker = ({
         // Použij malý timeout pro throttling (16ms = ~60fps)
         onChangeTimeoutRef.current = setTimeout(() => {
           onChange(newValue);
+          // Haptic feedback při změně hodnoty
+          if (newValue !== lastValueRef.current) {
+            triggerHaptic();
+            lastValueRef.current = newValue;
+          }
         }, 16);
       }
     });
-  }, [value, values, onChange, isDragging]);
+  }, [value, values, onChange, isDragging, triggerHaptic]);
 
   // Vyčistit při unmount
   useEffect(() => {
@@ -107,11 +156,18 @@ const WheelPicker = ({
       if (onChangeTimeoutRef.current) {
         clearTimeout(onChangeTimeoutRef.current);
       }
+      if (scrollEndTimeoutRef.current) {
+        clearTimeout(scrollEndTimeoutRef.current);
+      }
     };
   }, []);
 
   const handleTouchEnd = useCallback(() => {
     setIsDragging(false);
+    if (scrollEndTimeoutRef.current) {
+      clearTimeout(scrollEndTimeoutRef.current);
+      scrollEndTimeoutRef.current = null;
+    }
 
     // Snap na nejbližší hodnotu
     if (containerRef.current) {
@@ -132,12 +188,17 @@ const WheelPicker = ({
         isScrollingRef.current = false;
         if (newValue !== value) {
           onChange(newValue);
+          // Haptic feedback při snapnutí na hodnotu
+          if (newValue !== lastValueRef.current) {
+            triggerHaptic();
+            lastValueRef.current = newValue;
+          }
         }
       }, 100);
     } else {
       isScrollingRef.current = false;
     }
-  }, [values, value, onChange, itemHeight]);
+  }, [values, value, onChange, itemHeight, triggerHaptic]);
 
   // Vypočti střed (výška kontejneru / 2)
   const centerY = useMemo(() => (itemsToShow * itemHeight) / 2, [itemsToShow, itemHeight]);
@@ -204,15 +265,19 @@ const WheelPicker = ({
         </label>
       )}
       {/* Světle šedý obdélník s zakulacenými rohy */}
-      <div className="relative bg-gray-100 rounded-2xl overflow-hidden" style={{ width: '80px', height: itemsToShow * itemHeight }}>
+      <div
+        className="relative bg-gray-100 rounded-2xl"
+        style={{ width: `${pickerWidth}px`, height: itemsToShow * itemHeight, overflow: 'hidden' }}
+      >
         {/* Scrollovatelný kontejner */}
         <div
           ref={containerRef}
           onScroll={handleScroll}
           onTouchEnd={handleTouchEnd}
           onMouseUp={handleTouchEnd}
-          className="overflow-y-auto scrollbar-hide h-full"
+          className="overflow-y-auto scrollbar-hide"
           style={{
+            height: itemsToShow * itemHeight,
             scrollSnapType: 'y mandatory'
           }}
         >

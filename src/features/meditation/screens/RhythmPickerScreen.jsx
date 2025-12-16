@@ -1,11 +1,11 @@
 import React, { useState, Suspense, lazy } from 'react';
-import { Music2 } from 'lucide-react';
+import { Music2, Plus, Minus } from 'lucide-react';
 import { FramerPageTransition, BackButton } from '@components';
 import { useLanguage } from '@contexts/LanguageContext';
 import { useTheme } from '@contexts/ThemeContext';
 
-// Lazy loading DualWheelPicker komponent
-const DualWheelPicker = lazy(() => import('@components/WheelPicker').then(m => ({ default: m.DualWheelPicker })));
+// Lazy loading WheelPicker komponent
+const WheelPicker = lazy(() => import('@components/WheelPicker').then(m => ({ default: m.default })));
 
 const RhythmPickerScreen = ({
   onNavigateToScreen,
@@ -43,6 +43,33 @@ const RhythmPickerScreen = ({
     onNavigateToScreen('sound-theme-gallery');
   };
 
+  // Haptic feedback helper
+  const triggerHaptic = () => {
+    if ('vibrate' in navigator) {
+      navigator.vibrate(10);
+    }
+  };
+
+  const handleLeftIncrement = () => {
+    triggerHaptic();
+    setTempLeftValue(Math.min(20, tempLeftValue + 1));
+  };
+
+  const handleLeftDecrement = () => {
+    triggerHaptic();
+    setTempLeftValue(Math.max(1, tempLeftValue - 1));
+  };
+
+  const handleRightIncrement = () => {
+    triggerHaptic();
+    setTempRightValue(Math.min(20, tempRightValue + 1));
+  };
+
+  const handleRightDecrement = () => {
+    triggerHaptic();
+    setTempRightValue(Math.max(1, tempRightValue - 1));
+  };
+
   return (
     <FramerPageTransition screenKey="rhythm-picker">
       <div
@@ -55,36 +82,106 @@ const RhythmPickerScreen = ({
         <BackButton onClick={() => onNavigateToScreen('breath')} />
 
         <div className="max-w-md w-full flex flex-col items-center justify-center min-h-[calc(100vh-4rem)] py-8">
-          {/* Header */}
-          <div className="flex items-center justify-between mb-8 w-full">
-            <h2 className="text-2xl font-light" style={{ color: displayTextColor }}>
+          {/* Středový blok: nadpis + wheel (vertikálně doprostřed) */}
+          <div className="flex flex-col items-center justify-center flex-1 w-full">
+            <h2 className="text-2xl font-light mb-6 text-center" style={{ color: displayTextColor }}>
               {t('rytmus') || 'rytmus'}
             </h2>
-          </div>
 
-          {/* Picker - velký, na středu */}
-          <div className="flex flex-col items-center justify-center mb-8 flex-1 w-full min-h-[calc(100vh-280px)]">
-            <div className="transform scale-[1.6] origin-center">
+            <div
+              style={{
+                transform: 'scale(1.6)',
+                transformOrigin: 'center',
+                padding: '60px 40px',
+                margin: '-60px -40px'
+              }}
+            >
               <Suspense fallback={
                 <div className="flex items-center justify-center w-full max-w-md h-64">
                   <div className="animate-spin rounded-full h-8 w-8 border-b-2" style={{ borderColor: textColor }}></div>
                 </div>
               }>
-                <DualWheelPicker
-                  leftValue={tempLeftValue}
-                  rightValue={tempRightValue}
-                  onLeftChange={setTempLeftValue}
-                  onRightChange={setTempRightValue}
-                  leftLabel={t('nadech') || 'nádech'}
-                  rightLabel={t('vydech') || 'výdech'}
-                  leftMin={1}
-                  leftMax={20}
-                  leftStep={1}
-                  rightMin={1}
-                  rightMax={20}
-                  rightStep={1}
-                  className="w-full max-w-md"
-                />
+                <div className="flex items-center gap-4">
+                  {/* Nádech picker s +/- tlačítky */}
+                  <div className="flex flex-col items-center">
+                    <WheelPicker
+                      value={tempLeftValue}
+                      onChange={setTempLeftValue}
+                      min={1}
+                      max={20}
+                      step={1}
+                      label={t('nadech') || 'nádech'}
+                    />
+                    {/* +/- pod wheelem */}
+                    <div className="flex items-center gap-3 mt-3">
+                      <button
+                        onClick={handleLeftDecrement}
+                        disabled={tempLeftValue <= 1}
+                        className="flex items-center justify-center w-10 h-9 rounded-full transition-all disabled:opacity-40 disabled:cursor-not-allowed"
+                        style={{
+                          backgroundColor: cardColor,
+                          border: `2px solid ${borderColor}`,
+                          color: displayTextColor
+                        }}
+                      >
+                        <Minus size={16} />
+                      </button>
+                      <button
+                        onClick={handleLeftIncrement}
+                        disabled={tempLeftValue >= 20}
+                        className="flex items-center justify-center w-10 h-9 rounded-full transition-all disabled:opacity-40 disabled:cursor-not-allowed"
+                        style={{
+                          backgroundColor: cardColor,
+                          border: `2px solid ${borderColor}`,
+                          color: displayTextColor
+                        }}
+                      >
+                        <Plus size={16} />
+                      </button>
+                    </div>
+                  </div>
+
+                  <div className="text-3xl font-light pt-8" style={{ color: displayTextColor }}>:</div>
+
+                  {/* Výdech picker s +/- tlačítky */}
+                  <div className="flex flex-col items-center">
+                    <WheelPicker
+                      value={tempRightValue}
+                      onChange={setTempRightValue}
+                      min={1}
+                      max={20}
+                      step={1}
+                      label={t('vydech') || 'výdech'}
+                    />
+                    {/* +/- pod wheelem */}
+                    <div className="flex items-center gap-3 mt-3">
+                      <button
+                        onClick={handleRightDecrement}
+                        disabled={tempRightValue <= 1}
+                        className="flex items-center justify-center w-10 h-9 rounded-full transition-all disabled:opacity-40 disabled:cursor-not-allowed"
+                        style={{
+                          backgroundColor: cardColor,
+                          border: `2px solid ${borderColor}`,
+                          color: displayTextColor
+                        }}
+                      >
+                        <Minus size={16} />
+                      </button>
+                      <button
+                        onClick={handleRightIncrement}
+                        disabled={tempRightValue >= 20}
+                        className="flex items-center justify-center w-10 h-9 rounded-full transition-all disabled:opacity-40 disabled:cursor-not-allowed"
+                        style={{
+                          backgroundColor: cardColor,
+                          border: `2px solid ${borderColor}`,
+                          color: displayTextColor
+                        }}
+                      >
+                        <Plus size={16} />
+                      </button>
+                    </div>
+                  </div>
+                </div>
               </Suspense>
             </div>
           </div>

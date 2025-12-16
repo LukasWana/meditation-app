@@ -1,4 +1,5 @@
 import React from 'react';
+import { motion } from 'framer-motion';
 import { FramerSection } from '@components';
 import { useTheme } from '@contexts/ThemeContext';
 
@@ -15,6 +16,7 @@ import { useTheme } from '@contexts/ThemeContext';
  * @param {Function} formatTime - Funkce pro formátování času
  * @param {Function} formatPreparationTime - Funkce pro formátování času přípravy
  * @param {Function} t - Funkce pro překlad
+ * @param {string} activeParameter - Aktuálně aktivní parametr ('preparation' | 'duration' | 'rhythm' | null)
  */
 const BreathParameters = ({
   preparationTime,
@@ -26,7 +28,8 @@ const BreathParameters = ({
   onRhythmClick,
   formatTime,
   formatPreparationTime,
-  t
+  t,
+  activeParameter = null
 }) => {
   const { getCurrentThemeColors, currentTheme } = useTheme();
   const themeColors = getCurrentThemeColors();
@@ -42,6 +45,8 @@ const BreathParameters = ({
   // Všechny texty by měly být bílé v dark mode, černé v light mode
   const displayTextColor = isDarkMode ? '#ffffff' : '#000000';
   const timeIndicatorColor = displayTextColor;
+  const borderColor = themeColors?.border || 'rgba(0, 0, 0, 0.1)';
+  const cardColor = themeColors?.card || 'rgba(255, 255, 255, 0.7)';
 
   return (
     <FramerSection
@@ -51,13 +56,23 @@ const BreathParameters = ({
     >
       <div className="flex justify-center items-start gap-8 md:gap-12 mb-4">
         {/* Příprava */}
-        <div className="flex flex-col items-center">
+        <motion.div
+          className="flex flex-col items-center"
+          animate={{
+            scale: activeParameter === 'preparation' ? 1.05 : 1,
+          }}
+          transition={{ duration: 0.2 }}
+        >
           <button
             onClick={onPreparationClick}
-            className="text-4xl md:text-5xl font-sans font-medium transition-colors cursor-pointer mb-1"
+            className="text-4xl md:text-5xl font-sans font-medium transition-all cursor-pointer mb-1 relative"
             style={{
               color: timeIndicatorColor,
-              fontFamily: currentTheme?.fontFamily || "'Petrona', serif"
+              fontFamily: currentTheme?.fontFamily || "'Petrona', serif",
+              padding: activeParameter === 'preparation' ? '0.25rem' : '0',
+              borderRadius: activeParameter === 'preparation' ? '0.5rem' : '0',
+              backgroundColor: activeParameter === 'preparation' ? `${cardColor}80` : 'transparent',
+              border: activeParameter === 'preparation' ? `2px solid ${borderColor}` : '2px solid transparent'
             }}
           >
             {formatPreparationTime(preparationTime)}
@@ -71,16 +86,26 @@ const BreathParameters = ({
           >
             {t('priprava') || 'příprava'}
           </span>
-        </div>
+        </motion.div>
 
         {/* Délka */}
-        <div className="flex flex-col items-center">
+        <motion.div
+          className="flex flex-col items-center"
+          animate={{
+            scale: activeParameter === 'duration' ? 1.05 : 1,
+          }}
+          transition={{ duration: 0.2 }}
+        >
           <button
             onClick={onDurationClick}
-            className="text-4xl md:text-5xl font-sans font-medium transition-colors cursor-pointer mb-1"
+            className="text-4xl md:text-5xl font-sans font-medium transition-all cursor-pointer mb-1 relative"
             style={{
               color: timeIndicatorColor,
-              fontFamily: currentTheme?.fontFamily || "'Petrona', serif"
+              fontFamily: currentTheme?.fontFamily || "'Petrona', serif",
+              padding: activeParameter === 'duration' ? '0.25rem' : '0',
+              borderRadius: activeParameter === 'duration' ? '0.5rem' : '0',
+              backgroundColor: activeParameter === 'duration' ? `${cardColor}80` : 'transparent',
+              border: activeParameter === 'duration' ? `2px solid ${borderColor}` : '2px solid transparent'
             }}
           >
             {formatTime(totalTime)}
@@ -94,16 +119,26 @@ const BreathParameters = ({
           >
             {t('dlzka') || 'délka'}
           </span>
-        </div>
+        </motion.div>
 
         {/* Rytmus */}
-        <div className="flex flex-col items-center">
+        <motion.div
+          className="flex flex-col items-center"
+          animate={{
+            scale: activeParameter === 'rhythm' ? 1.05 : 1,
+          }}
+          transition={{ duration: 0.2 }}
+        >
           <button
             onClick={onRhythmClick}
-            className="text-4xl md:text-5xl font-sans font-medium transition-colors cursor-pointer mb-1"
+            className="text-4xl md:text-5xl font-sans font-medium transition-all cursor-pointer mb-1 relative"
             style={{
               color: timeIndicatorColor,
-              fontFamily: currentTheme?.fontFamily || "'Petrona', serif"
+              fontFamily: currentTheme?.fontFamily || "'Petrona', serif",
+              padding: activeParameter === 'rhythm' ? '0.25rem' : '0',
+              borderRadius: activeParameter === 'rhythm' ? '0.5rem' : '0',
+              backgroundColor: activeParameter === 'rhythm' ? `${cardColor}80` : 'transparent',
+              border: activeParameter === 'rhythm' ? `2px solid ${borderColor}` : '2px solid transparent'
             }}
           >
             {breathInDuration} : {breathOutDuration}
@@ -117,7 +152,7 @@ const BreathParameters = ({
           >
             {t('rytmus') || 'rytmus'}
           </span>
-        </div>
+        </motion.div>
       </div>
     </FramerSection>
   );
