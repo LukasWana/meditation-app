@@ -4,74 +4,63 @@
 @tailwind components;
 @tailwind utilities;
 
+/* ============================================
+   Globální reset a základní styly
+   ============================================ */
+
 html {
-  /* font-family je aplikováno dynamicky z ThemeContext */
   margin: 0;
   padding: 0;
   overflow-x: hidden;
-  overflow-y: hidden; /* Přidáno: zabránit vertikálnímu skrolování */
+  overflow-y: hidden;
   width: 100%;
   max-width: 100vw;
-  height: 100%;
-  height: 100dvh; /* Dynamic viewport height for mobile browsers */
-
-  /* Zajistit, aby pozadí vyplnilo celý viewport bez deformace */
-  /* background-size: cover zachovává poměr stran a vyplní celý prostor */
-  background-size: cover !important;
-  background-position: center center !important;
-  background-repeat: no-repeat !important;
-  background-attachment: scroll !important;
-  /* Zajistit, aby se obrázek nedeformoval */
-  image-rendering: auto !important;
+  height: 100dvh;
+  /* Pozadí - aplikováno dynamicky z ThemeContext */
+  background-size: cover;
+  background-position: center center;
+  background-repeat: no-repeat;
+  background-attachment: scroll;
+  image-rendering: auto;
 }
 
 body {
-  /* font-family je aplikováno dynamicky z ThemeContext */
   margin: 0;
   padding: 0;
   overflow-x: hidden;
-  overflow-y: hidden; /* Přidáno: zabránit vertikálnímu skrolování */
+  overflow-y: hidden;
   width: 100%;
   max-width: 100vw;
+  height: 100dvh;
+  /* Touch optimizace */
   -webkit-tap-highlight-color: transparent;
   -webkit-touch-callout: none;
   -webkit-user-select: none;
   -moz-user-select: none;
   -ms-user-select: none;
   user-select: none;
-
-  /* Android Chrome viewport fix */
-  height: 100%;
-  height: 100dvh; /* Dynamic viewport height for mobile browsers */
-
-  /* Zajistit, aby pozadí vyplnilo celý viewport bez deformace */
-  background-size: cover !important;
-  background-position: center center !important;
-  background-repeat: no-repeat !important;
-  background-attachment: scroll !important;
-  image-rendering: auto !important;
+  /* Pozadí - aplikováno dynamicky z ThemeContext */
+  background-size: cover;
+  background-position: center center;
+  background-repeat: no-repeat;
+  background-attachment: scroll;
+  image-rendering: auto;
 }
 
 #root {
-  height: 100vh;
-  height: 100dvh; /* Dynamic viewport height for mobile browsers */
+  height: 100dvh;
   width: 100%;
   max-width: 100vw;
   overflow-x: hidden;
-  overflow-y: auto; /* Změněno na auto: umožní skrolování, když je potřeba */
-  /* font-family je aplikováno dynamicky z ThemeContext */
-
-  /* Android Chrome safe area support */
+  overflow-y: auto;
+  /* Safe area support pro iOS/Android */
   padding-bottom: env(safe-area-inset-bottom);
-
-  /* Zajistit, aby pozadí vyplnilo celý viewport bez deformace */
-  /* background-size: cover zachovává poměr stran a vyplní celý prostor */
-  background-size: cover !important;
-  background-position: center center !important;
-  background-repeat: no-repeat !important;
-  background-attachment: scroll !important;
-  /* Zajistit, aby se obrázek nedeformoval */
-  image-rendering: auto !important;
+  /* Pozadí - aplikováno dynamicky z ThemeContext */
+  background-size: cover;
+  background-position: center center;
+  background-repeat: no-repeat;
+  background-attachment: scroll;
+  image-rendering: auto;
 }
 
 /* Animované tlačidlá */
@@ -178,36 +167,28 @@ body, html, #root {
   font-family: var(--theme-font-family, 'Petrona', serif) !important;
 }
 
-/* Zabránenie horizontálnemu scrollingu */
+/* Box-sizing pro všechny elementy */
 * {
   box-sizing: border-box;
 }
 
+/* Zabránění horizontálnímu scrollingu */
 body, html, #root, main, div, section, article {
   overflow-x: hidden;
   max-width: 100vw;
 }
 
-/* Zabezpečenie, že všetky kontajnery nepresahujú šírku */
+/* Kontajnery nesmí přesahovat šířku */
 .container, .max-w-md, .w-full {
   max-width: 100vw;
   overflow-x: hidden;
 }
 
-/* Pre mobilné zariadenia */
-@media (max-width: 768px) {
-  body, html, #root {
-    overflow-x: hidden;
-    width: 100vw;
-    max-width: 100vw;
-  }
+/* ============================================
+   Utility třídy
+   ============================================ */
 
-  * {
-    max-width: 100vw;
-  }
-}
-
-/* Force override for dropdown menu visibility */
+/* Dropdown menu - vynutit zobrazení */
 .absolute.top-full.right-0 {
   display: block !important;
   visibility: visible !important;
@@ -256,24 +237,24 @@ body, html, #root, main, div, section, article {
   user-select: none;
 }
 
-/* Rounded style for themes with useRoundedStyle enabled */
-/* Pro kulaté písmo: kulaté rohy a čtvercové objekty udělat kulaté */
-[data-rounded-style="true"] button:not(.play-pause-button),
-[data-rounded-style="true"] .rounded-none,
-[data-rounded-style="true"] [class*="rounded-lg"],
-[data-rounded-style="true"] [class*="rounded-xl"],
-[data-rounded-style="true"] [class*="rounded-md"],
-[data-rounded-style="true"] .rounded-full:not(.play-pause-button),
-[data-rounded-style="true"] div[class*="rounded"]:not(.play-pause-button div),
-[data-rounded-style="true"] [class*="bg-white"]:not(.play-pause-button [class*="bg-white"]),
-[data-rounded-style="true"] [class*="bg-black"]:not(.play-pause-button [class*="bg-black"]),
-[data-rounded-style="true"] [class*="bg-gray"]:not(.play-pause-button [class*="bg-gray"]),
-[data-rounded-style="true"] [class*="bg-white/"]:not(.play-pause-button [class*="bg-white/"]),
-[data-rounded-style="true"] [class*="bg-black/"]:not(.play-pause-button [class*="bg-black/"]) {
-  border-radius: var(--theme-rounded-radius, 12px) !important; /* Kulaté rohy pro všechny objekty (per-téma) */
+/* ============================================
+   Rounded Style System
+   ============================================ */
+
+/* Rounded style - kulaté rohy pro témata s useRoundedStyle */
+[data-rounded-style="true"] {
+  --rounded-radius: var(--theme-rounded-radius, 12px);
+  --rounded-square-radius: var(--theme-rounded-square-radius, 50%);
 }
 
-/* Čtvercové objekty (aspect-square nebo stejná šířka a výška) udělat kulaté */
+/* Obecné prvky s kulatými rohy */
+[data-rounded-style="true"] button:not(.play-pause-button),
+[data-rounded-style="true"] .rounded-none:not(.play-pause-button),
+[data-rounded-style="true"] [class*="rounded"]:not(.play-pause-button) {
+  border-radius: var(--rounded-radius) !important;
+}
+
+/* Čtvercové objekty - plně kulaté */
 [data-rounded-style="true"] .aspect-square,
 [data-rounded-style="true"] [class*="w-20"][class*="h-20"],
 [data-rounded-style="true"] [class*="w-16"][class*="h-16"],
@@ -282,20 +263,16 @@ body, html, #root, main, div, section, article {
 [data-rounded-style="true"] [class*="w-8"][class*="h-8"],
 [data-rounded-style="true"] [class*="w-6"][class*="h-6"],
 [data-rounded-style="true"] [class*="w-4"][class*="h-4"] {
-  border-radius: 50% !important; /* Plně kulaté pro čtvercové objekty */
+  border-radius: var(--rounded-square-radius) !important;
 }
 
-/* Pro hranaté písmo: hranaté rohy (border-radius: 0) - aplikovat pouze když není rounded style */
+/* Hranaté písmo - hranaté rohy (když není rounded style) */
 html:not([data-rounded-style="true"]) button:not([class*="rounded-full"]):not(.play-pause-button),
-html:not([data-rounded-style="true"]) .rounded-none:not(.play-pause-button),
-html:not([data-rounded-style="true"]) [class*="rounded-lg"]:not(.play-pause-button),
-html:not([data-rounded-style="true"]) [class*="rounded-xl"]:not(.play-pause-button),
-html:not([data-rounded-style="true"]) [class*="rounded-md"]:not(.play-pause-button),
-html:not([data-rounded-style="true"]) div[class*="rounded"]:not([class*="rounded-full"]):not(.play-pause-button div) {
-  border-radius: 0 !important; /* Hranaté rohy pro hranaté písmo */
+html:not([data-rounded-style="true"]) [class*="rounded"]:not([class*="rounded-full"]):not(.play-pause-button) {
+  border-radius: 0 !important;
 }
 
-/* Z-index utilities for common values */
+/* Z-index utilities - použijte konstanty z constants/zIndex.js */
 .z-10000 {
   z-index: 10000;
 }
@@ -305,69 +282,49 @@ html:not([data-rounded-style="true"]) div[class*="rounded"]:not([class*="rounded
   min-height: clamp(80px, 15vh, 120px);
 }
 
-/* Vynutit, aby PlayPauseButton bylo vždy kulaté a nereagovalo na změny tématu */
-/* Toto pravidlo má nejvyšší prioritu a přepíše všechna ostatní - musí být na konci */
-button.play-pause-button,
-button[class*="play-pause-button"],
+/* ============================================
+   Speciální komponenty - vždy kulaté
+   ============================================ */
+
+/* PlayPauseButton - VŽDY kulaté, bez ohledu na téma, styly nebo jakékoli jiné pravidlo */
 .play-pause-button,
-.play-pause-button[class*="rounded-full"],
+button.play-pause-button,
 motion.button.play-pause-button,
-[data-rounded-style="true"] button.play-pause-button,
-[data-rounded-style="true"] .play-pause-button,
-[data-rounded-style="true"] .play-pause-button[class*="rounded-full"],
-html:not([data-rounded-style="true"]) button.play-pause-button,
-html:not([data-rounded-style="true"]) .play-pause-button,
-html:not([data-rounded-style="true"]) .play-pause-button[class*="rounded-full"],
-div .play-pause-button,
-div[class*="relative"] .play-pause-button,
-div[class*="absolute"] .play-pause-button,
-div[class*="flex"] .play-pause-button {
-  border-radius: 50% !important;
-  overflow: visible !important;
-}
-.play-pause-button div[class*="rounded-full"],
-.play-pause-button div[class*="absolute"],
-[data-rounded-style="true"] .play-pause-button div[class*="rounded-full"],
-[data-rounded-style="true"] .play-pause-button div[class*="absolute"],
-html:not([data-rounded-style="true"]) .play-pause-button div[class*="rounded-full"],
-html:not([data-rounded-style="true"]) .play-pause-button div[class*="absolute"] {
+button[class*="play-pause-button"],
+[class*="play-pause-button"],
+.play-pause-button *,
+.play-pause-button::before,
+.play-pause-button::after {
   border-radius: 50% !important;
 }
-.play-pause-button *:not([class*="w-3"]):not([class*="h-10"]),
-.play-pause-button div:not([class*="w-3"]):not([class*="h-10"]) {
+
+/* Hlavní tlačítko - vždy kulaté s nejvyšší prioritou */
+.play-pause-button,
+button.play-pause-button,
+motion.button.play-pause-button {
+  border-radius: 50% !important;
   overflow: visible !important;
+  /* Vynutit kulatý tvar i při změně velikosti */
+  aspect-ratio: 1 / 1 !important;
 }
-/* Vnitřní prvky pause ikony nesmí mít border-radius */
+
+/* Vnitřní pozadí tlačítka - také kulaté */
+.play-pause-button > div,
+.play-pause-button [class*="absolute"],
+.play-pause-button [class*="inset"] {
+  border-radius: 50% !important;
+}
+
+/* Vnitřní prvky pause ikony - bez border-radius (hranaté) */
 .play-pause-button [class*="w-3"],
 .play-pause-button [class*="h-10"] {
   border-radius: 0 !important;
 }
 
-/* FINÁLNÍ PRAVIDLO - PlayPauseButton musí být vždy kulaté - nejvyšší priorita na konci souboru */
-button.play-pause-button,
-.play-pause-button,
-[class*="play-pause-button"] {
-  border-radius: 50% !important;
-}
-
-/* Animace dýchání a úvodní animace musí být vždy kulaté - nejvyšší priorita */
-div.breath-animation-circle,
-div.intro-animation-circle,
+/* Animace dýchání a úvodní animace - vždy kulaté */
 .breath-animation-circle,
 .intro-animation-circle,
 [class*="breath-animation-circle"],
-[class*="intro-animation-circle"],
-motion.div.breath-animation-circle,
-motion.div.intro-animation-circle,
-[data-rounded-style="true"] div.breath-animation-circle,
-[data-rounded-style="true"] div.intro-animation-circle,
-[data-rounded-style="true"] .breath-animation-circle,
-[data-rounded-style="true"] .intro-animation-circle,
-html:not([data-rounded-style="true"]) div.breath-animation-circle,
-html:not([data-rounded-style="true"]) div.intro-animation-circle,
-html:not([data-rounded-style="true"]) .breath-animation-circle,
-html:not([data-rounded-style="true"]) .intro-animation-circle,
-.breath-animation-circle[style*="border-radius"],
-.intro-animation-circle[style*="border-radius"] {
+[class*="intro-animation-circle"] {
   border-radius: 50% !important;
 }
