@@ -4,40 +4,51 @@ import log from '@services/logger';
 import cacheService from '@services/cacheServiceRefactored';
 import { fastMetadataService } from '@services/fastMetadataService';
 
-// Vylepšená funkce pro načtení duration s retry logikou
+// Vylepšená funkce pro načtení duration s retry logikou a cleanup
 const getAudioDuration = (audioSrc, retries = 3) => {
   return new Promise((resolve) => {
     const audio = new Audio();
     let timeoutId;
+    let isResolved = false;
 
     const cleanup = () => {
+      if (isResolved) return;
       audio.removeEventListener('loadedmetadata', onLoadedMetadata);
       audio.removeEventListener('error', onError);
       if (timeoutId) clearTimeout(timeoutId);
+      // Vyčisti audio element pro uvolnění paměti
+      audio.src = '';
+      audio.load();
+    };
+
+    const resolveOnce = (value) => {
+      if (isResolved) return;
+      isResolved = true;
+      cleanup();
+      resolve(value);
     };
 
     const onLoadedMetadata = () => {
-      cleanup();
       const duration = audio.duration;
       if (isFinite(duration) && duration > 0) {
         log.debug(`✅ Duration loaded successfully: ${duration}s`);
-        resolve(duration); // Vrať duration v sekundách, ne jako string
+        resolveOnce(duration); // Vrať duration v sekundách, ne jako string
       } else {
         log.warn(`Invalid duration received: ${duration}`);
-        resolve(null);
+        resolveOnce(null);
       }
     };
 
     const onError = () => {
-      cleanup();
       log.warn(`Audio loading failed for ${audioSrc}, retries left: ${retries - 1}`);
       if (retries > 1) {
         // Retry s exponenciálním backoff
+        cleanup();
         setTimeout(() => {
-          getAudioDuration(audioSrc, retries - 1).then(resolve);
+          getAudioDuration(audioSrc, retries - 1).then(resolveOnce);
         }, 1000 * (4 - retries)); // 1s, 2s, 3s
       } else {
-        resolve(null);
+        resolveOnce(null);
       }
     };
 
@@ -46,9 +57,8 @@ const getAudioDuration = (audioSrc, retries = 3) => {
 
     // Timeout po 10 sekundách
     timeoutId = setTimeout(() => {
-      cleanup();
       log.warn(`Timeout loading duration for ${audioSrc}`);
-      resolve(null);
+      resolveOnce(null);
     }, 10000);
 
     audio.src = audioSrc;
@@ -247,36 +257,62 @@ export const useHudbaScreenData = () => {
 
   // Načti délky skladeb po načtení UI s vylepšenou logikou
   useEffect(() => {
-    if (hudbaItems && hudbaItems.length > 0 && !isLoading) {
-      log.debug('🔄 Loading durations for songs...');
+    if (!hudbaItems || hudbaItems.length === 0 || isLoading) return;
 
-      hudbaItems.forEach(async (item) => {
+    log.debug('🔄 Loading durations for songs...');
+    let isMounted = true;
+    const loadingSet = new Set(); // Track currently loading items to prevent duplicates
+
+    const loadDurations = async () => {
+      for (const item of hudbaItems) {
+        if (!isMounted) break; // Stop if component unmounted
+
         if (item.type === 'song' && item.audioSrc) {
           // Zkontroluj, jestli už máme duration v cache nebo state
           const hasCachedDuration = cacheService.getDuration(item.audioSrc) || durations.has(item.audioSrc);
           const hasMetadataDuration = item.duration && item.duration !== 'N/A';
 
-          // Načti duration pouze pokud ho nemáme
-          if (!hasCachedDuration && !hasMetadataDuration) {
+          // Načti duration pouze pokud ho nemáme a není už v procesu načítání
+          if (!hasCachedDuration && !hasMetadataDuration && !loadingSet.has(item.audioSrc)) {
+            loadingSet.add(item.audioSrc);
             try {
               const duration = await getAudioDuration(item.audioSrc);
+              if (!isMounted) return; // Check again after async operation
+
               if (duration && duration > 0) {
                 log.debug(`⏱️ Duration loaded for ${item.title}: ${duration}s`);
                 // Ulož do persistentní cache
                 cacheService.setDuration(item.audioSrc, duration);
                 // Aktualizuj state pro okamžité zobrazení
-                setDurations(prev => new Map(prev).set(item.audioSrc, duration));
+                setDurations(prev => {
+                  if (!isMounted) return prev; // Don't update if unmounted
+                  const newMap = new Map(prev);
+                  newMap.set(item.audioSrc, duration);
+                  return newMap;
+                });
               }
             } catch (error) {
-              log.warn(`Failed to load duration for ${item.title}:`, error);
+              if (isMounted) {
+                log.warn(`Failed to load duration for ${item.title}:`, error);
+              }
+            } finally {
+              loadingSet.delete(item.audioSrc);
             }
           } else {
             log.debug(`⏱️ Duration already available for ${item.title}`);
           }
         }
-      });
-    }
-  }, [hudbaItems, isLoading]);
+      }
+    };
+
+    loadDurations();
+
+    // Cleanup function
+    return () => {
+      isMounted = false;
+      loadingSet.clear();
+    };
+  }, [hudbaItems, isLoading, durations]);
 
   return {
     hudbaItems,
