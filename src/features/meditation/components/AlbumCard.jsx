@@ -11,7 +11,6 @@ export const AlbumCard = ({
 }) => {
   return (
     <FramerSection
-      key={item.key || idx}
       animationType="slideInUp"
       delay={0.2 + idx * 0.1}
     >
@@ -33,10 +32,11 @@ export const AlbumCard = ({
                     className="w-full h-full object-cover"
                     loading="lazy"
                     decoding="async"
-                    fetchPriority="low"
                     onError={(e) => {
-                      e.target.style.display = 'none';
-                      e.target.nextSibling.style.display = 'flex';
+                      if (e.target && e.target.nextSibling) {
+                        e.target.style.display = 'none';
+                        e.target.nextSibling.style.display = 'flex';
+                      }
                     }}
                   />
                 ) : (
