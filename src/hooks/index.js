@@ -22,6 +22,8 @@ export { useBackgroundDataLoader } from './useBackgroundDataLoader';
 export { useTimer } from './useTimer';
 export { useBreathPhase } from './useBreathPhase';
 export { useBreathSounds } from './useBreathSounds';
+export { useBreathAudioEngine } from './useBreathAudioEngine';
+export { useBreathPhaseNew } from './useBreathPhaseNew';
 export { useRealtimeMeditationFilter } from './useRealtimeMeditationFilter';
 export { useFirebaseDychanieScanner } from './useFirebaseDychanieScanner';
 export { useFirebaseDychanieFilter } from './useFirebaseDychanieFilter';

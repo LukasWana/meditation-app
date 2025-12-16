@@ -24,6 +24,7 @@ export const useBreathSounds = (
   const outFadeIntervalRef = useRef(null);
   const inFadeOutTimeoutRef = useRef(null);
   const outFadeOutTimeoutRef = useRef(null);
+  const clickEndTimeoutRef = useRef(null);
   const previousPhaseRef = useRef(null);
   const pendingPhaseRef = useRef(null); // Fáze, která čeká na spuštění
   const [inSoundUrl, setInSoundUrl] = useState(null);
@@ -297,6 +298,64 @@ export const useBreathSounds = (
     }, stepTime);
   };
 
+  const playClickAndThen = (onDone) => {
+    const click = clickSoundRef.current;
+    if (!click || !clickSoundUrl) {
+      if (onDone) onDone();
+      return;
+    }
+
+    // Vyčisti případný starý fallback timeout
+    if (clickEndTimeoutRef.current) {
+      clearTimeout(clickEndTimeoutRef.current);
+      clickEndTimeoutRef.current = null;
+    }
+
+    let doneCalled = false;
+    const done = () => {
+      if (doneCalled) return;
+      doneCalled = true;
+      if (clickEndTimeoutRef.current) {
+        clearTimeout(clickEndTimeoutRef.current);
+        clickEndTimeoutRef.current = null;
+      }
+      if (onDone) onDone();
+    };
+
+    try {
+      // Reset clicku, ať vždycky startuje od začátku
+      try {
+        click.pause();
+      } catch {
+        // Ignoruj chyby při pause (audio může být už zastavený)
+      }
+      click.currentTime = 0;
+
+      // Preferuj event 'ended' – spolehlivé u krátkých SFX
+      const onEnded = () => done();
+      click.addEventListener('ended', onEnded, { once: true });
+
+      // Fallback, kdyby 'ended' nepřišlo (např. neznámá duration / browser quirks)
+      const durationSec = click.duration;
+      const fallbackMs =
+        durationSec && !isNaN(durationSec) && durationSec > 0
+          ? Math.min(2000, Math.max(50, durationSec * 1000 + 25))
+          : 250;
+      clickEndTimeoutRef.current = setTimeout(() => {
+        // Pokud by se click mezitím odpojil, jen dokonči sekvenci
+        done();
+      }, fallbackMs);
+
+      click.play().catch((error) => {
+        console.warn('Failed to play click sound:', error);
+        done();
+      });
+    } catch (error) {
+      console.warn('Error playing click sound:', error);
+      done();
+    }
+  };
+
   // Hlavní logika přehrávání podle breathPhase
   useEffect(() => {
     if (!isPlaying) {
@@ -306,6 +365,10 @@ export const useBreathSounds = (
       }
       if (outSoundRef.current) {
         fadeOut(outSoundRef.current, 1.5, outFadeIntervalRef);
+      }
+      if (clickEndTimeoutRef.current) {
+        clearTimeout(clickEndTimeoutRef.current);
+        clickEndTimeoutRef.current = null;
       }
       previousPhaseRef.current = null;
       pendingPhaseRef.current = null;
@@ -326,18 +389,6 @@ export const useBreathSounds = (
     const currentSound = breathPhase === 'in'
       ? (breathInSound !== 'none' ? inSoundRef.current : null)
       : (breathOutSound !== 'none' ? outSoundRef.current : null);
-
-    // Přehrát kliknutí na začátku každé fáze
-    if ((phaseChanged || isFirstStart) && clickSoundRef.current && clickSoundUrl) {
-      try {
-        clickSoundRef.current.currentTime = 0;
-        clickSoundRef.current.play().catch((error) => {
-          console.warn('Failed to play click sound:', error);
-        });
-      } catch (error) {
-        console.warn('Error playing click sound:', error);
-      }
-    }
 
     // Získat zvuk, který se má zastavit
     const soundToStop = breathPhase === 'in'
@@ -477,27 +528,36 @@ export const useBreathSounds = (
     // Kontrolujeme, zda zvuk skutečně běží (není pauzovaný a má currentTime > 0)
     const isSoundPlaying = soundToStop && !soundToStop.paused && soundToStop.currentTime > 0;
 
-    if (phaseChanged && soundToStop && isSoundPlaying) {
-      // Zvuk běží - zastav ho fade out a pak spusť nový
-      pendingPhaseRef.current = breathPhase;
+    // Nové časování: klik se přehraje AŽ PO doběhnutí celé fáze (tj. na přechodu),
+    // a to mezi fade-out předchozího zvuku a fade-in dalšího zvuku.
+    if (phaseChanged || isFirstStart) {
+      // Aby se při rerenderu (kvůli jiným deps) nespouštěla sekvence znovu,
+      // nastavíme previousPhaseRef hned, jakmile sekvenci naplánujeme.
+      previousPhaseRef.current = breathPhase;
 
-      const stopIntervalRef = breathPhase === 'in' ? outFadeIntervalRef : inFadeIntervalRef;
-      // Fade out předchozího zvuku (1.5 sekundy), poté spusť nový
-      fadeOut(soundToStop, fadeOutDuration, stopIntervalRef, () => {
-        // Po dokončení fade out spusť nový zvuk pro čekající fázi
-        const nextPhase = pendingPhaseRef.current;
-        pendingPhaseRef.current = null;
-        if (nextPhase) {
-          startNewSound(nextPhase);
+      const startNextAfterClick = () => {
+        // Pokud není zvuk pro aktuální fázi, jen skonči (klik už proběhl)
+        if (currentSound) {
+          startNewSound();
         }
-      });
-    } else if (currentSound && (phaseChanged || isFirstStart)) {
-      // Spustit nový zvuk bez čekání - při prvním spuštění nebo pokud není co zastavit
-      startNewSound();
-    }
+      };
 
-    // Aktualizuj předchozí fázi AŽ PO kontrole a spuštění zvuku
-    previousPhaseRef.current = breathPhase;
+      if (soundToStop && isSoundPlaying) {
+        // Zvuk předchozí fáze běží -> fade out -> click -> start next
+        pendingPhaseRef.current = breathPhase;
+        const stopIntervalRef = breathPhase === 'in' ? outFadeIntervalRef : inFadeIntervalRef;
+        fadeOut(soundToStop, fadeOutDuration, stopIntervalRef, () => {
+          pendingPhaseRef.current = null;
+          playClickAndThen(startNextAfterClick);
+        });
+      } else {
+        // Není co zastavit (nebo neběží) -> click -> start next
+        playClickAndThen(startNextAfterClick);
+      }
+    } else {
+      // Bez změny fáze nedělej nic; jen aktualizuj previousPhaseRef pro jistotu
+      previousPhaseRef.current = breathPhase;
+    }
 
   }, [isPlaying, breathPhase, breathInSound, breathOutSound, breathClickSound, clickSoundUrl, breathSoundFadeEnabled, breathInDuration, breathOutDuration]);
 
@@ -515,6 +575,10 @@ export const useBreathSounds = (
       }
       if (outFadeOutTimeoutRef.current) {
         clearTimeout(outFadeOutTimeoutRef.current);
+      }
+      if (clickEndTimeoutRef.current) {
+        clearTimeout(clickEndTimeoutRef.current);
+        clickEndTimeoutRef.current = null;
       }
       if (inSoundRef.current) {
         inSoundRef.current.pause();
