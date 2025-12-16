@@ -248,9 +248,10 @@ body, html, #root, main, div, section, article {
 }
 
 /* Obecné prvky s kulatými rohy */
-[data-rounded-style="true"] button:not(.play-pause-button),
-[data-rounded-style="true"] .rounded-none:not(.play-pause-button),
-[data-rounded-style="true"] [class*="rounded"]:not(.play-pause-button) {
+/* Vyloučit play-pause-button - ten je vždy kulatý */
+[data-rounded-style="true"] button:not(.play-pause-button):not([class*="play-pause-button"]),
+[data-rounded-style="true"] .rounded-none:not(.play-pause-button):not([class*="play-pause-button"]),
+[data-rounded-style="true"] [class*="rounded"]:not(.play-pause-button):not([class*="play-pause-button"]) {
   border-radius: var(--rounded-radius) !important;
 }
 
@@ -267,8 +268,9 @@ body, html, #root, main, div, section, article {
 }
 
 /* Hranaté písmo - hranaté rohy (když není rounded style) */
-html:not([data-rounded-style="true"]) button:not([class*="rounded-full"]):not(.play-pause-button),
-html:not([data-rounded-style="true"]) [class*="rounded"]:not([class*="rounded-full"]):not(.play-pause-button) {
+/* Vyloučit play-pause-button - ten je vždy kulatý */
+html:not([data-rounded-style="true"]) button:not([class*="rounded-full"]):not(.play-pause-button):not([class*="play-pause-button"]),
+html:not([data-rounded-style="true"]) [class*="rounded"]:not([class*="rounded-full"]):not(.play-pause-button):not([class*="play-pause-button"]) {
   border-radius: 0 !important;
 }
 
@@ -287,37 +289,42 @@ html:not([data-rounded-style="true"]) [class*="rounded"]:not([class*="rounded-fu
    ============================================ */
 
 /* PlayPauseButton - VŽDY kulaté, bez ohledu na téma, styly nebo jakékoli jiné pravidlo */
+/* Vyloučit z rounded style systému - play button je vždy kulatý */
 .play-pause-button,
 button.play-pause-button,
 motion.button.play-pause-button,
 button[class*="play-pause-button"],
-[class*="play-pause-button"],
-.play-pause-button *,
-.play-pause-button::before,
-.play-pause-button::after {
-  border-radius: 50% !important;
-}
-
-/* Hlavní tlačítko - vždy kulaté s nejvyšší prioritou */
-.play-pause-button,
-button.play-pause-button,
-motion.button.play-pause-button {
+[class*="play-pause-button"] {
   border-radius: 50% !important;
   overflow: visible !important;
-  /* Vynutit kulatý tvar i při změně velikosti */
   aspect-ratio: 1 / 1 !important;
 }
 
-/* Vnitřní pozadí tlačítka - také kulaté */
-.play-pause-button > div,
-.play-pause-button [class*="absolute"],
-.play-pause-button [class*="inset"] {
+/* Vyloučit play button z rounded style pravidel */
+[data-rounded-style="true"] .play-pause-button,
+[data-rounded-style="true"] button.play-pause-button,
+html:not([data-rounded-style="true"]) .play-pause-button,
+html:not([data-rounded-style="true"]) button.play-pause-button {
   border-radius: 50% !important;
 }
 
-/* Vnitřní prvky pause ikony - bez border-radius (hranaté) */
+/* Vnitřní pozadí tlačítka - také kulaté */
+.play-pause-button > div[class*="absolute"],
+.play-pause-button > div[class*="inset"],
+.play-pause-button [class*="absolute"][class*="inset"] {
+  border-radius: 50% !important;
+}
+
+/* Vnitřní ikony - VŽDY hranaté (bez border-radius) */
 .play-pause-button [class*="w-3"],
-.play-pause-button [class*="h-10"] {
+.play-pause-button [class*="h-10"],
+.play-pause-button [class*="w-0"],
+.play-pause-button [class*="h-0"],
+.play-pause-button [class*="border"],
+.play-pause-button [class*="border-y"],
+.play-pause-button [class*="border-left"],
+.play-pause-button div[class*="flex"] > div,
+.play-pause-button *:not([class*="absolute"]):not([class*="inset"]) {
   border-radius: 0 !important;
 }
 
