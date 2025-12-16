@@ -34,11 +34,12 @@ const PlayPauseButton = ({
     }
   }, [iconColor]);
 
-  // Vynutit, aby tlačítko bylo vždy kulaté
+  // Vynutit, aby tlačítko bylo vždy kulaté - CSS to už zajišťuje, ale pro jistotu
   const buttonRef = useRef(null);
   useEffect(() => {
     if (buttonRef.current) {
       buttonRef.current.style.setProperty('border-radius', '50%', 'important');
+      buttonRef.current.style.setProperty('aspect-ratio', '1 / 1', 'important');
     }
   }, []);
 
@@ -62,6 +63,7 @@ const PlayPauseButton = ({
         border: 'none',
         overflow: 'visible',
         borderRadius: '50%',
+        aspectRatio: '1 / 1',
         isolation: 'isolate'
       }}
       transition={{ type: "spring", stiffness: 300, damping: 20 }}
