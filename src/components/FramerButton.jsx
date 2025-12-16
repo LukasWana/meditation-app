@@ -26,6 +26,12 @@ const FramerButton = ({
     }
   };
 
+  // Filtrovat props, které by neměly být předány do DOM
+  const {
+    key: _key, // key by neměl být předán jako prop
+    ...domProps
+  } = props;
+
   return (
     <motion.button
       className={`
@@ -41,7 +47,7 @@ const FramerButton = ({
       disabled={disabled}
       onClick={onClick}
       // Hover efekty odstraněny - žádné animace při hover
-      {...props}
+      {...domProps}
     >
       {children}
     </motion.button>

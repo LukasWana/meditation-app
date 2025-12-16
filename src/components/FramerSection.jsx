@@ -26,6 +26,12 @@ const FramerSection = ({
     };
   }, [delay, animationType]);
 
+  // Filtrovat props, které by neměly být předány do DOM
+  const {
+    key: _key, // key by neměl být předán jako prop
+    ...domProps
+  } = props;
+
   return (
     <motion.div
       className={`${className} max-w-full overflow-x-hidden`}
@@ -36,7 +42,7 @@ const FramerSection = ({
       variants={variants}
       transition={transition}
       // Hover efekty odstraněny - žádné animace při hover
-      {...props}
+      {...domProps}
     >
       {children}
     </motion.div>
