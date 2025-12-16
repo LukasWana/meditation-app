@@ -94,12 +94,18 @@ const PlayPauseButton = ({
                 <div
                   ref={pauseBar1Ref}
                   className="w-3 h-10 pointer-events-none"
-                  style={{ backgroundColor: iconColor }}
+                  style={{ 
+                    backgroundColor: iconColor,
+                    borderRadius: 0
+                  }}
                 ></div>
                 <div
                   ref={pauseBar2Ref}
                   className="w-3 h-10 pointer-events-none"
-                  style={{ backgroundColor: iconColor }}
+                  style={{ 
+                    backgroundColor: iconColor,
+                    borderRadius: 0
+                  }}
                 ></div>
               </div>
             </motion.div>
@@ -111,7 +117,12 @@ const PlayPauseButton = ({
               animate={{ scale: 1 }}
               exit={{ scale: 0 }}
               className="w-0 h-0 border-y-[12px] border-y-transparent ml-3 pointer-events-none"
-              style={{ borderLeftColor: iconColor, borderLeftWidth: '16px', color: iconColor }}
+              style={{ 
+                borderLeftColor: iconColor, 
+                borderLeftWidth: '16px', 
+                color: iconColor,
+                borderRadius: 0
+              }}
             />
           )}
         </AnimatePresence>
