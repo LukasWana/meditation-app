@@ -1,6 +1,5 @@
 import React from 'react';
 import { motion } from 'framer-motion';
-import { FramerSection } from '@components';
 import CircularProgress from '@features/audio/components/CircularProgress';
 import CurrentTimeDisplay from '@features/audio/components/CurrentTimeDisplay';
 import BreathActionButtons from './BreathActionButtons';
@@ -126,44 +125,6 @@ const PreparationSection = ({
         </div>
       </div>
 
-      {/* Prázdná sekce s parametry - pro zachování stejné struktury jako na stránce dýchání */}
-      <FramerSection
-        className="mb-6"
-        animationType="fadeIn"
-        delay={0.3}
-      >
-        <div className="flex justify-center items-start gap-8 md:gap-12 mb-4">
-          {/* Příprava - prázdné */}
-          <div className="flex flex-col items-center" style={{ opacity: 0, pointerEvents: 'none' }}>
-            <div className="text-4xl md:text-5xl font-sans font-medium mb-1" style={{ height: 'clamp(2.5rem, 5vw, 3rem)' }}>
-              &nbsp;
-            </div>
-            <div className="text-base md:text-lg" style={{ height: '1.25rem', fontFamily: themeColors?.fontFamily || "'Petrona', serif" }}>
-              &nbsp;
-            </div>
-          </div>
-
-          {/* Délka - prázdné */}
-          <div className="flex flex-col items-center" style={{ opacity: 0, pointerEvents: 'none' }}>
-            <div className="text-4xl md:text-5xl font-sans font-medium mb-1" style={{ height: 'clamp(2.5rem, 5vw, 3rem)' }}>
-              &nbsp;
-            </div>
-            <div className="text-base md:text-lg" style={{ height: '1.25rem', fontFamily: themeColors?.fontFamily || "'Petrona', serif" }}>
-              &nbsp;
-            </div>
-          </div>
-
-          {/* Rytmus - prázdné */}
-          <div className="flex flex-col items-center" style={{ opacity: 0, pointerEvents: 'none' }}>
-            <div className="text-4xl md:text-5xl font-sans font-medium mb-1" style={{ height: 'clamp(2.5rem, 5vw, 3rem)' }}>
-              &nbsp;
-            </div>
-            <div className="text-base md:text-lg" style={{ height: '1.25rem', fontFamily: themeColors?.fontFamily || "'Petrona', serif" }}>
-              &nbsp;
-            </div>
-          </div>
-        </div>
-      </FramerSection>
 
       {/* Reset tlačítko, tlačítko pro zvukovou galerii a tlačítko pro profily - vedle sebe - stejná struktura jako na stránce dýchání */}
       <BreathActionButtons

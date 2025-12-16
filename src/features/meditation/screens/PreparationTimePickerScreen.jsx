@@ -1,5 +1,5 @@
 import React, { useState, Suspense, lazy } from 'react';
-import { Music2 } from 'lucide-react';
+import { Music2, Plus, Minus } from 'lucide-react';
 import { FramerPageTransition, BackButton } from '@components';
 import { useLanguage } from '@contexts/LanguageContext';
 import { useTheme } from '@contexts/ThemeContext';
@@ -41,6 +41,23 @@ const PreparationTimePickerScreen = ({
     onNavigateToScreen('sound-theme-gallery');
   };
 
+  // Haptic feedback helper
+  const triggerHaptic = () => {
+    if ('vibrate' in navigator) {
+      navigator.vibrate(10);
+    }
+  };
+
+  const handleIncrement = () => {
+    triggerHaptic();
+    setTempValue(Math.min(60, tempValue + 1));
+  };
+
+  const handleDecrement = () => {
+    triggerHaptic();
+    setTempValue(Math.max(0, tempValue - 1));
+  };
+
   return (
     <FramerPageTransition screenKey="preparation-time-picker">
       <div
@@ -53,16 +70,13 @@ const PreparationTimePickerScreen = ({
         <BackButton onClick={() => onNavigateToScreen('breath')} />
 
         <div className="max-w-md w-full flex flex-col items-center justify-center min-h-[calc(100vh-4rem)] py-8">
-          {/* Header */}
-          <div className="flex items-center justify-between mb-8 w-full">
-            <h2 className="text-2xl font-light" style={{ color: displayTextColor }}>
+          {/* Středový blok: nadpis + wheel (vertikálně doprostřed) */}
+          <div className="flex flex-col items-center justify-center flex-1 w-full">
+            <h2 className="text-2xl font-light mb-6 text-center" style={{ color: displayTextColor }}>
               {t('priprava') || 'příprava'}
             </h2>
-          </div>
 
-          {/* Picker - velký, na středu */}
-          <div className="flex flex-col items-center justify-center mb-8 flex-1 w-full min-h-[calc(100vh-280px)]">
-            <div className="transform scale-[1.6] origin-center">
+            <div className="flex flex-col items-center">
               <Suspense fallback={
                 <div className="flex items-center justify-center w-32 h-32">
                   <div className="animate-spin rounded-full h-8 w-8 border-b-2" style={{ borderColor: textColor }}></div>
@@ -75,9 +89,40 @@ const PreparationTimePickerScreen = ({
                   max={60}
                   step={1}
                   label={t('sekund')}
+                  itemHeight={70}
+                  visibleItems={5}
+                  pickerWidth={110}
                   className="w-48"
                 />
               </Suspense>
+
+              {/* +/- tlačítka pod wheelpickerem vedle sebe */}
+              <div className="flex items-center gap-4 mt-5">
+                <button
+                  onClick={handleDecrement}
+                  disabled={tempValue <= 0}
+                  className="flex items-center justify-center w-14 h-12 rounded-full transition-all disabled:opacity-40 disabled:cursor-not-allowed"
+                  style={{
+                    backgroundColor: cardColor,
+                    border: `2px solid ${borderColor}`,
+                    color: displayTextColor
+                  }}
+                >
+                  <Minus size={20} />
+                </button>
+                <button
+                  onClick={handleIncrement}
+                  disabled={tempValue >= 60}
+                  className="flex items-center justify-center w-14 h-12 rounded-full transition-all disabled:opacity-40 disabled:cursor-not-allowed"
+                  style={{
+                    backgroundColor: cardColor,
+                    border: `2px solid ${borderColor}`,
+                    color: displayTextColor
+                  }}
+                >
+                  <Plus size={20} />
+                </button>
+              </div>
             </div>
           </div>
 
