@@ -21,9 +21,9 @@ export const THEMES = [
     },
     allowsCustomBackground: true, // Všechna témata nyní podporují vlastní pozadí (fotka nebo barva)
     fontFamily: "'Petrona', serif",
-    useRoundedStyle: true, // Zaoblené rohy na 35%
+    useRoundedStyle: true, // Zaoblené rohy
     roundedRadiusPx: 10, // Mírně zaoblené rohy pro obecné prvky
-    roundedSquareRadius: '35%' // 35% zaoblení pro čtvercové prvky
+    roundedSquareRadius: '50%' // Kruh pro čtvercové prvky
   },
   {
     id: 'calma',
@@ -48,7 +48,8 @@ export const THEMES = [
     },
     allowsCustomBackground: true, // Tento styl umožňuje vlastní pozadí
     fontFamily: "'Inter', sans-serif",
-    useRoundedStyle: false // Pro barevná témata bez kulatého stylu
+    useRoundedStyle: false, // Pro barevná témata bez kulatého stylu
+    roundedSquareRadius: '25%' // Zaoblený čtverec pro Calma
   },
   {
     id: 'dreamy-lavender',
@@ -73,11 +74,11 @@ export const THEMES = [
     },
     allowsCustomBackground: true,
     fontFamily: "'Montserrat', sans-serif",
-    // Stejný "rounded" styl jako Jemné pastely, ale s polovičním zakulacením
+    // Stejný "rounded" styl jako Jemné pastely
     useRoundedStyle: true,
     roundedRadiusPx: 6,
-    // Jemné pastely dělají čtvercové prvky úplně kulaté (50%); tady chceme polovinu.
-    roundedSquareRadius: '25%'
+    // Kruh pro čtvercové prvky
+    roundedSquareRadius: '50%'
   },
   {
     id: 'soft-pastels',
@@ -104,7 +105,7 @@ export const THEMES = [
     fontFamily: "'Quicksand', sans-serif",
     useRoundedStyle: true, // Pro barevná témata s kulatým stylem (Quicksand je kulatý font)
     roundedRadiusPx: 12,
-    // Jemné pastely: čtvercové prvky jsou úplně kulaté
+    // Kruh pro čtvercové prvky
     roundedSquareRadius: '50%'
   }
 

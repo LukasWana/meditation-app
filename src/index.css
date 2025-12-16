@@ -274,6 +274,18 @@ html:not([data-rounded-style="true"]) [class*="rounded"]:not([class*="rounded-fu
   border-radius: 0 !important;
 }
 
+/* Čtvercové objekty pro non-rounded témata (např. Calma) - zaoblený čtverec */
+html:not([data-rounded-style="true"]) .aspect-square:not(.play-pause-button):not([class*="play-pause-button"]),
+html:not([data-rounded-style="true"]) [class*="w-20"][class*="h-20"]:not(.play-pause-button):not([class*="play-pause-button"]),
+html:not([data-rounded-style="true"]) [class*="w-16"][class*="h-16"]:not(.play-pause-button):not([class*="play-pause-button"]),
+html:not([data-rounded-style="true"]) [class*="w-12"][class*="h-12"]:not(.play-pause-button):not([class*="play-pause-button"]),
+html:not([data-rounded-style="true"]) [class*="w-10"][class*="h-10"]:not(.play-pause-button):not([class*="play-pause-button"]),
+html:not([data-rounded-style="true"]) [class*="w-8"][class*="h-8"]:not(.play-pause-button):not([class*="play-pause-button"]),
+html:not([data-rounded-style="true"]) [class*="w-6"][class*="h-6"]:not(.play-pause-button):not([class*="play-pause-button"]),
+html:not([data-rounded-style="true"]) [class*="w-4"][class*="h-4"]:not(.play-pause-button):not([class*="play-pause-button"]) {
+  border-radius: var(--theme-rounded-square-radius, 25%) !important;
+}
+
 /* Z-index utilities - použijte konstanty z constants/zIndex.js */
 .z-10000 {
   z-index: 10000;
