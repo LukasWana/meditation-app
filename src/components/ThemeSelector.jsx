@@ -5,7 +5,7 @@ import { useLanguage } from '@contexts/LanguageContext';
 import { getThemeName } from '@data/themes';
 // Omezení odstraněna - obrázky se nahrávají bez validace a zpracování
 import FramerSection from '@components/FramerSection';
-import { ImageIcon, X } from 'lucide-react';
+import { ImageIcon, X, Palette } from 'lucide-react';
 import { ref, listAll, getDownloadURL, getMetadata } from 'firebase/storage';
 import { storage } from '@config/secure-firebase';
 import log from '@services/logger';
@@ -22,6 +22,63 @@ const ThemeSelector = () => {
   const [firebaseBackgrounds, setFirebaseBackgrounds] = useState([]);
   const [firebaseBackgroundsLoading, setFirebaseBackgroundsLoading] = useState(false);
   const [firebaseBackgroundsError, setFirebaseBackgroundsError] = useState(null);
+  const [backgroundType, setBackgroundType] = useState('image'); // 'image' nebo 'color'
+
+  // Předdefinované barvy pro výběr
+  const predefinedColors = [
+    { name: 'Bílá', value: 'rgba(255, 255, 255, 1)' },
+    { name: 'Černá', value: 'rgba(0, 0, 0, 1)' },
+    { name: 'Šedá', value: 'rgba(128, 128, 128, 1)' },
+    { name: 'Světle šedá', value: 'rgba(200, 200, 200, 1)' },
+    { name: 'Tmavě šedá', value: 'rgba(64, 64, 64, 1)' },
+    { name: 'Béžová', value: 'rgba(244, 221, 196, 1)' },
+    { name: 'Světle béžová', value: 'rgba(250, 235, 215, 1)' },
+    { name: 'Tmavě béžová', value: 'rgba(210, 180, 140, 1)' },
+    { name: 'Modrá', value: 'rgba(59, 130, 246, 1)' },
+    { name: 'Světle modrá', value: 'rgba(147, 197, 253, 1)' },
+    { name: 'Tmavě modrá', value: 'rgba(30, 64, 175, 1)' },
+    { name: 'Fialová', value: 'rgba(168, 85, 247, 1)' },
+    { name: 'Světle fialová', value: 'rgba(196, 181, 253, 1)' },
+    { name: 'Tmavě fialová', value: 'rgba(126, 34, 206, 1)' },
+    { name: 'Růžová', value: 'rgba(236, 72, 153, 1)' },
+    { name: 'Světle růžová', value: 'rgba(251, 182, 206, 1)' },
+    { name: 'Tmavě růžová', value: 'rgba(190, 24, 93, 1)' },
+    { name: 'Zelená', value: 'rgba(34, 197, 94, 1)' },
+    { name: 'Světle zelená', value: 'rgba(134, 239, 172, 1)' },
+    { name: 'Tmavě zelená', value: 'rgba(22, 101, 52, 1)' },
+    { name: 'Oranžová', value: 'rgba(249, 115, 22, 1)' },
+    { name: 'Světle oranžová', value: 'rgba(254, 215, 170, 1)' },
+    { name: 'Tmavě oranžová', value: 'rgba(194, 65, 12, 1)' },
+    { name: 'Červená', value: 'rgba(239, 68, 68, 1)' },
+    { name: 'Světle červená', value: 'rgba(254, 202, 202, 1)' },
+    { name: 'Tmavě červená', value: 'rgba(185, 28, 28, 1)' },
+    { name: 'Žlutá', value: 'rgba(234, 179, 8, 1)' },
+    { name: 'Světle žlutá', value: 'rgba(254, 240, 138, 1)' },
+    { name: 'Tmavě žlutá', value: 'rgba(161, 98, 7, 1)' },
+    { name: 'Hnědá', value: 'rgba(120, 53, 15, 1)' },
+    { name: 'Světle hnědá', value: 'rgba(180, 83, 9, 1)' },
+    { name: 'Tmavě hnědá', value: 'rgba(69, 26, 3, 1)' }
+  ];
+
+  // Detekovat typ pozadí při změně customBackground
+  useEffect(() => {
+    if (!customBackground) {
+      setBackgroundType('image');
+      return;
+    }
+
+    try {
+      const parsed = JSON.parse(customBackground);
+      if (parsed?.backgroundColor) {
+        setBackgroundType('color');
+      } else if (parsed?.url || parsed?.downloadURL) {
+        setBackgroundType('image');
+      }
+    } catch (e) {
+      // Starý formát - URL string, je to obrázek
+      setBackgroundType('image');
+    }
+  }, [customBackground]);
 
   // Funkce pro načtení náhledu pro pozadí s cachováním
   const loadThumbnailForBackground = useCallback(async (imageName) => {
@@ -227,6 +284,7 @@ const ThemeSelector = () => {
 
       // Nastavení jako pozadí (uložit jako JSON string)
       setCustomBackground(JSON.stringify(backgroundData));
+      setBackgroundType('image');
     } catch (err) {
       setError(err.message || 'Chyba při zpracování obrázku');
       console.error('Error processing image:', err);
@@ -240,6 +298,39 @@ const ThemeSelector = () => {
   const handleRemoveBackground = () => {
     removeCustomBackground();
     setError(null);
+    setBackgroundType('image');
+  };
+
+  const handleColorSelect = (colorValue) => {
+    setError(null);
+    setIsProcessing(true);
+
+    try {
+      const backgroundData = {
+        backgroundColor: colorValue,
+        useRoundedStyle: currentTheme?.useRoundedStyle ?? false,
+        fontFamily: currentTheme?.fontFamily || "'Petrona', serif"
+      };
+
+      setCustomBackground(JSON.stringify(backgroundData));
+      setBackgroundType('color');
+    } catch (err) {
+      setError(err.message || 'Chyba při nastavení barvy');
+      console.error('Error setting color:', err);
+    } finally {
+      setIsProcessing(false);
+    }
+  };
+
+  const handleCustomColorSelect = (event) => {
+    const colorValue = event.target.value;
+    // Převést hex na rgba
+    const hex = colorValue.replace('#', '');
+    const r = parseInt(hex.substring(0, 2), 16);
+    const g = parseInt(hex.substring(2, 4), 16);
+    const b = parseInt(hex.substring(4, 6), 16);
+    const rgbaColor = `rgba(${r}, ${g}, ${b}, 1)`;
+    handleColorSelect(rgbaColor);
   };
 
   const handleDefaultImageSelect = async (imageUrl) => {
@@ -281,6 +372,7 @@ const ThemeSelector = () => {
 
       // Nastavení jako pozadí (uložit jako JSON string)
       setCustomBackground(JSON.stringify(backgroundData));
+      setBackgroundType('image');
     } catch (err) {
       setError(err.message || 'Chyba při zpracování obrázku');
       console.error('Error processing default image:', err);
@@ -399,21 +491,65 @@ const ThemeSelector = () => {
               {t('vlastniPozadi')}
             </h4>
 
+            {/* Přepínač mezi fotkou a barvou */}
+            <div className="flex gap-2 mb-4">
+              <motion.button
+                onClick={() => setBackgroundType('image')}
+                className={`flex-1 px-4 py-2 rounded-lg text-sm font-medium transition-colors flex items-center justify-center gap-2 border-2`}
+                style={{
+                  backgroundColor: backgroundType === 'image' ? activeBgColor : 'transparent',
+                  borderColor: backgroundType === 'image' ? activeBorderColor : borderColor,
+                  color: backgroundType === 'image' ? textColor : textSecondaryColor
+                }}
+                whileHover={{ opacity: 0.8 }}
+                whileTap={{ scale: 0.98 }}
+              >
+                <ImageIcon className="w-4 h-4" />
+                {t('fotka') || 'Fotka'}
+              </motion.button>
+              <motion.button
+                onClick={() => setBackgroundType('color')}
+                className={`flex-1 px-4 py-2 rounded-lg text-sm font-medium transition-colors flex items-center justify-center gap-2 border-2`}
+                style={{
+                  backgroundColor: backgroundType === 'color' ? activeBgColor : 'transparent',
+                  borderColor: backgroundType === 'color' ? activeBorderColor : borderColor,
+                  color: backgroundType === 'color' ? textColor : textSecondaryColor
+                }}
+                whileHover={{ opacity: 0.8 }}
+                whileTap={{ scale: 0.98 }}
+              >
+                <Palette className="w-4 h-4" />
+                {t('barva') || 'Barva'}
+              </motion.button>
+            </div>
+
             {customBackground ? (
               <div className="relative">
-                <div
-                  className="relative w-full h-32 rounded-lg overflow-hidden border"
-                  style={{ borderColor: borderColor }}
-                >
-                  <img
-                    src={typeof customBackground === 'string' && customBackground.startsWith('{')
-                      ? JSON.parse(customBackground).url
-                      : customBackground}
-                    alt="Custom background"
-                    className="w-full h-full object-cover"
+                {backgroundType === 'image' ? (
+                  <div
+                    className="relative w-full h-32 rounded-lg overflow-hidden border"
+                    style={{ borderColor: borderColor }}
+                  >
+                    <img
+                      src={typeof customBackground === 'string' && customBackground.startsWith('{')
+                        ? JSON.parse(customBackground).url
+                        : customBackground}
+                      alt="Custom background"
+                      className="w-full h-full object-cover"
+                    />
+                    <div className="absolute inset-0 bg-black/20" />
+                  </div>
+                ) : (
+                  <div
+                    className="relative w-full h-32 rounded-lg overflow-hidden border"
+                    style={{
+                      borderColor: borderColor,
+                      backgroundColor: typeof customBackground === 'string' && customBackground.startsWith('{')
+                        ? JSON.parse(customBackground).backgroundColor
+                        : customBackground
+                    }}
                   />
-                  <div className="absolute inset-0 bg-black/20" />
-                </div>
+                )}
                 <motion.button
                   onClick={handleRemoveBackground}
                   className="mt-3 px-4 py-2 rounded-lg text-sm font-medium transition-colors flex items-center gap-2"
@@ -427,6 +563,49 @@ const ThemeSelector = () => {
                   <X className="w-4 h-4" />
                   {t('odstranitPozadi')}
                 </motion.button>
+              </div>
+            ) : backgroundType === 'color' ? (
+              <div>
+                {/* Předdefinované barvy */}
+                <div className="grid grid-cols-4 gap-2 mb-4">
+                  {predefinedColors.map((color, index) => (
+                    <motion.button
+                      key={index}
+                      onClick={() => handleColorSelect(color.value)}
+                      className="relative w-full aspect-square rounded-lg overflow-hidden border-2"
+                      style={{
+                        borderColor: borderColor,
+                        backgroundColor: color.value
+                      }}
+                      whileHover={{ scale: 1.05 }}
+                      whileTap={{ scale: 0.95 }}
+                      disabled={isProcessing}
+                      title={color.name}
+                    />
+                  ))}
+                </div>
+
+                {/* Vlastní barva - color picker */}
+                <div className="mt-4">
+                  <label
+                    className="block text-sm mb-2"
+                    style={{ color: textColor }}
+                  >
+                    {t('vlastniBarva') || 'Vlastní barva:'}
+                  </label>
+                  <div className="flex items-center gap-3">
+                    <input
+                      type="color"
+                      onChange={handleCustomColorSelect}
+                      className="w-16 h-16 rounded-lg border-2 cursor-pointer"
+                      style={{ borderColor: borderColor }}
+                      disabled={isProcessing}
+                    />
+                    <span className="text-xs" style={{ color: textSecondaryColor }}>
+                      {t('klikniProVyber') || 'Klikni pro výběr barvy'}
+                    </span>
+                  </div>
+                </div>
               </div>
             ) : (
               <div>
