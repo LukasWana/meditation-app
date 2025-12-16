@@ -84,6 +84,41 @@ export const ThemeProvider = ({ children }) => {
   // Základní téma (statické) - memoizovat, aby se neměnilo při každém renderu
   const baseTheme = useMemo(() => getThemeById(themeId), [themeId]);
 
+  // Migrace: starší uložené custom background mohlo obsahovat useRoundedStyle=false pro témata,
+  // která jsou nyní "rounded" (např. Jemné pastely / Snová levandule). To pak udržuje UI hranaté.
+  // Pokud základní téma vyžaduje rounded styl, vynutíme useRoundedStyle=true v uložených datech.
+  useEffect(() => {
+    if (!baseTheme?.allowsCustomBackground) return;
+    if (!baseTheme?.useRoundedStyle) return;
+    if (!customBackground) return;
+
+    let parsed = null;
+    try {
+      parsed = JSON.parse(customBackground);
+    } catch (_e) {
+      // Starý formát (URL string) – není co migrovat.
+      return;
+    }
+
+    if (!parsed || typeof parsed !== 'object') return;
+
+    // Migruj pouze pokud je explicitně false (legacy stav) – true nebo null necháváme.
+    if (parsed.useRoundedStyle === false) {
+      const migrated = { ...parsed, useRoundedStyle: true };
+      const next = JSON.stringify(migrated);
+      // Zamezit zbytečným smyčkám – nastav jen pokud se string změnil.
+      if (next !== customBackground) {
+        setCustomBackground(next);
+        try {
+          const key = getBackgroundStorageKey(themeId);
+          localStorage.setItem(key, next);
+        } catch (_err) {
+          // ignore – bez localStorage se jen nesynchronizuje persistence
+        }
+      }
+    }
+  }, [baseTheme, customBackground, themeId]);
+
   // Přednačti aktuální pozadí do Cache Storage hned po startu / změně pozadí,
   // aby se při zobrazení už nemuselo čekat na síť.
   useEffect(() => {
@@ -97,6 +132,9 @@ export const ThemeProvider = ({ children }) => {
             return { url: customBackground };
           }
         })();
+
+        // Pokud je to barva, není co přednačítat
+        if (data?.backgroundColor) return null;
 
         if (data?.url) return data.url;
         if (data?.downloadURL) return data.downloadURL;
@@ -134,6 +172,10 @@ export const ThemeProvider = ({ children }) => {
   // Získat URL obrázku z customBackground nebo použít defaultní
   const getBackgroundImageUrl = () => {
     const data = getBackgroundData();
+    if (!data) return null;
+
+    // Pokud máme backgroundColor, není to obrázek
+    if (data.backgroundColor) return null;
 
     // Pokud máme URL přímo (base64 nebo downloadURL), použít ho
     if (data?.url) {
@@ -152,6 +194,12 @@ export const ThemeProvider = ({ children }) => {
     }
 
     return null;
+  };
+
+  // Získat barvu pozadí z customBackground
+  const getBackgroundColor = () => {
+    const data = getBackgroundData();
+    return data?.backgroundColor || null;
   };
 
   // Získat extrahované barvy z customBackground
@@ -204,12 +252,19 @@ export const ThemeProvider = ({ children }) => {
   // Získat aktuální barvy tématu (buď z fotky, nebo defaultní)
   const getCurrentThemeColors = () => {
     const backgroundUrl = getBackgroundImageUrl();
+    const customBackgroundColor = getBackgroundColor();
     const hasImage = !!backgroundUrl && baseTheme?.allowsCustomBackground;
     const extractedColors = getExtractedColors();
     let colors = {};
 
-    // Pokud máme fotku s extrahovanými barvami, použít je
-    if (hasImage && extractedColors) {
+    // Pokud máme custom barvu pozadí, použít ji jako background
+    if (customBackgroundColor) {
+      colors = {
+        ...baseTheme?.colors,
+        background: customBackgroundColor
+      };
+    } else if (hasImage && extractedColors) {
+      // Pokud máme fotku s extrahovanými barvami, použít je
       console.log('🎨 Používám extrahované barvy z obrázku:', extractedColors);
       // Sloučit extrahované barvy s defaultními (extrahované mají prioritu)
       colors = {
@@ -284,9 +339,19 @@ export const ThemeProvider = ({ children }) => {
   // Získat styl pro pozadí
   const getBackgroundStyle = () => {
     const backgroundUrl = getBackgroundImageUrl();
-    // Použít obrázek pokud existuje (buď custom nebo defaultní) a téma ho podporuje
-    const hasImage = !!backgroundUrl && baseTheme?.allowsCustomBackground;
+    const customBackgroundColor = getBackgroundColor();
     const themeColors = getCurrentThemeColors();
+
+    // Pokud máme custom barvu pozadí, použít ji
+    if (customBackgroundColor) {
+      return {
+        backgroundColor: customBackgroundColor,
+        transition: 'background-color 0.3s ease, background-image 0.3s ease'
+      };
+    }
+
+    // Pokud máme obrázek, použít ho
+    const hasImage = !!backgroundUrl && baseTheme?.allowsCustomBackground;
 
     // Barva pozadí pro body/root - použít barvy z fotky pokud jsou, jinak defaultní
     let backgroundColor = themeColors?.background || currentTheme?.colors?.background || '#f4ddc4';
@@ -340,9 +405,15 @@ export const ThemeProvider = ({ children }) => {
   // Získat backgroundColor pro obrazovky - transparent když je obrázek
   // Vrací rgba(0,0,0,0) místo 'transparent' pro kompatibilitu s Framer Motion animacemi
   const getScreenBackgroundColor = () => {
+    const customBackgroundColor = getBackgroundColor();
     const backgroundUrl = getBackgroundImageUrl();
     const hasImage = !!backgroundUrl && baseTheme?.allowsCustomBackground;
     const themeColors = getCurrentThemeColors();
+
+    // Pokud máme custom barvu, použít ji
+    if (customBackgroundColor) {
+      return customBackgroundColor;
+    }
 
     // Pokud je obrázek, vrátit rgba(0,0,0,0) místo 'transparent' pro animovatelnost
     if (hasImage) {
@@ -375,6 +446,11 @@ export const ThemeProvider = ({ children }) => {
       (currentTheme?.roundedRadiusPx ?? baseTheme?.roundedRadiusPx) ??
       (useRoundedStyle ? 12 : 0);
     root.style.setProperty('--theme-rounded-radius', `${roundedRadiusPx}px`);
+    // Radius pro čtvercové prvky v rounded stylu (umožňuje per-téma hodnotu)
+    const roundedSquareRadius =
+      (currentTheme?.roundedSquareRadius ?? baseTheme?.roundedSquareRadius) ??
+      (useRoundedStyle ? '50%' : '0%');
+    root.style.setProperty('--theme-rounded-square-radius', roundedSquareRadius);
 
     // Nastavit data atribut pro CSS selektor
     if (useRoundedStyle) {
@@ -704,6 +780,7 @@ export const ThemeProvider = ({ children }) => {
     getScreenBackgroundColor,
     getCurrentThemeColors,
     getBackgroundImageUrl,
+    getBackgroundColor,
     allowsCustomBackground: baseTheme?.allowsCustomBackground || false,
     colorMode,
     changeColorMode
