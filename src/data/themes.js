@@ -19,9 +19,11 @@ export const THEMES = [
       progressIndicator: 'rgba(50, 205, 50, 1)', // Barva ukazatele času kruhového přehrávače
       timeIndicator: 'rgba(0, 0, 0, 1)' // Barva textu času pod kruhovým přehrávačem
     },
-    allowsCustomBackground: false,
+    allowsCustomBackground: true, // Všechna témata nyní podporují vlastní pozadí (fotka nebo barva)
     fontFamily: "'Petrona', serif",
-    useRoundedStyle: false
+    useRoundedStyle: true, // Zaoblené rohy na 35%
+    roundedRadiusPx: 10, // Mírně zaoblené rohy pro obecné prvky
+    roundedSquareRadius: '35%' // 35% zaoblení pro čtvercové prvky
   },
   {
     id: 'calma',
@@ -73,7 +75,9 @@ export const THEMES = [
     fontFamily: "'Montserrat', sans-serif",
     // Stejný "rounded" styl jako Jemné pastely, ale s polovičním zakulacením
     useRoundedStyle: true,
-    roundedRadiusPx: 6
+    roundedRadiusPx: 6,
+    // Jemné pastely dělají čtvercové prvky úplně kulaté (50%); tady chceme polovinu.
+    roundedSquareRadius: '25%'
   },
   {
     id: 'soft-pastels',
@@ -99,7 +103,9 @@ export const THEMES = [
     allowsCustomBackground: true,
     fontFamily: "'Quicksand', sans-serif",
     useRoundedStyle: true, // Pro barevná témata s kulatým stylem (Quicksand je kulatý font)
-    roundedRadiusPx: 12
+    roundedRadiusPx: 12,
+    // Jemné pastely: čtvercové prvky jsou úplně kulaté
+    roundedSquareRadius: '50%'
   }
 
 ];
