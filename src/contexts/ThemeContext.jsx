@@ -446,10 +446,11 @@ export const ThemeProvider = ({ children }) => {
       (currentTheme?.roundedRadiusPx ?? baseTheme?.roundedRadiusPx) ??
       (useRoundedStyle ? 12 : 0);
     root.style.setProperty('--theme-rounded-radius', `${roundedRadiusPx}px`);
-    // Radius pro čtvercové prvky v rounded stylu (umožňuje per-téma hodnotu)
+    // Radius pro čtvercové prvky (umožňuje per-téma hodnotu)
+    // Pro rounded témata: kruh (50%), pro non-rounded (Calma): zaoblený čtverec (25%)
     const roundedSquareRadius =
       (currentTheme?.roundedSquareRadius ?? baseTheme?.roundedSquareRadius) ??
-      (useRoundedStyle ? '50%' : '0%');
+      (useRoundedStyle ? '50%' : '25%');
     root.style.setProperty('--theme-rounded-square-radius', roundedSquareRadius);
 
     // Nastavit data atribut pro CSS selektor
