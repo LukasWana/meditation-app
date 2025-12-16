@@ -88,102 +88,96 @@ const RhythmPickerScreen = ({
               {t('rytmus') || 'rytmus'}
             </h2>
 
-            <div
-              style={{
-                transform: 'scale(1.6)',
-                transformOrigin: 'center',
-                padding: '60px 40px',
-                margin: '-60px -40px'
-              }}
-            >
-              <Suspense fallback={
-                <div className="flex items-center justify-center w-full max-w-md h-64">
-                  <div className="animate-spin rounded-full h-8 w-8 border-b-2" style={{ borderColor: textColor }}></div>
-                </div>
-              }>
-                <div className="flex items-center gap-4">
-                  {/* Nádech picker s +/- tlačítky */}
-                  <div className="flex flex-col items-center">
-                    <WheelPicker
-                      value={tempLeftValue}
-                      onChange={setTempLeftValue}
-                      min={1}
-                      max={20}
-                      step={1}
-                      label={t('nadech') || 'nádech'}
-                    />
-                    {/* +/- pod wheelem */}
-                    <div className="flex items-center gap-3 mt-3">
-                      <button
-                        onClick={handleLeftDecrement}
-                        disabled={tempLeftValue <= 1}
-                        className="flex items-center justify-center w-10 h-9 rounded-full transition-all disabled:opacity-40 disabled:cursor-not-allowed"
-                        style={{
-                          backgroundColor: cardColor,
-                          border: `2px solid ${borderColor}`,
-                          color: displayTextColor
-                        }}
-                      >
-                        <Minus size={16} />
-                      </button>
-                      <button
-                        onClick={handleLeftIncrement}
-                        disabled={tempLeftValue >= 20}
-                        className="flex items-center justify-center w-10 h-9 rounded-full transition-all disabled:opacity-40 disabled:cursor-not-allowed"
-                        style={{
-                          backgroundColor: cardColor,
-                          border: `2px solid ${borderColor}`,
-                          color: displayTextColor
-                        }}
-                      >
-                        <Plus size={16} />
-                      </button>
-                    </div>
-                  </div>
-
-                  <div className="text-3xl font-light pt-8" style={{ color: displayTextColor }}>:</div>
-
-                  {/* Výdech picker s +/- tlačítky */}
-                  <div className="flex flex-col items-center">
-                    <WheelPicker
-                      value={tempRightValue}
-                      onChange={setTempRightValue}
-                      min={1}
-                      max={20}
-                      step={1}
-                      label={t('vydech') || 'výdech'}
-                    />
-                    {/* +/- pod wheelem */}
-                    <div className="flex items-center gap-3 mt-3">
-                      <button
-                        onClick={handleRightDecrement}
-                        disabled={tempRightValue <= 1}
-                        className="flex items-center justify-center w-10 h-9 rounded-full transition-all disabled:opacity-40 disabled:cursor-not-allowed"
-                        style={{
-                          backgroundColor: cardColor,
-                          border: `2px solid ${borderColor}`,
-                          color: displayTextColor
-                        }}
-                      >
-                        <Minus size={16} />
-                      </button>
-                      <button
-                        onClick={handleRightIncrement}
-                        disabled={tempRightValue >= 20}
-                        className="flex items-center justify-center w-10 h-9 rounded-full transition-all disabled:opacity-40 disabled:cursor-not-allowed"
-                        style={{
-                          backgroundColor: cardColor,
-                          border: `2px solid ${borderColor}`,
-                          color: displayTextColor
-                        }}
-                      >
-                        <Plus size={16} />
-                      </button>
-                    </div>
+            <Suspense fallback={
+              <div className="flex items-center justify-center w-full max-w-md h-64">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2" style={{ borderColor: textColor }}></div>
+              </div>
+            }>
+              {/* Bez scale: nativně větší wheel, responzivní mezery (mobile safe) */}
+              <div className="flex items-start justify-center gap-6 sm:gap-10 w-full">
+                {/* Nádech */}
+                <div className="flex flex-col items-center">
+                  <WheelPicker
+                    value={tempLeftValue}
+                    onChange={setTempLeftValue}
+                    min={1}
+                    max={20}
+                    step={1}
+                    label={t('nadech') || 'nádech'}
+                    itemHeight={70}
+                    visibleItems={5}
+                    pickerWidth={110}
+                  />
+                  <div className="flex items-center gap-4 mt-5">
+                    <button
+                      onClick={handleLeftDecrement}
+                      disabled={tempLeftValue <= 1}
+                      className="flex items-center justify-center w-14 h-12 rounded-full transition-all disabled:opacity-40 disabled:cursor-not-allowed"
+                      style={{
+                        backgroundColor: cardColor,
+                        border: `2px solid ${borderColor}`,
+                        color: displayTextColor
+                      }}
+                    >
+                      <Minus size={18} />
+                    </button>
+                    <button
+                      onClick={handleLeftIncrement}
+                      disabled={tempLeftValue >= 20}
+                      className="flex items-center justify-center w-14 h-12 rounded-full transition-all disabled:opacity-40 disabled:cursor-not-allowed"
+                      style={{
+                        backgroundColor: cardColor,
+                        border: `2px solid ${borderColor}`,
+                        color: displayTextColor
+                      }}
+                    >
+                      <Plus size={18} />
+                    </button>
                   </div>
                 </div>
-              </Suspense>
-            </div>
+
+                {/* Výdech */}
+                <div className="flex flex-col items-center">
+                  <WheelPicker
+                    value={tempRightValue}
+                    onChange={setTempRightValue}
+                    min={1}
+                    max={20}
+                    step={1}
+                    label={t('vydech') || 'výdech'}
+                    itemHeight={70}
+                    visibleItems={5}
+                    pickerWidth={110}
+                  />
+                  <div className="flex items-center gap-4 mt-5">
+                    <button
+                      onClick={handleRightDecrement}
+                      disabled={tempRightValue <= 1}
+                      className="flex items-center justify-center w-14 h-12 rounded-full transition-all disabled:opacity-40 disabled:cursor-not-allowed"
+                      style={{
+                        backgroundColor: cardColor,
+                        border: `2px solid ${borderColor}`,
+                        color: displayTextColor
+                      }}
+                    >
+                      <Minus size={18} />
+                    </button>
+                    <button
+                      onClick={handleRightIncrement}
+                      disabled={tempRightValue >= 20}
+                      className="flex items-center justify-center w-14 h-12 rounded-full transition-all disabled:opacity-40 disabled:cursor-not-allowed"
+                      style={{
+                        backgroundColor: cardColor,
+                        border: `2px solid ${borderColor}`,
+                        color: displayTextColor
+                      }}
+                    >
+                      <Plus size={18} />
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </Suspense>
           </div>
 
           {/* Footer - tlačítka */}
