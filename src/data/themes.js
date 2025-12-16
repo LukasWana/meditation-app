@@ -71,7 +71,9 @@ export const THEMES = [
     },
     allowsCustomBackground: true,
     fontFamily: "'Montserrat', sans-serif",
-    useRoundedStyle: false
+    // Stejný "rounded" styl jako Jemné pastely, ale s polovičním zakulacením
+    useRoundedStyle: true,
+    roundedRadiusPx: 6
   },
   {
     id: 'soft-pastels',
@@ -96,7 +98,8 @@ export const THEMES = [
     },
     allowsCustomBackground: true,
     fontFamily: "'Quicksand', sans-serif",
-    useRoundedStyle: true // Pro barevná témata s kulatým stylem (Quicksand je kulatý font)
+    useRoundedStyle: true, // Pro barevná témata s kulatým stylem (Quicksand je kulatý font)
+    roundedRadiusPx: 12
   }
 
 ];

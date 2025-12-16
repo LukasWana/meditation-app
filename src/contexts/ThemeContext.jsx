@@ -370,6 +370,11 @@ export const ThemeProvider = ({ children }) => {
     // Nastavit jako CSS custom property pro použití v CSS
     root.style.setProperty('--theme-font-family', fontFamily);
     root.style.setProperty('--theme-use-rounded-style', useRoundedStyle ? '1' : '0');
+    // Radius pro rounded styl (umožňuje per-téma hodnotu)
+    const roundedRadiusPx =
+      (currentTheme?.roundedRadiusPx ?? baseTheme?.roundedRadiusPx) ??
+      (useRoundedStyle ? 12 : 0);
+    root.style.setProperty('--theme-rounded-radius', `${roundedRadiusPx}px`);
 
     // Nastavit data atribut pro CSS selektor
     if (useRoundedStyle) {

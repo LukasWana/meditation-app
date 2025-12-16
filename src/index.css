@@ -270,7 +270,7 @@ body, html, #root, main, div, section, article {
 [data-rounded-style="true"] [class*="bg-gray"]:not(.play-pause-button [class*="bg-gray"]),
 [data-rounded-style="true"] [class*="bg-white/"]:not(.play-pause-button [class*="bg-white/"]),
 [data-rounded-style="true"] [class*="bg-black/"]:not(.play-pause-button [class*="bg-black/"]) {
-  border-radius: 12px !important; /* Kulaté rohy pro všechny objekty */
+  border-radius: var(--theme-rounded-radius, 12px) !important; /* Kulaté rohy pro všechny objekty (per-téma) */
 }
 
 /* Čtvercové objekty (aspect-square nebo stejná šířka a výška) udělat kulaté */
