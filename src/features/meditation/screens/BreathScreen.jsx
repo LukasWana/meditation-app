@@ -3,8 +3,8 @@ import { AnimatePresence } from 'framer-motion';
 import { FramerPageTransition, BackButton } from '@components';
 import { useLanguage } from '@contexts/LanguageContext';
 import { useTheme } from '@contexts/ThemeContext';
-import { useBreathSounds } from '@hooks';
-import { useBreathPhase } from '@hooks/useBreathPhase';
+import { useBreathAudioEngine } from '@hooks/useBreathAudioEngine';
+import { useBreathPhaseNew } from '@hooks/useBreathPhaseNew';
 import { useCountdownSound } from '@hooks/useCountdownSound';
 import { useFinalSound } from '@hooks/useFinalSound';
 import { useBreathTimer } from '@hooks/useBreathTimer';
@@ -70,20 +70,26 @@ const BreathScreen = ({
   const currentIsPreparing = localIsPreparing;
   const currentPreparationCountdown = localPreparationCountdown;
 
-  // Použij hook pro přehrávání zvuků dýchání
-  useBreathSounds(
+  // Použij nový audio engine pro přesné přehrávání zvuků dýchání
+  const { getCurrentPhase } = useBreathAudioEngine(
     isBreathing,
-    breathPhase,
+    breathInDuration,
+    breathOutDuration,
     breathInSound || 'none',
     breathOutSound || 'none',
     breathClickSound || 'none',
     breathSoundFadeEnabled !== false,
-    breathInDuration,
-    breathOutDuration
+    setBreathPhase // onPhaseChange callback
   );
 
-  // Použij hook pro správu fází dýchání
-  useBreathPhase(isBreathing, breathTime, setBreathPhase, breathInDuration, breathOutDuration);
+  // Použij hook pro aktualizaci UI fáze (fallback, pokud audio engine nefunguje)
+  useBreathPhaseNew(
+    isBreathing,
+    setBreathPhase,
+    breathInDuration,
+    breathOutDuration,
+    getCurrentPhase
+  );
 
   // Použij hook pro countdown zvuk (vrací funkci pro přehrání)
   const playCountdownSound = useCountdownSound(breathCountdownSound, currentIsPreparing);
@@ -206,6 +212,20 @@ const BreathScreen = ({
 
   const { getScreenBackgroundColor } = useTheme();
 
+  // Handler pro tlačítko zpět - zastaví dýchání před navigací
+  const handleBackClick = () => {
+    // Zastav dýchání a přípravu
+    if (isBreathing) {
+      setIsBreathing(false);
+    }
+    if (currentIsPreparing) {
+      setLocalIsPreparing(false);
+      setLocalPreparationCountdown(0);
+    }
+    // Naviguj zpět
+    onNavigateToScreen('home');
+  };
+
   return (
     <FramerPageTransition screenKey="dychani">
       <div
@@ -215,7 +235,7 @@ const BreathScreen = ({
         onTouchMove={onTouchMove}
         onTouchEnd={onTouchEnd}
       >
-        <BackButton onClick={() => onNavigateToScreen('home')} />
+        <BackButton onClick={handleBackClick} />
 
         <div className="max-w-md w-full" style={{ marginTop: '4rem', paddingTop: 0, paddingBottom: '2rem', position: 'relative', display: 'flex', flexDirection: 'column', alignItems: 'stretch', minHeight: 'calc(100vh - 4rem - 5rem)' }}>
           <AnimatePresence>
