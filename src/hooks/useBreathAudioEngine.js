@@ -161,9 +161,10 @@ export const useBreathAudioEngine = (
   const stopAllSources = useCallback(() => {
     activeSourcesRef.current.forEach(source => {
       try {
+        // Zkus zastavit source - pokud už je zastavený, vyhodí chybu, kterou ignorujeme
         source.stop();
       } catch (e) {
-        // Source už může být zastavený
+        // Source už může být zastavený nebo v neplatném stavu - to je v pořádku
       }
     });
     activeSourcesRef.current = [];
@@ -209,14 +210,19 @@ export const useBreathAudioEngine = (
       }
     }
 
-    source.start(start);
-    source.stop(start + duration);
+    try {
+      source.start(start);
+      source.stop(start + duration);
 
-    source.onended = () => {
-      activeSourcesRef.current = activeSourcesRef.current.filter(s => s !== source);
-    };
+      source.onended = () => {
+        activeSourcesRef.current = activeSourcesRef.current.filter(s => s !== source);
+      };
 
-    activeSourcesRef.current.push(source);
+      activeSourcesRef.current.push(source);
+    } catch (error) {
+      console.warn('Failed to start audio source:', error);
+      // Source se nepřidá do activeSourcesRef, takže se automaticky vyčistí
+    }
   }, [breathSoundFadeEnabled]);
 
   // Plánování kliku
@@ -232,13 +238,19 @@ export const useBreathAudioEngine = (
 
     const now = audioContext.currentTime;
     const start = Math.max(now, time);
-    source.start(start);
 
-    source.onended = () => {
-      activeSourcesRef.current = activeSourcesRef.current.filter(s => s !== source);
-    };
+    try {
+      source.start(start);
 
-    activeSourcesRef.current.push(source);
+      source.onended = () => {
+        activeSourcesRef.current = activeSourcesRef.current.filter(s => s !== source);
+      };
+
+      activeSourcesRef.current.push(source);
+    } catch (error) {
+      console.warn('Failed to start click sound:', error);
+      // Source se nepřidá do activeSourcesRef, takže se automaticky vyčistí
+    }
   }, []);
 
   // Trackování naplánovaných hranic (aby se neplánovaly dvakrát)
@@ -271,8 +283,20 @@ export const useBreathAudioEngine = (
       return;
     }
 
-    // Plánuj zvuky pro aktuální a budoucí fáze v lookahead rozsahu
+    // Cleanup starých záznamů v scheduledBoundariesRef (starší než aktuální čas - 1 cyklus)
     const cycleDuration = breathInDuration + breathOutDuration;
+    const cleanupThreshold = elapsed - cycleDuration;
+    scheduledBoundariesRef.current.forEach(key => {
+      const match = key.match(/^(in|out)-(\d+\.\d+)$/);
+      if (match) {
+        const time = parseFloat(match[2]);
+        if (time < cleanupThreshold) {
+          scheduledBoundariesRef.current.delete(key);
+        }
+      }
+    });
+
+    // Plánuj zvuky pro aktuální a budoucí fáze v lookahead rozsahu
     const fadeOutDuration = 1.5;
     const fadeInDuration = breathSoundFadeEnabled ? 1.5 : 0;
 
@@ -294,15 +318,19 @@ export const useBreathAudioEngine = (
           const firstCycleFadeIn = cycle === 0 && inStart === 0 ? 3.0 : fadeInDuration;
 
           // Fade-out předchozího výdechu (pokud existuje)
-          if (cycle > 0 || inStart > 0) {
+          if (cycle > 0) {
             const prevOutGain = outGainRef.current;
             if (prevOutGain && breathSoundFadeEnabled) {
               const fadeOutStart = inAudioTime - fadeOutDuration;
               if (fadeOutStart >= now) {
-                prevOutGain.gain.cancelScheduledValues(fadeOutStart);
-                const currentGain = prevOutGain.gain.value;
-                prevOutGain.gain.setValueAtTime(currentGain, fadeOutStart);
-                prevOutGain.gain.linearRampToValueAtTime(0, inAudioTime);
+                try {
+                  prevOutGain.gain.cancelScheduledValues(fadeOutStart);
+                  const currentGain = prevOutGain.gain.value;
+                  prevOutGain.gain.setValueAtTime(currentGain, fadeOutStart);
+                  prevOutGain.gain.linearRampToValueAtTime(0, inAudioTime);
+                } catch (error) {
+                  console.warn('Failed to schedule fade-out for out sound:', error);
+                }
               }
             }
           }
@@ -339,10 +367,14 @@ export const useBreathAudioEngine = (
           if (prevInGain && breathSoundFadeEnabled) {
             const fadeOutStart = outAudioTime - fadeOutDuration;
             if (fadeOutStart >= now) {
-              prevInGain.gain.cancelScheduledValues(fadeOutStart);
-              const currentGain = prevInGain.gain.value;
-              prevInGain.gain.setValueAtTime(currentGain, fadeOutStart);
-              prevInGain.gain.linearRampToValueAtTime(0, outAudioTime);
+              try {
+                prevInGain.gain.cancelScheduledValues(fadeOutStart);
+                const currentGain = prevInGain.gain.value;
+                prevInGain.gain.setValueAtTime(currentGain, fadeOutStart);
+                prevInGain.gain.linearRampToValueAtTime(0, outAudioTime);
+              } catch (error) {
+                console.warn('Failed to schedule fade-out for in sound:', error);
+              }
             }
           }
 
@@ -402,6 +434,25 @@ export const useBreathAudioEngine = (
       isSuspendedRef.current = false;
       scheduledBoundariesRef.current.clear();
       lastPhaseUpdateRef.current = null;
+
+      // Odpoj gain nodes od audio contextu
+      try {
+        if (inGainRef.current) {
+          inGainRef.current.disconnect();
+        }
+        if (outGainRef.current) {
+          outGainRef.current.disconnect();
+        }
+        if (clickGainRef.current) {
+          clickGainRef.current.disconnect();
+        }
+        if (masterGainRef.current) {
+          masterGainRef.current.disconnect();
+        }
+      } catch (error) {
+        console.warn('Error disconnecting gain nodes:', error);
+      }
+
       return;
     }
 
@@ -421,12 +472,21 @@ export const useBreathAudioEngine = (
     // Nastav start time
     if (!startAtAudioTimeRef.current) {
       // Pokud jsme byli pozastaveni, resync
-      if (pausedElapsedRef.current > 0) {
+      if (pausedElapsedRef.current > 0 && pausedElapsedRef.current < 3600) { // Max 1 hodina
         startAtAudioTimeRef.current = audioContext.currentTime - pausedElapsedRef.current;
         pausedElapsedRef.current = 0;
       } else {
         startAtAudioTimeRef.current = audioContext.currentTime;
+        pausedElapsedRef.current = 0;
       }
+    }
+
+    // Validace: pokud startAtAudioTimeRef je v budoucnosti nebo příliš daleko v minulosti, resetuj
+    const timeDiff = audioContext.currentTime - startAtAudioTimeRef.current;
+    if (timeDiff < -1 || timeDiff > 3600) { // Max 1 hodina rozdíl
+      console.warn('Invalid start time detected, resetting:', timeDiff);
+      startAtAudioTimeRef.current = audioContext.currentTime;
+      pausedElapsedRef.current = 0;
     }
 
     isSuspendedRef.current = false;
@@ -524,6 +584,43 @@ export const useBreathAudioEngine = (
     const { phase } = phaseAtTime(elapsed, breathInDuration, breathOutDuration);
     return phase;
   }, [breathInDuration, breathOutDuration]);
+
+  // Cleanup při unmount
+  useEffect(() => {
+    return () => {
+      // Zastav všechny sources
+      stopAllSources();
+
+      // Vyčisti scheduler
+      if (schedulerIntervalRef.current) {
+        clearInterval(schedulerIntervalRef.current);
+        schedulerIntervalRef.current = null;
+      }
+
+      // Odpoj gain nodes
+      try {
+        if (inGainRef.current) {
+          inGainRef.current.disconnect();
+        }
+        if (outGainRef.current) {
+          outGainRef.current.disconnect();
+        }
+        if (clickGainRef.current) {
+          clickGainRef.current.disconnect();
+        }
+        if (masterGainRef.current) {
+          masterGainRef.current.disconnect();
+        }
+      } catch (error) {
+        // Ignoruj chyby při cleanup
+      }
+
+      // Vyčisti refs
+      scheduledBoundariesRef.current.clear();
+      scheduledUntilRef.current = 0;
+      startAtAudioTimeRef.current = null;
+    };
+  }, [stopAllSources]);
 
   return {
     isLoading,
