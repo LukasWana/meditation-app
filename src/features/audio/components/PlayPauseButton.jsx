@@ -98,7 +98,7 @@ const PlayPauseButton = ({
     >
       {/* Pozadí buttonu - stále stejné, nemění se při přepínání */}
       <div
-        className="absolute inset-0 rounded-full backdrop-blur-sm pointer-events-none"
+        className="absolute inset-0 backdrop-blur-sm pointer-events-none"
         style={{
           backgroundColor: buttonBackgroundColor,
           opacity: 1,
