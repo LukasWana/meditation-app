@@ -362,10 +362,18 @@ button.play-pause-button.rounded-full[class*="h-"],
 .play-pause-button.flex,
 button.play-pause-button.flex,
 .play-pause-button[class*="flex"],
-button[class*="play-pause-button"][class*="flex"] {
+button[class*="play-pause-button"][class*="flex"],
+/* Přepsat viewport jednotky (vw, vh) */
+.play-pause-button[class*="vw"],
+.play-pause-button[class*="vh"],
+button[class*="play-pause-button"][class*="vw"],
+button[class*="play-pause-button"][class*="vh"] {
   border-radius: 50% !important;
   overflow: visible !important;
   aspect-ratio: 1 / 1 !important;
+  /* Zajistit, aby width a height byly stejné */
+  height: var(--play-button-size, auto) !important;
+  width: var(--play-button-size, auto) !important;
 }
 
 /* Vyloučit play button z rounded style pravidel - explicitní pravidla pro všechny stavy */
