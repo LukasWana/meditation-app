@@ -367,13 +367,13 @@ button[class*="play-pause-button"][class*="flex"],
 .play-pause-button[class*="vw"],
 .play-pause-button[class*="vh"],
 button[class*="play-pause-button"][class*="vw"],
-button[class*="play-pause-button"][class*="vh"] {
+button[class*="play-pause-button"][class*="vh"],
+/* Přepsat Framer Motion styly */
+motion.button[class*="play-pause-button"],
+[data-framer-name][class*="play-pause-button"] {
   border-radius: 50% !important;
   overflow: visible !important;
   aspect-ratio: 1 / 1 !important;
-  /* Zajistit, aby width a height byly stejné */
-  height: var(--play-button-size, auto) !important;
-  width: var(--play-button-size, auto) !important;
 }
 
 /* Vyloučit play button z rounded style pravidel - explicitní pravidla pro všechny stavy */
