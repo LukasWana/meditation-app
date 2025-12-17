@@ -50,7 +50,13 @@ const Layout = ({
 
       {/* Top Right Controls - Hidden when player is active, show on all pages */}
       {!isPlayerActive && (
-        <div className="fixed top-6 right-6 z-50 flex items-center space-x-3">
+        <div className="fixed top-6 z-50 flex items-center space-x-3" style={{ 
+          right: 'max(1.5rem, calc((100vw - 650px) / 2 + 1.5rem))',
+          maxWidth: '650px',
+          width: '100%',
+          justifyContent: 'flex-end',
+          paddingRight: '1.5rem'
+        }}>
           {/* User Profile */}
           <UserProfile />
 
