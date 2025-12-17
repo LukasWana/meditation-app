@@ -289,7 +289,8 @@ export const ThemeProvider = ({ children }) => {
         textSecondary: 'rgba(180, 180, 180, 1)',
         background: 'rgba(10, 10, 10, 1)', // Vždy tmavá barva pozadí
         card: 'rgba(15, 15, 15, 0.95)', // Vždy tmavá barva karty
-        primary: colors.primary ? adjustColorForDarkMode(colors.primary) : 'rgba(30, 30, 30, 1)'
+        primary: colors.primary ? adjustColorForDarkMode(colors.primary) : 'rgba(30, 30, 30, 1)',
+        timeIndicator: 'rgba(255, 255, 255, 1)' // Bílá pro dark mode
       };
     } else if (colorMode === 'light') {
       // Vynutit světlý režim
@@ -300,7 +301,8 @@ export const ThemeProvider = ({ children }) => {
         textSecondary: 'rgba(100, 100, 100, 1)',
         background: 'rgba(255, 255, 255, 1)', // Vždy světlá barva pozadí
         card: 'rgba(255, 255, 255, 0.95)', // Vždy světlá barva karty
-        primary: colors.primary ? adjustColorForLightMode(colors.primary) : 'rgba(244, 221, 196, 1)'
+        primary: colors.primary ? adjustColorForLightMode(colors.primary) : 'rgba(244, 221, 196, 1)',
+        timeIndicator: 'rgba(0, 0, 0, 1)' // Černá pro light mode
       };
     }
     return colors;
