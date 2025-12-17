@@ -38,10 +38,35 @@ const PlayPauseButton = ({
   const buttonRef = useRef(null);
   useEffect(() => {
     if (buttonRef.current) {
+      // Nastavit border-radius s nejvyšší prioritou
       buttonRef.current.style.setProperty('border-radius', '50%', 'important');
       buttonRef.current.style.setProperty('aspect-ratio', '1 / 1', 'important');
+      
+      // Zajistit, aby width a height byly stejné (pro kruh)
+      const updateSize = () => {
+        if (buttonRef.current) {
+          const computedStyle = window.getComputedStyle(buttonRef.current);
+          const width = computedStyle.width;
+          if (width && width !== 'auto') {
+            buttonRef.current.style.setProperty('height', width, 'important');
+            buttonRef.current.style.setProperty('width', width, 'important');
+          }
+        }
+      };
+      
+      // Aktualizovat velikost okamžitě a po malém zpoždění (pro viewport jednotky)
+      updateSize();
+      const timeoutId = setTimeout(updateSize, 100);
+      
+      // Sledovat změny velikosti okna
+      window.addEventListener('resize', updateSize);
+      
+      return () => {
+        clearTimeout(timeoutId);
+        window.removeEventListener('resize', updateSize);
+      };
     }
-  }, []);
+  }, [className]); // Spustit i když se změní className
 
   const handleTouchEnd = (e) => {
     e.preventDefault();
@@ -64,7 +89,12 @@ const PlayPauseButton = ({
         overflow: 'visible',
         borderRadius: '50%',
         aspectRatio: '1 / 1',
-        isolation: 'isolate'
+        isolation: 'isolate',
+        // Zajistit, aby tlačítko bylo vždy kulaté - přepsat jakékoli jiné styly
+        minWidth: 'var(--button-size, auto)',
+        minHeight: 'var(--button-size, auto)',
+        maxWidth: 'var(--button-size, auto)',
+        maxHeight: 'var(--button-size, auto)'
       }}
       transition={{ type: "spring", stiffness: 300, damping: 20 }}
     >
@@ -94,7 +124,7 @@ const PlayPauseButton = ({
                 <div
                   ref={pauseBar1Ref}
                   className="w-3 h-10 pointer-events-none"
-                  style={{ 
+                  style={{
                     backgroundColor: iconColor,
                     borderRadius: 0
                   }}
@@ -102,7 +132,7 @@ const PlayPauseButton = ({
                 <div
                   ref={pauseBar2Ref}
                   className="w-3 h-10 pointer-events-none"
-                  style={{ 
+                  style={{
                     backgroundColor: iconColor,
                     borderRadius: 0
                   }}
@@ -117,9 +147,9 @@ const PlayPauseButton = ({
               animate={{ scale: 1 }}
               exit={{ scale: 0 }}
               className="w-0 h-0 border-y-[12px] border-y-transparent ml-3 pointer-events-none"
-              style={{ 
-                borderLeftColor: iconColor, 
-                borderLeftWidth: '16px', 
+              style={{
+                borderLeftColor: iconColor,
+                borderLeftWidth: '16px',
                 color: iconColor,
                 borderRadius: 0
               }}
