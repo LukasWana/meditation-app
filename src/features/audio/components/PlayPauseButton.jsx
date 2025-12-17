@@ -76,6 +76,12 @@ const PlayPauseButton = ({
       // Nastavit okamžitě
       ensureCircular();
 
+      // Použít requestAnimationFrame pro zajištění aktualizace po renderu
+      const rafId1 = requestAnimationFrame(ensureCircular);
+      const rafId2 = requestAnimationFrame(() => {
+        requestAnimationFrame(ensureCircular);
+      });
+
       // Aktualizovat po malém zpoždění (pro viewport jednotky a render)
       // Více timeoutů pro zajištění, že se to nastaví po všech render cyklech
       const timeoutId1 = setTimeout(ensureCircular, 0);
@@ -98,6 +104,8 @@ const PlayPauseButton = ({
       });
 
       return () => {
+        cancelAnimationFrame(rafId1);
+        cancelAnimationFrame(rafId2);
         clearTimeout(timeoutId1);
         clearTimeout(timeoutId2);
         clearTimeout(timeoutId3);
