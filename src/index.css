@@ -63,6 +63,29 @@ body {
   image-rendering: auto;
 }
 
+/* ============================================
+   Content Container - max-width pro obsah
+   ============================================ */
+
+/* Hlavní kontejner pro obsah aplikace - max 650px, pozadí zůstává na celou šířku */
+.app-content-container {
+  width: 100%;
+  max-width: 650px;
+  margin-left: auto;
+  margin-right: auto;
+  position: relative;
+  min-height: 100vh;
+}
+
+/* Všechny obrazovky a jejich přímé děti - respektovat max-width */
+.app-content-container > *,
+.app-content-container > * > * {
+  max-width: 100%;
+}
+
+/* Fixed elementy zůstávají na viewport pozicích (nejsou ovlivněny max-width) */
+/* Pozadí zůstává na celou šířku díky aplikaci na body/#root */
+
 /* Animované tlačidlá */
 .animated-button {
   position: relative;

@@ -532,12 +532,14 @@ function MeditationApp() {
                 <LazyIntroScreen onIntroComplete={handleIntroComplete} />
               )}
 
+<<<<<<< HEAD
               {/* Hlavní aplikace - zobrazí se s fade-in po intro */}
               {!showIntro && (
                 <motion.div
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
                   transition={{ duration: 0.6, ease: "easeInOut" }}
+                  className="app-content-container"
                 >
                   <PageManager
                     // Navigation
