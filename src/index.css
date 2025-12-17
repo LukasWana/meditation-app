@@ -83,7 +83,13 @@ body {
   max-width: 100%;
 }
 
-/* Fixed elementy zůstávají na viewport pozicích (nejsou ovlivněny max-width) */
+/* Fixed elementy - pozicování relativní k max-width kontejneru na větších obrazovkách */
+@media (min-width: 650px) {
+  .app-content-controls {
+    right: calc((100vw - 650px) / 2 + 1.5rem) !important;
+  }
+}
+
 /* Pozadí zůstává na celou šířku díky aplikaci na body/#root */
 
 /* Animované tlačidlá */
