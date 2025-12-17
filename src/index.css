@@ -335,7 +335,7 @@ html:not([data-rounded-style="true"]) [class*="w-4"][class*="h-4"]:not(.play-pau
 
 /* PlayPauseButton - VŽDY kulaté, bez ohledu na téma, styly nebo jakékoli jiné pravidlo */
 /* NEJVYŠŠÍ PRIORITA - musí být na konci souboru pro přepsání všech ostatních pravidel */
-/* Přepsat všechny možné kombinace tříd a selektorů */
+/* Přepsat všechny možné kombinace tříd a selektorů včetně Tailwind utility tříd */
 .play-pause-button,
 button.play-pause-button,
 motion.button.play-pause-button,
@@ -352,7 +352,17 @@ button[class*="play-pause-button"][class*="rounded-full"],
 .play-pause-button[class*="w-"],
 .play-pause-button[class*="h-"],
 button[class*="play-pause-button"][class*="w-"],
-button[class*="play-pause-button"][class*="h-"] {
+button[class*="play-pause-button"][class*="h-"],
+/* Přepsat Tailwind utility třídy */
+.play-pause-button.rounded-full[class*="w-"],
+.play-pause-button.rounded-full[class*="h-"],
+button.play-pause-button.rounded-full[class*="w-"],
+button.play-pause-button.rounded-full[class*="h-"],
+/* Přepsat všechny možné kombinace s flex a dalšími třídami */
+.play-pause-button.flex,
+button.play-pause-button.flex,
+.play-pause-button[class*="flex"],
+button[class*="play-pause-button"][class*="flex"] {
   border-radius: 50% !important;
   overflow: visible !important;
   aspect-ratio: 1 / 1 !important;
@@ -405,4 +415,23 @@ html:not([data-rounded-style="true"]) button.play-pause-button.rounded-full {
 [class*="breath-animation-circle"],
 [class*="intro-animation-circle"] {
   border-radius: 50% !important;
+}
+
+/* ============================================
+   FINÁLNÍ PŘEPSÁNÍ - NEJVYŠŠÍ PRIORITA
+   ============================================ */
+/* Zajistit, aby play button byl vždy kulatý - přepsat VŠECHNO */
+html .play-pause-button,
+html button.play-pause-button,
+html [class*="play-pause-button"],
+html body .play-pause-button,
+html body button.play-pause-button,
+html #root .play-pause-button,
+html #root button.play-pause-button,
+html [data-rounded-style="true"] .play-pause-button,
+html [data-rounded-style="true"] button.play-pause-button,
+html:not([data-rounded-style="true"]) .play-pause-button,
+html:not([data-rounded-style="true"]) button.play-pause-button {
+  border-radius: 50% !important;
+  aspect-ratio: 1 / 1 !important;
 }
