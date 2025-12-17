@@ -102,19 +102,17 @@ const PlayPauseButton = ({
               initial={{ scale: 0 }}
               animate={{ scale: 1 }}
               exit={{ scale: 0 }}
-              className="w-8 h-8 flex items-center justify-center pointer-events-none"
+              className="w-10 h-10 flex items-center justify-center pointer-events-none"
             >
               {/* Pause icon jako SVG (bez zaoblení, nezávislé na CSS rounded systému) */}
               <svg
-                width="28"
-                height="28"
-                viewBox="0 0 28 28"
+                className="w-full h-full pointer-events-none"
+                viewBox="0 0 40 40"
                 aria-hidden="true"
                 focusable="false"
-                className="pointer-events-none"
               >
-                <rect x="6" y="5" width="6" height="18" rx="0" ry="0" fill={iconColor} />
-                <rect x="16" y="5" width="6" height="18" rx="0" ry="0" fill={iconColor} />
+                <rect x="10" y="2" width="8" height="36" rx="0" ry="0" fill={iconColor} />
+                <rect x="22" y="2" width="8" height="36" rx="0" ry="0" fill={iconColor} />
               </svg>
             </motion.div>
           ) : (
@@ -123,18 +121,16 @@ const PlayPauseButton = ({
               initial={{ scale: 0 }}
               animate={{ scale: 1 }}
               exit={{ scale: 0 }}
-              className="pointer-events-none flex items-center justify-center"
+              className="w-10 h-10 pointer-events-none flex items-center justify-center"
             >
               {/* Play icon jako SVG (bez zaoblení, konzistentní rendering) */}
               <svg
-                width="28"
-                height="28"
-                viewBox="0 0 28 28"
+                className="w-full h-full pointer-events-none"
+                viewBox="0 0 40 40"
                 aria-hidden="true"
                 focusable="false"
-                className="pointer-events-none"
               >
-                <polygon points="11,7 22,14 11,21" fill={iconColor} />
+                <polygon points="14,8 32,20 14,32" fill={iconColor} />
               </svg>
             </motion.div>
           )}
