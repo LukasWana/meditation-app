@@ -8,9 +8,6 @@ const PlayPauseButton = ({
   className = "w-24 h-24"
 }) => {
   const { currentTheme } = useTheme();
-  const pauseBar1Ref = useRef(null);
-  const pauseBar2Ref = useRef(null);
-  const playIconRef = useRef(null);
 
   // Získat barvu textu z tématu a detekovat dark mode
   const textColor = currentTheme?.colors?.text || '#000000';
@@ -22,20 +19,6 @@ const PlayPauseButton = ({
   // Pro dark mode použít bílou ikonku na tmavém pozadí, pro light mode bílou ikonku na černém pozadí
   const iconColor = isDarkMode ? '#ffffff' : '#ffffff';
   const buttonBackgroundColor = isDarkMode ? 'rgba(0, 0, 0, 0.8)' : 'rgba(0, 0, 0, 0.8)';
-
-  // Nastavit barvu s !important pomocí setProperty
-  useEffect(() => {
-    if (pauseBar1Ref.current && pauseBar2Ref.current) {
-      pauseBar1Ref.current.style.setProperty('background-color', iconColor, 'important');
-      pauseBar1Ref.current.style.setProperty('border-radius', '0px', 'important');
-      pauseBar2Ref.current.style.setProperty('background-color', iconColor, 'important');
-      pauseBar2Ref.current.style.setProperty('border-radius', '0px', 'important');
-    }
-    if (playIconRef.current) {
-      playIconRef.current.style.setProperty('border-left-color', iconColor, 'important');
-      playIconRef.current.style.setProperty('border-radius', '0px', 'important');
-    }
-  }, [iconColor]);
 
   // Vynutit, aby tlačítko bylo vždy kulaté - pouze border-radius, bez změny velikosti
   const buttonRef = useRef(null);
@@ -121,40 +104,39 @@ const PlayPauseButton = ({
               exit={{ scale: 0 }}
               className="w-8 h-8 flex items-center justify-center pointer-events-none"
             >
-              <div className="flex space-x-3 pointer-events-none">
-                <div
-                  ref={pauseBar1Ref}
-                  className="w-3 h-10 pointer-events-none"
-                  style={{
-                    backgroundColor: iconColor,
-                    borderRadius: 0
-                  }}
-                ></div>
-                <div
-                  ref={pauseBar2Ref}
-                  className="w-3 h-10 pointer-events-none"
-                  style={{
-                    backgroundColor: iconColor,
-                    borderRadius: 0
-                  }}
-                ></div>
-              </div>
+              {/* Pause icon jako SVG (bez zaoblení, nezávislé na CSS rounded systému) */}
+              <svg
+                width="28"
+                height="28"
+                viewBox="0 0 28 28"
+                aria-hidden="true"
+                focusable="false"
+                className="pointer-events-none"
+              >
+                <rect x="6" y="5" width="6" height="18" rx="0" ry="0" fill={iconColor} />
+                <rect x="16" y="5" width="6" height="18" rx="0" ry="0" fill={iconColor} />
+              </svg>
             </motion.div>
           ) : (
             <motion.div
               key="play"
-              ref={playIconRef}
               initial={{ scale: 0 }}
               animate={{ scale: 1 }}
               exit={{ scale: 0 }}
-              className="w-0 h-0 border-y-[12px] border-y-transparent ml-3 pointer-events-none"
-              style={{
-                borderLeftColor: iconColor,
-                borderLeftWidth: '16px',
-                color: iconColor,
-                borderRadius: 0
-              }}
-            />
+              className="pointer-events-none flex items-center justify-center"
+            >
+              {/* Play icon jako SVG (bez zaoblení, konzistentní rendering) */}
+              <svg
+                width="28"
+                height="28"
+                viewBox="0 0 28 28"
+                aria-hidden="true"
+                focusable="false"
+                className="pointer-events-none"
+              >
+                <polygon points="11,7 22,14 11,21" fill={iconColor} />
+              </svg>
+            </motion.div>
           )}
         </AnimatePresence>
       </div>
