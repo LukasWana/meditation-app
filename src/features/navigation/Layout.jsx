@@ -49,14 +49,9 @@ const Layout = ({
       {children}
 
       {/* Top Right Controls - Hidden when player is active, show on all pages */}
+      {/* Pozicování: na mobilech right-6, na větších obrazovkách relativní k max-width kontejneru */}
       {!isPlayerActive && (
-        <div className="fixed top-6 z-50 flex items-center space-x-3" style={{ 
-          right: 'max(1.5rem, calc((100vw - 650px) / 2 + 1.5rem))',
-          maxWidth: '650px',
-          width: '100%',
-          justifyContent: 'flex-end',
-          paddingRight: '1.5rem'
-        }}>
+        <div className="fixed top-6 right-6 z-50 flex items-center space-x-3 app-content-controls">
           {/* User Profile */}
           <UserProfile />
 
