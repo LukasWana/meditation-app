@@ -370,10 +370,24 @@ button[class*="play-pause-button"][class*="vw"],
 button[class*="play-pause-button"][class*="vh"],
 /* Přepsat Framer Motion styly */
 motion.button[class*="play-pause-button"],
-[data-framer-name][class*="play-pause-button"] {
+[data-framer-name][class*="play-pause-button"],
+/* Přepsat min-width a min-height */
+.play-pause-button[class*="min-w"],
+.play-pause-button[class*="min-h"],
+.play-pause-button[class*="max-w"],
+.play-pause-button[class*="max-h"],
+button[class*="play-pause-button"][class*="min-w"],
+button[class*="play-pause-button"][class*="min-h"],
+button[class*="play-pause-button"][class*="max-w"],
+button[class*="play-pause-button"][class*="max-h"] {
   border-radius: 50% !important;
   overflow: visible !important;
   aspect-ratio: 1 / 1 !important;
+  /* Přepsat min/max width a height */
+  min-width: auto !important;
+  min-height: auto !important;
+  max-width: none !important;
+  max-height: none !important;
 }
 
 /* Vyloučit play button z rounded style pravidel - explicitní pravidla pro všechny stavy */
