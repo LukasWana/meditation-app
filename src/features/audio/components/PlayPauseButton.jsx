@@ -27,10 +27,13 @@ const PlayPauseButton = ({
   useEffect(() => {
     if (pauseBar1Ref.current && pauseBar2Ref.current) {
       pauseBar1Ref.current.style.setProperty('background-color', iconColor, 'important');
+      pauseBar1Ref.current.style.setProperty('border-radius', '0px', 'important');
       pauseBar2Ref.current.style.setProperty('background-color', iconColor, 'important');
+      pauseBar2Ref.current.style.setProperty('border-radius', '0px', 'important');
     }
     if (playIconRef.current) {
       playIconRef.current.style.setProperty('border-left-color', iconColor, 'important');
+      playIconRef.current.style.setProperty('border-radius', '0px', 'important');
     }
   }, [iconColor]);
 
