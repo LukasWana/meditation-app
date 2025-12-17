@@ -43,26 +43,32 @@ const PlayPauseButton = ({
       buttonRef.current.style.setProperty('aspect-ratio', '1 / 1', 'important');
       
       // Zajistit, aby width a height byly stejné (pro kruh)
+      // Použít width jako primární dimenzi a height nastavit na stejnou hodnotu
       const updateSize = () => {
         if (buttonRef.current) {
-          const computedStyle = window.getComputedStyle(buttonRef.current);
-          const width = computedStyle.width;
-          if (width && width !== 'auto') {
-            buttonRef.current.style.setProperty('height', width, 'important');
-            buttonRef.current.style.setProperty('width', width, 'important');
+          // Získat computed width (respektuje viewport jednotky)
+          const rect = buttonRef.current.getBoundingClientRect();
+          const width = rect.width;
+          
+          if (width > 0) {
+            // Nastavit height na stejnou hodnotu jako width
+            buttonRef.current.style.setProperty('height', `${width}px`, 'important');
+            // Zajistit, aby width zůstalo stejné (pro případ, že by se změnilo)
+            buttonRef.current.style.setProperty('width', `${width}px`, 'important');
           }
         }
       };
       
-      // Aktualizovat velikost okamžitě a po malém zpoždění (pro viewport jednotky)
-      updateSize();
-      const timeoutId = setTimeout(updateSize, 100);
+      // Aktualizovat velikost po malém zpoždění (pro viewport jednotky a render)
+      const timeoutId1 = setTimeout(updateSize, 0);
+      const timeoutId2 = setTimeout(updateSize, 100);
       
       // Sledovat změny velikosti okna
       window.addEventListener('resize', updateSize);
       
       return () => {
-        clearTimeout(timeoutId);
+        clearTimeout(timeoutId1);
+        clearTimeout(timeoutId2);
         window.removeEventListener('resize', updateSize);
       };
     }
