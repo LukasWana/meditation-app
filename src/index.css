@@ -285,14 +285,16 @@ body, html, #root, main, div, section, article {
 }
 
 /* Čtvercové objekty - plně kulaté */
-[data-rounded-style="true"] .aspect-square,
-[data-rounded-style="true"] [class*="w-20"][class*="h-20"],
-[data-rounded-style="true"] [class*="w-16"][class*="h-16"],
-[data-rounded-style="true"] [class*="w-12"][class*="h-12"],
-[data-rounded-style="true"] [class*="w-10"][class*="h-10"],
-[data-rounded-style="true"] [class*="w-8"][class*="h-8"],
-[data-rounded-style="true"] [class*="w-6"][class*="h-6"],
-[data-rounded-style="true"] [class*="w-4"][class*="h-4"] {
+/* Vyloučit play-pause-button - ten je vždy kulatý */
+[data-rounded-style="true"] .aspect-square:not(.play-pause-button):not([class*="play-pause-button"]),
+[data-rounded-style="true"] [class*="w-24"][class*="h-24"]:not(.play-pause-button):not([class*="play-pause-button"]),
+[data-rounded-style="true"] [class*="w-20"][class*="h-20"]:not(.play-pause-button):not([class*="play-pause-button"]),
+[data-rounded-style="true"] [class*="w-16"][class*="h-16"]:not(.play-pause-button):not([class*="play-pause-button"]),
+[data-rounded-style="true"] [class*="w-12"][class*="h-12"]:not(.play-pause-button):not([class*="play-pause-button"]),
+[data-rounded-style="true"] [class*="w-10"][class*="h-10"]:not(.play-pause-button):not([class*="play-pause-button"]),
+[data-rounded-style="true"] [class*="w-8"][class*="h-8"]:not(.play-pause-button):not([class*="play-pause-button"]),
+[data-rounded-style="true"] [class*="w-6"][class*="h-6"]:not(.play-pause-button):not([class*="play-pause-button"]),
+[data-rounded-style="true"] [class*="w-4"][class*="h-4"]:not(.play-pause-button):not([class*="play-pause-button"]) {
   border-radius: var(--rounded-square-radius) !important;
 }
 
@@ -304,7 +306,9 @@ html:not([data-rounded-style="true"]) [class*="rounded"]:not([class*="rounded-fu
 }
 
 /* Čtvercové objekty pro non-rounded témata (např. Calma) - zaoblený čtverec */
+/* Vyloučit play-pause-button - ten je vždy kulatý */
 html:not([data-rounded-style="true"]) .aspect-square:not(.play-pause-button):not([class*="play-pause-button"]),
+html:not([data-rounded-style="true"]) [class*="w-24"][class*="h-24"]:not(.play-pause-button):not([class*="play-pause-button"]),
 html:not([data-rounded-style="true"]) [class*="w-20"][class*="h-20"]:not(.play-pause-button):not([class*="play-pause-button"]),
 html:not([data-rounded-style="true"]) [class*="w-16"][class*="h-16"]:not(.play-pause-button):not([class*="play-pause-button"]),
 html:not([data-rounded-style="true"]) [class*="w-12"][class*="h-12"]:not(.play-pause-button):not([class*="play-pause-button"]),
@@ -312,7 +316,7 @@ html:not([data-rounded-style="true"]) [class*="w-10"][class*="h-10"]:not(.play-p
 html:not([data-rounded-style="true"]) [class*="w-8"][class*="h-8"]:not(.play-pause-button):not([class*="play-pause-button"]),
 html:not([data-rounded-style="true"]) [class*="w-6"][class*="h-6"]:not(.play-pause-button):not([class*="play-pause-button"]),
 html:not([data-rounded-style="true"]) [class*="w-4"][class*="h-4"]:not(.play-pause-button):not([class*="play-pause-button"]) {
-  border-radius: var(--theme-rounded-square-radius, 25%) !important;
+  border-radius: var(--theme-rounded-square-radius, 0%) !important;
 }
 
 /* Z-index utilities - použijte konstanty z constants/zIndex.js */
@@ -330,22 +334,30 @@ html:not([data-rounded-style="true"]) [class*="w-4"][class*="h-4"]:not(.play-pau
    ============================================ */
 
 /* PlayPauseButton - VŽDY kulaté, bez ohledu na téma, styly nebo jakékoli jiné pravidlo */
-/* Vyloučit z rounded style systému - play button je vždy kulatý */
+/* NEJVYŠŠÍ PRIORITA - musí být na konci souboru pro přepsání všech ostatních pravidel */
 .play-pause-button,
 button.play-pause-button,
 motion.button.play-pause-button,
 button[class*="play-pause-button"],
-[class*="play-pause-button"] {
+[class*="play-pause-button"],
+button.play-pause-button[class*="w-24"],
+button.play-pause-button[class*="h-24"],
+.play-pause-button[class*="w-24"],
+.play-pause-button[class*="h-24"] {
   border-radius: 50% !important;
   overflow: visible !important;
   aspect-ratio: 1 / 1 !important;
 }
 
-/* Vyloučit play button z rounded style pravidel */
+/* Vyloučit play button z rounded style pravidel - explicitní pravidla pro všechny stavy */
 [data-rounded-style="true"] .play-pause-button,
 [data-rounded-style="true"] button.play-pause-button,
+[data-rounded-style="true"] .play-pause-button[class*="w-24"],
+[data-rounded-style="true"] button.play-pause-button[class*="w-24"],
 html:not([data-rounded-style="true"]) .play-pause-button,
-html:not([data-rounded-style="true"]) button.play-pause-button {
+html:not([data-rounded-style="true"]) button.play-pause-button,
+html:not([data-rounded-style="true"]) .play-pause-button[class*="w-24"],
+html:not([data-rounded-style="true"]) button.play-pause-button[class*="w-24"] {
   border-radius: 50% !important;
 }
 
