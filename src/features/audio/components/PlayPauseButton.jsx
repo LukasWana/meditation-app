@@ -38,38 +38,63 @@ const PlayPauseButton = ({
   const buttonRef = useRef(null);
   useEffect(() => {
     if (buttonRef.current) {
-      // Nastavit border-radius s nejvyšší prioritou
-      buttonRef.current.style.setProperty('border-radius', '50%', 'important');
-      buttonRef.current.style.setProperty('aspect-ratio', '1 / 1', 'important');
-      
-      // Zajistit, aby width a height byly stejné (pro kruh)
-      // Použít width jako primární dimenzi a height nastavit na stejnou hodnotu
-      const updateSize = () => {
+      // Funkce pro zajištění kulatého tvaru
+      const ensureCircular = () => {
         if (buttonRef.current) {
-          // Získat computed width (respektuje viewport jednotky)
+          // VŽDY nastavit border-radius na 50% s nejvyšší prioritou
+          buttonRef.current.style.setProperty('border-radius', '50%', 'important');
+          buttonRef.current.style.setProperty('aspect-ratio', '1 / 1', 'important');
+
+          // Zajistit, aby width a height byly stejné (pro kruh)
           const rect = buttonRef.current.getBoundingClientRect();
           const width = rect.width;
-          
-          if (width > 0) {
-            // Nastavit height na stejnou hodnotu jako width
+          const height = rect.height;
+
+          if (width > 0 && height > 0) {
+            // Použít menší z obou hodnot pro zajištění kruhu
+            const size = Math.min(width, height);
+            buttonRef.current.style.setProperty('width', `${size}px`, 'important');
+            buttonRef.current.style.setProperty('height', `${size}px`, 'important');
+          } else if (width > 0) {
+            // Pokud máme jen width, použít ho pro obě dimenze
             buttonRef.current.style.setProperty('height', `${width}px`, 'important');
-            // Zajistit, aby width zůstalo stejné (pro případ, že by se změnilo)
             buttonRef.current.style.setProperty('width', `${width}px`, 'important');
+          } else if (height > 0) {
+            // Pokud máme jen height, použít ho pro obě dimenze
+            buttonRef.current.style.setProperty('width', `${height}px`, 'important');
+            buttonRef.current.style.setProperty('height', `${height}px`, 'important');
           }
         }
       };
-      
-      // Aktualizovat velikost po malém zpoždění (pro viewport jednotky a render)
-      const timeoutId1 = setTimeout(updateSize, 0);
-      const timeoutId2 = setTimeout(updateSize, 100);
-      
+
+      // Nastavit okamžitě
+      ensureCircular();
+
+      // Aktualizovat po malém zpoždění (pro viewport jednotky a render)
+      const timeoutId1 = setTimeout(ensureCircular, 0);
+      const timeoutId2 = setTimeout(ensureCircular, 50);
+      const timeoutId3 = setTimeout(ensureCircular, 100);
+      const timeoutId4 = setTimeout(ensureCircular, 200);
+
       // Sledovat změny velikosti okna
-      window.addEventListener('resize', updateSize);
+      window.addEventListener('resize', ensureCircular);
       
+      // Sledovat změny pomocí MutationObserver (pro případ, že by se změnily třídy)
+      const observer = new MutationObserver(ensureCircular);
+      observer.observe(buttonRef.current, {
+        attributes: true,
+        attributeFilter: ['class', 'style'],
+        childList: false,
+        subtree: false
+      });
+
       return () => {
         clearTimeout(timeoutId1);
         clearTimeout(timeoutId2);
-        window.removeEventListener('resize', updateSize);
+        clearTimeout(timeoutId3);
+        clearTimeout(timeoutId4);
+        window.removeEventListener('resize', ensureCircular);
+        observer.disconnect();
       };
     }
   }, [className]); // Spustit i když se změní className
@@ -95,12 +120,7 @@ const PlayPauseButton = ({
         overflow: 'visible',
         borderRadius: '50%',
         aspectRatio: '1 / 1',
-        isolation: 'isolate',
-        // Zajistit, aby tlačítko bylo vždy kulaté - přepsat jakékoli jiné styly
-        minWidth: 'var(--button-size, auto)',
-        minHeight: 'var(--button-size, auto)',
-        maxWidth: 'var(--button-size, auto)',
-        maxHeight: 'var(--button-size, auto)'
+        isolation: 'isolate'
       }}
       transition={{ type: "spring", stiffness: 300, damping: 20 }}
     >
