@@ -439,7 +439,17 @@ html #root button.play-pause-button,
 html [data-rounded-style="true"] .play-pause-button,
 html [data-rounded-style="true"] button.play-pause-button,
 html:not([data-rounded-style="true"]) .play-pause-button,
-html:not([data-rounded-style="true"]) button.play-pause-button {
+html:not([data-rounded-style="true"]) button.play-pause-button,
+/* Přepsat i Framer Motion styly */
+html motion.button.play-pause-button,
+html motion.button[class*="play-pause-button"],
+html [data-framer-name] .play-pause-button,
+html [data-framer-name] button.play-pause-button {
   border-radius: 50% !important;
   aspect-ratio: 1 / 1 !important;
+  /* Zajistit, aby width a height byly stejné */
+  min-width: auto !important;
+  min-height: auto !important;
+  max-width: none !important;
+  max-height: none !important;
 }
