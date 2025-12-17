@@ -49,7 +49,7 @@ export const THEMES = [
     allowsCustomBackground: true, // Tento styl umožňuje vlastní pozadí
     fontFamily: "'Inter', sans-serif",
     useRoundedStyle: false, // Pro barevná témata bez kulatého stylu
-    roundedSquareRadius: '25%' // Zaoblený čtverec pro Calma
+    roundedSquareRadius: '0%' // Calma: jediný čtverec
   },
   {
     id: 'dreamy-lavender',
