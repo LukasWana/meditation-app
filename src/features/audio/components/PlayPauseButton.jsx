@@ -111,8 +111,8 @@ const PlayPauseButton = ({
                 aria-hidden="true"
                 focusable="false"
               >
-                <rect x="10" y="2" width="8" height="36" rx="0" ry="0" fill={iconColor} />
-                <rect x="22" y="2" width="8" height="36" rx="0" ry="0" fill={iconColor} />
+                <rect x="10" y="6" width="8" height="28" rx="0" ry="0" fill={iconColor} />
+                <rect x="24" y="6" width="8" height="28" rx="0" ry="0" fill={iconColor} />
               </svg>
             </motion.div>
           ) : (
