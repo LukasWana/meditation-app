@@ -34,65 +34,24 @@ const PlayPauseButton = ({
     }
   }, [iconColor]);
 
-  // Vynutit, aby tlačítko bylo vždy kulaté - CSS to už zajišťuje, ale pro jistotu
+  // Vynutit, aby tlačítko bylo vždy kulaté - pouze border-radius, bez změny velikosti
   const buttonRef = useRef(null);
   useEffect(() => {
     if (buttonRef.current) {
-      // Funkce pro zajištění kulatého tvaru
+      // Funkce pro zajištění kulatého tvaru (pouze border-radius, bez změny velikosti)
       const ensureCircular = () => {
         if (buttonRef.current) {
           // VŽDY nastavit border-radius na 50% s nejvyšší prioritou
           buttonRef.current.style.setProperty('border-radius', '50%', 'important');
           buttonRef.current.style.setProperty('aspect-ratio', '1 / 1', 'important');
-          
-          // Přepsat min-width a min-height, aby nebránily kulatému tvaru
-          buttonRef.current.style.setProperty('min-width', 'auto', 'important');
-          buttonRef.current.style.setProperty('min-height', 'auto', 'important');
-          buttonRef.current.style.setProperty('max-width', 'none', 'important');
-          buttonRef.current.style.setProperty('max-height', 'none', 'important');
-
-          // Zajistit, aby width a height byly stejné (pro kruh)
-          const rect = buttonRef.current.getBoundingClientRect();
-          const width = rect.width;
-          const height = rect.height;
-
-          if (width > 0 && height > 0) {
-            // Použít průměr z obou hodnot pro zajištění kruhu
-            const size = Math.round((width + height) / 2);
-            buttonRef.current.style.setProperty('width', `${size}px`, 'important');
-            buttonRef.current.style.setProperty('height', `${size}px`, 'important');
-          } else if (width > 0) {
-            // Pokud máme jen width, použít ho pro obě dimenze
-            buttonRef.current.style.setProperty('height', `${width}px`, 'important');
-            buttonRef.current.style.setProperty('width', `${width}px`, 'important');
-          } else if (height > 0) {
-            // Pokud máme jen height, použít ho pro obě dimenze
-            buttonRef.current.style.setProperty('width', `${height}px`, 'important');
-            buttonRef.current.style.setProperty('height', `${height}px`, 'important');
-          }
         }
       };
 
       // Nastavit okamžitě
       ensureCircular();
 
-      // Použít requestAnimationFrame pro zajištění aktualizace po renderu
-      const rafId1 = requestAnimationFrame(ensureCircular);
-      const rafId2 = requestAnimationFrame(() => {
-        requestAnimationFrame(ensureCircular);
-      });
-
-      // Aktualizovat po malém zpoždění (pro viewport jednotky a render)
-      // Více timeoutů pro zajištění, že se to nastaví po všech render cyklech
-      const timeoutId1 = setTimeout(ensureCircular, 0);
-      const timeoutId2 = setTimeout(ensureCircular, 10);
-      const timeoutId3 = setTimeout(ensureCircular, 50);
-      const timeoutId4 = setTimeout(ensureCircular, 100);
-      const timeoutId5 = setTimeout(ensureCircular, 200);
-      const timeoutId6 = setTimeout(ensureCircular, 500);
-
-      // Sledovat změny velikosti okna
-      window.addEventListener('resize', ensureCircular);
+      // Aktualizovat po malém zpoždění (pro případ, že by se změnily třídy)
+      const timeoutId = setTimeout(ensureCircular, 100);
 
       // Sledovat změny pomocí MutationObserver (pro případ, že by se změnily třídy)
       const observer = new MutationObserver(ensureCircular);
@@ -104,15 +63,7 @@ const PlayPauseButton = ({
       });
 
       return () => {
-        cancelAnimationFrame(rafId1);
-        cancelAnimationFrame(rafId2);
-        clearTimeout(timeoutId1);
-        clearTimeout(timeoutId2);
-        clearTimeout(timeoutId3);
-        clearTimeout(timeoutId4);
-        clearTimeout(timeoutId5);
-        clearTimeout(timeoutId6);
-        window.removeEventListener('resize', ensureCircular);
+        clearTimeout(timeoutId);
         observer.disconnect();
       };
     }
