@@ -142,6 +142,8 @@ const PlayPauseButton = ({
         isolation: 'isolate'
       }}
       transition={{ type: "spring", stiffness: 300, damping: 20 }}
+      whileHover={{}}
+      whileTap={{}}
     >
       {/* Pozadí buttonu - stále stejné, nemění se při přepínání */}
       <div
