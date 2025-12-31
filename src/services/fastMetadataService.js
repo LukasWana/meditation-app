@@ -249,6 +249,133 @@ class FastMetadataService {
         log.warn(`Failed to load dychanie folder:`, dychanieError);
       }
 
+      // ✅ NOVÉ: Načti background složku (obrázky)
+      try {
+        const backgroundRef = ref(storage, 'background');
+        log.debug(`🔍 Loading from Firebase Storage path: background`);
+        const backgroundResult = await listAll(backgroundRef);
+        log.debug(`📊 Firebase Storage result for background:`, {
+          itemsCount: backgroundResult.items.length,
+          prefixesCount: backgroundResult.prefixes.length
+        });
+
+        // Přidej obrázky z background složky
+        backgroundResult.items.forEach(item => {
+          const fileName = item.name.toLowerCase();
+          const isImageFile = fileName.endsWith('.jpg') ||
+                             fileName.endsWith('.jpeg') ||
+                             fileName.endsWith('.png') ||
+                             fileName.endsWith('.gif') ||
+                             fileName.endsWith('.webp');
+
+          if (isImageFile) {
+            allFiles.push({
+              ...item,
+              name: item.name,
+              folder: 'background'
+            });
+            log.debug(`📄 Adding background image:`, item.name);
+          }
+        });
+
+        // Prohledej podsložky background (pokud existují)
+        for (const folderRef of backgroundResult.prefixes) {
+          try {
+            const folderResult = await listAll(folderRef);
+            folderResult.items.forEach(item => {
+              const fileName = item.name.toLowerCase();
+              const isImageFile = fileName.endsWith('.jpg') ||
+                                 fileName.endsWith('.jpeg') ||
+                                 fileName.endsWith('.png') ||
+                                 fileName.endsWith('.gif') ||
+                                 fileName.endsWith('.webp');
+
+              if (isImageFile) {
+                allFiles.push({
+                  ...item,
+                  name: `${folderRef.name}/${item.name}`,
+                  folder: 'background',
+                  subFolder: folderRef.name
+                });
+              }
+            });
+          } catch (err) {
+            log.warn(`Failed to check background subfolder ${folderRef.name}:`, err);
+          }
+        }
+      } catch (backgroundError) {
+        log.warn(`Failed to load background folder:`, backgroundError);
+      }
+
+      // ✅ NOVÉ: Načti meditacie složku s jazykovými podsložkami
+      try {
+        const meditacieRef = ref(storage, 'meditacie');
+        log.debug(`🔍 Loading from Firebase Storage path: meditacie`);
+        const meditacieResult = await listAll(meditacieRef);
+        log.debug(`📊 Firebase Storage result for meditacie:`, {
+          itemsCount: meditacieResult.items.length,
+          prefixesCount: meditacieResult.prefixes.length
+        });
+
+        // Prohledej jazykové podsložky (CZ, SK, EN)
+        for (const langFolderRef of meditacieResult.prefixes) {
+          try {
+            log.debug(`📁 Processing meditacie language folder: ${langFolderRef.name}`);
+            const langResult = await listAll(langFolderRef);
+
+            langResult.items.forEach(item => {
+              const fileName = item.name.toLowerCase();
+              const isAudioFile = fileName.endsWith('.mp3') ||
+                                 fileName.endsWith('.ogg') ||
+                                 fileName.endsWith('.oga');
+
+              if (isAudioFile) {
+                allFiles.push({
+                  ...item,
+                  name: `${langFolderRef.name}/${item.name}`,
+                  folder: 'meditacie',
+                  language: langFolderRef.name
+                });
+                log.debug(`📄 Adding meditacie file: ${langFolderRef.name}/${item.name}`);
+              }
+            });
+          } catch (err) {
+            log.warn(`Failed to check meditacie folder ${langFolderRef.name}:`, err);
+          }
+        }
+      } catch (meditacieError) {
+        log.warn(`Failed to load meditacie folder:`, meditacieError);
+      }
+
+      // ✅ NOVÉ: Načti jazykové složky na kořenové úrovni (CZ/, SK/, EN/)
+      const languageFolders = ['CZ', 'SK', 'EN'];
+      for (const lang of languageFolders) {
+        try {
+          const langRef = ref(storage, lang);
+          log.debug(`🔍 Loading from Firebase Storage path: ${lang}`);
+          const langResult = await listAll(langRef);
+
+          langResult.items.forEach(item => {
+            const fileName = item.name.toLowerCase();
+            const isAudioFile = fileName.endsWith('.mp3') ||
+                               fileName.endsWith('.ogg') ||
+                               fileName.endsWith('.oga');
+
+            if (isAudioFile) {
+              allFiles.push({
+                ...item,
+                name: `${lang}/${item.name}`,
+                folder: 'slova',
+                language: lang
+              });
+              log.debug(`📄 Adding language folder file: ${lang}/${item.name}`);
+            }
+          });
+        } catch (langError) {
+          log.warn(`Failed to load ${lang} folder:`, langError);
+        }
+      }
+
     // Zpracuj soubory a vytvoř metadata
     await this.processFiles(allFiles);
 
@@ -287,23 +414,42 @@ class FastMetadataService {
     // Filtruj soubory podle složek
     const hudbaFiles = files.filter(file => file.folder === 'hudba');
     const dychanieFiles = files.filter(file => file.folder === 'dychanie');
+    const meditacieFiles = files.filter(file => file.folder === 'meditacie');
+    const slovaFiles = files.filter(file => file.folder === 'slova' && (file.language || file.name.startsWith('CZ/') || file.name.startsWith('SK/') || file.name.startsWith('EN/')));
+    const backgroundFiles = files.filter(file => file.folder === 'background');
+
     const mp3Files = hudbaFiles.filter(file => file.name.toLowerCase().endsWith('.mp3'));
     const oggFiles = dychanieFiles.filter(file => {
       const fileName = file.name.toLowerCase();
       return fileName.endsWith('.ogg') || fileName.endsWith('.oga') || fileName.endsWith('.mp3');
     });
+    const meditacieAudioFiles = meditacieFiles.filter(file => {
+      const fileName = file.name.toLowerCase();
+      return fileName.endsWith('.mp3') || fileName.endsWith('.ogg') || fileName.endsWith('.oga');
+    });
+    const slovaAudioFiles = slovaFiles.filter(file => {
+      const fileName = file.name.toLowerCase();
+      return fileName.endsWith('.mp3') || fileName.endsWith('.ogg') || fileName.endsWith('.oga');
+    });
     const imageFiles = hudbaFiles.filter(file => /\.(jpg|jpeg|png|gif|webp)$/i.test(file.name));
+    const backgroundImageFiles = backgroundFiles.filter(file => /\.(jpg|jpeg|png|gif|webp)$/i.test(file.name));
 
     log.debug(`🎵 Filtered files:`, {
       totalFiles: files.length,
       hudbaFiles: hudbaFiles.length,
       dychanieFiles: dychanieFiles.length,
+      meditacieFiles: meditacieFiles.length,
+      slovaFiles: slovaFiles.length,
+      backgroundFiles: backgroundFiles.length,
       mp3Files: mp3Files.length,
       oggFiles: oggFiles.length,
-      imageFiles: imageFiles.length
+      meditacieAudioFiles: meditacieAudioFiles.length,
+      slovaAudioFiles: slovaAudioFiles.length,
+      imageFiles: imageFiles.length,
+      backgroundImageFiles: backgroundImageFiles.length
     });
 
-    log.info(`📊 Processing ${mp3Files.length} MP3 files and ${imageFiles.length} images`);
+    log.info(`📊 Processing ${mp3Files.length} MP3 files, ${imageFiles.length} images, ${meditacieAudioFiles.length} meditacie files, ${slovaAudioFiles.length} slova files, ${backgroundImageFiles.length} background images`);
     log.debug(`🎵 MP3 files:`, mp3Files.map(f => ({
       name: f.name,
       folder: f.folder,
@@ -311,7 +457,7 @@ class FastMetadataService {
     })));
 
     // Nejdříve zpracuj cover obrázky pro lepší UX
-    log.info(`🖼️ Processing ${imageFiles.length} images first for better UX...`);
+    log.info(`🖼️ Processing ${imageFiles.length} cover images first for better UX...`);
     for (const file of imageFiles) {
       try {
         const metadata = await this.createImageMetadata(file);
@@ -319,6 +465,19 @@ class FastMetadataService {
         log.debug(`✅ Cover image processed: ${file.name}`);
       } catch (error) {
         log.warn(`Failed to process image ${file.name}:`, error);
+      }
+    }
+
+    // ✅ NOVÉ: Zpracuj background obrázky
+    log.info(`🖼️ Processing ${backgroundImageFiles.length} background images...`);
+    for (const file of backgroundImageFiles) {
+      try {
+        const metadata = await this.createImageMetadata(file);
+        metadata.isBackground = true;
+        this.metadata.set(file.name, metadata);
+        log.debug(`✅ Background image processed: ${file.name}`);
+      } catch (error) {
+        log.warn(`Failed to process background image ${file.name}:`, error);
       }
     }
 
@@ -343,6 +502,40 @@ class FastMetadataService {
         this.metadata.set(metadata.fileName, metadata);
       } catch (error) {
         log.warn(`Failed to process dychanie file ${file.name}:`, error);
+      }
+    }
+
+    // ✅ NOVÉ: Zpracuj meditacie audio soubory
+    log.info(`🎵 Processing ${meditacieAudioFiles.length} meditacie audio files...`);
+    for (const file of meditacieAudioFiles) {
+      try {
+        const metadata = await this.createMetadataFromFile(file);
+        // Přidej informace o jazyce
+        if (file.language) {
+          metadata.language = file.language;
+        }
+        metadata.category = 'slova';
+        this.metadata.set(metadata.fileName, metadata);
+        log.debug(`✅ Meditacie file processed: ${metadata.fileName}`);
+      } catch (error) {
+        log.warn(`Failed to process meditacie file ${file.name}:`, error);
+      }
+    }
+
+    // ✅ NOVÉ: Zpracuj slova audio soubory z jazykových složek
+    log.info(`🎵 Processing ${slovaAudioFiles.length} slova audio files from language folders...`);
+    for (const file of slovaAudioFiles) {
+      try {
+        const metadata = await this.createMetadataFromFile(file);
+        // Přidej informace o jazyce
+        if (file.language) {
+          metadata.language = file.language;
+        }
+        metadata.category = 'slova';
+        this.metadata.set(metadata.fileName, metadata);
+        log.debug(`✅ Slova file processed: ${metadata.fileName}`);
+      } catch (error) {
+        log.warn(`Failed to process slova file ${file.name}:`, error);
       }
     }
 
