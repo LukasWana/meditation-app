@@ -653,7 +653,12 @@ exports.onFileUpload = functions
     const isInTargetFolder = fileName.startsWith('hudba/') ||
                              fileName.startsWith('slova/') ||
                              fileName.startsWith('dychanie/') ||
-                             fileName.startsWith('metadata/'); // Pro obrázky
+                             fileName.startsWith('metadata/') || // Pro obrázky
+                             fileName.startsWith('background/') || // ✅ NOVÉ: Background obrázky
+                             fileName.startsWith('meditacie/') || // ✅ NOVÉ: Meditace s jazyky
+                             fileName.startsWith('CZ/') || // ✅ NOVÉ: České meditace
+                             fileName.startsWith('SK/') || // ✅ NOVÉ: Slovenské meditace
+                             fileName.startsWith('EN/'); // ✅ NOVÉ: Anglické meditace
 
     if (!isInTargetFolder) {
       console.log(`⏭️ Skipping file outside target folders: ${fileName}`);
@@ -671,6 +676,44 @@ exports.onFileUpload = functions
           const downloadURL = `https://firebasestorage.googleapis.com/v0/b/${bucketName}/o/${encodeURIComponent(fileName)}?alt=media`;
           metadata.downloadURL = downloadURL;
           metadata.fileSize = parseInt(object.size) || 0;
+
+          // ✅ NOVÉ: Zpracuj meditacie/ složku - extrahuj jazyk z cesty
+          if (fileName.startsWith('meditacie/')) {
+            const pathParts = fileName.split('/');
+            if (pathParts.length >= 2) {
+              const language = pathParts[1]; // meditacie/CZ/... -> CZ
+              metadata.language = language;
+              metadata.folder = 'meditacie';
+              metadata.category = 'slova'; // Meditace jsou v kategorii slova
+
+              // Extrahuj pohlaví a typ z názvu souboru (pokud je v názvu)
+              const fileNameOnly = pathParts[pathParts.length - 1];
+              if (fileNameOnly.includes('muzsky') || fileNameOnly.includes('male') || fileNameOnly.includes('M' + language)) {
+                metadata.gender = 'male';
+              } else if (fileNameOnly.includes('zensky') || fileNameOnly.includes('female') || fileNameOnly.includes('F' + language)) {
+                metadata.gender = 'female';
+              }
+
+              console.log(`✅ Processed meditation file: ${fileName} (language: ${language})`);
+            }
+          }
+
+          // ✅ NOVÉ: Zpracuj jazykové složky na kořenové úrovni (CZ/, SK/, EN/)
+          if (fileName.startsWith('CZ/') || fileName.startsWith('SK/') || fileName.startsWith('EN/')) {
+            const language = fileName.split('/')[0];
+            metadata.language = language;
+            metadata.folder = 'slova'; // Považujeme to za slova
+            metadata.category = 'slova';
+
+            const fileNameOnly = fileName.split('/').pop();
+            if (fileNameOnly.includes('muzsky') || fileNameOnly.includes('male') || fileNameOnly.includes('M' + language)) {
+              metadata.gender = 'male';
+            } else if (fileNameOnly.includes('zensky') || fileNameOnly.includes('female') || fileNameOnly.includes('F' + language)) {
+              metadata.gender = 'female';
+            }
+
+            console.log(`✅ Processed language folder file: ${fileName} (language: ${language})`);
+          }
 
           // Ulož do databáze
           await updateMetadataDatabase(fileName, metadata);
@@ -725,6 +768,14 @@ exports.onFileUpload = functions
         const metadata = await extractImageMetadata(fileName, bucketName);
 
         if (metadata) {
+          // ✅ NOVÉ: Zpracuj background/ složku speciálně
+          if (fileName.startsWith('background/')) {
+            metadata.folder = 'background';
+            metadata.category = 'background';
+            metadata.isBackground = true;
+            console.log(`✅ Processed background image: ${fileName}`);
+          }
+
           // Ulož do Realtime Database
           const safePath = sanitizePath(fileName);
           const rtdbRef = getRTDB().ref(`image-metadata/${safePath}`);
@@ -735,8 +786,9 @@ exports.onFileUpload = functions
             source: 'firebase-storage'
           });
 
-          // Ulož také do Firestore
-          await db.collection('image-metadata').doc(fileName).set(metadata, { merge: true });
+          // Ulož také do Firestore (použij sanitizovanou cestu pro document ID)
+          const safeDocId = sanitizePath(fileName);
+          await db.collection('image-metadata').doc(safeDocId).set(metadata, { merge: true });
 
           console.log(`✅ Image metadata saved for ${fileName}`);
         }
@@ -771,7 +823,8 @@ exports.syncAllFiles = functions
 
       // Seznam všech souborů v podporovaných složkách
       // getFiles s prefixem BEZ delimiteru automaticky vrací všechny soubory včetně podsložek
-      const folders = ['hudba', 'slova', 'dychanie', 'metadata'];
+      // ✅ ROZŠÍŘENO: Přidány background, meditacie a jazykové složky
+      const folders = ['hudba', 'slova', 'dychanie', 'metadata', 'background', 'meditacie', 'CZ', 'SK', 'EN'];
       const allFiles = [];
 
       for (const folder of folders) {
@@ -950,9 +1003,10 @@ exports.syncAllFiles = functions
             const metadata = await extractImageMetadata(fileName, bucket.name);
             if (metadata) {
               const safePath = sanitizePath(fileName);
+              const safeDocId = sanitizePath(fileName);
               const rtdbRef = getRTDB().ref(`image-metadata/${safePath}`);
               await rtdbRef.set(metadata);
-              await db.collection('image-metadata').doc(fileName).set(metadata, { merge: true });
+              await db.collection('image-metadata').doc(safeDocId).set(metadata, { merge: true });
               results.processedImages++;
             }
           } catch (error) {
