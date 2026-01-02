@@ -108,22 +108,28 @@ class SlovaDataService {
         fullPath: meta.fullPath
       })));
 
-      // Filtruj pouze slova soubory
+      // Filtruj meditace soubory (primárně meditacie/, zpětně kompatibilní se slova/)
       let slovaMetadata = Object.values(allMetadata).filter(meta => {
-        const isSlova = meta.folder === 'slova' ||
-          meta.fileName?.includes('slova/') ||
-          meta.fullPath?.includes('slova/');
-        return isSlova;
+        const isMeditacie = meta.folder === 'meditacie' ||
+                           meta.category === 'slova' ||
+                           meta.fileName?.includes('meditacie/') ||
+                           meta.fullPath?.includes('meditacie/') ||
+                           // Zpětná kompatibilita se slova/
+                           meta.folder === 'slova' ||
+                           meta.fileName?.includes('slova/') ||
+                           meta.fullPath?.includes('slova/');
+        return isMeditacie;
       });
 
-      // Pokud se nenašly žádné slova soubory, zkus najít všechny soubory s 'slova' v názvu
+      // Pokud se nenašly žádné meditace soubory, zkus najít všechny soubory s 'meditacie' nebo 'slova' v názvu
       if (slovaMetadata.length === 0) {
-        log.warn('No slova files found with folder filter, trying broader search...');
+        log.warn('No meditacie files found with folder filter, trying broader search...');
         slovaMetadata = Object.values(allMetadata).filter(meta => {
           const fileName = meta.fileName || meta.fullPath || '';
-          return fileName.toLowerCase().includes('slova') ||
-            fileName.toLowerCase().includes('muzsky') ||
-            fileName.toLowerCase().includes('zensky');
+          return fileName.toLowerCase().includes('meditacie') ||
+                 fileName.toLowerCase().includes('slova') ||
+                 fileName.toLowerCase().includes('muzsky') ||
+                 fileName.toLowerCase().includes('zensky');
         });
       }
 

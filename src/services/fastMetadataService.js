@@ -851,7 +851,7 @@ class FastMetadataService {
 
     // Pokud je to obrázek, zpracuj ho jako cover obrázek
     if (isImage) {
-      const folder = data.folder || (fileName.includes('hudba/') ? 'hudba' : fileName.includes('slova/') ? 'slova' : null);
+      const folder = data.folder || (fileName.includes('hudba/') ? 'hudba' : fileName.includes('meditacie/') ? 'meditacie' : fileName.includes('slova/') ? 'meditacie' : null);
       const isCover = fileNameOnly.toLowerCase().includes('cover');
 
       // Urči albumName ze struktury souboru
