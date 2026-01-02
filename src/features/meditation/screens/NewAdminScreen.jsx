@@ -136,11 +136,11 @@ const NewAdminScreen = () => {
     setLoading(true);
     try {
       const hudbaRef = ref(storage, 'hudba');
-      const slovaRef = ref(storage, 'slova');
+      const slovaRef = ref(storage, 'meditacie');
 
       const [hudbaFiles, slovaFiles] = await Promise.all([
         getAllFilesRecursively(hudbaRef, 'hudba'),
-        getAllFilesRecursively(slovaRef, 'slova')
+        getAllFilesRecursively(slovaRef, 'meditacie')
       ]);
 
       const hudbaMetadata = hudbaFiles;
@@ -187,11 +187,11 @@ const NewAdminScreen = () => {
 
       // Načti aktuální data z Firebase Storage
       const hudbaRef = ref(storage, 'hudba');
-      const slovaRef = ref(storage, 'slova');
+      const slovaRef = ref(storage, 'meditacie');
 
       const [hudbaFiles, slovaFiles] = await Promise.all([
         getAllFilesRecursively(hudbaRef, 'hudba'),
-        getAllFilesRecursively(slovaRef, 'slova')
+        getAllFilesRecursively(slovaRef, 'meditacie')
       ]);
 
       const currentFiles = [...hudbaFiles, ...slovaFiles];
@@ -323,8 +323,7 @@ const NewAdminScreen = () => {
     return cleanName
       .split('-')
       .map(word => word.charAt(0).toUpperCase() + word.slice(1))
-      .join(' ')
-      .replace(/[<>]/g, ''); // Remove potential XSS characters
+      .join(' ');
   };
 
   // Připravení dat pro Realtime Database
@@ -351,8 +350,8 @@ const NewAdminScreen = () => {
           category: file.folder === 'hudba' ? 'music' : 'speech'
         };
 
-        // Pro slova soubory přidej pokročilé metadata
-        if (file.folder === 'slova') {
+        // Pro meditacie soubory přidej pokročilé metadata
+        if (file.folder === 'meditacie') {
           const fileName = file.name;
           const isMale = fileName.includes('muzsky') || fileName.includes('male');
           const isFemale = fileName.includes('zensky') || fileName.includes('female');
@@ -395,7 +394,6 @@ const NewAdminScreen = () => {
 
   // Odhad délky audio souboru na základě velikosti (přibližně 1MB = 1 minuta)
   const estimateDuration = (sizeInBytes) => {
-    if (!sizeInBytes || sizeInBytes <= 0) return 0;
     const sizeInMB = sizeInBytes / (1024 * 1024);
     return Math.round(sizeInMB * 60); // sekundy
   };
@@ -502,7 +500,7 @@ const NewAdminScreen = () => {
 
       // Zobraz slova soubory
       const slovaFiles = metadataArray.filter(file =>
-        file.fileName && file.fileName.includes('slova/')
+        file.fileName && file.fileName.includes('meditacie/')
       );
       console.log(`🎤 Found ${slovaFiles.length} slova files in Firestore`);
 
@@ -570,10 +568,11 @@ const NewAdminScreen = () => {
           </div>
           <button
             onClick={() => setIsDarkMode(!isDarkMode)}
-            className={`p-3 rounded-lg transition-colors ${isDarkMode
-              ? 'bg-gray-700 hover:bg-gray-600'
-              : 'bg-gray-200 hover:bg-gray-300'
-              }`}
+            className={`p-3 rounded-lg transition-colors ${
+              isDarkMode
+                ? 'bg-gray-700 hover:bg-gray-600'
+                : 'bg-gray-200 hover:bg-gray-300'
+            }`}
           >
             {isDarkMode ? <Sun size={24} /> : <Moon size={24} />}
           </button>
@@ -760,8 +759,8 @@ const NewAdminScreen = () => {
           </div>
         </motion.div>
 
-        {/* Offline Cache sekce */}
-        <motion.div
+        {/* Offline Cache sekce - ZAKOMENTOVÁNO */}
+        {/* <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.6 }}
@@ -771,83 +770,7 @@ const NewAdminScreen = () => {
             <HardDrive className="mr-2" size={24} />
             Offline Cache
           </h3>
-          <p className="text-gray-500 mb-4">
-            Stáhněte audio soubory do cache pro offline použití aplikace.
-          </p>
-
-          {/* Cache statistiky */}
-          {cacheStats && (
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-              <div className={`p-4 rounded-lg ${isOfflineReady ? 'bg-green-50 border border-green-200' : 'bg-gray-50 border border-gray-200'}`}>
-                <div className="flex items-center mb-2">
-                  {isOfflineReady ? <Wifi className="text-green-500 mr-2" size={20} /> : <WifiOff className="text-gray-400 mr-2" size={20} />}
-                  <span className="font-semibold">Offline stav</span>
-                </div>
-                <p className={`text-sm ${isOfflineReady ? 'text-green-600' : 'text-gray-500'}`}>
-                  {isOfflineReady ? 'Připraveno pro offline' : 'Není připraveno'}
-                </p>
-              </div>
-
-              <div className="p-4 rounded-lg bg-blue-50 border border-blue-200">
-                <div className="flex items-center mb-2">
-                  <FileAudio className="text-blue-500 mr-2" size={20} />
-                  <span className="font-semibold">Stažené soubory</span>
-                </div>
-                <p className="text-sm text-blue-600">
-                  {cacheStats.totalFiles} / {audioStats.totalFiles}
-                </p>
-              </div>
-
-              <div className="p-4 rounded-lg bg-purple-50 border border-purple-200">
-                <div className="flex items-center mb-2">
-                  <Database className="text-purple-500 mr-2" size={20} />
-                  <span className="font-semibold">Velikost v cache</span>
-                </div>
-                <p className="text-sm text-purple-600">
-                  {formatFileSize(cacheStats.totalSize)}
-                </p>
-              </div>
-            </div>
-          )}
-
-          {/* Cache akce */}
-          <div className="space-y-4">
-            {isCaching ? (
-              <div className="bg-blue-50 p-6 rounded-lg border border-blue-200">
-                <div className="flex justify-between mb-2">
-                  <span className="text-sm font-medium text-blue-700">Stahování souborů do cache...</span>
-                  <span className="text-sm text-blue-700">{cacheProgress?.percentage}%</span>
-                </div>
-                <div className="w-full bg-blue-200 rounded-full h-3 mb-2">
-                  <div
-                    className="bg-blue-600 h-3 rounded-full transition-all duration-300"
-                    style={{ width: `${cacheProgress?.percentage}%` }}
-                  ></div>
-                </div>
-                <p className="text-xs text-blue-600">
-                  Soubor {cacheProgress?.current} z {cacheProgress?.total}
-                </p>
-              </div>
-            ) : (
-              <div className="flex flex-col md:flex-row gap-4">
-                <button
-                  onClick={startCachingAllFiles}
-                  disabled={loading || audioStats.totalFiles === 0}
-                  className="flex-1 bg-blue-600 hover:bg-blue-700 text-white py-3 px-6 rounded-xl font-semibold flex items-center justify-center transition-all shadow-md"
-                >
-                  <Download className="mr-2" size={20} />
-                  Stáhnout vše pro offline
-                </button>
-                <button
-                  onClick={clearCache}
-                  className="bg-white border-2 border-red-200 text-red-500 hover:bg-red-50 py-3 px-6 rounded-xl font-semibold transition-all"
-                >
-                  Vymazat cache
-                </button>
-              </div>
-            )}
-          </div>
-        </motion.div>
+        </motion.div> */}
 
         {/* Synchronizace Firestore */}
         <motion.div
@@ -904,20 +827,22 @@ const NewAdminScreen = () => {
               <button
                 onClick={saveToRealtimeDB}
                 disabled={loading || !preparedData || updateStatus !== 'needs-update'}
-                className={`w-full py-2 px-4 rounded-lg transition-colors ${updateStatus === 'needs-update'
-                  ? 'bg-green-500 hover:bg-green-600 text-white'
-                  : 'bg-gray-400 text-gray-600 cursor-not-allowed'
-                  }`}
+                className={`w-full py-2 px-4 rounded-lg transition-colors ${
+                  updateStatus === 'needs-update'
+                    ? 'bg-green-500 hover:bg-green-600 text-white'
+                    : 'bg-gray-400 text-gray-600 cursor-not-allowed'
+                }`}
               >
                 {loading ? <RefreshCw className="animate-spin mx-auto" size={20} /> : 'Uložit do Realtime DB'}
               </button>
               <button
                 onClick={saveToFirestore}
                 disabled={loading || !preparedData || updateStatus !== 'needs-update'}
-                className={`w-full py-2 px-4 rounded-lg transition-colors ${updateStatus === 'needs-update'
-                  ? 'bg-purple-500 hover:bg-purple-600 text-white'
-                  : 'bg-gray-400 text-gray-600 cursor-not-allowed'
-                  }`}
+                className={`w-full py-2 px-4 rounded-lg transition-colors ${
+                  updateStatus === 'needs-update'
+                    ? 'bg-purple-500 hover:bg-purple-600 text-white'
+                    : 'bg-gray-400 text-gray-600 cursor-not-allowed'
+                }`}
               >
                 {loading ? <RefreshCw className="animate-spin mx-auto" size={20} /> : 'Uložit do Firestore'}
               </button>
@@ -937,10 +862,11 @@ const NewAdminScreen = () => {
                         }
                       }}
                       disabled={loading || !preparedData}
-                      className={`w-full py-2 px-4 rounded-lg transition-colors ${preparedData
-                        ? 'bg-orange-500 hover:bg-orange-600 text-white'
-                        : 'bg-gray-400 text-gray-600 cursor-not-allowed'
-                        }`}
+                      className={`w-full py-2 px-4 rounded-lg transition-colors ${
+                        preparedData
+                          ? 'bg-orange-500 hover:bg-orange-600 text-white'
+                          : 'bg-gray-400 text-gray-600 cursor-not-allowed'
+                      }`}
                     >
                       {loading ? <RefreshCw className="animate-spin mx-auto" size={20} /> : '⚠️ Vynutit aktualizaci Realtime DB'}
                     </button>
@@ -951,10 +877,11 @@ const NewAdminScreen = () => {
                         }
                       }}
                       disabled={loading || !preparedData}
-                      className={`w-full py-2 px-4 rounded-lg transition-colors ${preparedData
-                        ? 'bg-purple-500 hover:bg-purple-600 text-white'
-                        : 'bg-gray-400 text-gray-600 cursor-not-allowed'
-                        }`}
+                      className={`w-full py-2 px-4 rounded-lg transition-colors ${
+                        preparedData
+                          ? 'bg-purple-500 hover:bg-purple-600 text-white'
+                          : 'bg-gray-400 text-gray-600 cursor-not-allowed'
+                      }`}
                     >
                       {loading ? <RefreshCw className="animate-spin mx-auto" size={20} /> : '⚠️ Vynutit aktualizaci Firestore'}
                     </button>
