@@ -86,8 +86,13 @@ export const useFirebaseCDNScanner = () => {
         .filter(item => {
           const name = item.name;
           const isMp3 = name.toLowerCase().endsWith('.mp3');
-          // Soubory ze slova/ složky, jazykových podsložek (CZ/, SK/, EN/) nebo začínající "muzsky" nebo "zensky"
-          const isSlova = name.startsWith('slova/') ||
+          // Soubory z meditacie/ složky (primární), jazykových podsložek (CZ/, SK/, EN/) nebo začínající "muzsky" nebo "zensky"
+          // Zpětná kompatibilita se slova/ složkou
+          const isSlova = name.startsWith('meditacie/') ||
+                         name.startsWith('meditacie/CZ/') ||
+                         name.startsWith('meditacie/SK/') ||
+                         name.startsWith('meditacie/EN/') ||
+                         name.startsWith('slova/') ||
                          name.startsWith('slova/CZ/') ||
                          name.startsWith('slova/SK/') ||
                          name.startsWith('slova/EN/') ||

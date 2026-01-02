@@ -74,18 +74,21 @@ export const useFirebaseAudioFilter = (userGender, userLanguage = 'sk') => {
       const fileName = file.fileName;
 
       if (normalizedUserLang === 'sk') {
-        // Pro SK zobraz soubory ze složky "slova/", "slova/SK/" a "SK/"
-        return fileName.startsWith('slova/') ||
-               fileName.startsWith('slova/SK/') ||
-               fileName.startsWith('SK/');
+        // Pro SK zobraz soubory ze složky "meditacie/SK/", "SK/" (slova/ pro zpětnou kompatibilitu)
+        return fileName.startsWith('meditacie/SK/') ||
+               fileName.startsWith('SK/') ||
+               fileName.startsWith('slova/') ||
+               fileName.startsWith('slova/SK/');
       } else if (normalizedUserLang === 'cz') {
-        // Pro CZ zobraz soubory ze složky "slova/CZ/" a "CZ/"
-        return fileName.startsWith('slova/CZ/') ||
-               fileName.startsWith('CZ/');
+        // Pro CZ zobraz soubory ze složky "meditacie/CZ/", "CZ/" (slova/ pro zpětnou kompatibilitu)
+        return fileName.startsWith('meditacie/CZ/') ||
+               fileName.startsWith('CZ/') ||
+               fileName.startsWith('slova/CZ/');
       } else if (normalizedUserLang === 'en') {
-        // Pro EN zobraz soubory ze složky "slova/EN/" a "EN/"
-        return fileName.startsWith('slova/EN/') ||
-               fileName.startsWith('EN/');
+        // Pro EN zobraz soubory ze složky "meditacie/EN/", "EN/" (slova/ pro zpětnou kompatibilitu)
+        return fileName.startsWith('meditacie/EN/') ||
+               fileName.startsWith('EN/') ||
+               fileName.startsWith('slova/EN/');
       }
 
       // Fallback - zobraz všechny soubory
