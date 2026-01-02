@@ -44,7 +44,7 @@ const SimpleAdminScreen = () => {
 
       querySnapshot.forEach((doc) => {
         const data = doc.data();
-        if (data.fileName && data.fileName.includes('slova/')) {
+        if (data.fileName && (data.fileName.includes('meditacie/') || data.folder === 'meditacie')) {
           slovaFiles.push(data);
         }
         if (data.fileName && data.fileName.includes('hudba/')) {
@@ -103,7 +103,7 @@ const SimpleAdminScreen = () => {
           // Zajisti, že má downloadURL nebo audioSrc
           downloadURL: data.downloadURL || data.audioSrc,
           // Zajisti, že má folder
-          folder: data.folder || (data.fileName?.includes('slova/') ? 'slova' : 'hudba'),
+          folder: data.folder || (data.fileName?.includes('meditacie/') ? 'meditacie' : 'hudba'),
           // Zajisti, že má displayName
           displayName: data.displayName || data.title || data.fileName?.replace(/\.[^/.]+$/, ""),
           // Zajisti, že má fullPath
@@ -113,7 +113,7 @@ const SimpleAdminScreen = () => {
       });
 
       const slovaFiles = metadataArray.filter(file =>
-        file.fileName && file.fileName.includes('slova/')
+        (file.fileName && file.fileName.includes('meditacie/')) || file.folder === 'meditacie'
       );
       const hudbaFiles = metadataArray.filter(file =>
         file.fileName && file.fileName.includes('hudba/')
@@ -364,8 +364,8 @@ const SimpleAdminScreen = () => {
             waveformData: waveformData,
             waveformGenerated: waveformData ? new Date().toISOString() : null,
             waveformSamples: waveformData ? 800 : null,
-            // Dodatečné informace pro slova soubory
-            ...(file.folder === 'slova' ? {
+            // Dodatečné informace pro meditacie soubory
+            ...(file.folder === 'meditacie' ? {
               gender: extractGender(file.name),
               topic: extractTopic(file.name),
               type: extractType(file.name)
@@ -433,7 +433,7 @@ const SimpleAdminScreen = () => {
       }
 
       // 4. Filtruj soubory podle složek
-      const slovaFiles = metadataArray.filter(file => file.folder === 'slova');
+      const slovaFiles = metadataArray.filter(file => file.folder === 'meditacie');
       const hudbaFiles = metadataArray.filter(file => file.folder === 'hudba');
       const dychanieFiles = metadataArray.filter(file => file.folder === 'dychanie');
 
@@ -650,9 +650,9 @@ const SimpleAdminScreen = () => {
       return allFiles;
     };
 
-    // Skenuj hudba, slova a dychanie složky
+    // Skenuj hudba, meditacie a dychanie složky
     const hudbaRef = ref(storage, 'hudba');
-    const slovaRef = ref(storage, 'slova');
+    const slovaRef = ref(storage, 'meditacie');
     const dychanieRef = ref(storage, 'dychanie');
 
     console.log('🚀 Začínám skenování Firebase Storage...');
@@ -707,7 +707,7 @@ const SimpleAdminScreen = () => {
 
     const [hudbaFiles, slovaFiles] = await Promise.all([
       getAllFilesRecursively(hudbaRef, 'hudba'),
-      getAllFilesRecursively(slovaRef, 'slova')
+      getAllFilesRecursively(slovaRef, 'meditacie')
     ]);
 
     console.log(`🫁 Dychanie files výsledek: ${dychanieFiles.length} souborů`);
@@ -811,7 +811,7 @@ const SimpleAdminScreen = () => {
         await slovaDataService.initialize();
 
         const slovaFiles = Object.values(realtimeMetadata).filter(file =>
-          file.folder === 'slova' || (file.fileName && file.fileName.includes('slova/'))
+          file.folder === 'meditacie' || (file.fileName && file.fileName.includes('meditacie/'))
         );
 
         const hudbaFiles = Object.values(realtimeMetadata).filter(file =>

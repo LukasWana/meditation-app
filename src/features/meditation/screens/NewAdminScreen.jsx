@@ -136,11 +136,11 @@ const NewAdminScreen = () => {
     setLoading(true);
     try {
       const hudbaRef = ref(storage, 'hudba');
-      const slovaRef = ref(storage, 'slova');
+      const slovaRef = ref(storage, 'meditacie');
 
       const [hudbaFiles, slovaFiles] = await Promise.all([
         getAllFilesRecursively(hudbaRef, 'hudba'),
-        getAllFilesRecursively(slovaRef, 'slova')
+        getAllFilesRecursively(slovaRef, 'meditacie')
       ]);
 
       const hudbaMetadata = hudbaFiles;
@@ -187,11 +187,11 @@ const NewAdminScreen = () => {
 
       // Načti aktuální data z Firebase Storage
       const hudbaRef = ref(storage, 'hudba');
-      const slovaRef = ref(storage, 'slova');
+      const slovaRef = ref(storage, 'meditacie');
 
       const [hudbaFiles, slovaFiles] = await Promise.all([
         getAllFilesRecursively(hudbaRef, 'hudba'),
-        getAllFilesRecursively(slovaRef, 'slova')
+        getAllFilesRecursively(slovaRef, 'meditacie')
       ]);
 
       const currentFiles = [...hudbaFiles, ...slovaFiles];
@@ -350,8 +350,8 @@ const NewAdminScreen = () => {
           category: file.folder === 'hudba' ? 'music' : 'speech'
         };
 
-        // Pro slova soubory přidej pokročilé metadata
-        if (file.folder === 'slova') {
+        // Pro meditacie soubory přidej pokročilé metadata
+        if (file.folder === 'meditacie') {
           const fileName = file.name;
           const isMale = fileName.includes('muzsky') || fileName.includes('male');
           const isFemale = fileName.includes('zensky') || fileName.includes('female');
@@ -500,7 +500,7 @@ const NewAdminScreen = () => {
 
       // Zobraz slova soubory
       const slovaFiles = metadataArray.filter(file =>
-        file.fileName && file.fileName.includes('slova/')
+        file.fileName && file.fileName.includes('meditacie/')
       );
       console.log(`🎤 Found ${slovaFiles.length} slova files in Firestore`);
 

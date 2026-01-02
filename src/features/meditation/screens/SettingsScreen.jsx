@@ -67,22 +67,22 @@ const SettingsScreen = ({
         const metadata = await realtimeMetadataService.getAllMetadata();
         console.log('📊 All metadata from realtimeMetadataService:', Object.keys(metadata).length);
 
-        // Debug: zobraz slova soubory
+        // Debug: zobraz meditacie soubory
         const slovaFiles = Object.values(metadata).filter(file =>
-          file.fileName && file.fileName.includes('slova/')
+          file.fileName && file.fileName.includes('meditacie/')
         );
-        console.log('🎤 Slova files found:', slovaFiles.length);
+        console.log('🎤 Meditacie files found:', slovaFiles.length);
         console.log('🎤 Sample slova files:', slovaFiles.slice(0, 3).map(f => ({
           fileName: f.fileName,
           downloadURL: f.downloadURL || f.audioSrc,
           folder: f.folder
         })));
 
-        // Debug: zobraz všechny soubory s 'slova' v názvu
+        // Debug: zobraz všechny soubory s 'meditacie' v názvu
         const allSlovaFiles = Object.values(metadata).filter(file =>
-          file.fileName && file.fileName.toLowerCase().includes('slova')
+          file.fileName && file.fileName.toLowerCase().includes('meditacie')
         );
-        console.log('🎤 All files with "slova" in name:', allSlovaFiles.length);
+        console.log('🎤 All files with "meditacie" in name:', allSlovaFiles.length);
         console.log('🎤 Sample files with "slova":', allSlovaFiles.slice(0, 5).map(f => ({
           fileName: f.fileName,
           hasDownloadURL: !!(f.downloadURL || f.audioSrc)
@@ -141,9 +141,9 @@ const SettingsScreen = ({
     if (filesToCache && filesToCache.length > 0) {
       console.log('🚀 Starting cache with files:', filesToCache.length);
 
-      // Debug: zobraz slova soubory v filesToCache
+      // Debug: zobraz meditacie soubory v filesToCache
       const slovaFilesToCache = filesToCache.filter(file =>
-        file.fileName && file.fileName.includes('slova/')
+        file.fileName && file.fileName.includes('meditacie/')
       );
       console.log('🎤 Slova files to cache:', slovaFilesToCache.length);
       console.log('🎤 Sample slova files to cache:', slovaFilesToCache.slice(0, 3).map(f => ({
