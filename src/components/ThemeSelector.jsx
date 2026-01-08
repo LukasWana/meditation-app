@@ -6,7 +6,7 @@ import { getThemeName } from '@data/themes';
 // Omezení odstraněna - obrázky se nahrávají bez validace a zpracování
 import FramerSection from '@components/FramerSection';
 import { ImageIcon, X, Palette } from 'lucide-react';
-import { ref, listAll, getDownloadURL, getMetadata } from 'firebase/storage';
+import { ref, listAll, getDownloadURL } from 'firebase/storage';
 import { storage } from '@config/secure-firebase';
 import log from '@services/logger';
 import cacheService from '@services/cacheServiceRefactored';
@@ -138,14 +138,11 @@ const ThemeSelector = () => {
         return name.endsWith('.jpg') || name.endsWith('.jpeg') || name.endsWith('.png') || name.endsWith('.webp');
       });
 
-      console.log('🔄 Filtered image files:', imageFiles.length, imageFiles.map(f => f.name));
+      console.log('🔄 Filtered image files:', imageFiles.length);
 
-      const backgrounds = [];
-
-      // Pro každý obrázek získat metadata, downloadURL a náhled
-      for (const itemRef of imageFiles) {
+      // PARALELNÍ načítání místo sekvenčního loopu - výrazně rychlejší
+      const backgroundPromises = imageFiles.map(async (itemRef) => {
         try {
-          console.log(`🔄 Processing image: ${itemRef.name}`);
           const imageCacheKey = `background/${itemRef.name}`;
 
           // Zkontroluj cache pro plný obrázek
@@ -160,10 +157,7 @@ const ThemeSelector = () => {
             console.log(`✅ Full image cache hit: ${itemRef.name}`);
           }
 
-          // Získat metadata (potřebujeme pro velikost a contentType)
-          const metadata = await getMetadata(itemRef);
-
-          // Zkusit načíst náhled (s cachováním)
+          // Zkusit načíst náhled (s cachováním) - paralelně
           const thumbnailURL = await loadThumbnailForBackground(itemRef.name);
           console.log(`✅ Loaded ${itemRef.name}, thumbnail: ${thumbnailURL ? 'yes' : 'no'}`);
 
@@ -171,19 +165,26 @@ const ThemeSelector = () => {
           const bestPreviewUrl = thumbnailURL || downloadURL;
           cacheService.preloadImage(bestPreviewUrl, `background-preview:${itemRef.name}`).catch(() => {});
 
-          backgrounds.push({
+          // Metadata není nutné pro zobrazení - přeskočíme ho pro rychlejší načítání
+          // Pokud bude potřeba, můžeme ho načíst později nebo z cache
+          return {
             name: itemRef.name,
             fullPath: itemRef.fullPath,
             downloadURL: downloadURL,
             thumbnailURL: thumbnailURL,
-            size: metadata.size,
-            contentType: metadata.contentType
-          });
+            size: null, // Lazy load pokud bude potřeba
+            contentType: null // Lazy load pokud bude potřeba
+          };
         } catch (metaError) {
-          console.warn(`❌ Failed to get metadata for ${itemRef.name}:`, metaError);
-          log.warn(`Failed to get metadata for ${itemRef.name}:`, metaError.message);
+          console.warn(`❌ Failed to process ${itemRef.name}:`, metaError);
+          log.warn(`Failed to process ${itemRef.name}:`, metaError.message);
+          return null;
         }
-      }
+      });
+
+      // Počkej na všechny paralelní requesty
+      const results = await Promise.all(backgroundPromises);
+      const backgrounds = results.filter(bg => bg !== null);
 
       console.log(`✅ Loaded ${backgrounds.length} backgrounds from Firebase Storage:`, backgrounds);
       setFirebaseBackgrounds(backgrounds);
