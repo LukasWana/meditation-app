@@ -126,6 +126,68 @@ export const useBackgroundDataLoader = ({ enabled = true } = {}) => {
 
         // Preload critical data
         await cacheServiceRefactored.preloadCriticalData();
+
+        // PŘEDNAČTI NÁHLEDY POZADÍ - na pozadí, aby se uživatel nemusel čekat v nastavení
+        try {
+          const { ref, listAll, getDownloadURL } = await import('firebase/storage');
+          const { storage } = await import('@config/secure-firebase');
+
+          const backgroundRef = ref(storage, 'background');
+          const backgroundResult = await listAll(backgroundRef);
+
+          const imageFiles = backgroundResult.items.filter(item => {
+            const name = item.name.toLowerCase();
+            return name.endsWith('.jpg') || name.endsWith('.jpeg') || name.endsWith('.png') || name.endsWith('.webp');
+          });
+
+          // Přednačti náhledy paralelně na pozadí (nečekej na dokončení)
+          const preloadPromises = imageFiles.map(async (itemRef) => {
+            try {
+              const imageCacheKey = `background/${itemRef.name}`;
+              const thumbnailCacheKey = `background/thumbnails/${itemRef.name}`;
+
+              // Zkontroluj cache pro plný obrázek
+              let downloadURL = cacheServiceRefactored.getImageUrl(imageCacheKey);
+              if (!downloadURL) {
+                downloadURL = await getDownloadURL(itemRef);
+                cacheServiceRefactored.setImageUrl(imageCacheKey, downloadURL);
+              }
+
+              // Zkus načíst náhled
+              let thumbnailURL = cacheServiceRefactored.getImageUrl(thumbnailCacheKey);
+              if (!thumbnailURL) {
+                try {
+                  const thumbnailRef = ref(storage, thumbnailCacheKey);
+                  thumbnailURL = await getDownloadURL(thumbnailRef);
+                  cacheServiceRefactored.setImageUrl(thumbnailCacheKey, thumbnailURL);
+                } catch {
+                  // Náhled neexistuje, použij plný obrázek
+                  thumbnailURL = null;
+                }
+              }
+
+              // Přednačti do Cache Storage pro okamžité zobrazení
+              const bestPreviewUrl = thumbnailURL || downloadURL;
+              if (bestPreviewUrl) {
+                await cacheServiceRefactored.preloadImage(bestPreviewUrl, `background-preview:${itemRef.name}`);
+              }
+            } catch (err) {
+              // Ignoruj chyby při přednačítání - není kritické
+            }
+          });
+
+          // Spusť přednačítání na pozadí (nečekej na dokončení)
+          Promise.all(preloadPromises).catch(() => {});
+          if (import.meta.env.MODE === 'development') {
+            log.cache(`🚀 Preloading ${imageFiles.length} background thumbnails in background...`);
+          }
+        } catch (err) {
+          // Ignoruj chyby při přednačítání - není kritické pro funkčnost aplikace
+          if (import.meta.env.MODE === 'development') {
+            log.warn('Failed to preload background thumbnails:', err);
+          }
+        }
+
         safelySetState(prev => ({
           ...prev,
           cacheInitialized: true,
