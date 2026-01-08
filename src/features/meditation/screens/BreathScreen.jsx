@@ -74,7 +74,7 @@ const BreathScreen = ({
   const currentPreparationCountdown = localPreparationCountdown;
 
   // Použij nový audio engine pro přesné přehrávání zvuků dýchání
-  const { getCurrentPhase } = useBreathAudioEngine(
+  const { getCurrentPhase, resetAudioEngine } = useBreathAudioEngine(
     isBreathing,
     breathInDuration,
     breathOutDuration,
@@ -193,6 +193,9 @@ const BreathScreen = ({
   const handleReset = () => {
     setIsBreathing(false);
     setBreathTime(breathDuration * 60);
+    setLocalIsPreparing(false);
+    setLocalPreparationCountdown(0);
+    resetAudioEngine();
   };
 
 
