@@ -653,6 +653,33 @@ export const useBreathAudioEngine = (
     isSuspendedRef.current = false;
     scheduledBoundariesRef.current.clear();
     lastPhaseUpdateRef.current = null;
+
+    // DŮLEŽITÉ: Odpoj gain nodes a nastav na null, aby se při dalším startu správně znovu vytvořily
+    try {
+      if (inGainRef.current) {
+        inGainRef.current.disconnect();
+        inGainRef.current = null;
+      }
+      if (outGainRef.current) {
+        outGainRef.current.disconnect();
+        outGainRef.current = null;
+      }
+      if (clickGainRef.current) {
+        clickGainRef.current.disconnect();
+        clickGainRef.current = null;
+      }
+      if (masterGainRef.current) {
+        masterGainRef.current.disconnect();
+        masterGainRef.current = null;
+      }
+    } catch (error) {
+      console.warn('Error disconnecting gain nodes during reset:', error);
+      // I když dojde k chybě, nastav refs na null, aby se vytvořily nové
+      inGainRef.current = null;
+      outGainRef.current = null;
+      clickGainRef.current = null;
+      masterGainRef.current = null;
+    }
   }, [stopAllSources]);
 
   // Cleanup při unmount
