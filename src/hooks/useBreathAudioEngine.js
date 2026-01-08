@@ -62,7 +62,54 @@ export const useBreathAudioEngine = (
   // Inicializace AudioContext
   const initializeAudioContext = useCallback(() => {
     if (audioContextRef.current) {
-      return audioContextRef.current;
+      // Pokud AudioContext existuje, zkontroluj zda jsou gain nodes správně připojené
+      // Pokud ne, znovu je vytvoř a připoj
+      const audioContext = audioContextRef.current;
+
+      // Zkontroluj, zda gain nodes existují a mají správný context
+      const needsRecreation = !masterGainRef.current ||
+        !inGainRef.current ||
+        !outGainRef.current ||
+        !clickGainRef.current ||
+        masterGainRef.current.context !== audioContext ||
+        inGainRef.current.context !== audioContext ||
+        outGainRef.current.context !== audioContext ||
+        clickGainRef.current.context !== audioContext;
+
+      if (needsRecreation) {
+        // Odpoj staré nodes pokud existují
+        try {
+          if (masterGainRef.current) {
+            masterGainRef.current.disconnect();
+          }
+          if (inGainRef.current) {
+            inGainRef.current.disconnect();
+          }
+          if (outGainRef.current) {
+            outGainRef.current.disconnect();
+          }
+          if (clickGainRef.current) {
+            clickGainRef.current.disconnect();
+          }
+        } catch (e) {
+          // Ignoruj chyby při odpojování
+        }
+
+        // Vytvoř nové gain nodes
+        masterGainRef.current = audioContext.createGain();
+        masterGainRef.current.connect(audioContext.destination);
+
+        inGainRef.current = audioContext.createGain();
+        inGainRef.current.connect(masterGainRef.current);
+
+        outGainRef.current = audioContext.createGain();
+        outGainRef.current.connect(masterGainRef.current);
+
+        clickGainRef.current = audioContext.createGain();
+        clickGainRef.current.connect(masterGainRef.current);
+      }
+
+      return audioContext;
     }
 
     try {
@@ -585,6 +632,29 @@ export const useBreathAudioEngine = (
     return phase;
   }, [breathInDuration, breathOutDuration]);
 
+  // Reset audio engine - volá se při kliknutí na tlačítko reset
+  const resetAudioEngine = useCallback(() => {
+    console.log('🔄 Resetting audio engine');
+
+    // Zastav všechny aktivní sources
+    stopAllSources();
+
+    // Vyčisti scheduler
+    if (schedulerIntervalRef.current) {
+      clearInterval(schedulerIntervalRef.current);
+      schedulerIntervalRef.current = null;
+    }
+
+    // Reset scheduler refs
+    scheduledUntilRef.current = 0;
+    startAtAudioTimeRef.current = null;
+    pausedAtRef.current = null;
+    pausedElapsedRef.current = 0;
+    isSuspendedRef.current = false;
+    scheduledBoundariesRef.current.clear();
+    lastPhaseUpdateRef.current = null;
+  }, [stopAllSources]);
+
   // Cleanup při unmount
   useEffect(() => {
     return () => {
@@ -625,7 +695,8 @@ export const useBreathAudioEngine = (
   return {
     isLoading,
     loadError,
-    getCurrentPhase
+    getCurrentPhase,
+    resetAudioEngine
   };
 };
 
