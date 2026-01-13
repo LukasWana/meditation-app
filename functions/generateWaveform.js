@@ -15,6 +15,19 @@ if (!admin.apps.length) {
 }
 
 /**
+ * Generování waveformy je nákladné + používá admin SDK (Storage/RTDB),
+ * proto musí být callable endpoint chráněný (admin custom claim).
+ */
+function requireAdminCallable(context) {
+  if (!context || !context.auth || !context.auth.uid) {
+    throw new functions.https.HttpsError('unauthenticated', 'Musíš být přihlášen.');
+  }
+  if (context.auth.token?.admin !== true) {
+    throw new functions.https.HttpsError('permission-denied', 'Vyžadováno admin oprávnění.');
+  }
+}
+
+/**
  * Generuje waveform data z audio souboru pomocí ffmpeg (správná metoda)
  * Používá PCM data pro přesné generování waveformy
  * @param {string} tempFilePath - Cesta k dočasnému audio souboru
@@ -184,7 +197,8 @@ exports.generateWaveform = functions
     memory: '512MB'
   })
   .https
-  .onCall(async (data, _context) => {
+  .onCall(async (data, context) => {
+    requireAdminCallable(context);
     try {
       // ✅ OPRAVA: Zvýšeno z 150 na 800 pro lepší detail
       const { fileName, samples = 800 } = data || {};
