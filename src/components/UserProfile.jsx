@@ -97,6 +97,7 @@ const UserProfile = () => {
 
   const displayName = user?.displayName || user?.email?.split('@')[0] || 'Uživatel';
   const photoURL = user?.photoURL;
+  const [imageError, setImageError] = useState(false);
 
   // Debug: zkontroluj, jestli photoURL existuje
   useEffect(() => {
@@ -109,6 +110,11 @@ const UserProfile = () => {
       });
     }
   }, [user]);
+
+  // Reset image error když se změní photoURL
+  useEffect(() => {
+    setImageError(false);
+  }, [photoURL]);
 
   // Debug: loguj změny showMenu
   useEffect(() => {
@@ -165,21 +171,22 @@ const UserProfile = () => {
           type="button"
           style={{ pointerEvents: 'auto', position: 'relative', zIndex: 100 }}
         >
-          {photoURL ? (
+          {photoURL && !imageError ? (
             <img
               src={photoURL}
               alt={displayName}
               className="w-7 h-7 rounded-full object-cover"
+              onLoad={() => {
+                console.log('✅ Profile image loaded successfully:', photoURL);
+              }}
               onError={(e) => {
-                console.error('Failed to load profile image:', photoURL);
+                console.warn('⚠️ Failed to load profile image:', photoURL);
+                setImageError(true);
                 e.target.style.display = 'none';
-                // Zobraz fallback avatar
-                const fallback = e.target.parentElement?.querySelector('.avatar-fallback');
-                if (fallback) fallback.style.display = 'flex';
               }}
             />
           ) : null}
-          <div className={`w-7 h-7 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center avatar-fallback ${photoURL ? 'hidden' : ''}`}>
+          <div className={`w-7 h-7 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center avatar-fallback ${photoURL && !imageError ? 'hidden' : ''}`}>
             <span className="text-white text-xs font-semibold">
               {displayName.charAt(0).toUpperCase()}
             </span>
@@ -226,21 +233,22 @@ const UserProfile = () => {
             {/* User info */}
             <div className="px-4 py-3 border-b border-gray-200">
               <div className="flex items-center gap-3">
-                {photoURL ? (
+                {photoURL && !imageError ? (
                   <img
                     src={photoURL}
                     alt={displayName}
                     className="w-10 h-10 rounded-full object-cover"
+                    onLoad={() => {
+                      console.log('✅ Profile image loaded in menu:', photoURL);
+                    }}
                     onError={(e) => {
-                      console.error('Failed to load profile image in menu:', photoURL);
+                      console.warn('⚠️ Failed to load profile image in menu:', photoURL);
+                      setImageError(true);
                       e.target.style.display = 'none';
-                      // Zobraz fallback avatar
-                      const fallback = e.target.parentElement?.querySelector('.avatar-fallback-menu');
-                      if (fallback) fallback.style.display = 'flex';
                     }}
                   />
                 ) : null}
-                <div className={`w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center avatar-fallback-menu ${photoURL ? 'hidden' : ''}`}>
+                <div className={`w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center avatar-fallback-menu ${photoURL && !imageError ? 'hidden' : ''}`}>
                   <span className="text-white text-sm font-semibold">
                     {displayName.charAt(0).toUpperCase()}
                   </span>
