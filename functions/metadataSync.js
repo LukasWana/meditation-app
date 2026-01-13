@@ -18,6 +18,19 @@ const db = admin.firestore();
 let rtdb;
 
 /**
+ * Callable Functions musí být chráněné – jinak je může volat kdokoliv (DoS / zneužití resources).
+ * Používáme custom claim `admin=true` (stejně jako v Firestore/Storage rules).
+ */
+function requireAdminCallable(context) {
+  if (!context || !context.auth || !context.auth.uid) {
+    throw new functions.https.HttpsError('unauthenticated', 'Musíš být přihlášen.');
+  }
+  if (context.auth.token?.admin !== true) {
+    throw new functions.https.HttpsError('permission-denied', 'Vyžadováno admin oprávnění.');
+  }
+}
+
+/**
  * RTDB init musí být lazy.
  * Firebase CLI při deploy/analýze může načítat kód bez plné konfigurace (FIREBASE_CONFIG),
  * a admin.database() pak spadne na "Can't determine Firebase Database URL."
@@ -74,7 +87,8 @@ exports.testMetadata = functions
     memory: '128MB'
   })
   .https
-  .onCall(async (_data, _context) => {
+  .onCall(async (_data, context) => {
+    requireAdminCallable(context);
     return {
       success: true,
       message: 'Metadata service is working',
@@ -812,7 +826,8 @@ exports.syncAllFiles = functions
     memory: '1GB'
   })
   .https
-  .onCall(async (_data, _context) => {
+  .onCall(async (_data, context) => {
+    requireAdminCallable(context);
     try {
       console.log('🚀 Starting manual sync for all files...');
 
@@ -1092,7 +1107,8 @@ exports.syncStorage = functions
     memory: '512MB'
   })
   .https
-  .onCall(async (_data, _context) => {
+  .onCall(async (_data, context) => {
+    requireAdminCallable(context);
     try {
       console.log('🚀 Starting manual metadata sync...');
 
@@ -1149,7 +1165,8 @@ exports.getFileStats = functions
     memory: '128MB'
   })
   .https
-  .onCall(async (_data, _context) => {
+  .onCall(async (_data, context) => {
+    requireAdminCallable(context);
     try {
       const snapshot = await db.collection('audio-metadata').limit(1000).get();
       const stats = {
@@ -1194,7 +1211,8 @@ exports.saveScrapedMetadata = functions
     memory: '256MB'
   })
   .https
-  .onCall(async (data, _context) => {
+  .onCall(async (data, context) => {
+    requireAdminCallable(context);
     try {
       const { fileName, metadata } = data || {};
 
@@ -1224,7 +1242,8 @@ exports.cleanupMetadata = functions
     memory: '256MB'
   })
   .https
-  .onCall(async (_data, _context) => {
+  .onCall(async (_data, context) => {
+    requireAdminCallable(context);
     try {
       console.log('🧹 Starting metadata cleanup...');
 
