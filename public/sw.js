@@ -4,7 +4,7 @@
  */
 
 // Verze cache – při změně se smažou staré cache a natáhne se nový index.html
-const CACHE_VERSION = 'v2';
+const CACHE_VERSION = 'v3';
 const STATIC_CACHE = `static-${CACHE_VERSION}`;
 const DYNAMIC_CACHE = `dynamic-${CACHE_VERSION}`;
 const AUDIO_CACHE = `audio-${CACHE_VERSION}`;
@@ -12,7 +12,6 @@ const AUDIO_CACHE = `audio-${CACHE_VERSION}`;
 // Statické soubory k cache
 const STATIC_ASSETS = [
   '/',
-  '/index.html',
   '/manifest.json',
   '/offline.html'
 ];
@@ -66,6 +65,14 @@ self.addEventListener('activate', (event) => {
 self.addEventListener('fetch', (event) => {
   const { request } = event;
   const url = new URL(request.url);
+
+  // Navigace / HTML dokumenty: vždy Network First bez cachování (kvůli rychlým aktualizacím + CSP změnám)
+  if ((request.mode === 'navigate' || request.destination === 'document') && request.method === 'GET') {
+    event.respondWith(
+      fetch(request, { cache: 'no-store' }).catch(() => caches.match('/offline.html'))
+    );
+    return;
+  }
 
   // Ignoruj non-HTTP požadavky
   if (!request.url.startsWith('http')) {
