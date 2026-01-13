@@ -60,7 +60,8 @@ export const getCacheInfo = () => {
 };
 
 // Export pro použití v konzoli
-if (typeof window !== 'undefined') {
+const __isDev__ = import.meta?.env?.MODE === 'development';
+if (typeof window !== 'undefined' && __isDev__) {
   window.testCachePerformance = testCachePerformance;
   window.clearCache = clearCache;
   window.getCacheInfo = getCacheInfo;
