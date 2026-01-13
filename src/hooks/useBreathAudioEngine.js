@@ -54,6 +54,9 @@ export const useBreathAudioEngine = (
   const [isLoading, setIsLoading] = useState(false);
   const [loadError, setLoadError] = useState(null);
 
+  // State pro sledování načtení bufferů (pro správné dependency v useEffect)
+  const [buffersReady, setBuffersReady] = useState(false);
+
   // URLs pro načítání
   const [inSoundUrl, setInSoundUrl] = useState(null);
   const [outSoundUrl, setOutSoundUrl] = useState(null);
@@ -145,6 +148,9 @@ export const useBreathAudioEngine = (
 
   // Načtení URL pro zvuky (stejná logika jako v useBreathSounds)
   useEffect(() => {
+    // Resetuj buffersReady při změně zvuků
+    setBuffersReady(false);
+
     const loadSoundUrl = async (soundId, setUrl) => {
       if (soundId === 'none' || !soundId) {
         setUrl(null);
@@ -199,10 +205,34 @@ export const useBreathAudioEngine = (
       }
     };
 
-    if (inSoundUrl) decodeAudio(inSoundUrl, inBufferRef);
-    if (outSoundUrl) decodeAudio(outSoundUrl, outBufferRef);
-    if (clickSoundUrl) decodeAudio(clickSoundUrl, clickBufferRef);
-  }, [inSoundUrl, outSoundUrl, clickSoundUrl, initializeAudioContext]);
+    const loadPromises = [];
+    if (inSoundUrl) {
+      loadPromises.push(decodeAudio(inSoundUrl, inBufferRef));
+    } else {
+      inBufferRef.current = null;
+    }
+    if (outSoundUrl) {
+      loadPromises.push(decodeAudio(outSoundUrl, outBufferRef));
+    } else {
+      outBufferRef.current = null;
+    }
+    if (clickSoundUrl) {
+      loadPromises.push(decodeAudio(clickSoundUrl, clickBufferRef));
+    } else {
+      clickBufferRef.current = null;
+    }
+
+    // Počkej na načtení všech bufferů a aktualizuj state
+    Promise.all(loadPromises).then(() => {
+      // Zkontroluj, zda jsou všechny potřebné buffery načtené
+      const needsInBuffer = breathInSound && breathInSound !== 'none';
+      const needsOutBuffer = breathOutSound && breathOutSound !== 'none';
+      const hasInBuffer = !needsInBuffer || inBufferRef.current !== null;
+      const hasOutBuffer = !needsOutBuffer || outBufferRef.current !== null;
+
+      setBuffersReady(hasInBuffer && hasOutBuffer);
+    });
+  }, [inSoundUrl, outSoundUrl, clickSoundUrl, initializeAudioContext, breathInSound, breathOutSound]);
 
   // Zastavení všech aktivních sources
   const stopAllSources = useCallback(() => {
@@ -482,22 +512,31 @@ export const useBreathAudioEngine = (
       scheduledBoundariesRef.current.clear();
       lastPhaseUpdateRef.current = null;
 
-      // Odpoj gain nodes od audio contextu
+      // Odpoj gain nodes od audio contextu a nastav na null, aby se při dalším startu správně znovu vytvořily
       try {
         if (inGainRef.current) {
           inGainRef.current.disconnect();
+          inGainRef.current = null;
         }
         if (outGainRef.current) {
           outGainRef.current.disconnect();
+          outGainRef.current = null;
         }
         if (clickGainRef.current) {
           clickGainRef.current.disconnect();
+          clickGainRef.current = null;
         }
         if (masterGainRef.current) {
           masterGainRef.current.disconnect();
+          masterGainRef.current = null;
         }
       } catch (error) {
         console.warn('Error disconnecting gain nodes:', error);
+        // I když dojde k chybě, nastav refs na null, aby se vytvořily nové
+        inGainRef.current = null;
+        outGainRef.current = null;
+        clickGainRef.current = null;
+        masterGainRef.current = null;
       }
 
       return;
@@ -506,6 +545,27 @@ export const useBreathAudioEngine = (
     // Inicializuj AudioContext
     const audioContext = initializeAudioContext();
     if (!audioContext) return;
+
+    // DŮLEŽITÉ: Zkontroluj, zda jsou buffery načtené před spuštěním
+    // Pokud jsou zvuky nastavené (ne 'none'), musí být buffery načtené
+    const needsInBuffer = breathInSound && breathInSound !== 'none';
+    const needsOutBuffer = breathOutSound && breathOutSound !== 'none';
+    const hasInBuffer = !needsInBuffer || inBufferRef.current !== null;
+    const hasOutBuffer = !needsOutBuffer || outBufferRef.current !== null;
+
+    if (!hasInBuffer || !hasOutBuffer) {
+      // Buffery se ještě načítají, počkej
+      console.log('⏳ Waiting for audio buffers to load...', {
+        needsInBuffer,
+        needsOutBuffer,
+        hasInBuffer,
+        hasOutBuffer,
+        inBuffer: !!inBufferRef.current,
+        outBuffer: !!outBufferRef.current,
+        buffersReady
+      });
+      return;
+    }
 
     // Resume AudioContext pokud je suspendovaný
     if (audioContext.state === 'suspended') {
@@ -552,7 +612,42 @@ export const useBreathAudioEngine = (
         schedulerIntervalRef.current = null;
       }
     };
-  }, [isPlaying, initializeAudioContext, scheduler, stopAllSources]);
+  }, [isPlaying, initializeAudioContext, scheduler, stopAllSources, breathInSound, breathOutSound, buffersReady]);
+
+  // Znovu spusť scheduler, když se buffery načtou (pokud je isPlaying)
+  useEffect(() => {
+    if (!isPlaying) return;
+    if (schedulerIntervalRef.current) return; // Scheduler už běží
+
+    const needsInBuffer = breathInSound && breathInSound !== 'none';
+    const needsOutBuffer = breathOutSound && breathOutSound !== 'none';
+    const hasInBuffer = !needsInBuffer || inBufferRef.current !== null;
+    const hasOutBuffer = !needsOutBuffer || outBufferRef.current !== null;
+
+    // Pokud jsou všechny potřebné buffery načtené a scheduler ještě neběží, spusť ho
+    if (hasInBuffer && hasOutBuffer && buffersReady) {
+      const audioContext = initializeAudioContext();
+      if (!audioContext) return;
+
+      if (audioContext.state === 'suspended') {
+        audioContext.resume().catch(err => {
+          console.error('Failed to resume AudioContext:', err);
+        });
+      }
+
+      if (!startAtAudioTimeRef.current) {
+        startAtAudioTimeRef.current = audioContext.currentTime;
+      }
+
+      isSuspendedRef.current = false;
+
+      schedulerIntervalRef.current = setInterval(() => {
+        scheduler();
+      }, 50);
+
+      scheduler();
+    }
+  }, [isPlaying, breathInSound, breathOutSound, buffersReady, initializeAudioContext, scheduler]);
 
   // Handling suspend/resume a visibility change
   useEffect(() => {
