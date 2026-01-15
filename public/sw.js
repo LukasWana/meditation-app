@@ -46,8 +46,8 @@ self.addEventListener('activate', (event) => {
         return Promise.all(
           cacheNames.map((cacheName) => {
             if (cacheName !== STATIC_CACHE &&
-                cacheName !== DYNAMIC_CACHE &&
-                cacheName !== AUDIO_CACHE) {
+              cacheName !== DYNAMIC_CACHE &&
+              cacheName !== AUDIO_CACHE) {
 
               return caches.delete(cacheName);
             }
@@ -79,16 +79,14 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  // Pro MP3 soubory a Firebase Storage: nejdříve zkontroluj cache, pak nech prohlížeč zpracovat
-  // Důležité pro Android - cachované soubory musí fungovat, ale nové soubory musí být bez opaque responses
+  // Pro MP3 soubory a Firebase Storage: Cache First s CORS-enabled fetch
+  // Důležité pro Android - používáme pouze CORS requesty, žádné opaque responses
   if (url.hostname.includes('firebasestorage.googleapis.com') || url.pathname.endsWith('.mp3') || url.pathname.includes('/media/') || request.headers.get('accept')?.includes('audio/')) {
-    // Zkus cache nejdříve - pokud je soubor v cache, vrať ho
     event.respondWith(
       caches.open('meditation-audio-cache').then(async (cache) => {
-        // Zkus najít podle originál URL
+        // Zkus najít v cache podle různých klíčů
         let cachedResponse = await cache.match(request);
 
-        // Pokud není podle originál URL, zkus najít podle různých variant klíčů
         if (!cachedResponse) {
           const fileName = url.pathname.split('/').pop();
           const possibleKeys = [
@@ -102,53 +100,49 @@ self.addEventListener('fetch', (event) => {
           for (const cacheKey of possibleKeys) {
             try {
               cachedResponse = await cache.match(cacheKey);
-              if (cachedResponse) {
+              if (cachedResponse && cachedResponse.type !== 'opaque') {
+                // Používej pouze non-opaque responses
                 break;
               }
+              cachedResponse = null; // Reset pokud je opaque
             } catch (err) {
               // Ignoruj chyby při hledání
             }
           }
         }
 
-        if (cachedResponse) {
-          // Pokud je opaque response, převeď ho na normální Response s blobem
-          // Opaque responses nefungují s Audio elementem na Androidu
-          if (cachedResponse.type === 'opaque') {
-            console.log(`🔄 Converting opaque response to blob for: ${request.url}`);
-            try {
-              // Pokus se z opaque response získat blob
-              const blob = await cachedResponse.blob();
-
-              // Vytvoř nový Response s blobem a správnými hlavičkami
-              const newResponse = new Response(blob, {
-                status: 200,
-                statusText: 'OK',
-                headers: {
-                  'Content-Type': 'audio/mpeg',
-                  'Content-Length': blob.size.toString(),
-                  'Cache-Control': 'public, max-age=31536000'
-                }
-              });
-
-              console.log(`✅ Converted opaque response to normal Response for: ${request.url}`);
-              return newResponse;
-            } catch (blobError) {
-              console.warn(`⚠️ Failed to convert opaque response for: ${request.url}`, blobError);
-              // Pokud se nepodaří převést, zkus fetch
-              return fetch(request);
-            }
-          }
-
-          // Pro normální responses vrať přímo
+        // Pokud máme validní cache hit (non-opaque), vrať ho
+        if (cachedResponse && cachedResponse.type !== 'opaque') {
+          console.log(`🎵 Cache hit for: ${request.url}`);
           return cachedResponse;
         }
 
-        // Pokud není v cache, nech prohlížeč zpracovat požadavek přímo (bez interceptování)
-        // Tím se zabrání opaque responses, které nefungují na Androidu
-        return fetch(request);
-      }).catch(() => {
-        // V případě chyby zkus fetch
+        // Pokud není v cache nebo je opaque, udělej CORS fetch
+        // Firebase Storage má CORS enabled, takže tento fetch bude fungovat
+        console.log(`🎵 Cache miss for: ${request.url} - fetching with CORS`);
+        try {
+          const networkResponse = await fetch(request, {
+            mode: 'cors',
+            credentials: 'omit',
+            cache: 'force-cache'
+          });
+
+          if (networkResponse.ok) {
+            // Ulož do cache pro příští použití
+            cache.put(request, networkResponse.clone());
+            return networkResponse;
+          } else {
+            console.warn(`⚠️ Network fetch failed: ${request.url} - ${networkResponse.status}`);
+            return networkResponse;
+          }
+        } catch (fetchError) {
+          console.error(`❌ CORS fetch failed for: ${request.url}`, fetchError);
+          // Pokud CORS selže, zkus fallback bez Service Worker
+          return fetch(request);
+        }
+      }).catch((cacheError) => {
+        console.error(`❌ Cache error for: ${request.url}`, cacheError);
+        // V případě chyby cache, zkus přímý fetch
         return fetch(request);
       })
     );
@@ -233,33 +227,33 @@ async function networkFirstAudio(request, cacheName) {
       return cachedResponse;
     }
 
-        // Pokud není v cache, zkus network
-        try {
-          // Pro Firebase Storage URL použij no-cors mode
-          const networkResponse = await fetch(request, {
-            mode: 'no-cors',
-            credentials: 'omit'
-          });
+    // Pokud není v cache, zkus network
+    try {
+      // Pro Firebase Storage URL použij no-cors mode
+      const networkResponse = await fetch(request, {
+        mode: 'no-cors',
+        credentials: 'omit'
+      });
 
-          if (networkResponse.type === 'opaque') {
-            console.log(`🎵 No-CORS success for: ${request.url}`);
-            // Ulož opaque response do cache
-            const cache = await caches.open(cacheName);
-            cache.put(request, networkResponse.clone());
-            return networkResponse;
-          } else {
-            console.warn(`🎵 Non-opaque response for: ${request.url} - ${networkResponse.type}`);
-            // Ulož i non-opaque response do cache
-            const cache = await caches.open(cacheName);
-            cache.put(request, networkResponse.clone());
-            return networkResponse;
-          }
-        } catch (fetchError) {
-          console.error(`🎵 Fetch error for: ${request.url}`, fetchError);
+      if (networkResponse.type === 'opaque') {
+        console.log(`🎵 No-CORS success for: ${request.url}`);
+        // Ulož opaque response do cache
+        const cache = await caches.open(cacheName);
+        cache.put(request, networkResponse.clone());
+        return networkResponse;
+      } else {
+        console.warn(`🎵 Non-opaque response for: ${request.url} - ${networkResponse.type}`);
+        // Ulož i non-opaque response do cache
+        const cache = await caches.open(cacheName);
+        cache.put(request, networkResponse.clone());
+        return networkResponse;
+      }
+    } catch (fetchError) {
+      console.error(`🎵 Fetch error for: ${request.url}`, fetchError);
 
-          // Fallback na offline stránku
-          return new Response('Offline', { status: 503 });
-        }
+      // Fallback na offline stránku
+      return new Response('Offline', { status: 503 });
+    }
   } catch (error) {
     console.error('❌ Service Worker: Audio fetch failed', error);
 
