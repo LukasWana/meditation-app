@@ -67,6 +67,7 @@ export const useFinalSound = (breathFinalSound, isBreathing) => {
         }
 
         const audio = new Audio(url);
+        audio.crossOrigin = 'anonymous'; // Povolí CORS pro Android Chrome
         audio.volume = 1;
         audio.play().catch((error) => {
           console.error('Failed to play final sound:', error);

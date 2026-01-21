@@ -104,10 +104,10 @@ export const useBreathTimer = (
 
       // Kontrola finálního zvuku (pouze pokud je zapnuté pokračovat po skončení)
       if (continueAfterEnd &&
-          breathFinalSoundRef.current &&
-          breathFinalSoundRef.current !== 'none' &&
-          !endSoundScheduledRef.current &&
-          elapsed >= totalDurationRef.current) {
+        breathFinalSoundRef.current &&
+        breathFinalSoundRef.current !== 'none' &&
+        !endSoundScheduledRef.current &&
+        elapsed >= totalDurationRef.current) {
         // Přehraj finální zvuk přesně v momentě, kdy uplyne nastavená délka
         endSoundScheduledRef.current = true;
         playFinalSoundRef.current();
@@ -175,15 +175,39 @@ export const useBreathTimer = (
       return;
     }
 
-    // Režim bez pokračování: při breathTime <= 0 čekej na dokončení fáze a pak zastav
+    // Režim bez pokračování: při breathTime <= 0 čekej na dokončení celého cyklu a pak zastav
     if (!continueAfterEnd && breathTime <= 0 && !waitingForCycleCompletionRef.current) {
       waitingForCycleCompletionRef.current = true;
 
       const currentPhase = currentPhaseRef.current;
-      const currentPhaseDuration = currentPhase === 'in' ? breathInDuration : breathOutDuration;
       const fadeOutDuration = 1.5;
       const silenceDuration = 1.0;
-      const totalWaitTime = (currentPhaseDuration + fadeOutDuration + silenceDuration) * 1000;
+
+      // Vypočítat, jak dlouho už dýchání běží a kde ve fázi jsme
+      const now = Date.now();
+      const elapsed = startTimeRef.current ? (now - startTimeRef.current) / 1000 : 0;
+      const cycleDuration = breathInDuration + breathOutDuration;
+      const cycleTime = elapsed % cycleDuration; // Pozice v aktuálním cyklu
+
+      // Vypočítat zbývající čas podle fáze:
+      // - Pokud jsme v nádechu, musíme počkat na zbývající část nádechu + celý výdech + fade-outy + ticho
+      // - Pokud jsme ve výdechu, stačí počkat jen na zbývající část výdechu + fade-out + ticho
+      let totalWaitTime;
+      if (currentPhase === 'in') {
+        // Jsme v nádechu - zjisti, kolik z nádechu už uběhlo
+        const breathInElapsed = cycleTime; // Kolik sekund nádechu už proběhlo
+        const breathInRemaining = Math.max(0, breathInDuration - breathInElapsed);
+
+        // Dokončit zbývající část nádechu + celý výdech (zajistí dokončení celého cyklu)
+        totalWaitTime = (breathInRemaining + fadeOutDuration + breathOutDuration + fadeOutDuration + silenceDuration) * 1000;
+      } else {
+        // Jsme ve výdechu - zjisti, kolik z výdechu už uběhlo
+        const breathOutElapsed = cycleTime - breathInDuration; // Kolik sekund výdechu už proběhlo
+        const breathOutRemaining = Math.max(0, breathOutDuration - breathOutElapsed);
+
+        // Jen dokončit zbývající část výdechu (nádech už proběhl)
+        totalWaitTime = (breathOutRemaining + fadeOutDuration + silenceDuration) * 1000;
+      }
 
       if (completionTimeoutRef.current) {
         clearTimeout(completionTimeoutRef.current);
