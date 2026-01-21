@@ -180,8 +180,6 @@ export const useBreathTimer = (
       waitingForCycleCompletionRef.current = true;
 
       const currentPhase = currentPhaseRef.current;
-      const fadeOutDuration = 1.5;
-      const silenceDuration = 1.0;
 
       // Vypočítat, jak dlouho už dýchání běží a kde ve fázi jsme
       const now = Date.now();
@@ -190,8 +188,9 @@ export const useBreathTimer = (
       const cycleTime = elapsed % cycleDuration; // Pozice v aktuálním cyklu
 
       // Vypočítat zbývající čas podle fáze:
-      // - Pokud jsme v nádechu, musíme počkat na zbývající část nádechu + celý výdech + fade-outy + ticho
-      // - Pokud jsme ve výdechu, stačí počkat jen na zbývající část výdechu + fade-out + ticho
+      // - Pokud jsme v nádechu, musíme počkat na zbývající část nádechu + celý výdech
+      // - Pokud jsme ve výdechu, stačí počkat jen na zbývající část výdechu
+      // NEDĚLÁME: fade-out a silence - to si audio engine řídí sám
       let totalWaitTime;
       if (currentPhase === 'in') {
         // Jsme v nádechu - zjisti, kolik z nádechu už uběhlo
@@ -199,14 +198,16 @@ export const useBreathTimer = (
         const breathInRemaining = Math.max(0, breathInDuration - breathInElapsed);
 
         // Dokončit zbývající část nádechu + celý výdech (zajistí dokončení celého cyklu)
-        totalWaitTime = (breathInRemaining + fadeOutDuration + breathOutDuration + fadeOutDuration + silenceDuration) * 1000;
+        // Zastavíme 0.3s před koncem výdechu, aby audio engine nestihl spustit další cyklus
+        totalWaitTime = (breathInRemaining + breathOutDuration - 0.3) * 1000;
       } else {
         // Jsme ve výdechu - zjisti, kolik z výdechu už uběhlo
         const breathOutElapsed = cycleTime - breathInDuration; // Kolik sekund výdechu už proběhlo
         const breathOutRemaining = Math.max(0, breathOutDuration - breathOutElapsed);
 
-        // Jen dokončit zbývající část výdechu (nádech už proběhl)
-        totalWaitTime = (breathOutRemaining + fadeOutDuration + silenceDuration) * 1000;
+        // Jen dokončit zbývající část výdechu
+        // Zastavíme 0.3s před koncem výdechu, aby audio engine nestihl spustit další cyklus
+        totalWaitTime = (breathOutRemaining - 0.3) * 1000;
       }
 
       if (completionTimeoutRef.current) {

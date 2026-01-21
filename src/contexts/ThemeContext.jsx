@@ -150,7 +150,7 @@ export const ThemeProvider = ({ children }) => {
     if (!backgroundUrl) return;
     if (!baseTheme?.allowsCustomBackground) return;
 
-    cacheService.preloadImage(backgroundUrl, `theme-background:${themeId}`).catch(() => {});
+    cacheService.preloadImage(backgroundUrl, `theme-background:${themeId}`).catch(() => { });
   }, [customBackground, baseTheme, themeId]);
 
   // Získat data z customBackground
@@ -265,7 +265,7 @@ export const ThemeProvider = ({ children }) => {
       };
     } else if (hasImage && extractedColors) {
       // Pokud máme fotku s extrahovanými barvami, použít je
-      console.log('🎨 Používám extrahované barvy z obrázku:', extractedColors);
+      // console.log('🎨 Používám extrahované barvy z obrázku:', extractedColors);
       // Sloučit extrahované barvy s defaultními (extrahované mají prioritu)
       colors = {
         ...baseTheme?.colors,

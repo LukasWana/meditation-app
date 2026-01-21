@@ -121,7 +121,7 @@ const UserProfile = () => {
     console.log('🟡 showMenu changed:', showMenu);
   }, [showMenu]);
 
-  console.log('🟢 UserProfile render - showMenu:', showMenu, 'user:', user?.email);
+  // console.log('🟢 UserProfile render - showMenu:', showMenu, 'user:', user?.email);
 
   if (isLoading) {
     return (
