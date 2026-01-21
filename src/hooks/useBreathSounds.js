@@ -179,6 +179,7 @@ export const useBreathSounds = (
     // Vytvoř nové audio elementy s načtenými URL
     if (inSoundUrl && !inSoundRef.current) {
       inSoundRef.current = new Audio(inSoundUrl);
+      inSoundRef.current.crossOrigin = 'anonymous'; // Povolí CORS pro Android Chrome
       inSoundRef.current.loop = false; // Zvuk se přehrává jen jednou
       inSoundRef.current.volume = 0;
       inSoundRef.current.preload = 'auto';
@@ -186,6 +187,7 @@ export const useBreathSounds = (
 
     if (outSoundUrl && !outSoundRef.current) {
       outSoundRef.current = new Audio(outSoundUrl);
+      outSoundRef.current.crossOrigin = 'anonymous'; // Povolí CORS pro Android Chrome
       outSoundRef.current.loop = false; // Zvuk se přehrává jen jednou
       outSoundRef.current.volume = 0;
       outSoundRef.current.preload = 'auto';
@@ -193,6 +195,7 @@ export const useBreathSounds = (
 
     if (clickSoundUrl && !clickSoundRef.current) {
       clickSoundRef.current = new Audio(clickSoundUrl);
+      clickSoundRef.current.crossOrigin = 'anonymous'; // Povolí CORS pro Android Chrome
       clickSoundRef.current.loop = false;
       clickSoundRef.current.volume = 1;
       clickSoundRef.current.preload = 'auto';

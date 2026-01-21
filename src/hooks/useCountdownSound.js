@@ -88,6 +88,7 @@ export const useCountdownSound = (breathCountdownSound, isPreparing) => {
 
       // Vytvoř nový audio element a přehraj ho
       const audio = new Audio(countdownSoundUrlRef.current);
+      audio.crossOrigin = 'anonymous'; // Povolí CORS pro Android Chrome
       audio.volume = 1; // Začni na plné hlasitosti (bez fade in)
       countdownSoundRef.current = audio;
 
