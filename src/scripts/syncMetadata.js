@@ -65,7 +65,7 @@ class MetadataSyncService {
           totalFiles: 76,
           byFolder: {
             'hudba': 45,
-            'slova': 31
+            'meditacie': 31
           },
           lastSync: new Date().toISOString(),
           needsSync: false

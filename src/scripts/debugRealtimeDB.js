@@ -43,10 +43,10 @@ async function debugRealtimeDB() {
           console.log(`     DisplayName: ${file.displayName || 'No displayName'}`);
         });
 
-        const slovaFiles = data.files.filter(f =>
-          f.fileName && f.fileName.includes('slova/')
+        const meditacieFiles = data.files.filter(f =>
+          f.fileName && f.fileName.includes('meditacie/')
         );
-        console.log(`🎤 Slova files: ${slovaFiles.length}`);
+        console.log(`🎤 Meditacie files: ${meditacieFiles.length}`);
       }
     } else {
       console.log('❌ No data in audio-metadata');
