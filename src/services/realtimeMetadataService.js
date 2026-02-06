@@ -102,11 +102,13 @@ class RealtimeMetadataService {
           sampleData: data.files ? data.files.slice(0, 2) : Object.keys(data).slice(0, 2)
         });
 
-        // Pokud jsou data ve struktuře { metadata: {...}, files: [...] }, extrahuj files
+        const metadataObject = {};
+        let filesArrayCount = 0;
+        let keyedCount = 0;
+
+        // 1) Starší struktura: { files: [...] }
         if (data.files && Array.isArray(data.files)) {
-          log.debug(`✅ All metadata loaded from Realtime Database: ${data.files.length} files`);
-          // Převeď array na object s fileName jako klíč
-          const metadataObject = {};
+          filesArrayCount = data.files.length;
           data.files.forEach(file => {
             if (file.fileName) {
               // ✅ OPRAVA: Normalizuj waveform data - může být objekt místo pole
@@ -116,7 +118,25 @@ class RealtimeMetadataService {
               metadataObject[file.fileName] = file;
             }
           });
-          log.debug(`✅ Converted to object: ${Object.keys(metadataObject).length} files`);
+        }
+
+        // 2) Novější struktura: keyed záznamy podle safePath
+        Object.entries(data).forEach(([key, fileData]) => {
+          if (!fileData || typeof fileData !== 'object') return;
+          if (key === 'files' || key === 'metadata') return;
+          if (!fileData.fileName) return;
+
+          // ✅ OPRAVA: Normalizuj waveform data - může být objekt místo pole
+          if (fileData.waveformData) {
+            fileData.waveformData = this.normalizeWaveformData(fileData.waveformData);
+          }
+
+          metadataObject[fileData.fileName] = fileData;
+          keyedCount++;
+        });
+
+        if (Object.keys(metadataObject).length > 0) {
+          log.debug(`✅ All metadata loaded from Realtime Database: ${Object.keys(metadataObject).length} files (files[]: ${filesArrayCount}, keyed: ${keyedCount})`);
 
           // Debug: zobraz ukázku převedených dat
           const sampleKeys = Object.keys(metadataObject).slice(0, 3);
@@ -128,42 +148,6 @@ class RealtimeMetadataService {
           })));
 
           // Debug: zobraz slova soubory
-          const slovaFiles = Object.values(metadataObject).filter(file =>
-            file.fileName && file.fileName.includes('slova/')
-          );
-          log.debug(`🎤 Slova files in Realtime Database: ${slovaFiles.length}`);
-          log.debug('🎤 Sample slova files from DB:', slovaFiles.slice(0, 3).map(f => ({
-            fileName: f.fileName,
-            folder: f.folder,
-            hasDownloadURL: !!(f.downloadURL || f.audioSrc)
-          })));
-
-          return metadataObject;
-        } else {
-          // Pokud jsou data už ve správné struktuře (sanitizované klíče)
-          log.debug(`✅ All metadata loaded from Realtime Database: ${Object.keys(data).length} files`);
-
-          // Převeď objekt s sanitizovanými klíči na objekt s fileName jako klíč
-          // Klíče jsou sanitizované (např. dychanie_SLASH_prana-breath_SLASH_bg80_DOT_ogg)
-          // ale uvnitř je fileName normální (např. dychanie/prana-breath/bg80.ogg)
-          const metadataObject = {};
-          Object.entries(data).forEach(([sanitizedKey, fileData]) => {
-            // Pokud má fileData fileName, použij ho jako klíč
-            if (fileData && fileData.fileName) {
-              // ✅ OPRAVA: Normalizuj waveform data - může být objekt místo pole
-              if (fileData.waveformData) {
-                fileData.waveformData = this.normalizeWaveformData(fileData.waveformData);
-              }
-              metadataObject[fileData.fileName] = fileData;
-            } else {
-              // Pokud nemá fileName, použij sanitizovaný klíč (pro zpětnou kompatibilitu)
-              metadataObject[sanitizedKey] = fileData;
-            }
-          });
-
-          log.debug(`✅ Converted sanitized keys to fileName keys: ${Object.keys(metadataObject).length} files`);
-
-          // Debug: zobraz slova soubory i pro druhou strukturu
           const slovaFiles = Object.values(metadataObject).filter(file =>
             file.fileName && file.fileName.includes('slova/')
           );
@@ -199,6 +183,9 @@ class RealtimeMetadataService {
 
           return metadataObject;
         }
+
+        log.debug('📭 No metadata found in Realtime Database');
+        return {};
       } else {
         log.debug('📭 No metadata found in Realtime Database');
         return {};
