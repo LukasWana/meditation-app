@@ -139,6 +139,11 @@ async function extractAudioMetadata(fileName, bucketName) {
             _errorOutput += data.toString();
           });
 
+          ffprobe.on('error', (error) => {
+            console.warn(`⚠️ ffprobe failed to start: ${error.message}`);
+            resolve(null);
+          });
+
           ffprobe.on('close', (code) => {
             if (code === 0) {
               try {
@@ -552,6 +557,11 @@ async function extractImageMetadata(fileName, bucketName) {
             _errorOutput += data.toString();
           });
 
+          ffprobe.on('error', (error) => {
+            console.warn(`⚠️ ffprobe failed to start: ${error.message}`);
+            resolve({ width: null, height: null });
+          });
+
           ffprobe.on('close', (code) => {
             if (code === 0) {
               try {
@@ -676,10 +686,7 @@ exports.onFileUpload = functions
       fileName.startsWith('meditacie/') || // ✅ PRIMÁRNÍ: Meditace s jazyky
       fileName.startsWith('dychanie/') ||
       fileName.startsWith('metadata/') || // Pro obrázky
-      fileName.startsWith('background/') || // ✅ NOVÉ: Background obrázky
-      fileName.startsWith('CZ/') || // ✅ NOVÉ: České meditace
-      fileName.startsWith('SK/') || // ✅ NOVÉ: Slovenské meditace
-      fileName.startsWith('EN/'); // ✅ NOVÉ: Anglické meditace
+      fileName.startsWith('background/'); // ✅ NOVÉ: Background obrázky
 
     if (!isInTargetFolder) {
       console.log(`⏭️ Skipping file outside target folders: ${fileName}`);
@@ -705,7 +712,7 @@ exports.onFileUpload = functions
               const language = pathParts[1]; // meditacie/CZ/... -> CZ
               metadata.language = language;
               metadata.folder = 'meditacie';
-              metadata.category = 'slova'; // Meditace jsou v kategorii slova
+              metadata.category = 'meditacie';
 
               // Extrahuj pohlaví a typ z názvu souboru (pokud je v názvu)
               const fileNameOnly = pathParts[pathParts.length - 1];
@@ -717,22 +724,6 @@ exports.onFileUpload = functions
 
               console.log(`✅ Processed meditation file: ${fileName} (language: ${language})`);
             }
-          }
-          // ✅ NOVÉ: Zpracuj jazykové složky na kořenové úrovni (CZ/, SK/, EN/)
-          if (fileName.startsWith('CZ/') || fileName.startsWith('SK/') || fileName.startsWith('EN/')) {
-            const language = fileName.split('/')[0];
-            metadata.language = language;
-            metadata.folder = 'meditacie';
-            metadata.category = 'slova';
-
-            const fileNameOnly = fileName.split('/').pop();
-            if (fileNameOnly.includes('muzsky') || fileNameOnly.includes('male') || fileNameOnly.includes('M' + language)) {
-              metadata.gender = 'male';
-            } else if (fileNameOnly.includes('zensky') || fileNameOnly.includes('female') || fileNameOnly.includes('F' + language)) {
-              metadata.gender = 'female';
-            }
-
-            console.log(`✅ Processed language folder file: ${fileName} (language: ${language})`);
           }
 
           // Ulož do databáze
@@ -845,7 +836,7 @@ exports.syncAllFiles = functions
       // Seznam všech souborů v podporovaných složkách
       // getFiles s prefixem BEZ delimiteru automaticky vrací všechny soubory včetně podsložek
       // ✅ PRIMÁRNÍ: meditacie/ je hlavní složka
-      const folders = ['hudba', 'meditacie', 'dychanie', 'metadata', 'background', 'CZ', 'SK', 'EN'];
+      const folders = ['hudba', 'meditacie', 'dychanie', 'metadata', 'background'];
       const allFiles = [];
 
       for (const folder of folders) {
@@ -998,7 +989,7 @@ exports.syncAllFiles = functions
                   const language = pathParts[1]; // meditacie/CZ/... -> CZ
                   metadata.language = language;
                   metadata.folder = 'meditacie';
-                  metadata.category = 'slova'; // Meditace jsou v kategorii slova
+                  metadata.category = 'meditacie';
 
                   // Extrahuj pohlaví a typ z názvu souboru (pokud je v názvu)
                   const fileNameOnly = pathParts[pathParts.length - 1];
@@ -1011,22 +1002,7 @@ exports.syncAllFiles = functions
                   console.log(`✅ Processed meditation file: ${fileName} (language: ${language})`);
                 }
               }
-              // ✅ NOVÉ: Zpracuj jazykové složky na kořenové úrovni (CZ/, SK/, EN/)
-              else if (fileName.startsWith('CZ/') || fileName.startsWith('SK/') || fileName.startsWith('EN/')) {
-                const language = fileName.split('/')[0];
-                metadata.language = language;
-                metadata.folder = 'meditacie';
-                metadata.category = 'slova';
-
-                const fileNameOnly = fileName.split('/').pop();
-                if (fileNameOnly.includes('muzsky') || fileNameOnly.includes('male') || fileNameOnly.includes('M' + language)) {
-                  metadata.gender = 'male';
-                } else if (fileNameOnly.includes('zensky') || fileNameOnly.includes('female') || fileNameOnly.includes('F' + language)) {
-                  metadata.gender = 'female';
-                }
-
-                console.log(`✅ Processed language folder file: ${fileName} (language: ${language})`);
-              }
+              // Root jazykové složky (CZ/SK/EN) se nepoužívají – držíme se struktury meditacie/{LANG}/
 
               await updateMetadataDatabase(fileName, metadata);
 
