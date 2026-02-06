@@ -6,7 +6,10 @@ if (!admin.apps.length) {
   admin.initializeApp();
 }
 
-const db = admin.firestore();
+// function to get firestore db lazily
+function getFirestore() {
+  return admin.firestore();
+}
 
 const SHARED_SETTINGS_COLLECTION = 'sharedSettings';
 const DEFAULT_TTL_HOURS = 24;
@@ -70,7 +73,7 @@ exports.createSharedSettings = functions.https.onCall(async (data, context) => {
     preview: buildPreview(docPayload)
   };
 
-  await db.collection(SHARED_SETTINGS_COLLECTION).doc(shareId).set(doc);
+  await getFirestore().collection(SHARED_SETTINGS_COLLECTION).doc(shareId).set(doc);
 
   return {
     shareId,
@@ -91,7 +94,7 @@ exports.consumeSharedSettings = functions.https.onCall(async (data, context) => 
     throw new functions.https.HttpsError('invalid-argument', 'Chybí shareId.');
   }
 
-  const snap = await db.collection(SHARED_SETTINGS_COLLECTION).doc(shareId).get();
+  const snap = await getFirestore().collection(SHARED_SETTINGS_COLLECTION).doc(shareId).get();
   if (!snap.exists) {
     throw new functions.https.HttpsError('not-found', 'Sdílení nenalezeno nebo vypršelo.');
   }
