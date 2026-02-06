@@ -4,15 +4,16 @@ const { generateWaveform } = require('./generateWaveform');
 const metadataSync = require('./metadataSync');
 const sharedSettings = require('./sharedSettings');
 
+// Explicitly export functions to avoid discovery timeouts
 exports.extractMP3Metadata = extractMP3Metadata;
 exports.downloadProxy = downloadProxy;
 exports.generateWaveform = generateWaveform;
-// Exportuj všechny funkce z metadataSync
-Object.keys(metadataSync).forEach(key => {
-  exports[key] = metadataSync[key];
-});
 
-// Exportuj sdílení nastavení
-Object.keys(sharedSettings).forEach(key => {
-  exports[key] = sharedSettings[key];
-});
+// Export from metadataSync
+exports.helloWorld = metadataSync.helloWorld;
+exports.testMetadata = metadataSync.testMetadata;
+exports.onFileUpload = metadataSync.onFileUpload;
+
+// Export from sharedSettings
+exports.createSharedSettings = sharedSettings.createSharedSettings;
+exports.consumeSharedSettings = sharedSettings.consumeSharedSettings;

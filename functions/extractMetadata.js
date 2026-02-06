@@ -1,17 +1,24 @@
 const functions = require('firebase-functions/v1');
 const admin = require('firebase-admin');
-const { Storage } = require('@google-cloud/storage');
 const { spawn } = require('child_process');
 const path = require('path');
 const os = require('os');
 const fs = require('fs');
 
+// Lazy-loaded Storage
+let storage;
+function getStorage() {
+  if (!storage) {
+    const { Storage } = require('@google-cloud/storage');
+    storage = new Storage();
+  }
+  return storage;
+}
+
 // Inicializace Firebase Admin
 if (!admin.apps.length) {
   admin.initializeApp();
 }
-
-const storage = new Storage();
 
 /**
  * Firebase Function pro extrakci metadat z MP3 souborů
@@ -24,9 +31,9 @@ exports.extractMP3Metadata = functions.storage.object().onFinalize(async (object
   // Zkontroluj, jestli je to audio soubor (MP3, OGG, OGA)
   const filePathLower = filePath.toLowerCase();
   const isAudioFile = contentType && contentType.startsWith('audio/') &&
-                     (filePathLower.endsWith('.mp3') ||
-                      filePathLower.endsWith('.ogg') ||
-                      filePathLower.endsWith('.oga'));
+    (filePathLower.endsWith('.mp3') ||
+      filePathLower.endsWith('.ogg') ||
+      filePathLower.endsWith('.oga'));
 
   if (!isAudioFile) {
     console.log('Skipping non-audio file:', filePath);
@@ -35,8 +42,12 @@ exports.extractMP3Metadata = functions.storage.object().onFinalize(async (object
 
   // Zkontroluj, jestli je soubor v podporované složce
   const isInTargetFolder = filePath.startsWith('hudba/') ||
-                           filePath.startsWith('slova/') ||
-                           filePath.startsWith('dychanie/');
+    filePath.startsWith('slova/') ||
+    filePath.startsWith('dychanie/') ||
+    filePath.startsWith('meditacie/') ||
+    filePath.startsWith('CZ/') ||
+    filePath.startsWith('SK/') ||
+    filePath.startsWith('EN/');
 
   if (!isInTargetFolder) {
     console.log('Skipping file outside target folders:', filePath);
@@ -47,7 +58,7 @@ exports.extractMP3Metadata = functions.storage.object().onFinalize(async (object
 
   try {
     // Stáhni soubor do dočasné složky
-    const bucket = storage.bucket(object.bucket);
+    const bucket = getStorage().bucket(object.bucket);
     const tempFilePath = path.join(os.tmpdir(), path.basename(filePath));
     await bucket.file(filePath).download({ destination: tempFilePath });
 
@@ -90,37 +101,21 @@ exports.extractMP3Metadata = functions.storage.object().onFinalize(async (object
       } : {})
     };
 
-    // Ulož do Firestore
-    await admin.firestore().collection('audio-metadata').add(completeMetadata);
+    // Ulož do Firestore (bez "/" v doc ID)
+    const safeDocId = filePath.replace(/\//g, '_');
+    await admin.firestore().collection('audio-metadata').doc(safeDocId).set(completeMetadata, { merge: true });
 
-    // Ulož do Realtime Database
-    const realtimeRef = admin.database().ref('audio-metadata');
+    // Ulož do Realtime Database v novém formátu (keyed podle bezpečné cesty)
+    const safePath = sanitizePath(filePath);
+    const realtimeRef = admin.database().ref(`audio-metadata/${safePath}`);
     const snapshot = await realtimeRef.once('value');
-    const existingData = snapshot.val() || { files: [] };
-
-    // Přidej nový soubor do existujících dat
-    const files = existingData.files || [];
-    const existingIndex = files.findIndex(f => f.fileName === filePath);
-
-    if (existingIndex >= 0) {
-      files[existingIndex] = completeMetadata;
-    } else {
-      files.push(completeMetadata);
-    }
+    const existingData = snapshot.val() || {};
 
     await realtimeRef.set({
       ...existingData,
-      files: files,
-      lastSync: new Date().toISOString(),
-      totalFiles: files.length,
-      slovaFiles: files.filter(f => f.folder === 'slova').length,
-      hudbaFiles: files.filter(f => f.folder === 'hudba').length,
-      dychanieFiles: files.filter(f => f.folder === 'dychanie').length,
-      mp3Files: files.filter(f => f.fileName?.toLowerCase().endsWith('.mp3')).length,
-      oggFiles: files.filter(f => {
-        const name = f.fileName?.toLowerCase() || '';
-        return name.endsWith('.ogg') || name.endsWith('.oga');
-      }).length
+      ...completeMetadata,
+      lastUpdated: new Date().toISOString(),
+      source: 'extractMetadata'
     });
 
     console.log('Metadata extracted and saved for:', filePath);
@@ -213,8 +208,22 @@ function extractGender(fileName) {
  * Extrahuje téma ze jména souboru
  */
 function extractTopic(fileName) {
-  const match = fileName.match(/-([^-]+)\.mp3$/i);
+  const match = fileName.match(/-([^-]+)\.(mp3|ogg|oga)$/i);
   return match ? match[1] : null;
+}
+
+/**
+ * Sanitizuje cestu pro Realtime Database
+ */
+function sanitizePath(path) {
+  return path
+    .replace(/\./g, '_DOT_')
+    .replace(/#/g, '_HASH_')
+    .replace(/\$/g, '_DOLLAR_')
+    .replace(/\[/g, '_LBRACKET_')
+    .replace(/\]/g, '_RBRACKET_')
+    .replace(/\//g, '_SLASH_')
+    .replace(/\\/g, '_BACKSLASH_');
 }
 
 /**

@@ -14,7 +14,10 @@ if (!admin.apps.length) {
   admin.initializeApp();
 }
 
-const db = admin.firestore();
+// Lazy-loaded Firestore and RTDB references
+function getFirestore() {
+  return admin.firestore();
+}
 let rtdb;
 
 /**
@@ -251,17 +254,22 @@ async function extractAudioMetadata(fileName, bucketName) {
  * @param {Object} metadata - Metadata objekt
  */
 async function updateMetadataDatabase(fileName, metadata) {
+  const payload = {
+    ...metadata,
+    fileName
+  };
+
+  // Firestore: použij bezpečný doc ID (nesmí obsahovat "/")
+  const safeDocId = fileName.replace(/\//g, '_');
   try {
-    // Uložit do Firestore
-    await db.collection('audio-metadata').doc(fileName).set(metadata, { merge: true });
+    await getFirestore().collection('audio-metadata').doc(safeDocId).set(payload, { merge: true });
     console.log(`✅ Metadata updated in Firestore for ${fileName}`);
-
-    // Uložit také do Realtime Database pro rychlý přístup
-    await updateRealtimeDatabase(fileName, metadata);
-
   } catch (error) {
-    console.error(`❌ Failed to update metadata for ${fileName}:`, error);
+    console.error(`❌ Failed to update metadata in Firestore for ${fileName}:`, error);
   }
+
+  // Realtime Database: pokus se uložit i když Firestore selže
+  await updateRealtimeDatabase(fileName, payload);
 }
 
 /**
@@ -489,7 +497,7 @@ async function generateWaveformForFile(fileName, bucketName) {
  */
 async function updateLastSync() {
   try {
-    await db.collection('system').doc('lastSync').set({
+    await getFirestore().collection('system').doc('lastSync').set({
       timestamp: new Date().toISOString()
     });
     console.log('✅ Last sync timestamp updated');
@@ -654,24 +662,24 @@ exports.onFileUpload = functions
 
     // Zkontroluj typ souboru
     const isAudioFile = fileNameLower.endsWith('.mp3') ||
-                       fileNameLower.endsWith('.ogg') ||
-                       fileNameLower.endsWith('.oga');
+      fileNameLower.endsWith('.ogg') ||
+      fileNameLower.endsWith('.oga');
 
     const isImageFile = fileNameLower.endsWith('.jpg') ||
-                       fileNameLower.endsWith('.jpeg') ||
-                       fileNameLower.endsWith('.png') ||
-                       fileNameLower.endsWith('.gif') ||
-                       fileNameLower.endsWith('.webp');
+      fileNameLower.endsWith('.jpeg') ||
+      fileNameLower.endsWith('.png') ||
+      fileNameLower.endsWith('.gif') ||
+      fileNameLower.endsWith('.webp');
 
     // Zpracuj pouze soubory v podporovaných složkách
     const isInTargetFolder = fileName.startsWith('hudba/') ||
-                             fileName.startsWith('meditacie/') || // ✅ PRIMÁRNÍ: Meditace s jazyky
-                             fileName.startsWith('dychanie/') ||
-                             fileName.startsWith('metadata/') || // Pro obrázky
-                             fileName.startsWith('background/') || // ✅ NOVÉ: Background obrázky
-                             fileName.startsWith('CZ/') || // ✅ NOVÉ: České meditace
-                             fileName.startsWith('SK/') || // ✅ NOVÉ: Slovenské meditace
-                             fileName.startsWith('EN/'); // ✅ NOVÉ: Anglické meditace
+      fileName.startsWith('meditacie/') || // ✅ PRIMÁRNÍ: Meditace s jazyky
+      fileName.startsWith('dychanie/') ||
+      fileName.startsWith('metadata/') || // Pro obrázky
+      fileName.startsWith('background/') || // ✅ NOVÉ: Background obrázky
+      fileName.startsWith('CZ/') || // ✅ NOVÉ: České meditace
+      fileName.startsWith('SK/') || // ✅ NOVÉ: Slovenské meditace
+      fileName.startsWith('EN/'); // ✅ NOVÉ: Anglické meditace
 
     if (!isInTargetFolder) {
       console.log(`⏭️ Skipping file outside target folders: ${fileName}`);
@@ -958,14 +966,14 @@ exports.syncAllFiles = functions
         }
 
         const isAudioFile = fileNameLower.endsWith('.mp3') ||
-                           fileNameLower.endsWith('.ogg') ||
-                           fileNameLower.endsWith('.oga');
+          fileNameLower.endsWith('.ogg') ||
+          fileNameLower.endsWith('.oga');
 
         const isImageFile = fileNameLower.endsWith('.jpg') ||
-                           fileNameLower.endsWith('.jpeg') ||
-                           fileNameLower.endsWith('.png') ||
-                           fileNameLower.endsWith('.gif') ||
-                           fileNameLower.endsWith('.webp');
+          fileNameLower.endsWith('.jpeg') ||
+          fileNameLower.endsWith('.png') ||
+          fileNameLower.endsWith('.gif') ||
+          fileNameLower.endsWith('.webp');
 
         if (isAudioFile) {
           results.audioFiles++;
