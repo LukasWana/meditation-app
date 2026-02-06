@@ -37,8 +37,8 @@ const UnifiedFilesOverview = () => {
       const rootRef = ref(storage, '');
       const rootResult = await listAll(rootRef);
 
-      // Načti soubory ze slova složky
-      const slovaRef = ref(storage, 'slova');
+      // Načti soubory ze meditacie složky
+      const slovaRef = ref(storage, 'meditacie');
       const slovaResult = await listAll(slovaRef);
 
       const slovaFiles = [];
@@ -55,8 +55,8 @@ const UnifiedFilesOverview = () => {
             timeCreated: metadata.timeCreated,
             updated: metadata.updated,
             downloadURL: downloadURL,
-            folder: 'slova',
-            category: 'slova',
+            folder: 'meditacie',
+            category: 'meditacie',
             duration: 0,
             durationFormatted: 'N/A',
             durationDetailed: 'N/A'
@@ -66,13 +66,13 @@ const UnifiedFilesOverview = () => {
         }
       }
 
-      // Načti soubory z jazykových podsložek slova
+      // Načti soubory z jazykových podsložek meditacie
       const languageFolders = ['CZ', 'SK', 'EN'];
       const languageFiles = { CZ: [], SK: [], EN: [] };
 
       for (const lang of languageFolders) {
         try {
-          const langRef = ref(storage, `slova/${lang}`);
+          const langRef = ref(storage, `meditacie/${lang}`);
           const langResult = await listAll(langRef);
 
           for (const itemRef of langResult.items) {
@@ -88,8 +88,8 @@ const UnifiedFilesOverview = () => {
                 timeCreated: metadata.timeCreated,
                 updated: metadata.updated,
                 downloadURL: downloadURL,
-                folder: `slova/${lang}`,
-                category: 'slova',
+                folder: `meditacie/${lang}`,
+                category: 'meditacie',
                 language: lang,
                 duration: 0,
                 durationFormatted: 'N/A',
@@ -100,7 +100,7 @@ const UnifiedFilesOverview = () => {
             }
           }
         } catch (langError) {
-          log.warn(`Failed to scan slova/${lang}:`, langError.message);
+          log.warn(`Failed to scan meditacie/${lang}:`, langError.message);
         }
       }
 
@@ -345,9 +345,9 @@ const UnifiedFilesOverview = () => {
 
   const renderSummaryView = () => (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-      {/* Slova Summary */}
+      {/* Meditacie Summary */}
       <div className="bg-blue-50 p-4 rounded-lg">
-        <h3 className="text-lg font-semibold text-blue-900 mb-3">🗣️ Slova</h3>
+        <h3 className="text-lg font-semibold text-blue-900 mb-3">🗣️ Meditacie</h3>
         <div className="space-y-2 text-sm">
           <div><strong>Celkem souborů:</strong> {files.slova.length + files.slovaCZ.length + files.slovaSK.length + files.slovaEN.length}</div>
           <div><strong>Hlavní složka:</strong> {files.slova.length}</div>
@@ -452,7 +452,7 @@ const UnifiedFilesOverview = () => {
           📁 Unified Files Overview
         </h2>
         <p className="text-gray-700">
-          Kompletní přehled všech souborů v aplikaci - slova a hudba
+          Kompletní přehled všech souborů v aplikaci - meditacie a hudba
         </p>
       </div>
 
