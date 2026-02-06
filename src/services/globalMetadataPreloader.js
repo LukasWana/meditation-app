@@ -77,27 +77,15 @@ class GlobalMetadataPreloader {
     const audioFiles = [];
 
     try {
-      // Načti soubory ze slova složky (včetně jazykových podsložek)
-      const slovaFiles = await this._scanFolder('slova');
-      audioFiles.push(...slovaFiles);
-
-      // Načti soubory z jazykových podsložek slova/
-      const languageFolders = ['CZ', 'SK', 'EN'];
-      for (const lang of languageFolders) {
-        try {
-          const langFiles = await this._scanFolder(`slova/${lang}`);
-          audioFiles.push(...langFiles);
-          log.debug(`📁 Scanned slova/${lang}: ${langFiles.length} files`);
-        } catch (langError) {
-          log.warn(`⚠️ Could not scan slova/${lang}:`, langError.message);
-        }
-      }
+      // Načti soubory ze meditacie složky (včetně jazykových podsložek)
+      const meditacieFiles = await this._scanFolder('meditacie');
+      audioFiles.push(...meditacieFiles);
 
       // Načti soubory z hudba složky
       const hudbaFiles = await this._scanFolder('hudba');
       audioFiles.push(...hudbaFiles);
 
-      log.debug(`📁 Scanned folders: slova (${slovaFiles.length}), jazykové podsložky, hudba (${hudbaFiles.length})`);
+      log.debug(`📁 Scanned folders: meditacie (${meditacieFiles.length}), hudba (${hudbaFiles.length})`);
 
     } catch (error) {
       log.error('❌ Failed to scan audio files:', error);
@@ -206,7 +194,7 @@ class GlobalMetadataPreloader {
   }
 
   getStats() {
-    const slovaFiles = this.getMetadataByFolder('slova');
+    const slovaFiles = this.getMetadataByFolder('meditacie');
     const hudbaFiles = this.getMetadataByFolder('hudba');
     const loadedFiles = Array.from(this.metadata.values()).filter(m => m.loaded).length;
 

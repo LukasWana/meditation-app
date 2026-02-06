@@ -24,8 +24,8 @@ class AudioMetadataStorageService {
    * @param {string} fileData.durationFormatted - Formátovaná délka
    * @param {string} fileData.durationDetailed - Detailní délka
    * @param {string} fileData.folder - Složka
-   * @param {string} fileData.category - Kategorie (slova/hudba)
-   * @param {string} fileData.language - Jazyk (pro slova)
+   * @param {string} fileData.category - Kategorie (meditacie/hudba)
+   * @param {string} fileData.language - Jazyk (pro meditacie)
    * @param {string} fileData.downloadURL - Download URL
    */
   async saveFileMetadata(fileData) {
@@ -74,7 +74,7 @@ class AudioMetadataStorageService {
       const results = [];
       const batch = {};
       const stats = {
-        slova: { files: 0, totalDuration: 0, totalSize: 0 },
+        meditacie: { files: 0, totalDuration: 0, totalSize: 0 },
         hudba: { files: 0, totalDuration: 0, totalSize: 0 },
         total: { files: 0, totalDuration: 0, totalSize: 0 }
       };

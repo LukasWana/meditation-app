@@ -9,7 +9,7 @@ import cacheService from './cacheServiceRefactored';
 class FirebaseMetadataCollector {
   constructor() {
     this.collectedMetadata = {
-      slova: new Map(),
+      meditacie: new Map(),
       hudba: new Map(),
       albums: new Map(),
       lastUpdated: null
@@ -46,7 +46,7 @@ class FirebaseMetadataCollector {
       this.collectedMetadata.lastUpdated = new Date();
 
       console.log('🎉 Firebase metadata collection completed');
-      console.log(`📊 Collected: ${this.collectedMetadata.slova.size} slova, ${this.collectedMetadata.hudba.size} hudba, ${this.collectedMetadata.albums.size} albums`);
+      console.log(`📊 Collected: ${this.collectedMetadata.meditacie.size} meditacie, ${this.collectedMetadata.hudba.size} hudba, ${this.collectedMetadata.albums.size} albums`);
 
       return this.collectedMetadata;
 
@@ -117,7 +117,7 @@ class FirebaseMetadataCollector {
         metadata.album = firebaseMetadata.customMetadata.album;
         metadata.artist = firebaseMetadata.customMetadata.artist;
         metadata.duration = firebaseMetadata.customMetadata.duration;
-        metadata.type = firebaseMetadata.customMetadata.type; // 'slova' nebo 'hudba'
+        metadata.type = firebaseMetadata.customMetadata.type; // 'meditacie' nebo 'hudba'
       }
 
       // 5. Pokud není název v metadatech, parsuj název souboru
@@ -150,13 +150,13 @@ class FirebaseMetadataCollector {
   }
 
   parseFileName(fileName) {
-    // Zkus slova parser (muzsky/zensky prefix)
+    // Zkus meditacie parser (muzsky/zensky prefix)
     if (fileName.startsWith('muzsky') || fileName.startsWith('zensky')) {
       try {
         const parsed = parseAudioFileName(fileName);
         if (parsed) {
           return {
-            type: 'slova',
+            type: 'meditacie',
             title: parsed.title,
             gender: parsed.gender,
             topic: parsed.topic,
@@ -164,7 +164,7 @@ class FirebaseMetadataCollector {
           };
         }
       } catch (err) {
-        console.warn(`Failed to parse slova file ${fileName}:`, err.message);
+        console.warn(`Failed to parse meditacie file ${fileName}:`, err.message);
       }
     }
 
@@ -194,8 +194,8 @@ class FirebaseMetadataCollector {
       if (result.status === 'fulfilled' && result.value.success) {
         const metadata = result.value.metadata;
 
-        if (metadata.type === 'slova') {
-          this.collectedMetadata.slova.set(metadata.fileName, metadata);
+        if (metadata.type === 'meditacie' || metadata.type === 'slova') {
+          this.collectedMetadata.meditacie.set(metadata.fileName, metadata);
         } else if (metadata.type === 'hudba') {
           this.collectedMetadata.hudba.set(metadata.fileName, metadata);
         }
@@ -281,8 +281,8 @@ class FirebaseMetadataCollector {
 
   saveToCache() {
     try {
-      // Ulož slova metadata
-      this.collectedMetadata.slova.forEach((metadata, fileName) => {
+      // Ulož meditacie metadata
+      this.collectedMetadata.meditacie.forEach((metadata, fileName) => {
         cacheService.setMetadata(fileName, metadata);
       });
 
@@ -306,7 +306,7 @@ class FirebaseMetadataCollector {
   saveToLocalStorage() {
     try {
       const dataToSave = {
-        slova: Object.fromEntries(this.collectedMetadata.slova),
+        meditacie: Object.fromEntries(this.collectedMetadata.meditacie),
         hudba: Object.fromEntries(this.collectedMetadata.hudba),
         albums: Object.fromEntries(this.collectedMetadata.albums),
         lastUpdated: this.collectedMetadata.lastUpdated,
@@ -330,7 +330,8 @@ class FirebaseMetadataCollector {
       if (savedData) {
         const parsed = JSON.parse(savedData);
 
-        this.collectedMetadata.slova = new Map(Object.entries(parsed.slova || {}));
+        const meditacieEntries = parsed.meditacie || parsed.slova || {};
+        this.collectedMetadata.meditacie = new Map(Object.entries(meditacieEntries));
         this.collectedMetadata.hudba = new Map(Object.entries(parsed.hudba || {}));
         this.collectedMetadata.albums = new Map(Object.entries(parsed.albums || {}));
         this.collectedMetadata.lastUpdated = parsed.lastUpdated;

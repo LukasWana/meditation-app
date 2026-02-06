@@ -585,12 +585,12 @@ class OfflineCacheService {
              url: f.downloadURL || f.audioSrc
            })));
 
-      // Debug: zobraz slova soubory
-      const slovaFiles = audioFiles.filter(f =>
-        (f.fileName || f.name) && (f.fileName || f.name).includes('slova/')
+      // Debug: zobraz meditacie soubory
+      const meditacieFiles = audioFiles.filter(f =>
+        (f.fileName || f.name) && (f.fileName || f.name).includes('meditacie/')
       );
-      log.debug('🎤 Slova files to cache:', slovaFiles.length);
-      log.debug('🎤 Sample slova files:', slovaFiles.slice(0, 3).map(f => ({
+      log.debug('🎤 Meditacie files to cache:', meditacieFiles.length);
+      log.debug('🎤 Sample meditacie files:', meditacieFiles.slice(0, 3).map(f => ({
         fileName: f.fileName || f.name,
         hasUrl: !!(f.downloadURL || f.audioSrc)
       })));
@@ -702,7 +702,7 @@ class OfflineCacheService {
                url.includes('/audio/') ||
                url.includes('firebasestorage.googleapis.com') ||
                url.includes('meditations-audio.web.app/hudba/') ||
-               url.includes('meditations-audio.web.app/slova/');
+               url.includes('meditations-audio.web.app/meditacie/');
       });
 
       console.log(`🎵 Found ${audioKeys.length} audio files in cache`);
@@ -721,12 +721,12 @@ class OfflineCacheService {
       console.log('🔍 Audio cache keys:', audioKeys.map(key => key.url));
       log.debug('🔍 Audio cache keys:', audioKeys.map(key => key.url));
 
-      // Debug: zobraz slova soubory v cache
-      const slovaKeys = audioKeys.filter(key => key.url.includes('slova/'));
-      console.log(`🎤 Found ${slovaKeys.length} slova files in cache`);
-      log.debug(`🎤 Found ${slovaKeys.length} slova files in cache`);
-      console.log('🎤 Slova cache keys:', slovaKeys.map(key => key.url));
-      log.debug('🎤 Slova cache keys:', slovaKeys.map(key => key.url));
+      // Debug: zobraz meditacie soubory v cache
+      const meditacieKeys = audioKeys.filter(key => key.url.includes('meditacie/'));
+      console.log(`🎤 Found ${meditacieKeys.length} meditacie files in cache`);
+      log.debug(`🎤 Found ${meditacieKeys.length} meditacie files in cache`);
+      console.log('🎤 Meditacie cache keys:', meditacieKeys.map(key => key.url));
+      log.debug('🎤 Meditacie cache keys:', meditacieKeys.map(key => key.url));
 
       let totalSize = 0;
       const files = [];
@@ -742,8 +742,8 @@ class OfflineCacheService {
           // Pro opaque responses (no-cors mode) nemůžeme získat skutečnou velikost
           if (response.type === 'opaque') {
             // Odhadni velikost na základě názvu souboru nebo použij výchozí hodnotu
-            if (fileName.includes('slova/')) {
-              size = 5000000; // 5MB pro slova soubory
+            if (fileName.includes('meditacie/')) {
+              size = 5000000; // 5MB pro meditacie soubory
             } else if (fileName.includes('ambient-journey/')) {
               size = 15000000; // 15MB pro ambient journey
             } else if (fileName.includes('generator') || fileName.includes('meditacie') || fileName.includes('noise-generator')) {
@@ -826,7 +826,7 @@ class OfflineCacheService {
                url.includes('/audio/') ||
                url.includes('firebasestorage.googleapis.com') ||
                url.includes('meditations-audio.web.app/hudba/') ||
-               url.includes('meditations-audio.web.app/slova/');
+               url.includes('meditations-audio.web.app/meditacie/');
       });
 
       console.log(`🗑️ Found ${audioKeys.length} audio files to delete`);

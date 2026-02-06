@@ -59,16 +59,14 @@ class FirestoreMetadataService {
       const metadata = {};
       querySnapshot.forEach((doc) => {
         const data = doc.data();
+        if (!data || !data.fileName) {
+          return;
+        }
+
+        // Zachovej kompletní data z Firestore (zdroj pravdy)
         metadata[data.fileName] = {
-          fileName: data.fileName,
-          size: data.size,
-          contentType: data.contentType,
-          duration: data.duration,
-          estimatedDuration: data.estimatedDuration,
-          timeCreated: data.timeCreated,
-          updated: data.updated,
-          downloadURL: data.downloadURL,
-          type: data.type || 'audio'
+          ...data,
+          fileName: data.fileName
         };
 
         // Přidej do memory cache

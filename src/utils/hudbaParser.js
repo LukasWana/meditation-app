@@ -67,25 +67,31 @@ export const parseSlovaFileName = (fileName) => {
     const fileNameOnly = fileName.split('/').pop();
 
     // Regex pro slova soubory: muzsky4FSK-uzkost-osamelost.mp3
-    const match = fileNameOnly.match(/^(muzsky|zensky)(\d+)([A-Z]+)-(.+)\.mp3$/i);
+    const match = fileNameOnly.match(/^(muzsky|zensky)(\d*)([A-Z]+)-(.+)\.mp3$/i);
 
     if (!match) {
       return null;
     }
 
     const [, gender, number, type, topic] = match;
+    const cleanedTopic = topic
+      .trim()
+      .replace(/_/g, '-')
+      .replace(/-+/g, ' ')
+      .replace(/\s+/g, ' ')
+      .trim();
 
     return {
       originalFileName: fileName,
       gender: gender === 'muzsky' ? 'male' : 'female',
-      number: parseInt(number),
+      number: number ? parseInt(number, 10) : null,
       type,
-      topic: topic.replace(/-/g, ' '),
-      title: topic.replace(/-/g, ' '), // Čistý název bez pohlaví
+      topic: cleanedTopic,
+      title: cleanedTopic, // Čistý název bez pohlaví
       isHudba: false,
       isAlbum: false,
-      trackName: topic.replace(/-/g, ' '), // Čistý název bez pohlaví
-      albumName: topic.replace(/-/g, ' '),
+      trackName: cleanedTopic, // Čistý název bez pohlaví
+      albumName: cleanedTopic,
       // Metoda pro filtrování podle pohlaví uživatele
       isForUser: (userGender) => {
         // Pokud uživatel nemá nastavené pohlaví, zobraz všechny soubory
