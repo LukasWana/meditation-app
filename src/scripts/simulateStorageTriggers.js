@@ -78,10 +78,10 @@ export async function simulateHudbaTrigger() {
 }
 
 export async function simulateSlovaTrigger() {
-  console.log('🧪 Simulating slova/ folder trigger...');
+  console.log('🧪 Simulating meditacie/ folder trigger...');
   
   try {
-    const fileName = `slova/simulated-test-${Date.now()}.mp3`;
+    const fileName = `meditacie/simulated-test-${Date.now()}.mp3`;
     console.log(`📁 Simulating file upload: ${fileName}`);
     
     // Simuluj extrakci metadat
@@ -102,14 +102,14 @@ export async function simulateSlovaTrigger() {
     
     return {
       success: true,
-      message: `Simulated slova trigger successful! Created metadata for ${fileName}`,
+      message: `Simulated meditacie trigger successful! Created metadata for ${fileName}`,
       fileName: fileName,
       safePath: safePath,
       metadata: metadata
     };
     
   } catch (error) {
-    console.error('❌ Simulated slova trigger failed:', error);
+    console.error('❌ Simulated meditacie trigger failed:', error);
     return { success: false, error: error.message };
   }
 }
@@ -121,8 +121,8 @@ export async function simulateMultipleTriggers() {
     const testFiles = [
       'hudba/meditation-1.mp3',
       'hudba/meditation-2.mp3',
-      'slova/breathing-exercise.mp3',
-      'slova/guided-meditation.mp3'
+      'meditacie/breathing-exercise.mp3',
+      'meditacie/guided-meditation.mp3'
     ];
     
     const results = [];

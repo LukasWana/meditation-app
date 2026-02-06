@@ -104,11 +104,11 @@ export async function testHudbaFolderTrigger() {
 }
 
 export async function testSlovaFolderTrigger() {
-  console.log('🧪 Testing slova/ folder trigger...');
+  console.log('🧪 Testing meditacie/ folder trigger...');
 
   try {
-    // Vytvoř testovací soubor v slova/ složce
-    const testFileName = `slova/trigger-test-${Date.now()}.mp3`;
+    // Vytvoř testovací soubor v meditacie/ složce
+    const testFileName = `meditacie/trigger-test-${Date.now()}.mp3`;
     const testFileRef = ref(storage, testFileName);
 
     // Vytvoř fake MP3 data
@@ -119,18 +119,18 @@ export async function testSlovaFolderTrigger() {
       0x00, 0x00, 0x00, 0x00
     ]);
 
-    console.log(`📤 Uploading test file to slova folder: ${testFileName}`);
+    console.log(`📤 Uploading test file to meditacie folder: ${testFileName}`);
 
     await uploadBytes(testFileRef, fakeMP3Data, {
       contentType: 'audio/mpeg',
       customMetadata: {
-        test: 'slova-trigger',
+        test: 'meditacie-trigger',
         timestamp: new Date().toISOString(),
-        folder: 'slova'
+        folder: 'meditacie'
       }
     });
 
-    console.log('✅ Test file uploaded to slova folder');
+    console.log('✅ Test file uploaded to meditacie folder');
     console.log('🔄 onFileUpload trigger should have fired');
     console.log('📊 Metadata should be created in Firestore and Realtime Database');
 
@@ -141,12 +141,12 @@ export async function testSlovaFolderTrigger() {
 
     return {
       success: true,
-      message: 'Slova folder trigger test completed',
+      message: 'Meditacie folder trigger test completed',
       testFile: testFileName
     };
 
   } catch (error) {
-    console.error('❌ Slova folder trigger test failed:', error);
+    console.error('❌ Meditacie folder trigger test failed:', error);
     return { success: false, error: error.message };
   }
 }

@@ -28,12 +28,12 @@ export const initMetadataSync = async () => {
     // Zobraz statistiky
     const allMetadata = metadataSyncService.getAllMetadata();
     const hudbaFiles = Object.values(allMetadata).filter(m => m.fileName.startsWith('hudba/'));
-    const slovaFiles = Object.values(allMetadata).filter(m => m.fileName.startsWith('slova/'));
+    const meditacieFiles = Object.values(allMetadata).filter(m => m.fileName.startsWith('meditacie/'));
 
     log.info('📈 Metadata statistics:', {
       total: Object.keys(allMetadata).length,
       hudba: hudbaFiles.length,
-      slova: slovaFiles.length,
+      meditacie: meditacieFiles.length,
       withDuration: Object.values(allMetadata).filter(m => m.duration && m.duration !== 'N/A').length
     });
 
@@ -41,7 +41,7 @@ export const initMetadataSync = async () => {
       success: true,
       totalFiles: Object.keys(allMetadata).length,
       hudbaFiles: hudbaFiles.length,
-      slovaFiles: slovaFiles.length
+      meditacieFiles: meditacieFiles.length
     };
 
   } catch (error) {

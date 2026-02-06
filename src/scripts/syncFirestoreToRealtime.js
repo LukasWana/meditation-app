@@ -35,15 +35,15 @@ export async function syncFirestoreToRealtime() {
       metadataObject[data.fileName] = data;
     });
 
-    // Zobraz slova soubory
-    const slovaFiles = metadataArray.filter(file =>
-      file.fileName && file.fileName.includes('slova/')
+    // Zobraz meditacie soubory
+    const meditacieFiles = metadataArray.filter(file =>
+      file.fileName && file.fileName.includes('meditacie/')
     );
-    console.log(`🎤 Found ${slovaFiles.length} slova files in Firestore`);
+    console.log(`🎤 Found ${meditacieFiles.length} meditacie files in Firestore`);
 
-    if (slovaFiles.length > 0) {
-      console.log('🎤 Sample slova files:');
-      slovaFiles.slice(0, 3).forEach(file => {
+    if (meditacieFiles.length > 0) {
+      console.log('🎤 Sample meditacie files:');
+      meditacieFiles.slice(0, 3).forEach(file => {
         console.log(`   - ${file.fileName}`);
         console.log(`     Title: ${file.title || 'N/A'}`);
         console.log(`     Duration: ${file.duration || 'N/A'}`);
@@ -57,17 +57,17 @@ export async function syncFirestoreToRealtime() {
       files: metadataArray,
       lastSync: new Date().toISOString(),
       totalFiles: metadataArray.length,
-      slovaFiles: slovaFiles.length
+      meditacieFiles: meditacieFiles.length
     });
 
     console.log('✅ Successfully synced Firestore to Realtime Database');
     console.log(`📊 Synced ${metadataArray.length} total files`);
-    console.log(`🎤 Synced ${slovaFiles.length} slova files`);
+    console.log(`🎤 Synced ${meditacieFiles.length} meditacie files`);
 
     return {
       success: true,
       totalFiles: metadataArray.length,
-      slovaFiles: slovaFiles.length,
+      meditacieFiles: meditacieFiles.length,
       message: 'Sync completed successfully'
     };
 

@@ -24,8 +24,8 @@ export async function testMetadataStructure() {
     const sampleFiles = [
       'hudba/meditation-track-1.mp3',
       'hudba/meditation-track-2.mp3',
-      'slova/guided-meditation.mp3',
-      'slova/breathing-exercise.mp3'
+      'meditacie/guided-meditation.mp3',
+      'meditacie/breathing-exercise.mp3'
     ];
 
     console.log('📝 Creating sample metadata structure...');
