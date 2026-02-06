@@ -119,7 +119,8 @@ const CacheManagementPanel = () => {
               updated: metadata.updated,
               downloadURL: downloadURL,
               folder: folderRef.name,
-              category: folderRef.name === 'hudba' ? 'hudba' : 'slova',
+              category: folderRef.name === 'hudba' ? 'hudba' :
+                       folderRef.name === 'meditacie' ? 'meditacie' : folderRef.name,
               language: folderRef.name.includes('CZ') ? 'CZ' :
                        folderRef.name.includes('SK') ? 'SK' :
                        folderRef.name.includes('EN') ? 'EN' : null
@@ -129,7 +130,7 @@ const CacheManagementPanel = () => {
           }
         }
 
-        // Skenuj podsložky (např. slova/CZ, slova/SK, slova/EN)
+        // Skenuj podsložky (např. meditacie/CZ, meditacie/SK, meditacie/EN)
         for (const subFolderRef of folderResult.prefixes) {
           const subFolderResult = await listAll(subFolderRef);
 
@@ -147,7 +148,7 @@ const CacheManagementPanel = () => {
                 updated: metadata.updated,
                 downloadURL: downloadURL,
                 folder: subFolderRef.fullPath,
-                category: 'slova',
+                category: 'meditacie',
                 language: subFolderRef.name
               });
             } catch (error) {
@@ -254,14 +255,14 @@ const CacheManagementPanel = () => {
     }
 
     const files = Object.values(cacheData.audio_metadata).filter(file => file && typeof file === 'object');
-    const slovaFiles = files.filter(file => file.category === 'slova');
+    const meditacieFiles = files.filter(file => file.category === 'meditacie');
     const hudbaFiles = files.filter(file => file.category === 'hudba');
 
-    const slovaByLanguage = {
-      CZ: slovaFiles.filter(file => file.language === 'CZ'),
-      SK: slovaFiles.filter(file => file.language === 'SK'),
-      EN: slovaFiles.filter(file => file.language === 'EN'),
-      main: slovaFiles.filter(file => !file.language)
+    const meditacieByLanguage = {
+      CZ: meditacieFiles.filter(file => file.language === 'CZ'),
+      SK: meditacieFiles.filter(file => file.language === 'SK'),
+      EN: meditacieFiles.filter(file => file.language === 'EN'),
+      main: meditacieFiles.filter(file => !file.language)
     };
 
     return (
@@ -300,28 +301,28 @@ const CacheManagementPanel = () => {
             </div>
           </div>
 
-          {/* Slova */}
+          {/* Meditacie */}
           <div className="bg-purple-50 border border-purple-200 rounded-lg p-4">
-            <h3 className="text-lg font-semibold text-purple-800 mb-3">💬 Slova ({slovaFiles.length} souborů)</h3>
+            <h3 className="text-lg font-semibold text-purple-800 mb-3">💬 Meditacie ({meditacieFiles.length} souborů)</h3>
             <div className="space-y-2">
               <div className="text-sm">
-                <span className="font-medium">Celková velikost:</span> {formatBytes(slovaFiles.reduce((sum, f) => sum + (f.size || 0), 0))}
+                <span className="font-medium">Celková velikost:</span> {formatBytes(meditacieFiles.reduce((sum, f) => sum + (f.size || 0), 0))}
               </div>
               <div className="text-sm">
-                <span className="font-medium">Celková délka:</span> {formatDuration(slovaFiles.reduce((sum, f) => sum + (f.duration || 0), 0))}
+                <span className="font-medium">Celková délka:</span> {formatDuration(meditacieFiles.reduce((sum, f) => sum + (f.duration || 0), 0))}
               </div>
               <div className="mt-2 space-y-1">
                 <div className="text-xs text-gray-600">
-                  CZ: {slovaByLanguage.CZ.length} souborů
+                  CZ: {meditacieByLanguage.CZ.length} souborů
                 </div>
                 <div className="text-xs text-gray-600">
-                  SK: {slovaByLanguage.SK.length} souborů
+                  SK: {meditacieByLanguage.SK.length} souborů
                 </div>
                 <div className="text-xs text-gray-600">
-                  EN: {slovaByLanguage.EN.length} souborů
+                  EN: {meditacieByLanguage.EN.length} souborů
                 </div>
                 <div className="text-xs text-gray-600">
-                  Main: {slovaByLanguage.main.length} souborů
+                  Main: {meditacieByLanguage.main.length} souborů
                 </div>
               </div>
             </div>

@@ -17,7 +17,7 @@ export const useFirebaseCDNScanner = () => {
     setLastUpdated(cachedResult.lastUpdated);
     setIsLoading(false);
 
-    log.success('✅ Using cached slova data - no Firebase loading needed');
+    log.success('✅ Using cached meditacie data - no Firebase loading needed');
 
     // Metadata jsou už načtené z preloadingu, jen optimalizuj cache
     cacheService.optimizeCache();
@@ -29,11 +29,11 @@ export const useFirebaseCDNScanner = () => {
       setError(null);
 
       // Zkontroluj cache pro Firebase query
-      const cacheKey = 'slova_scanner_all_files';
+      const cacheKey = 'meditacie_scanner_all_files';
       const cachedResult = cacheService.getFirebaseQuery(cacheKey);
 
       if (cachedResult) {
-        console.log('Using cached Firebase scan result for slova');
+        console.log('Using cached Firebase scan result for meditacie');
         await processCachedResult(cachedResult);
         return;
       }
@@ -60,8 +60,8 @@ export const useFirebaseCDNScanner = () => {
             });
           });
 
-          // Pokud je to slova/ složka, prohledej i jazykové podsložky
-          if (folderRef.name === 'slova') {
+          // Pokud je to meditacie/ složka, prohledej i jazykové podsložky
+          if (folderRef.name === 'meditacie') {
             for (const langFolderRef of folderResult.prefixes) {
               try {
                 const langFolderResult = await listAll(langFolderRef);
@@ -81,25 +81,16 @@ export const useFirebaseCDNScanner = () => {
         }
       }
 
-      // Filtruj pouze MP3 soubory pro mluvené slovo ze slova/ složky a jazykových podsložek
+      // Filtruj pouze MP3 soubory pro meditace ze složky meditacie/ a root jazykových složek
       const mp3Files = allFiles
         .filter(item => {
           const name = item.name;
           const isMp3 = name.toLowerCase().endsWith('.mp3');
-          // Soubory z meditacie/ složky (primární), jazykových podsložek (CZ/, SK/, EN/) nebo začínající "muzsky" nebo "zensky"
-          // Zpětná kompatibilita se slova/ složkou
-          const isSlova = name.startsWith('meditacie/') ||
-                         name.startsWith('meditacie/CZ/') ||
-                         name.startsWith('meditacie/SK/') ||
-                         name.startsWith('meditacie/EN/') ||
-                         name.startsWith('slova/') ||
-                         name.startsWith('slova/CZ/') ||
-                         name.startsWith('slova/SK/') ||
-                         name.startsWith('slova/EN/') ||
-                         /^(muzsky|zensky)/.test(name);
+          // Soubory z meditacie/ složky (primární)
+          const isMeditacie = name.startsWith('meditacie/');
           const isNotMusic = !name.startsWith('00--00--00--');
-          console.log(`Filtering ${name}: isMp3=${isMp3}, isSlova=${isSlova}, isNotMusic=${isNotMusic}`);
-          return isMp3 && isSlova && isNotMusic;
+          console.log(`Filtering ${name}: isMp3=${isMp3}, isMeditacie=${isMeditacie}, isNotMusic=${isNotMusic}`);
+          return isMp3 && isMeditacie && isNotMusic;
         })
         .map(item => item.name);
 
@@ -167,7 +158,7 @@ export const useFirebaseCDNScanner = () => {
       };
       cacheService.setFirebaseQuery(cacheKey, resultToCache);
 
-      log.success(`✅ Loaded ${verifiedFiles.filter(f => f.isAvailable).length} slova files from cache (no Firebase loading needed)`);
+      log.success(`✅ Loaded ${verifiedFiles.filter(f => f.isAvailable).length} meditacie files from cache (no Firebase loading needed)`);
 
       // Debug: vypiš všechny načtené soubory
       verifiedFiles.filter(f => f.isAvailable).forEach(file => {

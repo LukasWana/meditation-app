@@ -2,27 +2,8 @@ import { useState, useEffect, useMemo } from 'react';
 import { useFirebaseCDNScanner } from '@hooks/useFirebaseCDNScanner';
 import unifiedMetadataService from '@services/unifiedMetadataService';
 
-// Fallback duration pro slova soubory
-const getFallbackDuration = (fileName) => {
-  const fallbackDurations = {
-    'slova/muzsky4FSK-uzkost-osamelost.mp3': '5:30',
-    'slova/zensky4FSK-uzkost-osamelost.mp3': '5:30',
-    'slova/muzsky4FSK-strach-osamelost.mp3': '4:45',
-    'slova/zensky4FSK-strach-osamelost.mp3': '4:45',
-    'slova/muzsky4FSK-stres-praca.mp3': '6:15',
-    'slova/zensky4FSK-stres-praca.mp3': '6:15',
-    'slova/muzsky4FSK-spank.mp3': '8:00',
-    'slova/zensky4FSK-spank.mp3': '8:00',
-    'slova/muzsky4FSK-uzkost.mp3': '7:20',
-    'slova/zensky4FSK-uzkost.mp3': '7:20',
-    'slova/muzsky4FSK-stres.mp3': '5:45',
-    'slova/zensky4FSK-stres.mp3': '5:45',
-    'slova/muzsky4FSK-osamelost.mp3': '6:30',
-    'slova/zensky4FSK-osamelost.mp3': '6:30'
-  };
-
-  return fallbackDurations[fileName] || null;
-};
+// Fallback duration není potřeba - metadata jsou ve Firestore
+const getFallbackDuration = (_fileName) => null;
 
 export const useFirebaseAudioFilter = (userGender, userLanguage = 'sk') => {
   // Debug: zobraz přijaté parametry
@@ -74,21 +55,14 @@ export const useFirebaseAudioFilter = (userGender, userLanguage = 'sk') => {
       const fileName = file.fileName;
 
       if (normalizedUserLang === 'sk') {
-        // Pro SK zobraz soubory ze složky "meditacie/SK/", "SK/" (slova/ pro zpětnou kompatibilitu)
-        return fileName.startsWith('meditacie/SK/') ||
-               fileName.startsWith('SK/') ||
-               fileName.startsWith('slova/') ||
-               fileName.startsWith('slova/SK/');
+        // Pro SK zobraz soubory ze složky "meditacie/SK/"
+        return fileName.startsWith('meditacie/SK/');
       } else if (normalizedUserLang === 'cz') {
-        // Pro CZ zobraz soubory ze složky "meditacie/CZ/", "CZ/" (slova/ pro zpětnou kompatibilitu)
-        return fileName.startsWith('meditacie/CZ/') ||
-               fileName.startsWith('CZ/') ||
-               fileName.startsWith('slova/CZ/');
+        // Pro CZ zobraz soubory ze složky "meditacie/CZ/"
+        return fileName.startsWith('meditacie/CZ/');
       } else if (normalizedUserLang === 'en') {
-        // Pro EN zobraz soubory ze složky "meditacie/EN/", "EN/" (slova/ pro zpětnou kompatibilitu)
-        return fileName.startsWith('meditacie/EN/') ||
-               fileName.startsWith('EN/') ||
-               fileName.startsWith('slova/EN/');
+        // Pro EN zobraz soubory ze složky "meditacie/EN/"
+        return fileName.startsWith('meditacie/EN/');
       }
 
       // Fallback - zobraz všechny soubory

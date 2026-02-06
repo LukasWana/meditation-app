@@ -117,9 +117,9 @@ function MeditationApp() {
         console.log('🔍 Database viewer je k dispozici v konzoli');
       });
 
-      // Debug funkce pro slova soubory
-      window.debugSlovaFiles = async () => {
-        console.log('🔍 Debugging slova files...');
+      // Debug funkce pro meditacie soubory
+      window.debugMeditacieFiles = async () => {
+        console.log('🔍 Debugging meditacie files...');
         try {
           const { realtimeMetadataService } = await import('./services/realtimeMetadataService');
           const metadata = await realtimeMetadataService.getAllMetadata();
@@ -127,15 +127,15 @@ function MeditationApp() {
           console.log('📊 All metadata keys:', Object.keys(metadata).length);
           console.log('📊 All metadata:', metadata);
 
-          const slovaFiles = Object.values(metadata).filter(file =>
-            file.fileName && file.fileName.includes('slova/')
+          const meditacieFiles = Object.values(metadata).filter(file =>
+            file.fileName && file.fileName.includes('meditacie/')
           );
-          console.log('🎤 Slova files found:', slovaFiles.length);
-          console.log('🎤 Slova files:', slovaFiles);
+          console.log('🎤 Meditacie files found:', meditacieFiles.length);
+          console.log('🎤 Meditacie files:', meditacieFiles);
 
-          return { totalFiles: Object.keys(metadata).length, slovaFiles: slovaFiles.length };
+          return { totalFiles: Object.keys(metadata).length, meditacieFiles: meditacieFiles.length };
         } catch (error) {
-          console.error('❌ Error debugging slova files:', error);
+          console.error('❌ Error debugging meditacie files:', error);
           return null;
         }
       };
@@ -266,7 +266,7 @@ function MeditationApp() {
 
     console.log('🔍 Debug funkce dostupné v konzoli:');
     console.log('  - showDatabaseData() - zobrazí database viewer');
-    console.log('  - debugSlovaFiles() - zobrazí slova soubory v Realtime Database');
+    console.log('  - debugMeditacieFiles() - zobrazí meditacie soubory v Realtime Database');
     console.log('  - debugCache() - zobrazí detaily cache');
     console.log('  - clearCache() - vymaže cache');
     console.log('  - testAudioPlayback(fileName) - otestuje přehrávání konkrétního souboru');

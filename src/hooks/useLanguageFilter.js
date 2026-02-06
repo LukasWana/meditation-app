@@ -42,8 +42,8 @@ export const useLanguageFilter = () => {
   const getLanguagePath = (basePath) => {
     if (!basePath) return '';
 
-    // Pro sekci slova přidej jazykovou podsložku
-    if (basePath.includes('slova')) {
+    // Pro sekci meditacie přidej jazykovou podsložku
+    if (basePath.includes('meditacie') || basePath.includes('slova')) {
       return `${basePath}/${language}`;
     }
 

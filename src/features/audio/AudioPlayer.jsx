@@ -112,9 +112,9 @@ const AudioPlayer = ({
   }, [fileName, fileNameProp, audioSrc, albumTracks]);
 
   // Pro detekci typu aktivity použij více způsobů:
-  // 1. Zkontroluj folder z allFiles (nejspolehlivější - každý slova soubor má folder: 'slova')
-  // 2. Zkontroluj fileName prop nebo fileName z hooku (může obsahovat cestu "slova/...")
-  // 3. Heuristika: pokud fileName obsahuje "muzsky" nebo "zensky", je to slova soubor
+  // 1. Zkontroluj folder z allFiles (nejspolehlivější - každý meditacie soubor má folder: 'meditacie')
+  // 2. Zkontroluj fileName prop nebo fileName z hooku (může obsahovat cestu "meditacie/...")
+  // 3. Heuristika: pokud fileName obsahuje "muzsky" nebo "zensky", je to meditacie soubor
   // 4. Fallback na rawSrc
   // Důležité: použij audioUrl z hooku (aktualizuje se při změně hlasu), ne audioSrc prop (který zůstává stejný)
   const rawSrc = audioUrl || audioSrc || '';
@@ -122,10 +122,11 @@ const AudioPlayer = ({
   const sourceForDetection = fileName || fileNameProp || rawSrc || '';
 
   // Detekce podle folder z allFiles (nejspolehlivější)
-  const isSlovaByFolder = allFiles && allFiles.length > 0 && allFiles[0]?.folder === 'slova';
+  const isSlovaByFolder = allFiles && allFiles.length > 0 &&
+    (allFiles[0]?.folder === 'meditacie');
 
   // Detekce podle cesty v fileName
-  const isSlovaByPath = sourceForDetection.includes('slova');
+  const isSlovaByPath = sourceForDetection.includes('meditacie/');
 
   // Heuristika: soubory s prefixy muzsky/zensky jsou slova soubory
   const isSlovaByHeuristic = sourceForDetection.includes('muzsky') || sourceForDetection.includes('zensky');
@@ -159,7 +160,7 @@ const AudioPlayer = ({
   }
 
   // Trackování aktivity pro AudioPlayer:
-  // - slova/* patří do sekce "meditation" (uživatel to vnímá jako meditace/afirmace)
+  // - meditacie/* patří do sekce "meditation" (uživatel to vnímá jako meditace/afirmace)
   // - hudba/* patří do sekce "music"
   // - ostatní audio netrackujeme (aby se nám to nemíchalo)
   const activitySection = isSlova ? 'meditation' : 'music';
@@ -233,7 +234,7 @@ const AudioPlayer = ({
       audioSrc: rawSrc,
       albumName: albumName,
       duration: duration,
-      contentType: isSlova ? 'slova' : (isHudba ? 'hudba' : 'audio'),
+      contentType: isSlova ? 'meditacie' : (isHudba ? 'hudba' : 'audio'),
       gender: currentGender
     },
     getDescription: getAudioDescription
