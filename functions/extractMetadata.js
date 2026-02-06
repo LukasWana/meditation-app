@@ -42,12 +42,8 @@ exports.extractMP3Metadata = functions.storage.object().onFinalize(async (object
 
   // Zkontroluj, jestli je soubor v podporované složce
   const isInTargetFolder = filePath.startsWith('hudba/') ||
-    filePath.startsWith('slova/') ||
-    filePath.startsWith('dychanie/') ||
-    filePath.startsWith('meditacie/') ||
-    filePath.startsWith('CZ/') ||
-    filePath.startsWith('SK/') ||
-    filePath.startsWith('EN/');
+                           filePath.startsWith('dychanie/') ||
+                           filePath.startsWith('meditacie/');
 
   if (!isInTargetFolder) {
     console.log('Skipping file outside target folders:', filePath);
@@ -63,7 +59,13 @@ exports.extractMP3Metadata = functions.storage.object().onFinalize(async (object
     await bucket.file(filePath).download({ destination: tempFilePath });
 
     // Extrahuj metadata pomocí ffprobe
-    const metadata = await extractMetadataWithFFprobe(tempFilePath);
+    let metadata = { duration: 0 };
+    try {
+      metadata = await extractMetadataWithFFprobe(tempFilePath);
+    } catch (ffprobeError) {
+      console.warn(`⚠️ Failed to extract duration with ffprobe for ${filePath}: ${ffprobeError.message}`);
+      metadata = { duration: 0 };
+    }
 
     // Urči příponu souboru
     const fileExt = path.extname(filePath).toLowerCase();
@@ -77,11 +79,22 @@ exports.extractMP3Metadata = functions.storage.object().onFinalize(async (object
       finalContentType = 'audio/mpeg';
     }
 
+    // Urči folder a language (meditacie může být i v root jazykových složkách)
+    let folder = filePath.split('/')[0];
+    let language = null;
+    if (filePath.startsWith('meditacie/')) {
+      folder = 'meditacie';
+      const parts = filePath.split('/');
+      if (parts.length >= 2) {
+        language = parts[1];
+      }
+    }
+
     // Přidej dodatečné informace
     const completeMetadata = {
       fileName: filePath,
       displayName: baseName,
-      folder: filePath.split('/')[0],
+      folder: folder,
       subFolder: filePath.split('/').length > 2 ? filePath.split('/')[1] : null,
       downloadURL: `https://firebasestorage.googleapis.com/v0/b/${object.bucket}/o/${encodeURIComponent(filePath)}?alt=media`,
       fullPath: filePath,
@@ -93,11 +106,13 @@ exports.extractMP3Metadata = functions.storage.object().onFinalize(async (object
       contentType: finalContentType,
       lastModified: new Date().toISOString(),
       extracted: true,
-      // Dodatečné informace pro slova soubory
-      ...(filePath.startsWith('slova/') ? {
+      // Dodatečné informace pro meditacie soubory
+      ...(folder === 'meditacie' ? {
         gender: extractGender(path.basename(filePath)),
         topic: extractTopic(path.basename(filePath)),
-        type: extractType(path.basename(filePath))
+        type: extractType(path.basename(filePath)),
+        language: language,
+        category: 'meditacie'
       } : {})
     };
 
@@ -151,6 +166,10 @@ function extractMetadataWithFFprobe(filePath) {
 
     ffprobe.stderr.on('data', (data) => {
       errorOutput += data.toString();
+    });
+
+    ffprobe.on('error', (error) => {
+      reject(new Error(`ffprobe failed to start: ${error.message}`));
     });
 
     ffprobe.on('close', (code) => {

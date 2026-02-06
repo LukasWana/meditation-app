@@ -13,6 +13,11 @@ exports.generateWaveform = generateWaveform;
 exports.helloWorld = metadataSync.helloWorld;
 exports.testMetadata = metadataSync.testMetadata;
 exports.onFileUpload = metadataSync.onFileUpload;
+exports.syncAllFiles = metadataSync.syncAllFiles;
+exports.syncStorage = metadataSync.syncStorage;
+exports.getFileStats = metadataSync.getFileStats;
+exports.saveScrapedMetadata = metadataSync.saveScrapedMetadata;
+exports.cleanupMetadata = metadataSync.cleanupMetadata;
 
 // Export from sharedSettings
 exports.createSharedSettings = sharedSettings.createSharedSettings;
