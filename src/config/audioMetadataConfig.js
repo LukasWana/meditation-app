@@ -28,12 +28,12 @@ export const AUDIO_METADATA_CONFIG = {
       enabled: true
     },
     slova: {
-      path: 'slova',
+      path: 'meditacie',
       formats: ['mp3'],
       recursive: true,
       metadataExtraction: true,
       enabled: true,
-      // Speciální metadata pro slova soubory
+      // Speciální metadata pro meditacie soubory
       extractSpecialMetadata: true,
       specialFields: ['gender', 'topic', 'type']
     },

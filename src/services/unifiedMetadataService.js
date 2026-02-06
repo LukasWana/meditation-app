@@ -211,7 +211,6 @@ class UnifiedMetadataService {
   extractType(fileName) {
     if (fileName.startsWith('hudba/')) return 'hudba';
     if (fileName.startsWith('meditacie/')) return 'meditacie';
-    if (fileName.startsWith('slova/')) return 'meditacie'; // Zpětná kompatibilita - mapuj na meditacie
     return 'unknown';
   }
 

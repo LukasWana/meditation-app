@@ -110,7 +110,8 @@ class FastMetadataService {
           const fileData = {
             ...item,
             name: item.name,
-            folder: 'hudba'
+            folder: 'hudba',
+            fullPath: item.fullPath || `hudba/${item.name}`
           };
           log.debug(`📄 Adding root hudba file:`, fileData);
           allFiles.push(fileData);
@@ -130,7 +131,8 @@ class FastMetadataService {
               ...item,
               name: `${folderRef.name}/${item.name}`,
               folder: 'hudba', // Oprava: folder musí být 'hudba', ne název podsložky
-              subFolder: folderRef.name
+              subFolder: folderRef.name,
+              fullPath: item.fullPath || `hudba/${folderRef.name}/${item.name}`
             });
           });
 
@@ -146,7 +148,8 @@ class FastMetadataService {
                   ...item,
                   name: `${subFolderRef.name}/${item.name}`,
                   folder: 'hudba', // Oprava: folder musí být 'hudba'
-                  subFolder: subFolderRef.name
+                  subFolder: subFolderRef.name,
+                  fullPath: item.fullPath || `hudba/${subFolderRef.name}/${item.name}`
                 };
                 log.debug(`📄 Adding subfolder file:`, fileData);
                 allFiles.push(fileData);
@@ -183,7 +186,8 @@ class FastMetadataService {
             const fileData = {
               ...item,
               name: item.name,
-              folder: 'dychanie'
+              folder: 'dychanie',
+              fullPath: item.fullPath || `dychanie/${item.name}`
             };
             log.debug(`📄 Adding dychanie file:`, fileData);
             allFiles.push(fileData);
@@ -210,7 +214,8 @@ class FastMetadataService {
                     ...item,
                     name: `${folderRef.name}/${item.name}`,
                     folder: 'dychanie',
-                    subFolder: folderRef.name
+                    subFolder: folderRef.name,
+                    fullPath: item.fullPath || `dychanie/${folderRef.name}/${item.name}`
                   });
                 }
               });
@@ -232,7 +237,8 @@ class FastMetadataService {
                         ...item,
                         name: `${subFolderRef.name}/${item.name}`,
                         folder: 'dychanie',
-                        subFolder: subFolderRef.name
+                        subFolder: subFolderRef.name,
+                        fullPath: item.fullPath || `dychanie/${subFolderRef.name}/${item.name}`
                       });
                     }
                   });
@@ -272,7 +278,8 @@ class FastMetadataService {
             allFiles.push({
               ...item,
               name: item.name,
-              folder: 'background'
+              folder: 'background',
+              fullPath: item.fullPath || `background/${item.name}`
             });
             log.debug(`📄 Adding background image:`, item.name);
           }
@@ -295,7 +302,8 @@ class FastMetadataService {
                   ...item,
                   name: `${folderRef.name}/${item.name}`,
                   folder: 'background',
-                  subFolder: folderRef.name
+                  subFolder: folderRef.name,
+                  fullPath: item.fullPath || `background/${folderRef.name}/${item.name}`
                 });
               }
             });
@@ -334,7 +342,8 @@ class FastMetadataService {
                   ...item,
                   name: `${langFolderRef.name}/${item.name}`,
                   folder: 'meditacie',
-                  language: langFolderRef.name
+                  language: langFolderRef.name,
+                  fullPath: item.fullPath || `meditacie/${langFolderRef.name}/${item.name}`
                 });
                 log.debug(`📄 Adding meditacie file: ${langFolderRef.name}/${item.name}`);
               }
@@ -347,34 +356,7 @@ class FastMetadataService {
         log.warn(`Failed to load meditacie folder:`, meditacieError);
       }
 
-      // ✅ NOVÉ: Načti jazykové složky na kořenové úrovni (CZ/, SK/, EN/)
-      const languageFolders = ['CZ', 'SK', 'EN'];
-      for (const lang of languageFolders) {
-        try {
-          const langRef = ref(storage, lang);
-          log.debug(`🔍 Loading from Firebase Storage path: ${lang}`);
-          const langResult = await listAll(langRef);
-
-          langResult.items.forEach(item => {
-            const fileName = item.name.toLowerCase();
-            const isAudioFile = fileName.endsWith('.mp3') ||
-                               fileName.endsWith('.ogg') ||
-                               fileName.endsWith('.oga');
-
-            if (isAudioFile) {
-              allFiles.push({
-                ...item,
-                name: `${lang}/${item.name}`,
-                folder: 'slova',
-                language: lang
-              });
-              log.debug(`📄 Adding language folder file: ${lang}/${item.name}`);
-            }
-          });
-        } catch (langError) {
-          log.warn(`Failed to load ${lang} folder:`, langError);
-        }
-      }
+      // Root jazykové složky (CZ/SK/EN) se nepoužívají – držíme se struktury meditacie/{LANG}/
 
     // Zpracuj soubory a vytvoř metadata
     await this.processFiles(allFiles);
@@ -415,7 +397,6 @@ class FastMetadataService {
     const hudbaFiles = files.filter(file => file.folder === 'hudba');
     const dychanieFiles = files.filter(file => file.folder === 'dychanie');
     const meditacieFiles = files.filter(file => file.folder === 'meditacie');
-    const slovaFiles = files.filter(file => file.folder === 'slova' && (file.language || file.name.startsWith('CZ/') || file.name.startsWith('SK/') || file.name.startsWith('EN/')));
     const backgroundFiles = files.filter(file => file.folder === 'background');
 
     const mp3Files = hudbaFiles.filter(file => file.name.toLowerCase().endsWith('.mp3'));
@@ -427,10 +408,6 @@ class FastMetadataService {
       const fileName = file.name.toLowerCase();
       return fileName.endsWith('.mp3') || fileName.endsWith('.ogg') || fileName.endsWith('.oga');
     });
-    const slovaAudioFiles = slovaFiles.filter(file => {
-      const fileName = file.name.toLowerCase();
-      return fileName.endsWith('.mp3') || fileName.endsWith('.ogg') || fileName.endsWith('.oga');
-    });
     const imageFiles = hudbaFiles.filter(file => /\.(jpg|jpeg|png|gif|webp)$/i.test(file.name));
     const backgroundImageFiles = backgroundFiles.filter(file => /\.(jpg|jpeg|png|gif|webp)$/i.test(file.name));
 
@@ -439,17 +416,15 @@ class FastMetadataService {
       hudbaFiles: hudbaFiles.length,
       dychanieFiles: dychanieFiles.length,
       meditacieFiles: meditacieFiles.length,
-      slovaFiles: slovaFiles.length,
       backgroundFiles: backgroundFiles.length,
       mp3Files: mp3Files.length,
       oggFiles: oggFiles.length,
       meditacieAudioFiles: meditacieAudioFiles.length,
-      slovaAudioFiles: slovaAudioFiles.length,
       imageFiles: imageFiles.length,
       backgroundImageFiles: backgroundImageFiles.length
     });
 
-    log.info(`📊 Processing ${mp3Files.length} MP3 files, ${imageFiles.length} images, ${meditacieAudioFiles.length} meditacie files, ${slovaAudioFiles.length} slova files, ${backgroundImageFiles.length} background images`);
+    log.info(`📊 Processing ${mp3Files.length} MP3 files, ${imageFiles.length} images, ${meditacieAudioFiles.length} meditacie files, ${backgroundImageFiles.length} background images`);
     log.debug(`🎵 MP3 files:`, mp3Files.map(f => ({
       name: f.name,
       folder: f.folder,
@@ -514,7 +489,7 @@ class FastMetadataService {
         if (file.language) {
           metadata.language = file.language;
         }
-        metadata.category = 'slova';
+        metadata.category = 'meditacie';
         this.metadata.set(metadata.fileName, metadata);
         log.debug(`✅ Meditacie file processed: ${metadata.fileName}`);
       } catch (error) {
@@ -522,38 +497,25 @@ class FastMetadataService {
       }
     }
 
-    // ✅ NOVÉ: Zpracuj slova audio soubory z jazykových složek
-    log.info(`🎵 Processing ${slovaAudioFiles.length} slova audio files from language folders...`);
-    for (const file of slovaAudioFiles) {
-      try {
-        const metadata = await this.createMetadataFromFile(file);
-        // Přidej informace o jazyce
-        if (file.language) {
-          metadata.language = file.language;
-        }
-        metadata.category = 'slova';
-        this.metadata.set(metadata.fileName, metadata);
-        log.debug(`✅ Slova file processed: ${metadata.fileName}`);
-      } catch (error) {
-        log.warn(`Failed to process slova file ${file.name}:`, error);
-      }
-    }
-
     log.success(`✅ Processed ${this.metadata.size} files`);
   }
 
   async createMetadataFromFile(file) {
-    const fileName = file.name;
-    const fileNameOnly = fileName.split('/').pop();
+    const filePath = file.fullPath || (file.folder === 'root' ? file.name : `${file.folder}/${file.name}`);
+    const fileNameOnly = filePath.split('/').pop();
+    const normalizedFolder = file.folder === 'root' ? (filePath.split('/')[0] || 'root') : file.folder;
+    const isMeditaciePath = normalizedFolder === 'meditacie' ||
+      filePath.startsWith('meditacie/');
+    const isSlova = isMeditaciePath;
 
     // Parsuj název souboru
     const parsed = parseAudioFileName(fileNameOnly);
 
       // Vytvoř základní metadata
       const metadata = {
-        fileName: file.folder === 'root' ? fileName : `${file.folder}/${fileName}`,
+        fileName: filePath,
         fileNameOnly: fileNameOnly,
-        folder: file.folder,
+        folder: normalizedFolder,
         subFolder: file.subFolder || null,
         type: file.subFolder ? 'album_track' : 'audio',
         contentType: 'audio/mpeg',
@@ -562,16 +524,16 @@ class FastMetadataService {
         // Parsované informace - aktualizuj s informacemi o složce
         parsed: {
           ...parsed,
-          isHudba: file.folder === 'hudba',
-          isSlova: file.folder === 'slova',
-          isDychanie: file.folder === 'dychanie',
+          isHudba: normalizedFolder === 'hudba',
+          isSlova: isSlova,
+          isDychanie: normalizedFolder === 'dychanie',
           isAlbum: file.subFolder ? true : false,
           albumName: file.subFolder || null,
           trackName: parsed?.trackName || parsed?.name || fileNameOnly.replace(/\.(mp3|ogg|oga)$/i, ''),
         },
         // Urči typ podle struktury složek
-        isHudba: file.folder === 'hudba',
-        isSlova: file.folder === 'slova',
+        isHudba: normalizedFolder === 'hudba',
+        isSlova: isSlova,
         isAlbum: file.subFolder ? true : false,
         albumName: file.subFolder || null,
         trackName: parsed?.trackName || parsed?.name || fileNameOnly.replace(/\.mp3$/i, ''),
@@ -581,10 +543,10 @@ class FastMetadataService {
       };
 
     // Debug log pro každý soubor
-    log.debug(`🎵 Created metadata for ${fileName}:`, {
-      originalFileName: fileName,
+    log.debug(`🎵 Created metadata for ${filePath}:`, {
+      originalFileName: filePath,
       constructedFileName: metadata.fileName,
-      fileFolder: file.folder,
+      fileFolder: normalizedFolder,
       fileSubFolder: file.subFolder,
       trackName: metadata.trackName,
       albumName: metadata.albumName,
@@ -596,7 +558,7 @@ class FastMetadataService {
     metadata.downloadURL = await this._getDownloadURLWithRetry(file);
 
     // Debug log pro download URL
-    log.debug(`🔗 Download URL for ${fileName}:`, {
+    log.debug(`🔗 Download URL for ${filePath}:`, {
       downloadURL: metadata.downloadURL ? 'OK' : 'FAILED',
       isAlbum: metadata.isAlbum,
       albumName: metadata.albumName
@@ -609,10 +571,10 @@ class FastMetadataService {
         if (duration) {
           metadata.duration = duration;
           metadata.durationFormatted = this.formatDuration(duration);
-          log.debug(`⏱️ Duration loaded for ${fileName}: ${metadata.durationFormatted}`);
-        }
-      } catch (error) {
-        log.warn(`Failed to load duration for ${fileName}:`, error);
+        log.debug(`⏱️ Duration loaded for ${filePath}: ${metadata.durationFormatted}`);
+      }
+    } catch (error) {
+        log.warn(`Failed to load duration for ${filePath}:`, error);
       }
     }
 
@@ -624,7 +586,7 @@ class FastMetadataService {
 
     for (let attempt = 0; attempt <= retries; attempt++) {
       try {
-        const fullPath = file.folder === 'root' ? fileName : `${file.folder}/${fileName}`;
+        const fullPath = file.fullPath || (file.folder === 'root' ? fileName : `${file.folder}/${fileName}`);
         log.debug(`🔗 Constructing fullPath for ${fileName}:`, {
           fileName,
           folder: file.folder,
@@ -653,11 +615,11 @@ class FastMetadataService {
   }
 
   async createImageMetadata(file) {
-    const fileName = file.name;
-    const fileNameOnly = fileName.split('/').pop();
+    const filePath = file.fullPath || (file.folder === 'root' ? file.name : `${file.folder}/${file.name}`);
+    const fileNameOnly = filePath.split('/').pop();
 
     const metadata = {
-      fileName: file.folder === 'root' ? fileName : `${file.folder}/${fileName}`,
+      fileName: filePath,
       fileNameOnly: fileNameOnly,
       folder: file.folder,
       subFolder: file.subFolder || null,
@@ -670,7 +632,7 @@ class FastMetadataService {
     };
 
     // Debug log pro cover obrázky
-    log.debug(`🖼️ Processing image ${fileName}:`, {
+    log.debug(`🖼️ Processing image ${filePath}:`, {
       isCover: metadata.isCover,
       albumName: metadata.albumName,
       subFolder: file.subFolder
@@ -803,7 +765,7 @@ class FastMetadataService {
 
   getSlovaMetadata() {
     return Array.from(this.metadata.values()).filter(meta =>
-      meta.isSlova && meta.type === 'audio'
+      (meta.isSlova || meta.folder === 'meditacie') && meta.type === 'audio'
     );
   }
 
@@ -845,13 +807,14 @@ class FastMetadataService {
     }
 
     const fileNameOnly = fileName.split('/').pop();
+    const isMeditaciePath = fileName.startsWith('meditacie/');
 
     // Zkontroluj, zda je to obrázek (cover.jpg, cover.png, atd.)
     const isImage = /\.(jpg|jpeg|png|gif|webp)$/i.test(fileNameOnly);
 
     // Pokud je to obrázek, zpracuj ho jako cover obrázek
     if (isImage) {
-      const folder = data.folder || (fileName.includes('hudba/') ? 'hudba' : fileName.includes('meditacie/') ? 'meditacie' : fileName.includes('slova/') ? 'meditacie' : null);
+      const folder = data.folder || (fileName.includes('hudba/') ? 'hudba' : (isMeditaciePath ? 'meditacie' : (fileName.includes('dychanie/') ? 'dychanie' : null)));
       const isCover = fileNameOnly.toLowerCase().includes('cover');
 
       // Urči albumName ze struktury souboru
@@ -901,7 +864,7 @@ class FastMetadataService {
 
     // Jinak zpracuj jako audio soubor
     // Urči folder podle fileName nebo pole folder
-    const folder = data.folder || (fileName.includes('hudba/') ? 'hudba' : fileName.includes('slova/') ? 'slova' : null);
+    const folder = data.folder || (fileName.includes('hudba/') ? 'hudba' : (isMeditaciePath ? 'meditacie' : (fileName.includes('dychanie/') ? 'dychanie' : null)));
 
     // Urči type podle struktury
     let type = data.type;
@@ -917,7 +880,8 @@ class FastMetadataService {
     }
 
     // Urči isHudba podle folder
-    const isHudba = folder === 'hudba' || (data.category === 'music' || data.category === 'hudba');
+      const isHudba = folder === 'hudba' || (data.category === 'music' || data.category === 'hudba');
+      const isSlova = folder === 'meditacie';
 
     // Parsuj název souboru pro získání informací o albu
     const parsed = parseAudioFileName(fileNameOnly);
@@ -940,14 +904,14 @@ class FastMetadataService {
       parsed: {
         ...parsed,
         isHudba: isHudba,
-        isSlova: folder === 'slova',
+        isSlova: isSlova,
         isAlbum: folder === 'hudba' && fileName.split('/').length > 2,
         albumName: folder === 'hudba' && fileName.split('/').length > 2 ? fileName.split('/')[1] : null,
         trackName: parsed?.trackName || parsed?.name || fileNameOnly.replace(/\.mp3$/i, ''),
       },
       // Top level vlastnosti
       isHudba: isHudba,
-      isSlova: folder === 'slova',
+      isSlova: isSlova,
       isAlbum: folder === 'hudba' && fileName.split('/').length > 2,
       albumName: folder === 'hudba' && fileName.split('/').length > 2 ? fileName.split('/')[1] : null,
       trackName: parsed?.trackName || parsed?.name || fileNameOnly.replace(/\.mp3$/i, ''),

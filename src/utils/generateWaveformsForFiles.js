@@ -54,7 +54,7 @@ export const generateWaveformForFile = async (fileName, samples = 150) => {
 
 /**
  * Vygeneruje waveformy pro všechny soubory v dané složce
- * @param {string} folder - Složka (např. 'dychanie', 'hudba', 'slova')
+ * @param {string} folder - Složka (např. 'dychanie', 'hudba', 'meditacie')
  * @param {number} samples - Počet vzorků pro waveformu (default: 150)
  * @param {Function} onProgress - Callback pro progress (current, total)
  * @returns {Promise<{success: boolean, processed: number, failed: number, errors: Array}>}
@@ -121,7 +121,7 @@ export const generateWaveformsForFolder = async (folder, samples = 150, onProgre
  */
 export const generateWaveformsForAllFiles = async (samples = 150, onProgress = null) => {
   try {
-    const folders = ['dychanie', 'hudba', 'slova'];
+    const folders = ['dychanie', 'hudba', 'meditacie'];
     const results = {};
 
     for (const folder of folders) {
@@ -152,6 +152,5 @@ export default {
   generateWaveformsForFolder,
   generateWaveformsForAllFiles
 };
-
 
 

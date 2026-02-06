@@ -10,41 +10,31 @@ class SlovaDataService {
     this.isInitialized = false;
   }
 
+  normalizeMeditationName(rawName) {
+    const fileNameOnly = (rawName || '').split('/').pop() || '';
+    const withoutExt = fileNameOnly.replace(/\.(mp3|ogg|oga)$/i, '');
+
+    // Odstraň prefixy jako "zensky4FSK-" / "muzsky4MSK-"
+    const withoutPrefix = withoutExt.replace(/^(muzsky|zensky)\d*[A-Z]+-?/i, '');
+
+    const cleaned = withoutPrefix
+      .replace(/[_-]+/g, ' ')
+      .replace(/\s+/g, ' ')
+      .trim();
+
+    if (!cleaned) return 'Meditácia';
+
+    return cleaned.charAt(0).toUpperCase() + cleaned.slice(1);
+  }
+
   // Helper funkce pro extrakci tématu z názvu souboru
   extractTopicFromFileName(fileName) {
-    const topics = {
-      'uzkost': 'Úzkosť',
-      'osamelost': 'Osamelosť',
-      'strach': 'Strach',
-      'stres': 'Stres',
-      'praca': 'Práca',
-      'spank': 'Spánok',
-      'pokoj': 'Pokoj',
-      'relax': 'Relax'
-    };
-
-    for (const [key, value] of Object.entries(topics)) {
-      if (fileName.toLowerCase().includes(key)) {
-        return value;
-      }
-    }
-    return 'Meditácia';
+    return this.normalizeMeditationName(fileName);
   }
 
   // Helper funkce pro extrakci názvu z názvu souboru
   extractTitleFromFileName(fileName) {
-    const nameWithoutExt = fileName.replace(/\.mp3$/i, '');
-    const parts = nameWithoutExt.split('/');
-    const lastPart = parts[parts.length - 1];
-
-    // Odstraň prefixy jako "muzsky4FSK-", "zensky4MSK-", "zensky4FSK-", "muzsky4MSK-"
-    const cleanName = lastPart.replace(/^(muzsky|zensky)\d*[A-Z]+-?/i, '');
-
-    // Nahraď pomlčky mezerami a velkými písmeny
-    return cleanName
-      .split('-')
-      .map(word => word.charAt(0).toUpperCase() + word.slice(1))
-      .join(' ');
+    return this.normalizeMeditationName(fileName);
   }
 
   // Helper funkce pro formátování velikosti
@@ -107,28 +97,23 @@ class SlovaDataService {
         fullPath: meta.fullPath
       })));
 
-      // Filtruj meditace soubory (primárně meditacie/, zpětně kompatibilní se slova/)
+      // Filtruj meditacie soubory (primárně meditacie/ a root jazykové složky)
       let slovaMetadata = Object.values(allMetadata).filter(meta => {
+        const fileName = meta.fileName || meta.fullPath || '';
         const isMeditacie = meta.folder === 'meditacie' ||
-                           meta.category === 'slova' ||
-                           meta.fileName?.includes('meditacie/') ||
-                           meta.fullPath?.includes('meditacie/') ||
-                           // Zpětná kompatibilita se slova/
-                           meta.folder === 'slova' ||
-                           meta.fileName?.includes('slova/') ||
-                           meta.fullPath?.includes('slova/');
+                           meta.category === 'meditacie' ||
+                           fileName.startsWith('meditacie/');
         return isMeditacie;
       });
 
-      // Pokud se nenašly žádné meditace soubory, zkus najít všechny soubory s 'meditacie' nebo 'slova' v názvu
+      // Pokud se nenašly žádné meditace soubory, zkus najít všechny soubory s 'meditacie' nebo hlasovým prefixem v názvu
       if (slovaMetadata.length === 0) {
         log.warn('No meditacie files found with folder filter, trying broader search...');
         slovaMetadata = Object.values(allMetadata).filter(meta => {
-          const fileName = meta.fileName || meta.fullPath || '';
-          return fileName.toLowerCase().includes('meditacie') ||
-                 fileName.toLowerCase().includes('slova') ||
-                 fileName.toLowerCase().includes('muzsky') ||
-                 fileName.toLowerCase().includes('zensky');
+          const fileName = (meta.fileName || meta.fullPath || '').toLowerCase();
+          return fileName.includes('meditacie') ||
+                 fileName.includes('muzsky') ||
+                 fileName.includes('zensky');
         });
       }
 
@@ -146,7 +131,8 @@ class SlovaDataService {
         const is4F = fileName.includes('4F');
         const is4M = fileName.includes('4M');
         const mediaType = is4F ? '4F' : is4M ? '4M' : 'unknown';
-        const displayName = meta.displayName || meta.title || this.extractTitleFromFileName(fileName);
+        const displayNameSource = meta.displayName || meta.title || fileName;
+        const displayName = this.extractTitleFromFileName(displayNameSource);
         const duration = meta.durationFormatted || meta.duration || 'N/A';
         const durationSeconds = meta.duration || 0;
 
@@ -161,7 +147,7 @@ class SlovaDataService {
           mediaType: mediaType,
           size: meta.size || 0,
           sizeFormatted: this.formatFileSize(meta.size || 0),
-          folder: 'slova',
+          folder: 'meditacie',
           downloadURL: meta.downloadURL,
           parsed: {
             gender: gender,

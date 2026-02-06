@@ -1,6 +1,7 @@
 
 
 import { realtimeDatabase as database } from '@config/secure-firebase';
+import { firestoreMetadataService } from './firestoreMetadataService';
 import { ref, get, onValue, off } from 'firebase/database';
 import log from './logger';
 
@@ -85,6 +86,17 @@ class RealtimeMetadataService {
 
   async getAllMetadata() {
     try {
+      // ✅ Preferuj Firestore jako zdroj pravdy
+      try {
+        const firestoreMetadata = await firestoreMetadataService.getAllMetadata();
+        if (firestoreMetadata && Object.keys(firestoreMetadata).length > 0) {
+          log.debug(`✅ Loaded ${Object.keys(firestoreMetadata).length} metadata records from Firestore`);
+          return firestoreMetadata;
+        }
+      } catch (firestoreError) {
+        log.warn('⚠️ Failed to load metadata from Firestore, trying Realtime DB:', firestoreError.message);
+      }
+
       const dbInstance = await this.ensureDatabaseReady();
       const metadataRef = ref(dbInstance, 'audio-metadata');
       const snapshot = await get(metadataRef);
@@ -147,12 +159,14 @@ class RealtimeMetadataService {
             displayName: metadataObject[key].displayName
           })));
 
-          // Debug: zobraz slova soubory
-          const slovaFiles = Object.values(metadataObject).filter(file =>
-            file.fileName && file.fileName.includes('slova/')
-          );
-          log.debug(`🎤 Slova files in Realtime Database: ${slovaFiles.length}`);
-          log.debug('🎤 Sample slova files from DB:', slovaFiles.slice(0, 3).map(f => ({
+          // Debug: zobraz meditacie soubory
+          const meditacieFiles = Object.values(metadataObject).filter(file => {
+            const name = file.fileName || '';
+            return file.folder === 'meditacie' ||
+              name.startsWith('meditacie/');
+          });
+          log.debug(`🎤 Meditacie files in Realtime Database: ${meditacieFiles.length}`);
+          log.debug('🎤 Sample meditacie files from DB:', meditacieFiles.slice(0, 3).map(f => ({
             fileName: f.fileName,
             folder: f.folder,
             hasDownloadURL: !!(f.downloadURL || f.audioSrc),
