@@ -53,7 +53,7 @@ export const createCSPHeader = (options = {}) => {
   directives.push("font-src 'self' https://fonts.gstatic.com data:");
 
   // Connect sources (for API calls)
-  directives.push(`connect-src 'self' https://*.firebase.com https://*.googleapis.com wss://*.firebase.com`);
+  directives.push(`connect-src 'self' https://*.firebase.com https://*.googleapis.com https://*.cloudfunctions.net wss://*.firebase.com`);
 
   // Media sources
   directives.push("media-src 'self' blob: data: https:");

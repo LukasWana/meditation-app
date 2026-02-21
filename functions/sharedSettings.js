@@ -49,10 +49,14 @@ exports.createSharedSettings = functions.https.onCall(async (data, context) => {
 
   // Připrav payload
   const docPayload = {
-    ui: scope.ui ? (payload.ui || {}) : undefined,
-    breathing: scope.breathing ? (payload.breathing || {}) : undefined,
     schemaVersion: SCHEMA_VERSION
   };
+  if (scope.ui) {
+    docPayload.ui = JSON.parse(JSON.stringify(payload.ui || {}));
+  }
+  if (scope.breathing) {
+    docPayload.breathing = JSON.parse(JSON.stringify(payload.breathing || {}));
+  }
 
   const shareId = crypto.randomBytes(16).toString('hex');
   const now = admin.firestore.Timestamp.now();
