@@ -191,7 +191,7 @@ export const useBreathAudioEngine = (
         if (!audioContext) return;
 
         setIsLoading(true);
-        const response = await fetch(url);
+        const response = await fetch(url, { mode: 'cors' });
         const arrayBuffer = await response.arrayBuffer();
         const audioBuffer = await audioContext.decodeAudioData(arrayBuffer);
         bufferRef.current = audioBuffer;
@@ -567,44 +567,51 @@ export const useBreathAudioEngine = (
       return;
     }
 
-    // Resume AudioContext pokud je suspendovaný
-    if (audioContext.state === 'suspended') {
-      audioContext.resume().then(() => {
-        console.log('AudioContext resumed');
-      }).catch(err => {
-        console.error('Failed to resume AudioContext:', err);
-      });
-    }
+    // Spuštění scheduleru - celá sekvence je async, aby await resume() proběhlo před startem
+    const startSchedulerAsync = async () => {
+      // Resume AudioContext pokud je suspendovaný - MUSÍ proběhnout před startem scheduleru
+      if (audioContext.state === 'suspended') {
+        try {
+          await audioContext.resume();
+          console.log('AudioContext resumed, state:', audioContext.state);
+        } catch (err) {
+          console.error('Failed to resume AudioContext:', err);
+          return; // Bez funkčního kontextu nelze přehrávat
+        }
+      }
 
-    // Nastav start time
-    if (!startAtAudioTimeRef.current) {
-      // Pokud jsme byli pozastaveni, resync
-      if (pausedElapsedRef.current > 0 && pausedElapsedRef.current < 3600) { // Max 1 hodina
-        startAtAudioTimeRef.current = audioContext.currentTime - pausedElapsedRef.current;
-        pausedElapsedRef.current = 0;
-      } else {
+      // Nastav start time - AŽ PO resume, aby currentTime byl správný
+      if (!startAtAudioTimeRef.current) {
+        // Pokud jsme byli pozastaveni, resync
+        if (pausedElapsedRef.current > 0 && pausedElapsedRef.current < 3600) { // Max 1 hodina
+          startAtAudioTimeRef.current = audioContext.currentTime - pausedElapsedRef.current;
+          pausedElapsedRef.current = 0;
+        } else {
+          startAtAudioTimeRef.current = audioContext.currentTime;
+          pausedElapsedRef.current = 0;
+        }
+      }
+
+      // Validace: pokud startAtAudioTimeRef je v budoucnosti nebo příliš daleko v minulosti, resetuj
+      const timeDiff = audioContext.currentTime - startAtAudioTimeRef.current;
+      if (timeDiff < -1 || timeDiff > 3600) { // Max 1 hodina rozdíl
+        console.warn('Invalid start time detected, resetting:', timeDiff);
         startAtAudioTimeRef.current = audioContext.currentTime;
         pausedElapsedRef.current = 0;
       }
-    }
 
-    // Validace: pokud startAtAudioTimeRef je v budoucnosti nebo příliš daleko v minulosti, resetuj
-    const timeDiff = audioContext.currentTime - startAtAudioTimeRef.current;
-    if (timeDiff < -1 || timeDiff > 3600) { // Max 1 hodina rozdíl
-      console.warn('Invalid start time detected, resetting:', timeDiff);
-      startAtAudioTimeRef.current = audioContext.currentTime;
-      pausedElapsedRef.current = 0;
-    }
+      isSuspendedRef.current = false;
 
-    isSuspendedRef.current = false;
+      // Spusť scheduler (každých 50ms)
+      schedulerIntervalRef.current = setInterval(() => {
+        scheduler();
+      }, 50);
 
-    // Spusť scheduler (každých 50ms)
-    schedulerIntervalRef.current = setInterval(() => {
+      // Okamžitě naplánuj první zvuky
       scheduler();
-    }, 50);
+    };
 
-    // Okamžitě naplánuj první zvuky
-    scheduler();
+    startSchedulerAsync();
 
     return () => {
       if (schedulerIntervalRef.current) {
@@ -629,23 +636,31 @@ export const useBreathAudioEngine = (
       const audioContext = initializeAudioContext();
       if (!audioContext) return;
 
-      if (audioContext.state === 'suspended') {
-        audioContext.resume().catch(err => {
-          console.error('Failed to resume AudioContext:', err);
-        });
-      }
+      const startSchedulerAfterBuffers = async () => {
+        if (audioContext.state === 'suspended') {
+          try {
+            await audioContext.resume();
+            console.log('AudioContext resumed (buffersReady path), state:', audioContext.state);
+          } catch (err) {
+            console.error('Failed to resume AudioContext:', err);
+            return;
+          }
+        }
 
-      if (!startAtAudioTimeRef.current) {
-        startAtAudioTimeRef.current = audioContext.currentTime;
-      }
+        if (!startAtAudioTimeRef.current) {
+          startAtAudioTimeRef.current = audioContext.currentTime;
+        }
 
-      isSuspendedRef.current = false;
+        isSuspendedRef.current = false;
 
-      schedulerIntervalRef.current = setInterval(() => {
+        schedulerIntervalRef.current = setInterval(() => {
+          scheduler();
+        }, 50);
+
         scheduler();
-      }, 50);
+      };
 
-      scheduler();
+      startSchedulerAfterBuffers();
     }
   }, [isPlaying, breathInSound, breathOutSound, buffersReady, initializeAudioContext, scheduler]);
 
