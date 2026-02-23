@@ -64,41 +64,45 @@ export const useBreathAudioEngine = (
 
   // Inicializace AudioContext
   const initializeAudioContext = useCallback(() => {
-    if (audioContextRef.current) {
-      // Pokud AudioContext existuje, zkontroluj zda jsou gain nodes správně připojené
-      // Pokud ne, znovu je vytvoř a připoj
-      const audioContext = audioContextRef.current;
+    // 1. Získej nebo vytvoř AudioContext
+    let audioContext = audioContextRef.current;
 
-      // Zkontroluj, zda gain nodes existují a mají správný context
-      const needsRecreation = !masterGainRef.current ||
-        !inGainRef.current ||
-        !outGainRef.current ||
-        !clickGainRef.current ||
-        masterGainRef.current.context !== audioContext ||
-        inGainRef.current.context !== audioContext ||
-        outGainRef.current.context !== audioContext ||
-        clickGainRef.current.context !== audioContext;
-
-      if (needsRecreation) {
-        // Odpoj staré nodes pokud existují
-        try {
-          if (masterGainRef.current) {
-            masterGainRef.current.disconnect();
-          }
-          if (inGainRef.current) {
-            inGainRef.current.disconnect();
-          }
-          if (outGainRef.current) {
-            outGainRef.current.disconnect();
-          }
-          if (clickGainRef.current) {
-            clickGainRef.current.disconnect();
-          }
-        } catch (e) {
-          // Ignoruj chyby při odpojování
+    if (!audioContext) {
+      try {
+        audioContext = window.globalAudioContext;
+        if (!audioContext) {
+          audioContext = new (window.AudioContext || window.webkitAudioContext)();
+          window.globalAudioContext = audioContext;
         }
+        audioContextRef.current = audioContext;
+      } catch (error) {
+        console.error('Failed to create AudioContext:', error);
+        setLoadError(error.message);
+        return null;
+      }
+    }
 
-        // Vytvoř nové gain nodes
+    // 2. Resume pokud je suspendovaný (důležité pro Android)
+    if (audioContext.state === 'suspended') {
+      audioContext.resume().catch(err => console.warn('AudioContext resume failed:', err));
+    }
+
+    // 3. Vytvoř/obnov gain nodes pokud je potřeba
+    const needsNodes = !masterGainRef.current ||
+      !inGainRef.current ||
+      !outGainRef.current ||
+      !clickGainRef.current ||
+      masterGainRef.current.context !== audioContext;
+
+    if (needsNodes) {
+      try {
+        // Vyčisti staré pokud existují (defenzivní)
+        [masterGainRef, inGainRef, outGainRef, clickGainRef].forEach(ref => {
+          if (ref.current) {
+            try { ref.current.disconnect(); } catch (e) { /* Ignore */ }
+          }
+        });
+
         masterGainRef.current = audioContext.createGain();
         masterGainRef.current.connect(audioContext.destination);
 
@@ -110,40 +114,14 @@ export const useBreathAudioEngine = (
 
         clickGainRef.current = audioContext.createGain();
         clickGainRef.current.connect(masterGainRef.current);
-      }
 
-      return audioContext;
+        console.log('🎵 Audio nodes initialized/restored');
+      } catch (error) {
+        console.error('Failed to initialize audio nodes:', error);
+      }
     }
 
-    try {
-      // Použij globální AudioContext pokud existuje
-      let audioContext = window.globalAudioContext;
-      if (!audioContext) {
-        audioContext = new (window.AudioContext || window.webkitAudioContext)();
-        window.globalAudioContext = audioContext;
-      }
-
-      audioContextRef.current = audioContext;
-
-      // Vytvoř gain nodes
-      masterGainRef.current = audioContext.createGain();
-      masterGainRef.current.connect(audioContext.destination);
-
-      inGainRef.current = audioContext.createGain();
-      inGainRef.current.connect(masterGainRef.current);
-
-      outGainRef.current = audioContext.createGain();
-      outGainRef.current.connect(masterGainRef.current);
-
-      clickGainRef.current = audioContext.createGain();
-      clickGainRef.current.connect(masterGainRef.current);
-
-      return audioContext;
-    } catch (error) {
-      console.error('Failed to initialize AudioContext:', error);
-      setLoadError(error.message);
-      return null;
-    }
+    return audioContext;
   }, []);
 
   // Načtení URL pro zvuky (stejná logika jako v useBreathSounds)
@@ -833,7 +811,7 @@ export const useBreathAudioEngine = (
     isLoading,
     loadError,
     getCurrentPhase,
-    resetAudioEngine
+    resetAudioEngine,
+    initializeAudioContext // Exportujeme pro přímé volání při kliknutí
   };
 };
-
