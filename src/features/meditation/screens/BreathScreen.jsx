@@ -74,7 +74,7 @@ const BreathScreen = ({
   const currentPreparationCountdown = localPreparationCountdown;
 
   // Použij nový audio engine pro přesné přehrávání zvuků dýchání
-  const { getCurrentPhase, resetAudioEngine } = useBreathAudioEngine(
+  const { getCurrentPhase, resetAudioEngine, initializeAudioContext } = useBreathAudioEngine(
     isBreathing,
     breathInDuration,
     breathOutDuration,
@@ -146,6 +146,8 @@ const BreathScreen = ({
 
   // Handler pro play/pause s podporou přípravného času
   const handlePlayPause = () => {
+    // DŮLEŽITÉ: Aktivuj AudioContext přímo při kliknutí (vyžadováno prohlížečem pro Android Chrome)
+    initializeAudioContext();
 
     // Pokud už dýchání probíhá, zastav ho
     if (isBreathing) {
