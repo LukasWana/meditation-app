@@ -2,13 +2,15 @@ import React, { useState, Suspense } from 'react';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { PageManager } from '@features/navigation';
-import { useNavigation, useTouchNavigation, useAppState, useTimer, useBreathPhase } from '@hooks';
+import { useNavigation, useTouchNavigation } from '@features/navigation/hooks';
+import { useTimer } from '@features/meditation/hooks';
 import { useAppInitialization } from '@hooks/useAppInitialization';
 import { LazyIntroScreen, NewAdminScreen } from '@config/lazyComponents';
 import { LanguageProvider } from '@contexts/LanguageContext';
 import { UIConfigProvider } from '@contexts/UIConfigContext';
 import { ThemeProvider } from '@contexts/ThemeContext';
 import { AuthProvider } from '@contexts/AuthContext';
+import { useAudioPlayerStore } from '@stores/audioPlayerStore';
 import MonitoringDashboard from '@components/MonitoringDashboard';
 import OfflineIndicator from '@components/OfflineIndicator';
 import AdminGuard from '@components/AdminGuard';
@@ -41,50 +43,11 @@ function MeditationApp() {
   // Navigation state
   const { currentScreen, navigateToScreen } = useNavigation('intro');
 
-  // App state
+
   const {
-    time,
-    setTime,
-    selectedDuration,
-    isPlaying,
-    setIsPlaying,
-    breathPhase,
-    setBreathPhase,
-    breathInDuration,
-    breathOutDuration,
-    gender,
-    voicePreference,
-    isPlayerActive,
     activeAudio,
     selectedAlbum,
-    handleDurationChange,
-    handlePlayPause,
-    handleReset,
-    handleGenderChange,
-    handleVoicePreferenceChange,
-    handlePlayerStateChange,
-    handleCloseAudio,
-    handleAlbumClose,
-    handleBreathRhythmChange,
-    preparationTime,
-    handlePreparationTimeChange,
-    breathInSound,
-    breathOutSound,
-    breathClickSound,
-    breathFinalSound,
-    breathCountdownSound,
-    handleBreathSoundChange,
-    breathSoundFadeEnabled,
-    handleBreathSoundFadeChange,
-    isPreparing,
-    preparationCountdown,
-    breathDuration,
-    breathTime,
-    setBreathTime,
-    isBreathing,
-    setIsBreathing,
-    handleBreathDurationChange
-  } = useAppState();
+  } = useAudioPlayerStore();
 
   // Touch navigation
   const { handleTouchStart, handleTouchMove, handleTouchEnd } = useTouchNavigation({
@@ -105,10 +68,8 @@ function MeditationApp() {
 
 
   // Timer logika
-  useTimer(isPlaying, time, setTime, setIsPlaying);
+  useTimer();
 
-  // Breath phase logika
-  useBreathPhase(isPlaying, time, setBreathPhase, breathInDuration, breathOutDuration);
 
   // Development-only debug utilities
   React.useEffect(() => {
@@ -265,6 +226,7 @@ function MeditationApp() {
         originalConsole.log('Poznámka: console.error() a console.warn() se vždy zobrazí');
       };
 
+<<<<<<< HEAD
       // Funkce pro synchronizaci všech souborů pomocí Firebase Function
       window.syncAllFiles = async () => {
         console.log('🚀 Spouštím synchronizaci všech souborů...');
@@ -294,6 +256,15 @@ function MeditationApp() {
     console.log('  - clearCache() - vymaže cache');
     console.log('  - testAudioPlayback(fileName) - otestuje přehrávání konkrétního souboru');
     console.log('  - setLogLevel(level) - nastaví úroveň logování (silent, error, warn, info, debug)');
+=======
+      console.log('🔍 Debug funkce dostupné v konzoli:');
+      console.log('  - showDatabaseData() - zobrazí database viewer');
+      console.log('  - debugMeditacieFiles() - zobrazí meditacie soubory v Realtime Database');
+      console.log('  - debugCache() - zobrazí detaily cache');
+      console.log('  - clearCache() - vymaže cache');
+      console.log('  - testAudioPlayback(fileName) - otestuje přehrávání konkrétního souboru');
+      console.log('  - setLogLevel(level) - nastaví úroveň logování (silent, error, warn, info, debug)');
+>>>>>>> 5586763 (Phase 3: Hook Consolidation & Service Refactoring (Finalized))
     }
   }, []);
 
@@ -317,7 +288,6 @@ function MeditationApp() {
                 <LazyIntroScreen onIntroComplete={handleIntroComplete} />
               )}
 
-<<<<<<< HEAD
               {/* Hlavní aplikace - zobrazí se s fade-in po intro */}
               {!showIntro && (
                 <motion.div
@@ -336,50 +306,9 @@ function MeditationApp() {
                     onTouchMove={handleTouchMove}
                     onTouchEnd={handleTouchEnd}
 
-                    // Global state
-                    gender={gender}
-                    onGenderChange={handleGenderChange}
-                    voicePreference={voicePreference}
-                    onVoicePreferenceChange={handleVoicePreferenceChange}
-                    isPlayerActive={isPlayerActive}
-
-                    // Meditace specifické
-                    time={time}
-                    selectedDuration={selectedDuration}
-                    isPlaying={isPlaying}
-                    onDurationChange={handleDurationChange}
-                    onPlayPause={handlePlayPause}
-                    onReset={handleReset}
-                    breathPhase={breathPhase}
-                    setBreathPhase={setBreathPhase}
-                    breathInDuration={breathInDuration}
-                    breathOutDuration={breathOutDuration}
-                    onBreathRhythmChange={handleBreathRhythmChange}
-                    preparationTime={preparationTime}
-                    onPreparationTimeChange={handlePreparationTimeChange}
-                    breathInSound={breathInSound}
-                    breathOutSound={breathOutSound}
-                    breathClickSound={breathClickSound}
-                    breathFinalSound={breathFinalSound}
-                    breathCountdownSound={breathCountdownSound}
-                    onBreathSoundChange={handleBreathSoundChange}
-                    breathSoundFadeEnabled={breathSoundFadeEnabled}
-                    onBreathSoundFadeChange={handleBreathSoundFadeChange}
-                    isPreparing={isPreparing}
-                    preparationCountdown={preparationCountdown}
-                    breathDuration={breathDuration}
-                    breathTime={breathTime}
-                    setBreathTime={setBreathTime}
-                    isBreathing={isBreathing}
-                    setIsBreathing={setIsBreathing}
-                    onBreathDurationChange={handleBreathDurationChange}
-
-                    // Audio player specifické
+                    // Audio player specifické (ponecháno pro nyní)
                     activeAudio={activeAudio}
                     selectedAlbum={selectedAlbum}
-                    onPlayerStateChange={handlePlayerStateChange}
-                    onCloseAudio={handleCloseAudio}
-                    onAlbumClose={handleAlbumClose}
                   />
                 </motion.div>
               )}

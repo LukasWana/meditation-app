@@ -6,17 +6,19 @@ import { useTheme } from '@contexts/ThemeContext';
 // Odstraněny skeleton loadery
 import { AudioPlayer } from '@features/audio';
 // Preloadery odstraněny - data se načítají při startu
-import { useRealtimeMeditationFilter } from '@hooks/useRealtimeMeditationFilter';
+import { useRealtimeMeditationFilter } from '@features/audio/hooks';
+
+import { useUserPrefsStore } from '@stores/userPrefsStore';
+import { useAudioPlayerStore } from '@stores/audioPlayerStore';
 
 const MeditationScreen = ({
   onNavigateToScreen,
   onTouchStart,
   onTouchMove,
   onTouchEnd,
-  gender = 'none', // Přidáme gender prop pro filtrování
-  onPlayerStateChange, // Callback pro předání stavu přehrávače
-  onGenderChange: _onGenderChange // Callback pro změnu pohlaví
 }) => {
+  const { gender } = useUserPrefsStore();
+  const { setPlayerActive } = useAudioPlayerStore();
   const [activeAudio, setActiveAudio] = useState(null);
   const { t, language } = useLanguage();
   const { getScreenBackgroundColor } = useTheme();
@@ -60,13 +62,13 @@ const MeditationScreen = ({
         currentTrackIndex: 0,
         allFiles: item.allFiles || [] // Předaj všechny soubory pro dané téma
       });
-      onPlayerStateChange?.(true); // Informuj o aktivním přehrávači
+      setPlayerActive(true); // Informuj o aktivním přehrávači
     }
   };
 
   const handleCloseAudio = () => {
     setActiveAudio(null);
-    onPlayerStateChange?.(false); // Informuj o zavřeném přehrávači
+    setPlayerActive(false); // Informuj o zavřeném přehrávači
   };
 
   // Loading state - show loading during data fetch
@@ -108,9 +110,8 @@ const MeditationScreen = ({
   return (
     <FramerPageTransition screenKey="meditace">
       <div
-        className={`min-h-screen w-full max-w-full flex flex-col items-center justify-start p-2 sm:p-8 pb-20 overflow-x-hidden relative ${
-          activeAudio ? 'pointer-events-none' : ''
-        }`}
+        className={`min-h-screen w-full max-w-full flex flex-col items-center justify-start p-2 sm:p-8 pb-20 overflow-x-hidden relative ${activeAudio ? 'pointer-events-none' : ''
+          }`}
         style={{ backgroundColor: getScreenBackgroundColor() }}
         onTouchStart={activeAudio ? undefined : onTouchStart}
         onTouchMove={activeAudio ? undefined : onTouchMove}
@@ -122,13 +123,12 @@ const MeditationScreen = ({
           <div className="flex-shrink-0">
             <button
               onClick={() => onNavigateToScreen('home')}
-              className={`w-12 h-12 rounded-full bg-white/20 backdrop-blur-sm border border-black/10 hover:bg-white/30 flex items-center justify-center p-0 transition-colors ${
-                activeAudio ? 'pointer-events-none opacity-50' : ''
-              }`}
+              className={`w-12 h-12 rounded-full bg-white/20 backdrop-blur-sm border border-black/10 hover:bg-white/30 flex items-center justify-center p-0 transition-colors ${activeAudio ? 'pointer-events-none opacity-50' : ''
+                }`}
             >
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <path d="m12 19-7-7 7-7"/>
-                <path d="M19 12H5"/>
+                <path d="m12 19-7-7 7-7" />
+                <path d="M19 12H5" />
               </svg>
             </button>
           </div>
@@ -186,11 +186,10 @@ const MeditationScreen = ({
                 >
                   <FramerButton
                     variant="ghost"
-                    className={`w-full p-6 text-left bg-white/50 backdrop-blur rounded-none border border-black/10 ${
-                      activeAudio ? 'pointer-events-none opacity-50' : ''
-                    }`}
+                    className={`w-full p-6 text-left bg-white/50 backdrop-blur rounded-none border border-black/10 ${activeAudio ? 'pointer-events-none opacity-50' : ''
+                      }`}
                     onClick={activeAudio ? undefined : () => handleItemClick(item)}
-                    // Hover preloading odstraněn
+                  // Hover preloading odstraněn
                   >
                     <div className="flex items-center justify-between">
                       <div className="flex items-center space-x-3">

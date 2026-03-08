@@ -5,32 +5,24 @@ import { FramerSection, FramerPageTransition, BackButton } from '@components';
 import { useLanguage } from '@contexts/LanguageContext';
 import { useTheme } from '@contexts/ThemeContext';
 import breathProfilesService from '@services/breathProfilesService';
+import { useBreathStore } from '@stores/breathStore';
 
 const BreathProfilesScreen = ({
   onNavigateToScreen,
   onTouchStart,
   onTouchMove,
   onTouchEnd,
-  // Aktuální nastavení dýchání pro uložení
-  breathInDuration,
-  breathOutDuration,
-  breathDuration,
-  preparationTime,
-  breathInSound,
-  breathOutSound,
-  breathClickSound,
-  breathFinalSound,
-  breathCountdownSound,
-  breathSoundFadeEnabled,
-  // Handlers pro načtení profilu
-  onBreathRhythmChange,
-  onBreathDurationChange,
-  onPreparationTimeChange,
-  onBreathSoundChange,
-  onBreathSoundFadeChange
 }) => {
   const { t } = useLanguage();
   const { getScreenBackgroundColor } = useTheme();
+  const {
+    breathInDuration, breathOutDuration, breathDuration,
+    preparationTime, breathInSound, breathOutSound,
+    breathClickSound, breathFinalSound, breathCountdownSound,
+    breathSoundFadeEnabled,
+    setBreathRhythm, setBreathDuration, setPreparationTime,
+    setBreathSound, setBreathSoundFadeEnabled,
+  } = useBreathStore();
   const [profiles, setProfiles] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showNameInput, setShowNameInput] = useState(false);
@@ -157,28 +149,17 @@ const BreathProfilesScreen = ({
     }
   };
 
-  // Načtení profilu
+  // Načtení profilu — zapíšeme přímo do store
   const handleLoadProfile = (profile) => {
-    // Načíst všechna nastavení z profilu
-    if (onBreathRhythmChange) {
-      onBreathRhythmChange(profile.breathInDuration, profile.breathOutDuration);
-    }
-    if (onBreathDurationChange) {
-      onBreathDurationChange(profile.breathDuration);
-    }
-    if (onPreparationTimeChange) {
-      onPreparationTimeChange(profile.preparationTime);
-    }
-    if (onBreathSoundChange) {
-      onBreathSoundChange('in', profile.breathInSound);
-      onBreathSoundChange('out', profile.breathOutSound);
-      onBreathSoundChange('click', profile.breathClickSound);
-      onBreathSoundChange('final', profile.breathFinalSound);
-      onBreathSoundChange('countdown', profile.breathCountdownSound);
-    }
-    if (onBreathSoundFadeChange) {
-      onBreathSoundFadeChange(profile.breathSoundFadeEnabled);
-    }
+    setBreathRhythm(profile.breathInDuration, profile.breathOutDuration);
+    setBreathDuration(profile.breathDuration);
+    setPreparationTime(profile.preparationTime);
+    setBreathSound('breathInSound', profile.breathInSound);
+    setBreathSound('breathOutSound', profile.breathOutSound);
+    setBreathSound('breathClickSound', profile.breathClickSound);
+    setBreathSound('breathFinalSound', profile.breathFinalSound);
+    setBreathSound('breathCountdownSound', profile.breathCountdownSound);
+    setBreathSoundFadeEnabled(profile.breathSoundFadeEnabled);
 
     // Vrátit se zpět na stránku dýchání
     onNavigateToScreen('breath');
@@ -566,14 +547,14 @@ const BreathProfilesScreen = ({
                                 </div>
                               )}
                               {(!profile.breathInSound || profile.breathInSound === 'none') &&
-                               (!profile.breathOutSound || profile.breathOutSound === 'none') &&
-                               (!profile.breathClickSound || profile.breathClickSound === 'none') &&
-                               (!profile.breathFinalSound || profile.breathFinalSound === 'none') &&
-                               (!profile.breathCountdownSound || profile.breathCountdownSound === 'none') && (
-                                <div className="text-gray-400 italic">
-                                  {t('ziadnyZvuk') || 'Žádný zvuk'}
-                                </div>
-                              )}
+                                (!profile.breathOutSound || profile.breathOutSound === 'none') &&
+                                (!profile.breathClickSound || profile.breathClickSound === 'none') &&
+                                (!profile.breathFinalSound || profile.breathFinalSound === 'none') &&
+                                (!profile.breathCountdownSound || profile.breathCountdownSound === 'none') && (
+                                  <div className="text-gray-400 italic">
+                                    {t('ziadnyZvuk') || 'Žádný zvuk'}
+                                  </div>
+                                )}
                             </div>
                           </div>
                         </div>

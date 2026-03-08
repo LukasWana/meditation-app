@@ -1,276 +1,115 @@
-import { useMemo } from 'react';
-import { useFirebaseHudbaScanner } from '@hooks/useFirebaseHudbaScanner';
+import { useState, useEffect, useMemo } from 'react';
+import { fastMetadataService } from '@services/fastMetadataService';
 
 export const useFirebaseHudbaFilter = () => {
-  const {
-    availableFiles,
-    filesByTopic,
-    availableTopics,
-    stats,
-    coverImages,
-    isLoading,
-    isLoadingCovers,
-    isLoadingDurations,
-    error,
-    refreshCDN,
-    getFilesForTopic,
-    getFileByName
-  } = useFirebaseHudbaScanner();
+  const [metadataLoaded, setMetadataLoaded] = useState(false);
+  const [availableFiles, setAvailableFiles] = useState([]);
 
-  // Filtruj soubory podle témat a vyber nejvyšší verzi pro každé téma
+  // Sleduj načtení metadata a aktualizuj state
+  useEffect(() => {
+    const updateFiles = () => {
+      const allFiles = Array.from(fastMetadataService.metadata.values());
+      const hudbaFiles = allFiles.filter(file =>
+        file.folder === 'hudba' || file.fileName.startsWith('hudba/')
+      );
+      setAvailableFiles(hudbaFiles);
+      setMetadataLoaded(true);
+    };
+
+    if (fastMetadataService.isInitialized) {
+      updateFiles();
+    } else {
+      fastMetadataService.initialize().then(updateFiles);
+    }
+  }, []);
+
+  // Sestavení hudebních položek (alba a skladby)
   const hudbaItems = useMemo(() => {
-    console.log('🔄 useFirebaseHudbaFilter useMemo triggered');
-    console.log('📊 availableFiles:', availableFiles?.length || 0);
-    console.log('📊 availableFiles sample:', availableFiles?.slice(0, 3));
-    console.log('📊 isLoading:', isLoading);
-    console.log('📊 error:', error);
-
     const items = [];
+    const hudbaFiles = availableFiles.filter(file => file.type === 'hudba' || file.fileName.includes('/'));
 
-    // Filtruj pouze hudební soubory (ze složky hudba/)
-    const hudbaFiles = availableFiles.filter(file => {
-      const matches = file.type === 'hudba' && file.isAvailable;
-      if (!matches && file.fileName?.includes('hudba')) {
-        console.log('⚠️ File in hudba folder but not matching filter:', {
-          fileName: file.fileName,
-          type: file.type,
-          isAvailable: file.isAvailable
-        });
-      }
-      return matches;
-    });
-    console.log(`📊 Filtered ${hudbaFiles.length} hudba files from ${availableFiles?.length || 0} total files`);
-    // console.log(`📊 Processing ${hudbaFiles.length} hudba files:`, hudbaFiles.map(f => ({
-    //   fileName: f.fileName,
-    //   type: f.type,
-    //   isAlbum: f.isAlbum,
-    //   albumName: f.albumName,
-    //   parsed: f.parsed
-    // })));
-
-    // Rozděl soubory na samostatné skladby a alba podle struktury složek
+    // Rozdělení na samostatné skladby a alba
     const standaloneSongs = hudbaFiles.filter(file => {
-      // Samostatné skladby: přímo ve složce hudba/ (např. hudba/song.mp3)
-      const isStandalone = file.fileName.startsWith('hudba/') && !file.fileName.substring(6).includes('/');
-      // console.log(`🔍 Standalone song check: ${file.fileName}, isStandalone: ${isStandalone}`);
-      return isStandalone;
+      const pathParts = file.fileName.split('/');
+      return pathParts.length === 2 && pathParts[0] === 'hudba';
     });
 
     const albumSongs = hudbaFiles.filter(file => {
-      // Album skladby: v podsložce hudba/ (např. hudba/ambient-journey/song.mp3)
-      const isAlbumSong = file.fileName.startsWith('hudba/') && file.fileName.substring(6).includes('/');
-      // console.log(`🔍 Album song check: ${file.fileName}, isAlbumSong: ${isAlbumSong}, parsed:`, file.parsed);
-      return isAlbumSong;
+      const pathParts = file.fileName.split('/');
+      return pathParts.length > 2 && pathParts[0] === 'hudba';
     });
 
-    // console.log(`📊 File classification: ${standaloneSongs.length} standalone, ${albumSongs.length} album songs`);
-
-    // Zpracuj samostatné skladby jako jednotlivé položky
+    // Zpracování samostatných skladeb
     standaloneSongs.forEach(file => {
-      const parsed = file.parsed;
-
-      // Získej skutečnou délku z fastMetadataService
-      const actualDuration = file.duration || 'N/A';
-
-      // Bezpečný přístup k názvu skladby
-      const title = parsed?.trackName ||
-                   parsed?.name ||
-                   file.fileNameOnly ||
-                   file.fileName?.split('/').pop()?.replace(/\.mp3$/i, '') ||
-                   'Unknown Track';
-
       items.push({
         key: `standalone-${file.fileName}`,
-        title: title,
+        title: file.parsed?.trackName || file.fileName.split('/').pop().replace(/\.[^/.]+$/, ''),
         type: 'song',
-        audioSrc: file.downloadURL,
+        audioSrc: file.downloadURL || file.fileName,
         fileName: file.fileName,
-        duration: actualDuration,
-        isAvailable: file.isAvailable
+        duration: file.durationFormatted || 'N/A',
+        isAvailable: true
       });
     });
 
-    // Zpracuj album skladby - seskupuj podle podsložky
+    // Zpracování alb
     const albumGroups = new Map();
     albumSongs.forEach(file => {
-      // Extrahuj název podsložky (např. "ambient-journey" z "hudba/ambient-journey/song.mp3")
-      const pathParts = file.fileName.split('/');
-      const albumName = pathParts[1]; // Druhá část cesty je název alba
-      // console.log(`🔍 Album processing: ${file.fileName}, pathParts: [${pathParts.join(', ')}], albumName: ${albumName}, parsed:`, file.parsed);
-
-      if (!albumGroups.has(albumName)) {
-        albumGroups.set(albumName, []);
-        // console.log(`📁 Created new album group: ${albumName}`);
-      }
+      const albumName = file.fileName.split('/')[1];
+      if (!albumGroups.has(albumName)) albumGroups.set(albumName, []);
       albumGroups.get(albumName).push(file);
-      // console.log(`📄 Added file to album ${albumName}: ${file.fileName}`);
     });
 
-    // console.log(`📊 Album groups after processing:`, Array.from(albumGroups.entries()).map(([name, songs]) => ({
-    //   name,
-    //   songCount: songs.length,
-    //   songs: songs.map(s => s.fileName)
-    // })));
-
-    // Vytvoř alba z seskupených skladeb
-    // console.log(`📊 Album groups:`, Array.from(albumGroups.keys()));
     albumGroups.forEach((songs, albumName) => {
-      // console.log(`🎵 Creating album: ${albumName} with ${songs.length} tracks`);
-      // console.log(`📄 Album songs:`, songs.map(s => s.fileName));
-
-      // Seřaď skladby podle názvu souboru
+      // Seřaď skladby
       songs.sort((a, b) => a.fileName.localeCompare(b.fileName));
 
-      // Najdi cover obrázek pro album
-      let coverImageUrl = null;
-      if (coverImages instanceof Map) {
-        coverImageUrl = coverImages.get(albumName) || null;
-        // Debug: zobraz dostupné cover images a albumName
-        if (!coverImageUrl) {
-          console.log(`⚠️ Cover image not found for album: ${albumName}`);
-          console.log(`📊 Available cover images:`, Array.from(coverImages.keys()));
-        }
-      } else {
-        coverImageUrl = coverImages[albumName] || null;
-        if (!coverImageUrl) {
-          console.log(`⚠️ Cover image not found for album: ${albumName}`);
-          console.log(`📊 Available cover images:`, Object.keys(coverImages));
-        }
+      // Odfiltruj pouze audio soubory
+      const audioFiles = songs.filter(f => /\.(mp3|ogg|wav|m4a|flac)$/i.test(f.fileName));
+
+      const tracks = audioFiles.map((file, index) => ({
+        trackNumber: index + 1,
+        trackName: file.parsed?.trackName || file.fileName.split('/').pop().replace(/^\d+[\s\-.]+/, '').replace(/\.[^/.]+$/, '').trim(),
+        duration: file.durationFormatted || 'N/A',
+        audioSrc: file.downloadURL || file.fileName,
+        fileName: file.fileName
+      }));
+
+      if (tracks.length > 0) {
+        // Zkus najít cover obrázek v téže složce
+        const coverFile = songs.find(f => /cover|thumb/i.test(f.fileName) && /\.(jpg|jpeg|png|webp)$/i.test(f.fileName));
+
+        items.push({
+          key: `album-${albumName}`,
+          title: albumName.split('-').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' '),
+          type: 'album',
+          topic: albumName,
+          tracks,
+          coverImage: coverFile?.downloadURL || null
+        });
       }
-      // console.log(`🖼️ Cover image for ${albumName}:`, coverImageUrl);
-
-      // Funkce pro vyčištění názvu skladby - odstraní číslo skladby
-      const cleanTrackName = (trackName) => {
-        if (!trackName) return trackName;
-
-        // Odstraň číslo skladby z názvu (např. "01 - Název skladby" -> "Název skladby")
-        // Podporuje různé formáty: "01 - Název", "1. Název", "01 Název", atd.
-        return trackName.replace(/^\d+[\s\-.]+/, '').trim();
-      };
-
-      // Filtruj pouze audio soubory (vyfiltruj cover.jpg a jiné ne-audio soubory)
-      const audioFiles = songs.filter(file => {
-        const fileName = file.fileName || file.fileNameOnly || '';
-        const lowerFileName = fileName.toLowerCase();
-        // Povol pouze audio soubory (mp3, ogg, oga, wav, m4a, flac)
-        const isAudioFile = /\.(mp3|ogg|oga|wav|m4a|flac)$/i.test(fileName);
-        // Vylouč cover obrázky a jiné ne-audio soubory
-        const isNotCoverImage = !lowerFileName.includes('cover') &&
-                                !lowerFileName.endsWith('.jpg') &&
-                                !lowerFileName.endsWith('.jpeg') &&
-                                !lowerFileName.endsWith('.png') &&
-                                !lowerFileName.endsWith('.gif') &&
-                                !lowerFileName.endsWith('.webp');
-        return isAudioFile && isNotCoverImage;
-      });
-
-      // Vytvoř tracks pro album (pouze z audio souborů)
-      const tracks = audioFiles.map(file => {
-        // Získej skutečnou délku z fastMetadataService
-        const actualDuration = file.duration || 'N/A';
-
-        // Získej název skladby a vyčisti ho od čísla
-        // Použij optional chaining pro bezpečný přístup k parsed
-        const rawTrackName = file.parsed?.trackName ||
-                            file.parsed?.name ||
-                            file.fileNameOnly ||
-                            file.fileName?.split('/').pop()?.replace(/\.mp3$/i, '') ||
-                            'Unknown Track';
-        const cleanName = cleanTrackName(rawTrackName);
-
-        return {
-          trackNumber: audioFiles.indexOf(file) + 1,
-          trackName: cleanName,
-          duration: actualDuration,
-          audioSrc: file.downloadURL,
-          fileName: file.fileName,
-          originalFileName: file.parsed?.originalFileName || file.fileNameOnly || file.fileName
-        };
-      });
-
-      // Převeď albumName na čitelný formát (např. "ambient-journey" → "Ambient Journey")
-      const readableAlbumName = albumName
-        .split('-')
-        .map(word => word.charAt(0).toUpperCase() + word.slice(1))
-        .join(' ');
-
-      const albumItem = {
-        key: `album-${albumName}`,
-        title: readableAlbumName, // Použij čitelný název (např. "Ambient Journey")
-        type: 'album',
-        topic: albumName,
-        tracks: tracks,
-        coverImage: coverImageUrl
-      };
-
-      // console.log(`✅ Album created:`, albumItem);
-      items.push(albumItem);
     });
 
-    // console.log(`📊 Items before sorting:`, items.map(item => ({
-    //   key: item.key,
-    //   title: item.title,
-    //   type: item.type,
-    //   tracks: item.tracks?.length || 'N/A'
-    // })));
-
-    // Seřaď podle číslování
-    const sortedItems = items.sort((a, b) => {
-      if (a.type === 'album' && b.type === 'song') {
-        return -1; // Alba první
-      }
-      if (a.type === 'song' && b.type === 'album') {
-        return 1; // Samostatné skladby po albách
-      }
+    // Seřaď: alba první, pak skladby
+    return items.sort((a, b) => {
+      if (a.type !== b.type) return a.type === 'album' ? -1 : 1;
       return a.title.localeCompare(b.title);
     });
-
-    // console.log(`📊 Final items:`, sortedItems.map(item => ({
-    //   key: item.key,
-    //   title: item.title,
-    //   type: item.type,
-    //   tracks: item.tracks?.length || 'N/A'
-    // })));
-
-    return sortedItems;
-
-  }, [availableFiles, filesByTopic, availableTopics, coverImages]);
+  }, [availableFiles]);
 
   return {
-    // Data
     hudbaItems,
     availableFiles,
-    filesByTopic,
-    availableTopics,
-    stats,
-
-    // State
-    isLoading,
-    isLoadingCovers,
-    isLoadingDurations,
-    error,
-
-    // Actions
-    refreshAudioFiles: refreshCDN,
-
-    // Getters
+    isLoading: !metadataLoaded,
+    error: null,
+    refreshAudioFiles: () => fastMetadataService.initialize(),
     getAudioForTopic: (topic) => {
-      const topicFiles = filesByTopic[topic] || [];
-      const bestFile = topicFiles
-        .filter(file => file.parsed && file.isAvailable)
-        .sort((a, b) => parseInt(b.parsed.version) - parseInt(a.parsed.version))[0];
-      return bestFile?.fileName || null;
+      // Pro hudbu je "topic" název alba nebo složky
+      const album = hudbaItems.find(item => item.topic === topic || item.key === `album-${topic}`);
+      return album?.tracks[0]?.fileName || null;
     },
-    getBestAudio: () => {
-      return hudbaItems[0]?.fileName || null;
-    },
-    getFilesForTopic,
-    getAudioInfo: (fileName) => {
-      const file = getFileByName(fileName);
-      return file?.parsed || null;
-    },
-    getRecommendedFiles: (limit = 5) => {
-      return hudbaItems.slice(0, limit);
-    }
+    getBestAudio: () => hudbaItems[0]?.fileName || null,
+    getAudioInfo: (fileName) => availableFiles.find(f => f.fileName === fileName)?.parsed || null,
+    getRecommendedFiles: (limit = 5) => hudbaItems.slice(0, limit)
   };
 };

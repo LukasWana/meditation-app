@@ -26,6 +26,7 @@ export default defineConfig({
       '@config': fileURLToPath(new URL('./src/config', import.meta.url)),
       '@contexts': fileURLToPath(new URL('./src/contexts', import.meta.url)),
       '@data': fileURLToPath(new URL('./src/data', import.meta.url)),
+      '@stores': fileURLToPath(new URL('./src/stores', import.meta.url)),
     },
   },
   build: {

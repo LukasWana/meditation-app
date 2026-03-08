@@ -5,11 +5,13 @@ import LanguageSwitcher from '@components/LanguageSwitcher';
 import { useLanguage } from '@contexts/LanguageContext';
 import { useTheme } from '@contexts/ThemeContext';
 import { Download, Wifi, WifiOff, HardDrive, RefreshCw, Trash2, History } from 'lucide-react';
-import useOfflineCache from '@hooks/useOfflineCache';
-import { useFirebaseHudbaScanner } from '@hooks/useFirebaseHudbaScanner';
-import { realtimeMetadataService } from '@services/realtimeMetadataService';
+import { useOfflineCache } from '@features/audio/hooks';
+import { useFirebaseHudbaFilter } from '@features/audio/hooks';
+import { fastMetadataService } from '@services/fastMetadataService';
 import { createSharedSettings, consumeSharedSettings } from '@services/sharedSettingsService';
 import breathProfilesService from '@services/breathProfilesService';
+
+import { useUserPrefsStore } from '@stores/userPrefsStore';
 
 // Lazy loading ThemeSelector pro lepší pořadí načítání - načte se až po inicializaci ThemeProvider
 const ThemeSelector = lazy(() => import('@components/ThemeSelector'));
@@ -21,9 +23,8 @@ const SettingsScreen = ({
   onTouchMove,
   onTouchEnd,
   onPlayerStateChange,
-  gender = 'none',
-  onGenderChange
 }) => {
+  const { gender, setGender: onGenderChange } = useUserPrefsStore();
   const { t, language, changeLanguage } = useLanguage();
   const { getScreenBackgroundColor, getCurrentThemeColors, colorMode, themeId, changeTheme, changeColorMode } = useTheme();
   const themeColors = getCurrentThemeColors?.() || {};
@@ -41,7 +42,7 @@ const SettingsScreen = ({
   } = useOfflineCache();
 
   // Získej audio soubory pro cache
-  const { audioFiles } = useFirebaseHudbaScanner();
+  const { audioFiles } = useFirebaseHudbaFilter();
   const [allAudioFiles, setAllAudioFiles] = useState([]);
   const [breathProfiles, setBreathProfiles] = useState([]);
   const [continueAfterEnd, setContinueAfterEnd] = useState(false);
@@ -64,33 +65,16 @@ const SettingsScreen = ({
   useEffect(() => {
     const loadAllAudioFiles = async () => {
       try {
-        const metadata = await realtimeMetadataService.getAllMetadata();
-        console.log('📊 All metadata from realtimeMetadataService:', Object.keys(metadata).length);
+        if (!fastMetadataService.isInitialized) {
+          await fastMetadataService.initialize();
+        }
 
-        // Debug: zobraz meditacie soubory
-        const slovaFiles = Object.values(metadata).filter(file =>
-          file.fileName && file.fileName.includes('meditacie/')
-        );
-        console.log('🎤 Meditacie files found:', slovaFiles.length);
-        console.log('🎤 Sample slova files:', slovaFiles.slice(0, 3).map(f => ({
-          fileName: f.fileName,
-          downloadURL: f.downloadURL || f.audioSrc,
-          folder: f.folder
-        })));
+        const metadata = Array.from(fastMetadataService.metadata.values());
+        console.log('📊 All metadata from fastMetadataService:', metadata.length);
 
-        // Debug: zobraz všechny soubory s 'meditacie' v názvu
-        const allSlovaFiles = Object.values(metadata).filter(file =>
-          file.fileName && file.fileName.toLowerCase().includes('meditacie')
-        );
-        console.log('🎤 All files with "meditacie" in name:', allSlovaFiles.length);
-        console.log('🎤 Sample files with "slova":', allSlovaFiles.slice(0, 5).map(f => ({
-          fileName: f.fileName,
-          hasDownloadURL: !!(f.downloadURL || f.audioSrc)
-        })));
-
-        const files = Object.values(metadata).map(file => ({
+        const files = metadata.map(file => ({
           fileName: file.fileName,
-          downloadURL: file.downloadURL || file.audioSrc,
+          downloadURL: file.downloadURL,
           size: file.size || 0
         })).filter(file => file.downloadURL);
 
@@ -98,7 +82,7 @@ const SettingsScreen = ({
         console.log('📊 Loaded audio files for cache:', files.length);
       } catch (error) {
         console.error('❌ Failed to load audio files:', error);
-        // Fallback na data z useFirebaseHudbaScanner
+        // Fallback na data z useFirebaseHudbaFilter
         if (audioFiles && audioFiles.length > 0) {
           setAllAudioFiles(audioFiles);
         }
@@ -524,33 +508,30 @@ const SettingsScreen = ({
                 >
                   <motion.button
                     onClick={() => onGenderChange && onGenderChange('male')}
-                    className={`px-3 py-2 rounded-full text-sm font-medium transition-colors duration-200 ${
-                      gender === 'male'
-                        ? 'bg-gray-800 text-white'
-                        : 'text-gray-600 hover:text-gray-800'
-                    }`}
+                    className={`px-3 py-2 rounded-full text-sm font-medium transition-colors duration-200 ${gender === 'male'
+                      ? 'bg-gray-800 text-white'
+                      : 'text-gray-600 hover:text-gray-800'
+                      }`}
                     transition={{ type: "spring", stiffness: 300, damping: 20 }}
                   >
                     {t('jsemMuz')}
                   </motion.button>
                   <motion.button
                     onClick={() => onGenderChange && onGenderChange('female')}
-                    className={`px-3 py-2 rounded-full text-sm font-medium transition-colors duration-200 ${
-                      gender === 'female'
-                        ? 'bg-gray-800 text-white'
-                        : 'text-gray-600 hover:text-gray-800'
-                    }`}
+                    className={`px-3 py-2 rounded-full text-sm font-medium transition-colors duration-200 ${gender === 'female'
+                      ? 'bg-gray-800 text-white'
+                      : 'text-gray-600 hover:text-gray-800'
+                      }`}
                     transition={{ type: "spring", stiffness: 300, damping: 20 }}
                   >
                     {t('jsemZena')}
                   </motion.button>
                   <motion.button
                     onClick={() => onGenderChange && onGenderChange('none')}
-                    className={`px-3 py-2 rounded-full text-sm font-medium transition-colors duration-200 ${
-                      gender === 'none'
-                        ? 'bg-gray-800 text-white'
-                        : 'text-gray-600 hover:text-gray-800'
-                    }`}
+                    className={`px-3 py-2 rounded-full text-sm font-medium transition-colors duration-200 ${gender === 'none'
+                      ? 'bg-gray-800 text-white'
+                      : 'text-gray-600 hover:text-gray-800'
+                      }`}
                     transition={{ type: "spring", stiffness: 300, damping: 20 }}
                   >
                     {t('obecnyObsah')}

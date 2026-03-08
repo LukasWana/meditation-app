@@ -13,7 +13,6 @@ const HudbaScreen = ({
   onTouchStart,
   onTouchMove,
   onTouchEnd,
-  gender: _gender = 'none',
   onPlayerStateChange
 }) => {
   const [activeAudio, setActiveAudio] = useState(null);
@@ -113,9 +112,8 @@ const HudbaScreen = ({
   return (
     <FramerPageTransition screenKey="hudba">
       <div
-        className={`min-h-screen w-full max-w-full flex flex-col items-center justify-start p-2 sm:p-8 pb-20 overflow-x-hidden relative ${
-          activeAudio ? 'pointer-events-none' : ''
-        }`}
+        className={`min-h-screen w-full max-w-full flex flex-col items-center justify-start p-2 sm:p-8 pb-20 overflow-x-hidden relative ${activeAudio ? 'pointer-events-none' : ''
+          }`}
         style={{ backgroundColor: getScreenBackgroundColor() }}
         onTouchStart={activeAudio ? undefined : onTouchStart}
         onTouchMove={activeAudio ? undefined : onTouchMove}

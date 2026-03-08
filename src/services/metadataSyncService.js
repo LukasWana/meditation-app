@@ -1,6 +1,6 @@
 
 
-import { firestoreMetadataService } from './firestoreMetadataService';
+import { fastMetadataService } from './fastMetadataService';
 import { mp3MetadataExtractor } from './mp3MetadataExtractor';
 import { ref, listAll, getMetadata } from 'firebase/storage';
 import { storage } from '@config/secure-firebase';
@@ -22,8 +22,8 @@ class MetadataSyncService {
     try {
       log.info('🔄 Initializing metadata sync service...');
 
-      // Nejdříve zkus načíst z Firestore
-      await firestoreMetadataService.initialize();
+      // Nejdříve inicializuj FastMetadataService
+      await fastMetadataService.initialize();
 
       // Zkontroluj, jestli potřebujeme synchronizaci
       const needsSync = await this.checkIfSyncNeeded();
@@ -45,12 +45,11 @@ class MetadataSyncService {
 
   async checkIfSyncNeeded() {
     try {
-      // Zkontroluj, jestli máme metadata v cache
-      const cachedMetadata = firestoreMetadataService.getAllFromCache();
-      const cachedCount = Object.keys(cachedMetadata).length;
+      // Zkontroluj, jestli máme metadata v cache FastMetadataService
+      const cachedCount = fastMetadataService.cache.size;
 
       if (cachedCount === 0) {
-        log.info('No cached metadata found, sync needed');
+        log.info('No cached metadata found in FastMetadataService, sync needed');
         return true;
       }
 
@@ -122,9 +121,8 @@ class MetadataSyncService {
         }
       }
 
-      // Porovnej s cached metadaty
-      const cachedMetadata = firestoreMetadataService.getAllFromCache();
-      const cachedFiles = Object.keys(cachedMetadata);
+      // Porovnej s cached metadaty z FastMetadataService
+      const cachedFiles = Array.from(fastMetadataService.cache.keys());
 
       // Zkontroluj, jestli se počet souborů změnil
       if (mp3Files.length !== cachedFiles.length) {
@@ -192,10 +190,10 @@ class MetadataSyncService {
 
       log.info(`Metadata extraction completed: ${extractionResult.successCount} successful, ${extractionResult.errorCount} failed`);
 
-      // Ulož metadata do Firestore
+      // Ulož metadata (pro diagnostiku a fallback)
       if (extractionResult.results.length > 0) {
-        await this.saveMetadataToFirestore(extractionResult.results);
-        log.success(`✅ ${extractionResult.results.length} metadata records saved to Firestore`);
+        await this.saveMetadataLocally(extractionResult.results);
+        log.success(`✅ ${extractionResult.results.length} metadata records processed and cached locally`);
       }
 
       // Ulož čas poslední synchronizace
@@ -259,7 +257,7 @@ class MetadataSyncService {
     }
   }
 
-  async saveMetadataToFirestore(metadataArray) {
+  async saveMetadataLocally(metadataArray) {
     try {
       // Přidej Firebase Storage metadata (velikost, čas vytvoření)
       const enrichedMetadata = await Promise.all(
@@ -281,26 +279,23 @@ class MetadataSyncService {
         })
       );
 
-      // Ulož do Firestore
-      await firestoreMetadataService.saveBatchMetadata(
-        enrichedMetadata.map(metadata => ({
-          fileName: metadata.fileName,
-          metadata: metadata
-        }))
-      );
+      // Ulož do FastMetadataService cache (v reálné aplikaci by se to mohlo poslat na server)
+      enrichedMetadata.forEach(meta => {
+        fastMetadataService.cache.set(meta.fileName, meta);
+      });
 
     } catch (error) {
-      log.error('Failed to save metadata to Firestore:', error);
+      log.error('Failed to save metadata locally:', error);
       throw error;
     }
   }
 
   getMetadata(fileName) {
-    return firestoreMetadataService.getMetadata(fileName);
+    return fastMetadataService.getMetadata(fileName);
   }
 
   getAllMetadata() {
-    return firestoreMetadataService.getAllFromCache();
+    return fastMetadataService.getAllMetadata();
   }
 
   async forceSync() {

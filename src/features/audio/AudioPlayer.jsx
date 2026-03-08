@@ -5,7 +5,7 @@ import {
   CloseButton,
   AudioPlayerAnimations
 } from './components';
-import { useActivityTracking } from '@hooks/useActivityTracking';
+import { useActivityTracking } from '@features/meditation/hooks';
 
 
 const AudioPlayer = ({

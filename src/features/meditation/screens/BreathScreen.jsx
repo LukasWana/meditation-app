@@ -3,45 +3,46 @@ import { AnimatePresence } from 'framer-motion';
 import { FramerPageTransition, BackButton } from '@components';
 import { useLanguage } from '@contexts/LanguageContext';
 import { useTheme } from '@contexts/ThemeContext';
-import { useBreathAudioEngine } from '@hooks/useBreathAudioEngine';
-import { useBreathPhaseNew } from '@hooks/useBreathPhaseNew';
-import { useCountdownSound } from '@hooks/useCountdownSound';
-import { useFinalSound } from '@hooks/useFinalSound';
-import { useBreathTimer } from '@hooks/useBreathTimer';
-import { usePreparationTimer } from '@hooks/usePreparationTimer';
-import { useActivityTracking } from '@hooks/useActivityTracking';
+import {
+  useBreathAudioEngine,
+  useBreathPhase,
+  useCountdownSound,
+  useFinalSound,
+  useBreathTimer,
+  usePreparationTimer
+} from '@features/meditation/hooks';
+import { useActivityTracking } from '@features/meditation/hooks';
+import { useBreathStore } from '@stores/breathStore';
 import PreparationSection from '@features/meditation/components/PreparationSection';
 import BreathingSection from '@features/meditation/components/BreathingSection';
 
 const BreathScreen = ({
-  breathPhase,
-  setBreathPhase,
   onNavigateToScreen,
   onTouchStart,
   onTouchMove,
   onTouchEnd,
-  breathInDuration,
-  breathOutDuration,
-  // eslint-disable-next-line no-unused-vars
-  onBreathRhythmChange, // Předáváno do RhythmPickerScreen přes PageManager
-  preparationTime,
-  // eslint-disable-next-line no-unused-vars
-  onPreparationTimeChange, // Předáváno do PreparationTimePickerScreen přes PageManager
-  breathDuration,
-  breathTime,
-  setBreathTime,
-  isBreathing,
-  setIsBreathing,
-  // eslint-disable-next-line no-unused-vars
-  onBreathDurationChange, // Předáváno do DurationPickerScreen přes PageManager
-  breathInSound,
-  breathOutSound,
-  breathClickSound,
-  breathFinalSound,
-  breathCountdownSound,
-  breathSoundFadeEnabled
 }) => {
   const { t } = useLanguage();
+
+  // Čteme stav přímo ze store (místo prop-drillingu)
+  const {
+    breathPhase,
+    setBreathPhase,
+    breathInDuration,
+    breathOutDuration,
+    preparationTime,
+    breathDuration,
+    breathTime,
+    setBreathTime,
+    isBreathing,
+    setIsBreathing,
+    breathInSound,
+    breathOutSound,
+    breathClickSound,
+    breathFinalSound,
+    breathCountdownSound,
+    breathSoundFadeEnabled,
+  } = useBreathStore();
 
   // Lokální state pro přípravný čas (vždy používáme lokální state pro BreathScreen)
   const [localIsPreparing, setLocalIsPreparing] = useState(false);
@@ -86,7 +87,7 @@ const BreathScreen = ({
   );
 
   // Použij hook pro aktualizaci UI fáze (fallback, pokud audio engine nefunguje)
-  useBreathPhaseNew(
+  useBreathPhase(
     isBreathing,
     setBreathPhase,
     breathInDuration,

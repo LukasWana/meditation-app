@@ -1,8 +1,12 @@
-
-
 import { useEffect, useRef } from 'react';
+import { useMeditationStore } from '@stores/meditationStore';
 
-export const useTimer = (isPlaying, time, setTime, setIsPlaying) => {
+/**
+ * Hook pro meditační timer.
+ * Automaticky se propojí s useMeditationStore.
+ */
+export const useTimer = () => {
+  const { isPlaying, time, setTime, setIsPlaying } = useMeditationStore();
   const isUpdatingRef = useRef(false);
 
   // Timer effect with proper cleanup and race condition protection
@@ -13,15 +17,12 @@ export const useTimer = (isPlaying, time, setTime, setIsPlaying) => {
         // Ochrana proti race conditions
         if (!isUpdatingRef.current) {
           isUpdatingRef.current = true;
-          setTime(t => {
-            const newTime = t - 1;
-            if (newTime <= 0) {
-              // Zastav přehrávání okamžitě (bez setTimeout) a timer clamping na 0
-              setIsPlaying(false);
-            }
-            isUpdatingRef.current = false;
-            return Math.max(0, newTime);
-          });
+          setTime(time - 1);
+
+          if (time - 1 <= 0) {
+            setIsPlaying(false);
+          }
+          isUpdatingRef.current = false;
         }
       }, 1000);
     }

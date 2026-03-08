@@ -6,25 +6,25 @@ import { useLanguage } from '@contexts/LanguageContext';
 import { useTheme } from '@contexts/ThemeContext';
 import { realtimeMetadataService } from '@services/realtimeMetadataService';
 import Waveform from '@components/Waveform';
+import { useBreathStore } from '@stores/breathStore';
 
 const SoundThemeGalleryScreen = ({
   onNavigateToScreen,
   onTouchStart,
   onTouchMove,
   onTouchEnd,
-  onSelectSound,
-  selectedInSound,
-  selectedOutSound,
-  selectedClickSound,
-  selectedFinalSound,
-  selectedCountdownSound
 }) => {
+  const {
+    breathInSound, breathOutSound, breathClickSound,
+    breathFinalSound, breathCountdownSound, setBreathSound,
+  } = useBreathStore();
+
   // Fallback pro undefined hodnoty
-  const safeSelectedInSound = selectedInSound || 'none';
-  const safeSelectedOutSound = selectedOutSound || 'none';
-  const safeSelectedClickSound = selectedClickSound || 'none';
-  const safeSelectedFinalSound = selectedFinalSound || 'none';
-  const safeSelectedCountdownSound = selectedCountdownSound || 'none';
+  const safeSelectedInSound = breathInSound || 'none';
+  const safeSelectedOutSound = breathOutSound || 'none';
+  const safeSelectedClickSound = breathClickSound || 'none';
+  const safeSelectedFinalSound = breathFinalSound || 'none';
+  const safeSelectedCountdownSound = breathCountdownSound || 'none';
   const { t } = useLanguage();
   const { getScreenBackgroundColor } = useTheme();
 
@@ -363,16 +363,19 @@ const SoundThemeGalleryScreen = ({
   };
 
   const handleFileSelect = (type, fileName) => {
-    console.log('🔊 SoundThemeGalleryScreen: handleFileSelect called', { type, fileName, onSelectSound: typeof onSelectSound });
-    if (!onSelectSound) {
-      console.error('❌ SoundThemeGalleryScreen: onSelectSound is not defined!');
-      return;
-    }
-    try {
-      onSelectSound(type, fileName);
-      console.log('✅ SoundThemeGalleryScreen: onSelectSound called successfully', { type, fileName });
-    } catch (error) {
-      console.error('❌ SoundThemeGalleryScreen: Error calling onSelectSound:', error);
+    const typeToKey = {
+      'in': 'breathInSound',
+      'out': 'breathOutSound',
+      'click': 'breathClickSound',
+      'final': 'breathFinalSound',
+      'countdown': 'breathCountdownSound',
+    };
+    const key = typeToKey[type];
+    if (key) {
+      setBreathSound(key, fileName);
+      console.log('✅ Sound set via store:', { type, key, fileName });
+    } else {
+      console.error('❌ Unknown sound type:', type);
     }
   };
 
@@ -412,11 +415,10 @@ const SoundThemeGalleryScreen = ({
                   {/* Všechny */}
                   <button
                     onClick={() => setSelectedCategory('all')}
-                    className={`px-3 py-1.5 rounded-full text-sm transition-colors flex items-center gap-1.5 ${
-                      selectedCategory === 'all'
-                        ? 'bg-black text-white'
-                        : 'bg-white/70  text-gray-700 border border-black/10'
-                    }`}
+                    className={`px-3 py-1.5 rounded-full text-sm transition-colors flex items-center gap-1.5 ${selectedCategory === 'all'
+                      ? 'bg-black text-white'
+                      : 'bg-white/70  text-gray-700 border border-black/10'
+                      }`}
                     type="button"
                   >
                     <span className="hidden sm:inline">Vše</span>
@@ -427,11 +429,10 @@ const SoundThemeGalleryScreen = ({
                   {categories.includes('background') && (
                     <button
                       onClick={() => setSelectedCategory('background')}
-                      className={`px-3 py-1.5 rounded-full text-sm transition-colors flex items-center gap-1.5 ${
-                        selectedCategory === 'background'
-                          ? 'bg-black text-white'
-                          : 'bg-white/70  text-gray-700 border border-black/10'
-                      }`}
+                      className={`px-3 py-1.5 rounded-full text-sm transition-colors flex items-center gap-1.5 ${selectedCategory === 'background'
+                        ? 'bg-black text-white'
+                        : 'bg-white/70  text-gray-700 border border-black/10'
+                        }`}
                       type="button"
                       title="Background"
                     >
@@ -444,11 +445,10 @@ const SoundThemeGalleryScreen = ({
                   {categories.includes('mnich') && (
                     <button
                       onClick={() => setSelectedCategory('mnich')}
-                      className={`px-3 py-1.5 rounded-full text-sm transition-colors flex items-center gap-1.5 ${
-                        selectedCategory === 'mnich'
-                          ? 'bg-black text-white'
-                          : 'bg-white/70  text-gray-700 border border-black/10'
-                      }`}
+                      className={`px-3 py-1.5 rounded-full text-sm transition-colors flex items-center gap-1.5 ${selectedCategory === 'mnich'
+                        ? 'bg-black text-white'
+                        : 'bg-white/70  text-gray-700 border border-black/10'
+                        }`}
                       type="button"
                       title="Mnich"
                     >
@@ -461,11 +461,10 @@ const SoundThemeGalleryScreen = ({
                   {categories.includes('kratke') && (
                     <button
                       onClick={() => setSelectedCategory('kratke')}
-                      className={`px-3 py-1.5 rounded-full text-sm transition-colors flex items-center gap-1.5 ${
-                        selectedCategory === 'kratke'
-                          ? 'bg-black text-white'
-                          : 'bg-white/70  text-gray-700 border border-black/10'
-                      }`}
+                      className={`px-3 py-1.5 rounded-full text-sm transition-colors flex items-center gap-1.5 ${selectedCategory === 'kratke'
+                        ? 'bg-black text-white'
+                        : 'bg-white/70  text-gray-700 border border-black/10'
+                        }`}
                       type="button"
                       title="Krátké zvuky"
                     >
@@ -478,11 +477,10 @@ const SoundThemeGalleryScreen = ({
                   {categories.includes('pt_voice') && (
                     <button
                       onClick={() => setSelectedCategory('pt_voice')}
-                      className={`px-3 py-1.5 rounded-full text-sm transition-colors flex items-center gap-1.5 ${
-                        selectedCategory === 'pt_voice'
-                          ? 'bg-black text-white'
-                          : 'bg-white/70  text-gray-700 border border-black/10'
-                      }`}
+                      className={`px-3 py-1.5 rounded-full text-sm transition-colors flex items-center gap-1.5 ${selectedCategory === 'pt_voice'
+                        ? 'bg-black text-white'
+                        : 'bg-white/70  text-gray-700 border border-black/10'
+                        }`}
                       type="button"
                       title="PT Voice"
                     >
@@ -496,11 +494,10 @@ const SoundThemeGalleryScreen = ({
               {/* Silence - poslední záložka (vždy zobrazena) */}
               <button
                 onClick={() => setSelectedCategory('silence')}
-                className={`px-3 py-1.5 rounded-full text-sm transition-colors flex items-center gap-1.5 ${
-                  selectedCategory === 'silence'
-                    ? 'bg-black text-white'
-                    : 'bg-white/70  text-gray-700 border border-black/10'
-                }`}
+                className={`px-3 py-1.5 rounded-full text-sm transition-colors flex items-center gap-1.5 ${selectedCategory === 'silence'
+                  ? 'bg-black text-white'
+                  : 'bg-white/70  text-gray-700 border border-black/10'
+                  }`}
                 type="button"
                 title="Silence"
               >
@@ -523,11 +520,10 @@ const SoundThemeGalleryScreen = ({
               <button
                 onClick={() => setCurrentPage(prev => Math.max(0, prev - 1))}
                 disabled={currentPage === 0}
-                className={`px-3 py-1.5 rounded-full text-sm transition-colors flex items-center gap-1.5 ${
-                  currentPage === 0
-                    ? 'bg-gray-200 text-gray-400 cursor-not-allowed'
-                    : 'bg-white/70  text-gray-700 border border-black/10'
-                }`}
+                className={`px-3 py-1.5 rounded-full text-sm transition-colors flex items-center gap-1.5 ${currentPage === 0
+                  ? 'bg-gray-200 text-gray-400 cursor-not-allowed'
+                  : 'bg-white/70  text-gray-700 border border-black/10'
+                  }`}
                 type="button"
               >
                 ←
@@ -538,11 +534,10 @@ const SoundThemeGalleryScreen = ({
               <button
                 onClick={() => setCurrentPage(prev => Math.min(paginatedFiles.length - 1, prev + 1))}
                 disabled={currentPage === paginatedFiles.length - 1}
-                className={`px-3 py-1.5 rounded-full text-sm transition-colors flex items-center gap-1.5 ${
-                  currentPage === paginatedFiles.length - 1
-                    ? 'bg-gray-200 text-gray-400 cursor-not-allowed'
-                    : 'bg-white/70  text-gray-700 border border-black/10'
-                }`}
+                className={`px-3 py-1.5 rounded-full text-sm transition-colors flex items-center gap-1.5 ${currentPage === paginatedFiles.length - 1
+                  ? 'bg-gray-200 text-gray-400 cursor-not-allowed'
+                  : 'bg-white/70  text-gray-700 border border-black/10'
+                  }`}
                 type="button"
               >
                 →
@@ -573,11 +568,10 @@ const SoundThemeGalleryScreen = ({
                       handleFileSelect('final', 'none');
                       handleFileSelect('countdown', 'none');
                     }}
-                    className={`flex-1 p-2 rounded transition-colors flex items-center justify-center cursor-pointer ${
-                      safeSelectedInSound === 'none' && safeSelectedOutSound === 'none' && safeSelectedClickSound === 'none' && safeSelectedFinalSound === 'none' && safeSelectedCountdownSound === 'none'
-                        ? 'bg-black text-white '
-                        : 'bg-white/70  text-gray-700 border border-black/10'
-                    }`}
+                    className={`flex-1 p-2 rounded transition-colors flex items-center justify-center cursor-pointer ${safeSelectedInSound === 'none' && safeSelectedOutSound === 'none' && safeSelectedClickSound === 'none' && safeSelectedFinalSound === 'none' && safeSelectedCountdownSound === 'none'
+                      ? 'bg-black text-white '
+                      : 'bg-white/70  text-gray-700 border border-black/10'
+                      }`}
                     title={t('ziadnyZvuk') || 'Žádný zvuk pro všechny'}
                     type="button"
                   >
@@ -608,11 +602,10 @@ const SoundThemeGalleryScreen = ({
                       console.log('🔊 Clicked IN button for: none, Current selected:', safeSelectedInSound);
                       handleFileSelect('in', 'none');
                     }}
-                    className={`flex-1 p-2 rounded transition-colors flex items-center justify-center cursor-pointer ${
-                      safeSelectedInSound === 'none'
-                        ? 'bg-black text-white '
-                        : 'bg-white/70  text-gray-700 border border-black/10'
-                    }`}
+                    className={`flex-1 p-2 rounded transition-colors flex items-center justify-center cursor-pointer ${safeSelectedInSound === 'none'
+                      ? 'bg-black text-white '
+                      : 'bg-white/70  text-gray-700 border border-black/10'
+                      }`}
                     title={t('zvolteZvukNadech') || 'Nádech - žádný zvuk'}
                     type="button"
                   >
@@ -627,11 +620,10 @@ const SoundThemeGalleryScreen = ({
                       console.log('🔊 Clicked OUT button for: none, Current selected:', safeSelectedOutSound);
                       handleFileSelect('out', 'none');
                     }}
-                    className={`flex-1 p-2 rounded transition-colors flex items-center justify-center cursor-pointer ${
-                      safeSelectedOutSound === 'none'
-                        ? 'bg-black text-white '
-                        : 'bg-white/70  text-gray-700 border border-black/10'
-                    }`}
+                    className={`flex-1 p-2 rounded transition-colors flex items-center justify-center cursor-pointer ${safeSelectedOutSound === 'none'
+                      ? 'bg-black text-white '
+                      : 'bg-white/70  text-gray-700 border border-black/10'
+                      }`}
                     title={t('zvolteZvukVydech') || 'Výdech - žádný zvuk'}
                     type="button"
                   >
@@ -646,11 +638,10 @@ const SoundThemeGalleryScreen = ({
                       console.log('🔊 Clicked CLICK button for: none, Current selected:', safeSelectedClickSound);
                       handleFileSelect('click', 'none');
                     }}
-                    className={`flex-1 p-2 rounded transition-colors flex items-center justify-center cursor-pointer ${
-                      safeSelectedClickSound === 'none'
-                        ? 'bg-black text-white '
-                        : 'bg-white/70  text-gray-700 border border-black/10'
-                    }`}
+                    className={`flex-1 p-2 rounded transition-colors flex items-center justify-center cursor-pointer ${safeSelectedClickSound === 'none'
+                      ? 'bg-black text-white '
+                      : 'bg-white/70  text-gray-700 border border-black/10'
+                      }`}
                     title={t('zvolteZvukKliknuti') || 'Kliknutí - žádný zvuk'}
                     type="button"
                   >
@@ -665,11 +656,10 @@ const SoundThemeGalleryScreen = ({
                       console.log('🔊 Clicked FINAL button for: none, Current selected:', safeSelectedFinalSound);
                       handleFileSelect('final', 'none');
                     }}
-                    className={`flex-1 p-2 rounded transition-colors flex items-center justify-center cursor-pointer ${
-                      safeSelectedFinalSound === 'none'
-                        ? 'bg-black text-white '
-                        : 'bg-white/70  text-gray-700 border border-black/10'
-                    }`}
+                    className={`flex-1 p-2 rounded transition-colors flex items-center justify-center cursor-pointer ${safeSelectedFinalSound === 'none'
+                      ? 'bg-black text-white '
+                      : 'bg-white/70  text-gray-700 border border-black/10'
+                      }`}
                     title={t('zvolteZvukFinalni') || 'Finální - žádný zvuk'}
                     type="button"
                   >
@@ -684,11 +674,10 @@ const SoundThemeGalleryScreen = ({
                       console.log('🔊 Clicked COUNTDOWN button for: none, Current selected:', safeSelectedCountdownSound);
                       handleFileSelect('countdown', 'none');
                     }}
-                    className={`flex-1 p-2 rounded transition-colors flex items-center justify-center cursor-pointer ${
-                      safeSelectedCountdownSound === 'none'
-                        ? 'bg-black text-white '
-                        : 'bg-white/70  text-gray-700 border border-black/10'
-                    }`}
+                    className={`flex-1 p-2 rounded transition-colors flex items-center justify-center cursor-pointer ${safeSelectedCountdownSound === 'none'
+                      ? 'bg-black text-white '
+                      : 'bg-white/70  text-gray-700 border border-black/10'
+                      }`}
                     title={t('zvolteZvukOdpocitavani') || 'Odpočítávání - žádný zvuk'}
                     type="button"
                   >
@@ -740,11 +729,10 @@ const SoundThemeGalleryScreen = ({
                         e.stopPropagation();
                         handlePreview(file);
                       }}
-                      className={`p-2 rounded-full transition-colors flex items-center justify-center flex-shrink-0 ${
-                        playingPreview === file.fileName
-                          ? 'bg-black text-white '
-                          : 'bg-white/70  text-gray-700 border border-black/10'
-                      }`}
+                      className={`p-2 rounded-full transition-colors flex items-center justify-center flex-shrink-0 ${playingPreview === file.fileName
+                        ? 'bg-black text-white '
+                        : 'bg-white/70  text-gray-700 border border-black/10'
+                        }`}
                       title={playingPreview === file.fileName ? 'Zastavit' : 'Přehrát'}
                       type="button"
                     >
@@ -769,11 +757,10 @@ const SoundThemeGalleryScreen = ({
                             console.log('🔊 Clicked COUNTDOWN button for:', file.fileName, 'Current selected:', safeSelectedCountdownSound);
                             handleFileSelect('countdown', file.fileName);
                           }}
-                          className={`flex-1 min-w-[60px] p-2 rounded transition-colors flex items-center justify-center cursor-pointer ${
-                            safeSelectedCountdownSound === file.fileName
-                              ? 'bg-black text-white '
-                              : 'bg-white/70  text-gray-700 border border-black/10'
-                          }`}
+                          className={`flex-1 min-w-[60px] p-2 rounded transition-colors flex items-center justify-center cursor-pointer ${safeSelectedCountdownSound === file.fileName
+                            ? 'bg-black text-white '
+                            : 'bg-white/70  text-gray-700 border border-black/10'
+                            }`}
                           title={t('zvolteZvukOdpocitavani') || 'Odpočítávání'}
                           type="button"
                         >
@@ -798,11 +785,10 @@ const SoundThemeGalleryScreen = ({
                             console.log('🔊 Clicked IN button for:', file.fileName, 'Current selected:', safeSelectedInSound);
                             handleFileSelect('in', file.fileName);
                           }}
-                          className={`flex-1 min-w-[60px] p-2 rounded transition-colors flex items-center justify-center cursor-pointer ${
-                            safeSelectedInSound === file.fileName
-                              ? 'bg-black text-white '
-                              : 'bg-white/70  text-gray-700 border border-black/10'
-                          }`}
+                          className={`flex-1 min-w-[60px] p-2 rounded transition-colors flex items-center justify-center cursor-pointer ${safeSelectedInSound === file.fileName
+                            ? 'bg-black text-white '
+                            : 'bg-white/70  text-gray-700 border border-black/10'
+                            }`}
                           title={t('zvolteZvukNadech') || 'Nádech'}
                           type="button"
                         >
@@ -816,11 +802,10 @@ const SoundThemeGalleryScreen = ({
                             console.log('🔊 Clicked OUT button for:', file.fileName, 'Current selected:', safeSelectedOutSound);
                             handleFileSelect('out', file.fileName);
                           }}
-                          className={`flex-1 min-w-[60px] p-2 rounded transition-colors flex items-center justify-center cursor-pointer ${
-                            safeSelectedOutSound === file.fileName
-                              ? 'bg-black text-white '
-                              : 'bg-white/70  text-gray-700 border border-black/10'
-                          }`}
+                          className={`flex-1 min-w-[60px] p-2 rounded transition-colors flex items-center justify-center cursor-pointer ${safeSelectedOutSound === file.fileName
+                            ? 'bg-black text-white '
+                            : 'bg-white/70  text-gray-700 border border-black/10'
+                            }`}
                           title={t('zvolteZvukVydech') || 'Výdech'}
                           type="button"
                         >
@@ -842,11 +827,10 @@ const SoundThemeGalleryScreen = ({
                         console.log('🔊 Clicked CLICK button for:', file.fileName, 'Current selected:', safeSelectedClickSound);
                         handleFileSelect('click', file.fileName);
                       }}
-                      className={`flex-1 min-w-[60px] p-2 rounded transition-colors flex items-center justify-center cursor-pointer ${
-                        safeSelectedClickSound === file.fileName
-                          ? 'bg-black text-white '
-                          : 'bg-white/70  text-gray-700 border border-black/10'
-                      }`}
+                      className={`flex-1 min-w-[60px] p-2 rounded transition-colors flex items-center justify-center cursor-pointer ${safeSelectedClickSound === file.fileName
+                        ? 'bg-black text-white '
+                        : 'bg-white/70  text-gray-700 border border-black/10'
+                        }`}
                       title={t('zvolteZvukKliknuti') || 'Kliknutí'}
                       type="button"
                     >
@@ -861,11 +845,10 @@ const SoundThemeGalleryScreen = ({
                         console.log('🔊 Clicked FINAL button for:', file.fileName, 'Current selected:', safeSelectedFinalSound);
                         handleFileSelect('final', file.fileName);
                       }}
-                      className={`flex-1 min-w-[60px] p-2 rounded transition-colors flex items-center justify-center cursor-pointer ${
-                        safeSelectedFinalSound === file.fileName
-                          ? 'bg-black text-white '
-                          : 'bg-white/70  text-gray-700 border border-black/10'
-                      }`}
+                      className={`flex-1 min-w-[60px] p-2 rounded transition-colors flex items-center justify-center cursor-pointer ${safeSelectedFinalSound === file.fileName
+                        ? 'bg-black text-white '
+                        : 'bg-white/70  text-gray-700 border border-black/10'
+                        }`}
                       title={t('zvolteZvukFinalni') || 'Finální'}
                       type="button"
                     >

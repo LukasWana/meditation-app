@@ -2,7 +2,7 @@ import React, { useEffect } from 'react';
 import { FramerPageTransition } from '@components';
 import { useLanguage } from '@contexts/LanguageContext';
 import { useTheme } from '@contexts/ThemeContext';
-import { useThemeColors } from '@hooks/useThemeColors';
+import { useThemeColors } from '@hooks';
 
 const HomeScreen = ({
   onNavigateToScreen,

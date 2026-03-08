@@ -1,5 +1,5 @@
 import { renderHook, act } from '@testing-library/react';
-import { useBreathTimer } from '@hooks/useBreathTimer';
+import { useBreathTimer } from '@features/meditation/hooks';
 import { vi } from 'vitest';
 
 describe('useBreathTimer', () => {

@@ -7,17 +7,11 @@
  * @property {number} priority - Priorita inicializace (nižší = vyšší priorita)
  */
 
-import { realtimeMetadataService } from './realtimeMetadataService';
-import { staticMetadataService } from './staticMetadataService';
 import { fastMetadataService } from './fastMetadataService';
-import { firestoreMetadataService } from './firestoreMetadataService';
-import unifiedMetadataService from './unifiedMetadataService';
 import cacheServiceRefactored from './cacheServiceRefactored';
 import offlineCacheService from './offlineCacheService';
-import enhancedOfflineCacheService from './enhancedOfflineCacheService';
 import { slovaDataService } from './slovaDataService';
 import uiDataService from './uiDataService';
-import globalMetadataPreloader from './globalMetadataPreloader';
 
 /**
  * Registry všech services v aplikaci
@@ -25,23 +19,24 @@ import globalMetadataPreloader from './globalMetadataPreloader';
  */
 export const SERVICE_REGISTRY = {
   metadata: {
-    realtime: { service: realtimeMetadataService, priority: 1 },
-    static: { service: staticMetadataService, priority: 2 },
-    fast: { service: fastMetadataService, priority: 3 },
-    firestore: { service: firestoreMetadataService, priority: 4 },
-    unified: { service: unifiedMetadataService, priority: 5 }
+    fast: { service: fastMetadataService, priority: 1 },
+    // Ostatní jsou nyní sloučené do fastMetadataService
+    realtime: { service: fastMetadataService, priority: 2 },
+    static: { service: fastMetadataService, priority: 3 },
+    firestore: { service: fastMetadataService, priority: 4 },
+    unified: { service: fastMetadataService, priority: 5 }
   },
   cache: {
     main: { service: cacheServiceRefactored, priority: 1 },
     offline: { service: offlineCacheService, priority: 2 },
-    enhanced: { service: enhancedOfflineCacheService, priority: 3 }
+    enhanced: { service: offlineCacheService, priority: 3 }
   },
   data: {
     slova: { service: slovaDataService, priority: 1 },
     ui: { service: uiDataService, priority: 1 }
   },
   preloader: {
-    global: { service: globalMetadataPreloader, priority: 1 }
+    global: { service: fastMetadataService, priority: 1 }
   }
 };
 

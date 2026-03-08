@@ -1,10 +1,8 @@
 
-
 import { ref, listAll, getDownloadURL } from 'firebase/storage';
 import { storage } from '@config/secure-firebase';
 import log from './logger';
 import { parseAudioFileName } from '@utils/hudbaParser';
-import { realtimeMetadataService } from './realtimeMetadataService';
 
 class FastMetadataService {
   constructor() {
@@ -120,48 +118,48 @@ class FastMetadataService {
         // Prohledej podsložky hudba složky
         log.debug(`🔍 Found hudba subfolders:`, hudbaResult.prefixes.map(p => p.name));
         for (const folderRef of hudbaResult.prefixes) {
-        try {
-          log.debug(`📁 Processing folder: ${folderRef.name}`);
-          const folderResult = await listAll(folderRef);
-          log.debug(`📄 Found ${folderResult.items.length} items and ${folderResult.prefixes.length} subfolders in ${folderRef.name}`);
+          try {
+            log.debug(`📁 Processing folder: ${folderRef.name}`);
+            const folderResult = await listAll(folderRef);
+            log.debug(`📄 Found ${folderResult.items.length} items and ${folderResult.prefixes.length} subfolders in ${folderRef.name}`);
 
-          // Přidej soubory z této složky
-          folderResult.items.forEach(item => {
-            allFiles.push({
-              ...item,
-              name: `${folderRef.name}/${item.name}`,
-              folder: 'hudba', // Oprava: folder musí být 'hudba', ne název podsložky
-              subFolder: folderRef.name,
-              fullPath: item.fullPath || `hudba/${folderRef.name}/${item.name}`
-            });
-          });
-
-          // Prohledej podsložky této složky
-          log.debug(`🔍 Checking subfolders for ${folderRef.name}:`, folderResult.prefixes.map(p => p.name));
-          for (const subFolderRef of folderResult.prefixes) {
-            try {
-              log.debug(`📁 Processing subfolder: ${subFolderRef.name}`);
-              const subFolderResult = await listAll(subFolderRef);
-              log.debug(`📄 Found ${subFolderResult.items.length} items in ${subFolderRef.name}`);
-              subFolderResult.items.forEach(item => {
-                const fileData = {
-                  ...item,
-                  name: `${subFolderRef.name}/${item.name}`,
-                  folder: 'hudba', // Oprava: folder musí být 'hudba'
-                  subFolder: subFolderRef.name,
-                  fullPath: item.fullPath || `hudba/${subFolderRef.name}/${item.name}`
-                };
-                log.debug(`📄 Adding subfolder file:`, fileData);
-                allFiles.push(fileData);
+            // Přidej soubory z této složky
+            folderResult.items.forEach(item => {
+              allFiles.push({
+                ...item,
+                name: `${folderRef.name}/${item.name}`,
+                folder: 'hudba', // Oprava: folder musí být 'hudba', ne název podsložky
+                subFolder: folderRef.name,
+                fullPath: item.fullPath || `hudba/${folderRef.name}/${item.name}`
               });
-            } catch (subErr) {
-              log.warn(`Failed to check subfolder ${subFolderRef.name}:`, subErr);
+            });
+
+            // Prohledej podsložky této složky
+            log.debug(`🔍 Checking subfolders for ${folderRef.name}:`, folderResult.prefixes.map(p => p.name));
+            for (const subFolderRef of folderResult.prefixes) {
+              try {
+                log.debug(`📁 Processing subfolder: ${subFolderRef.name}`);
+                const subFolderResult = await listAll(subFolderRef);
+                log.debug(`📄 Found ${subFolderResult.items.length} items in ${subFolderRef.name}`);
+                subFolderResult.items.forEach(item => {
+                  const fileData = {
+                    ...item,
+                    name: `${subFolderRef.name}/${item.name}`,
+                    folder: 'hudba', // Oprava: folder musí být 'hudba'
+                    subFolder: subFolderRef.name,
+                    fullPath: item.fullPath || `hudba/${subFolderRef.name}/${item.name}`
+                  };
+                  log.debug(`📄 Adding subfolder file:`, fileData);
+                  allFiles.push(fileData);
+                });
+              } catch (subErr) {
+                log.warn(`Failed to check subfolder ${subFolderRef.name}:`, subErr);
+              }
             }
+          } catch (err) {
+            log.warn(`Failed to check folder ${folderRef.name}:`, err);
           }
-        } catch (err) {
-          log.warn(`Failed to check folder ${folderRef.name}:`, err);
         }
-      }
       } catch (hudbaError) {
         log.warn(`Failed to load hudba folder:`, hudbaError);
       }
@@ -269,10 +267,10 @@ class FastMetadataService {
         backgroundResult.items.forEach(item => {
           const fileName = item.name.toLowerCase();
           const isImageFile = fileName.endsWith('.jpg') ||
-                             fileName.endsWith('.jpeg') ||
-                             fileName.endsWith('.png') ||
-                             fileName.endsWith('.gif') ||
-                             fileName.endsWith('.webp');
+            fileName.endsWith('.jpeg') ||
+            fileName.endsWith('.png') ||
+            fileName.endsWith('.gif') ||
+            fileName.endsWith('.webp');
 
           if (isImageFile) {
             allFiles.push({
@@ -292,10 +290,10 @@ class FastMetadataService {
             folderResult.items.forEach(item => {
               const fileName = item.name.toLowerCase();
               const isImageFile = fileName.endsWith('.jpg') ||
-                                 fileName.endsWith('.jpeg') ||
-                                 fileName.endsWith('.png') ||
-                                 fileName.endsWith('.gif') ||
-                                 fileName.endsWith('.webp');
+                fileName.endsWith('.jpeg') ||
+                fileName.endsWith('.png') ||
+                fileName.endsWith('.gif') ||
+                fileName.endsWith('.webp');
 
               if (isImageFile) {
                 allFiles.push({
@@ -334,8 +332,8 @@ class FastMetadataService {
             langResult.items.forEach(item => {
               const fileName = item.name.toLowerCase();
               const isAudioFile = fileName.endsWith('.mp3') ||
-                                 fileName.endsWith('.ogg') ||
-                                 fileName.endsWith('.oga');
+                fileName.endsWith('.ogg') ||
+                fileName.endsWith('.oga');
 
               if (isAudioFile) {
                 allFiles.push({
@@ -358,11 +356,11 @@ class FastMetadataService {
 
       // Root jazykové složky (CZ/SK/EN) se nepoužívají – držíme se struktury meditacie/{LANG}/
 
-    // Zpracuj soubory a vytvoř metadata
-    await this.processFiles(allFiles);
+      // Zpracuj soubory a vytvoř metadata
+      await this.processFiles(allFiles);
 
-    // Načti délky audio souborů
-    await this.loadAudioDurations();
+      // Načti délky audio souborů
+      await this.loadAudioDurations();
 
       this.lastUpdate = new Date();
       this.saveToCache();
@@ -511,36 +509,36 @@ class FastMetadataService {
     // Parsuj název souboru
     const parsed = parseAudioFileName(fileNameOnly);
 
-      // Vytvoř základní metadata
-      const metadata = {
-        fileName: filePath,
-        fileNameOnly: fileNameOnly,
-        folder: normalizedFolder,
-        subFolder: file.subFolder || null,
-        type: file.subFolder ? 'album_track' : 'audio',
-        contentType: 'audio/mpeg',
-        timeCreated: new Date().toISOString(),
-        updated: new Date().toISOString(),
-        // Parsované informace - aktualizuj s informacemi o složce
-        parsed: {
-          ...parsed,
-          isHudba: normalizedFolder === 'hudba',
-          isSlova: isSlova,
-          isDychanie: normalizedFolder === 'dychanie',
-          isAlbum: file.subFolder ? true : false,
-          albumName: file.subFolder || null,
-          trackName: parsed?.trackName || parsed?.name || fileNameOnly.replace(/\.(mp3|ogg|oga)$/i, ''),
-        },
-        // Urči typ podle struktury složek
+    // Vytvoř základní metadata
+    const metadata = {
+      fileName: filePath,
+      fileNameOnly: fileNameOnly,
+      folder: normalizedFolder,
+      subFolder: file.subFolder || null,
+      type: file.subFolder ? 'album_track' : 'audio',
+      contentType: 'audio/mpeg',
+      timeCreated: new Date().toISOString(),
+      updated: new Date().toISOString(),
+      // Parsované informace - aktualizuj s informacemi o složce
+      parsed: {
+        ...parsed,
         isHudba: normalizedFolder === 'hudba',
         isSlova: isSlova,
+        isDychanie: normalizedFolder === 'dychanie',
         isAlbum: file.subFolder ? true : false,
         albumName: file.subFolder || null,
-        trackName: parsed?.trackName || parsed?.name || fileNameOnly.replace(/\.mp3$/i, ''),
-        // Délka se načte z audio elementu
-        duration: null, // Bude naplněno později
-        durationFormatted: 'N/A'
-      };
+        trackName: parsed?.trackName || parsed?.name || fileNameOnly.replace(/\.(mp3|ogg|oga)$/i, ''),
+      },
+      // Urči typ podle struktury složek
+      isHudba: normalizedFolder === 'hudba',
+      isSlova: isSlova,
+      isAlbum: file.subFolder ? true : false,
+      albumName: file.subFolder || null,
+      trackName: parsed?.trackName || parsed?.name || fileNameOnly.replace(/\.mp3$/i, ''),
+      // Délka se načte z audio elementu
+      duration: null, // Bude naplněno později
+      durationFormatted: 'N/A'
+    };
 
     // Debug log pro každý soubor
     log.debug(`🎵 Created metadata for ${filePath}:`, {
@@ -571,9 +569,9 @@ class FastMetadataService {
         if (duration) {
           metadata.duration = duration;
           metadata.durationFormatted = this.formatDuration(duration);
-        log.debug(`⏱️ Duration loaded for ${filePath}: ${metadata.durationFormatted}`);
-      }
-    } catch (error) {
+          log.debug(`⏱️ Duration loaded for ${filePath}: ${metadata.durationFormatted}`);
+        }
+      } catch (error) {
         log.warn(`Failed to load duration for ${filePath}:`, error);
       }
     }
@@ -779,18 +777,42 @@ class FastMetadataService {
     coverImages.forEach(meta => {
       if (meta.albumName && meta.downloadURL) {
         covers.set(meta.albumName, meta.downloadURL);
-        log.debug(`✅ Cover image mapped: ${meta.albumName} -> ${meta.downloadURL ? 'OK' : 'MISSING URL'}`);
-      } else {
-        log.debug(`⚠️ Cover image missing albumName or downloadURL:`, {
-          fileName: meta.fileName,
-          albumName: meta.albumName,
-          hasDownloadURL: !!meta.downloadURL
-        });
       }
     });
 
     log.debug(`📊 Cover images map:`, Array.from(covers.keys()));
     return covers;
+  }
+
+  getMetadataByFolder(folder) {
+    return Array.from(this.metadata.values()).filter(meta =>
+      meta.folder === folder && (meta.type === 'audio' || meta.type === 'album_track')
+    );
+  }
+
+  getMetadataBySubFolder(folder, subFolder) {
+    return Array.from(this.metadata.values()).filter(meta =>
+      meta.folder === folder && meta.subFolder === subFolder && (meta.type === 'audio' || meta.type === 'album_track')
+    );
+  }
+
+  getStats() {
+    const slovaFiles = this.getMetadataByFolder('meditacie');
+    const hudbaFiles = this.getMetadataByFolder('hudba');
+    const backgroundFiles = Array.from(this.metadata.values()).filter(m => m.folder === 'background');
+
+    return {
+      totalFiles: this.metadata.size,
+      slovaFiles: slovaFiles.length,
+      hudbaFiles: hudbaFiles.length,
+      backgroundFiles: backgroundFiles.length,
+      isInitialized: this.isInitialized,
+      isLoading: this.isLoading
+    };
+  }
+
+  isReady() {
+    return this.isInitialized && !this.isLoading;
   }
 
   /**
@@ -880,8 +902,8 @@ class FastMetadataService {
     }
 
     // Urči isHudba podle folder
-      const isHudba = folder === 'hudba' || (data.category === 'music' || data.category === 'hudba');
-      const isSlova = folder === 'meditacie';
+    const isHudba = folder === 'hudba' || (data.category === 'music' || data.category === 'hudba');
+    const isSlova = folder === 'meditacie';
 
     // Parsuj název souboru pro získání informací o albu
     const parsed = parseAudioFileName(fileNameOnly);
@@ -900,6 +922,10 @@ class FastMetadataService {
       duration: data.duration || null,
       durationFormatted: data.durationFormatted || data.durationDetailed || 'N/A',
       size: data.size || null,
+      // ✅ NOVÉ: Přidej waveform data s normalizací
+      waveformData: this.normalizeWaveformData(data.waveformData),
+      waveformGenerated: data.waveformGenerated || null,
+      waveformSamples: data.waveformSamples || null,
       // Parsované informace
       parsed: {
         ...parsed,
@@ -953,54 +979,9 @@ class FastMetadataService {
 
     this.isLoading = true;
 
-    // Nejdříve zkus načíst z Realtime Database (nejrychlejší a nejaktuálnější)
-    try {
-      log.info('🔄 Trying to load metadata from Realtime Database...');
-      console.log('🔄 Calling realtimeMetadataService.getAllMetadata()...');
-      const realtimeMetadata = await realtimeMetadataService.getAllMetadata();
-      console.log(`📊 RealtimeMetadata received: ${realtimeMetadata ? Object.keys(realtimeMetadata).length : 0} records`);
+    // Realtime Database logic removed - moved to FastMetadataService internal storage scanner
+    console.log('🔄 FastMetadataService: Loading from cache or storage...');
 
-      if (realtimeMetadata && Object.keys(realtimeMetadata).length > 0) {
-        log.success(`✅ Loaded ${Object.keys(realtimeMetadata).length} metadata records from Realtime Database`);
-        console.log(`✅ Processing ${Object.keys(realtimeMetadata).length} metadata records...`);
-
-        // Převeď na Map a normalizuj data do správného formátu
-        this.metadata.clear();
-        Object.entries(realtimeMetadata).forEach(([key, value]) => {
-          // Normalizuj data z Realtime Database do formátu, který očekává filtr
-          const normalized = this.normalizeRealtimeMetadata(value);
-          if (normalized) {
-            // Použij fileName jako klíč, nebo key pokud fileName není
-            const metadataKey = normalized.fileName || key;
-            this.metadata.set(metadataKey, normalized);
-          }
-        });
-
-        // Ulož do cache
-        this.saveToCache();
-        this.isLoading = false;
-        this.isInitialized = true; // Nastav flag, že je inicializovaný
-        log.success(`✅ FastMetadataService initialized from Realtime Database (${this.metadata.size} records)`);
-        console.log(`✅ FastMetadataService initialized: ${this.metadata.size} records in Map`);
-
-        // Načti cover obrázky z Firebase Storage (pokud nejsou v Realtime Database)
-        const coverImagesCount = Array.from(this.metadata.values()).filter(m => m.type === 'image' && m.isCover).length;
-        if (coverImagesCount === 0) {
-          log.info('🖼️ No cover images in Realtime Database, loading from Firebase Storage...');
-          await this.loadCoverImagesFromStorage();
-        } else {
-          log.success(`✅ Found ${coverImagesCount} cover images in Realtime Database`);
-        }
-
-        return;
-      } else {
-        log.warn('⚠️ Realtime Database is empty, trying cache...');
-        console.log('⚠️ Realtime Database returned empty result');
-      }
-    } catch (error) {
-      log.warn('⚠️ Failed to load from Realtime Database, trying cache:', error.message);
-      console.error('❌ Error loading from Realtime Database:', error);
-    }
 
     // Pokud Realtime Database neobsahuje data, zkus cache (pokud není forceReload)
     if (!forceReload && this.loadFromCache()) {
@@ -1010,34 +991,12 @@ class FastMetadataService {
       log.success(`✅ Metadata loaded from cache (${cachedCount} records)`);
       console.log(`✅ FastMetadataService loaded from cache: ${cachedCount} records`);
 
-      // Pokud máme méně než 10 souborů v cache, zkus načíst z Realtime Database znovu
-      if (cachedCount < 10) {
-        log.warn('⚠️ Cache contains very few files, trying Realtime Database again...');
-        try {
-          const realtimeMetadata = await realtimeMetadataService.getAllMetadata();
-          if (realtimeMetadata && Object.keys(realtimeMetadata).length > cachedCount) {
-            log.success(`✅ Found ${Object.keys(realtimeMetadata).length} records in Realtime Database (more than cache)`);
-            this.metadata.clear();
-            Object.entries(realtimeMetadata).forEach(([key, value]) => {
-              const normalized = this.normalizeRealtimeMetadata(value);
-              if (normalized) {
-                const metadataKey = normalized.fileName || key;
-                this.metadata.set(metadataKey, normalized);
-              }
-            });
-            this.saveToCache();
-            this.isInitialized = true; // Nastav flag
-            return;
-          }
-        } catch (error) {
-          log.warn('⚠️ Failed to reload from Realtime Database:', error.message);
-        }
-      }
 
+      // Cache search is enough if RTDB is gone
       return;
     }
 
-    // Fallback na Firebase Storage, pokud Realtime Database ani cache neobsahují data
+    // Fallback na Firebase Storage
     try {
       log.info('🔄 Loading metadata from Firebase Storage...');
       await this.getAllMetadata();
@@ -1137,7 +1096,37 @@ class FastMetadataService {
       log.warn('⚠️ Failed to load cover images from Firebase Storage:', error);
     }
   }
+
+  /**
+   * Normalizuje waveform data - přebírá logic z původního realtimeMetadataService
+   */
+  normalizeWaveformData(waveformData) {
+    if (!waveformData) {
+      return null;
+    }
+
+    // Pokud je to pole, vrať jak je
+    if (Array.isArray(waveformData)) {
+      return waveformData;
+    }
+
+    // Pokud je to objekt s numerickými klíči, převeď na pole
+    if (typeof waveformData === 'object' && waveformData !== null) {
+      const keys = Object.keys(waveformData);
+      // Zkontroluj, zda jsou všechny klíče čísla
+      const allNumericKeys = keys.every(key => /^\d+$/.test(key));
+
+      if (allNumericKeys) {
+        // Seřaď klíče numericky a vrať jako pole
+        const sortedKeys = keys.map(k => parseInt(k, 10)).sort((a, b) => a - b);
+        return sortedKeys.map(k => waveformData[k.toString()]);
+      }
+    }
+
+    return waveformData;
+  }
 }
+
 
 // Singleton instance
 export const fastMetadataService = new FastMetadataService();

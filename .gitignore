@@ -220,3 +220,7 @@ TEMP.md
 local/
 
 meditations-audio-09c55489f807.json
+# Build and log artifacts
+*.log
+tatus
+nul

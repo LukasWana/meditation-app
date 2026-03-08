@@ -50,12 +50,20 @@ export const useBreathAudioEngine = (
   const pausedElapsedRef = useRef(0);
   const isSuspendedRef = useRef(false);
 
-  // Loading state
+  // Loading state - počítadlo místo boolean pro správné sledování paralelního dekódování (Bug 4)
+  const loadingCountRef = useRef(0);
   const [isLoading, setIsLoading] = useState(false);
   const [loadError, setLoadError] = useState(null);
 
   // State pro sledování načtení bufferů (pro správné dependency v useEffect)
   const [buffersReady, setBuffersReady] = useState(false);
+
+  // Refs pro nestabilní závislosti scheduleru (Bug 6)
+  const isPlayingRef = useRef(isPlaying);
+  const breathSoundFadeEnabledRef = useRef(breathSoundFadeEnabled);
+  const onPhaseChangeRef = useRef(onPhaseChange);
+  const breathInDurationRef = useRef(breathInDuration);
+  const breathOutDurationRef = useRef(breathOutDuration);
 
   // URLs pro načítání
   const [inSoundUrl, setInSoundUrl] = useState(null);
@@ -125,9 +133,34 @@ export const useBreathAudioEngine = (
   }, []);
 
   // Načtení URL pro zvuky (stejná logika jako v useBreathSounds)
+  // Synchronizace refs s aktuálními hodnotami (Bug 6)
+  useEffect(() => {
+    isPlayingRef.current = isPlaying;
+  }, [isPlaying]);
+  useEffect(() => {
+    breathSoundFadeEnabledRef.current = breathSoundFadeEnabled;
+  }, [breathSoundFadeEnabled]);
+  useEffect(() => {
+    onPhaseChangeRef.current = onPhaseChange;
+  }, [onPhaseChange]);
+  useEffect(() => {
+    breathInDurationRef.current = breathInDuration;
+  }, [breathInDuration]);
+  useEffect(() => {
+    breathOutDurationRef.current = breathOutDuration;
+  }, [breathOutDuration]);
+
   useEffect(() => {
     // Resetuj buffersReady při změně zvuků
     setBuffersReady(false);
+
+    // Bug 5: Zastavit scheduler při změně zvuků, aby nepoužíval staré buffery
+    if (schedulerIntervalRef.current) {
+      clearInterval(schedulerIntervalRef.current);
+      schedulerIntervalRef.current = null;
+    }
+    scheduledBoundariesRef.current.clear();
+    scheduledUntilRef.current = 0;
 
     const loadSoundUrl = async (soundId, setUrl) => {
       if (soundId === 'none' || !soundId) {
@@ -168,6 +201,8 @@ export const useBreathAudioEngine = (
         const audioContext = initializeAudioContext();
         if (!audioContext) return;
 
+        // Bug 4: Použij counter místo boolean pro správné sledování paralelního dekódování
+        loadingCountRef.current++;
         setIsLoading(true);
         const response = await fetch(url, { mode: 'cors' });
         const arrayBuffer = await response.arrayBuffer();
@@ -179,7 +214,10 @@ export const useBreathAudioEngine = (
         bufferRef.current = null;
         setLoadError(error.message);
       } finally {
-        setIsLoading(false);
+        loadingCountRef.current = Math.max(0, loadingCountRef.current - 1);
+        if (loadingCountRef.current === 0) {
+          setIsLoading(false);
+        }
       }
     };
 
@@ -244,6 +282,10 @@ export const useBreathAudioEngine = (
     // Nastav gain envelope
     const now = audioContext.currentTime;
     const start = Math.max(now, startTime);
+
+    // Bug 3: Zrušit předchozí gain automatizaci před nastavením nových hodnot
+    // Tím se zabrání konfliktu mezi starým fade-out (gain→0) a novým fade-in (gain→1)
+    gainNode.gain.cancelScheduledValues(start);
 
     if (breathSoundFadeEnabled) {
       if (fadeInDuration > 0) {
@@ -313,8 +355,9 @@ export const useBreathAudioEngine = (
   const lastPhaseUpdateRef = useRef(null);
 
   // Lookahead scheduler - plánuje zvuky dopředu
+  // Bug 6: Scheduler čte nestabilní závislosti z refs, aby se jeho reference neměnila zbytečně
   const scheduler = useCallback(() => {
-    if (!isPlaying || !audioContextRef.current || isSuspendedRef.current) {
+    if (!isPlayingRef.current || !audioContextRef.current || isSuspendedRef.current) {
       return;
     }
 
@@ -329,6 +372,11 @@ export const useBreathAudioEngine = (
 
     if (elapsed < 0) return; // Ještě nezačalo
 
+    // Čti aktuální hodnoty z refs
+    const currentBreathInDuration = breathInDurationRef.current;
+    const currentBreathOutDuration = breathOutDurationRef.current;
+    const currentFadeEnabled = breathSoundFadeEnabledRef.current;
+
     // Lookahead: plánuj 2 sekundy dopředu
     const lookaheadTime = 2.0;
     const scheduleUntil = now + lookaheadTime;
@@ -339,7 +387,7 @@ export const useBreathAudioEngine = (
     }
 
     // Cleanup starých záznamů v scheduledBoundariesRef (starší než aktuální čas - 1 cyklus)
-    const cycleDuration = breathInDuration + breathOutDuration;
+    const cycleDuration = currentBreathInDuration + currentBreathOutDuration;
     const cleanupThreshold = elapsed - cycleDuration;
     scheduledBoundariesRef.current.forEach(key => {
       const match = key.match(/^(in|out)-(\d+\.\d+)$/);
@@ -353,7 +401,7 @@ export const useBreathAudioEngine = (
 
     // Plánuj zvuky pro aktuální a budoucí fáze v lookahead rozsahu
     const fadeOutDuration = 1.5;
-    const fadeInDuration = breathSoundFadeEnabled ? 1.5 : 0;
+    const fadeInDuration = currentFadeEnabled ? 1.5 : 0;
 
     // Najdi všechny cykly v lookahead rozsahu
     const startCycle = Math.floor(elapsed / cycleDuration);
@@ -375,7 +423,7 @@ export const useBreathAudioEngine = (
           // Fade-out předchozího výdechu (pokud existuje)
           if (cycle > 0) {
             const prevOutGain = outGainRef.current;
-            if (prevOutGain && breathSoundFadeEnabled) {
+            if (prevOutGain && currentFadeEnabled) {
               const fadeOutStart = inAudioTime - fadeOutDuration;
               if (fadeOutStart >= now) {
                 try {
@@ -398,7 +446,7 @@ export const useBreathAudioEngine = (
               inBuffer,
               inGain,
               inAudioTime,
-              breathInDuration,
+              currentBreathInDuration,
               firstCycleFadeIn,
               0 // Fade-out se naplánuje při výdechu
             );
@@ -409,7 +457,7 @@ export const useBreathAudioEngine = (
       }
 
       // Plánuj výdech
-      const outStart = cycleStart + breathInDuration;
+      const outStart = cycleStart + currentBreathInDuration;
       const outKey = `out-${outStart.toFixed(3)}`;
       if (outStart < elapsed + lookaheadTime && !scheduledBoundariesRef.current.has(outKey)) {
         const outAudioTime = startAtAudioTimeRef.current + outStart;
@@ -419,7 +467,7 @@ export const useBreathAudioEngine = (
 
           // Fade-out předchozího nádechu
           const prevInGain = inGainRef.current;
-          if (prevInGain && breathSoundFadeEnabled) {
+          if (prevInGain && currentFadeEnabled) {
             const fadeOutStart = outAudioTime - fadeOutDuration;
             if (fadeOutStart >= now) {
               try {
@@ -441,7 +489,7 @@ export const useBreathAudioEngine = (
               outBuffer,
               outGain,
               outAudioTime,
-              breathOutDuration,
+              currentBreathOutDuration,
               fadeInDuration,
               0 // Fade-out se naplánuje při dalším nádechu
             );
@@ -457,21 +505,18 @@ export const useBreathAudioEngine = (
     scheduledUntilRef.current = scheduleUntil;
 
     // Průběžně aktualizuj UI fázi podle aktuálního času
-    if (onPhaseChange) {
-      const { phase: currentPhase } = phaseAtTime(elapsed, breathInDuration, breathOutDuration);
+    const currentOnPhaseChange = onPhaseChangeRef.current;
+    if (currentOnPhaseChange) {
+      const { phase: currentPhase } = phaseAtTime(elapsed, currentBreathInDuration, currentBreathOutDuration);
       if (lastPhaseUpdateRef.current !== currentPhase) {
         lastPhaseUpdateRef.current = currentPhase;
-        onPhaseChange(currentPhase);
+        currentOnPhaseChange(currentPhase);
       }
     }
   }, [
-    isPlaying,
-    breathInDuration,
-    breathOutDuration,
-    breathSoundFadeEnabled,
+    // Bug 6: Stabilní závislosti - nestabilní hodnoty se čtou z refs
     scheduleSound,
-    scheduleClick,
-    onPhaseChange
+    scheduleClick
   ]);
 
   // Spuštění scheduleru
@@ -490,7 +535,8 @@ export const useBreathAudioEngine = (
       scheduledBoundariesRef.current.clear();
       lastPhaseUpdateRef.current = null;
 
-      // Odpoj gain nodes od audio contextu a nastav na null, aby se při dalším startu správně znovu vytvořily
+      // Bug 2: Odpoj gain nodes POUZE při zastavení (isPlaying=false),
+      // NE při restartu scheduleru kvůli změně deps
       try {
         if (inGainRef.current) {
           inGainRef.current.disconnect();
@@ -580,6 +626,11 @@ export const useBreathAudioEngine = (
 
       isSuspendedRef.current = false;
 
+      // Bug 2: Vyčisti předchozí scheduler interval pokud existuje (při restartu)
+      if (schedulerIntervalRef.current) {
+        clearInterval(schedulerIntervalRef.current);
+      }
+
       // Spusť scheduler (každých 50ms)
       schedulerIntervalRef.current = setInterval(() => {
         scheduler();
@@ -591,6 +642,7 @@ export const useBreathAudioEngine = (
 
     startSchedulerAsync();
 
+    // Bug 2: Cleanup effect NEODPOJUJE gain nodes - pouze zastaví scheduler interval
     return () => {
       if (schedulerIntervalRef.current) {
         clearInterval(schedulerIntervalRef.current);
@@ -599,47 +651,63 @@ export const useBreathAudioEngine = (
     };
   }, [isPlaying, initializeAudioContext, scheduler, stopAllSources, breathInSound, breathOutSound, buffersReady]);
 
-  // Znovu spusť scheduler, když se buffery načtou (pokud je isPlaying)
+  // Bug 1: Znovu spusť scheduler, když se buffery načtou (pokud je isPlaying)
+  // Tento effect je záchranný mechanismus pro případ, kdy isPlaying=true přijde
+  // DŘÍVE než jsou buffery načtené. Hlavní effect (výše) scheduler nespustí,
+  // a tento effect ho spustí jakmile jsou buffery připravené.
   useEffect(() => {
     if (!isPlaying) return;
-    if (schedulerIntervalRef.current) return; // Scheduler už běží
+    if (!buffersReady) return; // Buffery ještě nejsou připravené
 
     const needsInBuffer = breathInSound && breathInSound !== 'none';
     const needsOutBuffer = breathOutSound && breathOutSound !== 'none';
     const hasInBuffer = !needsInBuffer || inBufferRef.current !== null;
     const hasOutBuffer = !needsOutBuffer || outBufferRef.current !== null;
 
-    // Pokud jsou všechny potřebné buffery načtené a scheduler ještě neběží, spusť ho
-    if (hasInBuffer && hasOutBuffer && buffersReady) {
-      const audioContext = initializeAudioContext();
-      if (!audioContext) return;
+    if (!hasInBuffer || !hasOutBuffer) return;
 
-      const startSchedulerAfterBuffers = async () => {
-        if (audioContext.state === 'suspended') {
-          try {
-            await audioContext.resume();
-            console.log('AudioContext resumed (buffersReady path), state:', audioContext.state);
-          } catch (err) {
-            console.error('Failed to resume AudioContext:', err);
-            return;
-          }
+    // Bug 1: Nepoužívej schedulerIntervalRef jako guard - mohlo být vyčištěno cleanup funkcí
+    // Místo toho vždy restartuj scheduler pokud buffery jsou ready a isPlaying
+    const audioContext = initializeAudioContext();
+    if (!audioContext) return;
+
+    const startSchedulerAfterBuffers = async () => {
+      if (audioContext.state === 'suspended') {
+        try {
+          await audioContext.resume();
+          console.log('AudioContext resumed (buffersReady path), state:', audioContext.state);
+        } catch (err) {
+          console.error('Failed to resume AudioContext:', err);
+          return;
         }
+      }
 
-        if (!startAtAudioTimeRef.current) {
-          startAtAudioTimeRef.current = audioContext.currentTime;
-        }
+      if (!startAtAudioTimeRef.current) {
+        startAtAudioTimeRef.current = audioContext.currentTime;
+      }
 
-        isSuspendedRef.current = false;
+      isSuspendedRef.current = false;
 
-        schedulerIntervalRef.current = setInterval(() => {
-          scheduler();
-        }, 50);
+      // Vyčisti předchozí scheduler pokud existuje
+      if (schedulerIntervalRef.current) {
+        clearInterval(schedulerIntervalRef.current);
+      }
 
+      schedulerIntervalRef.current = setInterval(() => {
         scheduler();
-      };
+      }, 50);
 
-      startSchedulerAfterBuffers();
-    }
+      scheduler();
+    };
+
+    startSchedulerAfterBuffers();
+
+    return () => {
+      if (schedulerIntervalRef.current) {
+        clearInterval(schedulerIntervalRef.current);
+        schedulerIntervalRef.current = null;
+      }
+    };
   }, [isPlaying, breathInSound, breathOutSound, buffersReady, initializeAudioContext, scheduler]);
 
   // Handling suspend/resume a visibility change

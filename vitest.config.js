@@ -37,7 +37,12 @@ export default defineConfig({
       '@hooks': path.resolve(__dirname, './src/hooks'),
       '@services': path.resolve(__dirname, './src/services'),
       '@utils': path.resolve(__dirname, './src/utils'),
-      '@tests': path.resolve(__dirname, './src/tests')
+      '@tests': path.resolve(__dirname, './src/tests'),
+      '@config': path.resolve(__dirname, './src/config'),
+      '@contexts': path.resolve(__dirname, './src/contexts'),
+      '@data': path.resolve(__dirname, './src/data'),
+      '@assets': path.resolve(__dirname, './src/assets'),
+      '@stores': path.resolve(__dirname, './src/stores')
     }
   }
 });

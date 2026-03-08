@@ -5,15 +5,16 @@ import UserProfile from '@components/UserProfile';
 import SlovakiaFlagUrl from '@assets/flags/003-slovakia.svg';
 import CzechFlagUrl from '@assets/flags/002-czech-republic.svg';
 import UKFlagUrl from '@assets/flags/001-united-kingdom.svg';
+import { useUserPrefsStore } from '@stores/userPrefsStore';
+import { useAudioPlayerStore } from '@stores/audioPlayerStore';
 
 const Layout = ({
   children,
-  gender,
-  onGenderChange,
-  isPlayerActive = false,
   currentScreen = "",
   className = ""
 }) => {
+  const { gender, setGender: onGenderChange } = useUserPrefsStore();
+  const { isPlayerActive } = useAudioPlayerStore();
   const { language, changeLanguage, t } = useLanguage();
 
   const handleGenderSelect = (selectedGender) => {
@@ -64,33 +65,30 @@ const Layout = ({
           >
             <motion.button
               onClick={() => handleLanguageChange('SK')}
-              className={`p-2 rounded-full transition-colors duration-200 flex items-center justify-center ${
-                language === 'SK'
-                  ? 'bg-gray-800'
-                  : 'hover:bg-gray-100'
-              }`}
+              className={`p-2 rounded-full transition-colors duration-200 flex items-center justify-center ${language === 'SK'
+                ? 'bg-gray-800'
+                : 'hover:bg-gray-100'
+                }`}
               transition={{ type: "spring", stiffness: 300, damping: 20 }}
             >
               <img src={SlovakiaFlagUrl} alt="Slovakia" className="w-6 h-6" />
             </motion.button>
             <motion.button
               onClick={() => handleLanguageChange('CZ')}
-              className={`p-2 rounded-full transition-colors duration-200 flex items-center justify-center ${
-                language === 'CZ'
-                  ? 'bg-gray-800'
-                  : 'hover:bg-gray-100'
-              }`}
+              className={`p-2 rounded-full transition-colors duration-200 flex items-center justify-center ${language === 'CZ'
+                ? 'bg-gray-800'
+                : 'hover:bg-gray-100'
+                }`}
               transition={{ type: "spring", stiffness: 300, damping: 20 }}
             >
               <img src={CzechFlagUrl} alt="Czech Republic" className="w-6 h-6" />
             </motion.button>
             <motion.button
               onClick={() => handleLanguageChange('EN')}
-              className={`p-2 rounded-full transition-colors duration-200 flex items-center justify-center ${
-                language === 'EN'
-                  ? 'bg-gray-800'
-                  : 'hover:bg-gray-100'
-              }`}
+              className={`p-2 rounded-full transition-colors duration-200 flex items-center justify-center ${language === 'EN'
+                ? 'bg-gray-800'
+                : 'hover:bg-gray-100'
+                }`}
               transition={{ type: "spring", stiffness: 300, damping: 20 }}
             >
               <img src={UKFlagUrl} alt="United Kingdom" className="w-6 h-6" />
@@ -118,22 +116,20 @@ const Layout = ({
             >
               <motion.button
                 onClick={() => handleGenderSelect('male')}
-                className={`px-3 py-2 rounded-full text-sm font-medium transition-colors duration-200 ${
-                  gender === 'male'
-                    ? 'bg-gray-800 text-white'
-                    : 'text-gray-600 hover:text-gray-800'
-                }`}
+                className={`px-3 py-2 rounded-full text-sm font-medium transition-colors duration-200 ${gender === 'male'
+                  ? 'bg-gray-800 text-white'
+                  : 'text-gray-600 hover:text-gray-800'
+                  }`}
                 transition={{ type: "spring", stiffness: 300, damping: 20 }}
               >
                 {t('jsemMuz')}
               </motion.button>
               <motion.button
                 onClick={() => handleGenderSelect('female')}
-                className={`px-3 py-2 rounded-full text-sm font-medium transition-colors duration-200 ${
-                  gender === 'female'
-                    ? 'bg-gray-800 text-white'
-                    : 'text-gray-600 hover:text-gray-800'
-                }`}
+                className={`px-3 py-2 rounded-full text-sm font-medium transition-colors duration-200 ${gender === 'female'
+                  ? 'bg-gray-800 text-white'
+                  : 'text-gray-600 hover:text-gray-800'
+                  }`}
                 transition={{ type: "spring", stiffness: 300, damping: 20 }}
               >
                 {t('jsemZena')}

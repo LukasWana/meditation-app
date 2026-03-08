@@ -1,6 +1,6 @@
 
 
-import { staticMetadataService } from './staticMetadataService';
+import { fastMetadataService } from './fastMetadataService';
 import cacheService from './cacheServiceRefactored';
 
 class UIDataCollector {
@@ -18,12 +18,17 @@ class UIDataCollector {
     try {
       console.log('🔄 Collecting all UI data...');
 
-      // 1. Načti metadata ze statické služby
-      await staticMetadataService.initialize();
-      const allMetadata = staticMetadataService.getAllFromCache();
+      // 1. Načti metadata z FastMetadataService
+      await fastMetadataService.initialize();
+
+      // Převeď Map na objekt pro zpětnou kompatibilitu s existující logikou extrakce
+      const allMetadata = {};
+      fastMetadataService.cache.forEach((value, key) => {
+        allMetadata[key] = value;
+      });
 
       this.collectedData.metadata = allMetadata;
-      console.log(`✅ Collected ${Object.keys(allMetadata).length} metadata records`);
+      console.log(`✅ Collected ${Object.keys(allMetadata).length} metadata records via FastMetadataService`);
 
       // 2. Načti slova data z cache
       const slovaData = this.extractSlovaData(allMetadata);

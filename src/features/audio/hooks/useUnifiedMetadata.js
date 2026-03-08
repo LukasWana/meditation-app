@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import unifiedMetadataService from '@services/unifiedMetadataService';
+import { fastMetadataService } from '@services/fastMetadataService';
 
 export const useUnifiedMetadata = (fileName) => {
   const [metadata, setMetadata] = useState(null);
@@ -13,7 +13,7 @@ export const useUnifiedMetadata = (fileName) => {
     setError(null);
 
     try {
-      const result = await unifiedMetadataService.getMetadata(fileName);
+      const result = await fastMetadataService.getMetadata(fileName);
       setMetadata(result);
     } catch (err) {
       setError(err.message);
@@ -48,7 +48,7 @@ export const useBatchMetadata = (fileNames) => {
 
     try {
       const promises = fileNames.map(async (fileName) => {
-        const metadata = await unifiedMetadataService.getMetadata(fileName);
+        const metadata = await fastMetadataService.getMetadata(fileName);
         return { fileName, metadata };
       });
 
@@ -93,9 +93,9 @@ export const useMetadataService = () => {
 
     setIsLoading(true);
     try {
-      await unifiedMetadataService.initialize();
+      await fastMetadataService.initialize();
       setIsInitialized(true);
-      setMetrics(unifiedMetadataService.getMetrics());
+      setMetrics(fastMetadataService.getStats());
     } catch (error) {
       console.error('Failed to initialize metadata service:', error);
     } finally {
@@ -104,12 +104,12 @@ export const useMetadataService = () => {
   }, [isInitialized, isLoading]);
 
   const refreshMetrics = useCallback(() => {
-    setMetrics(unifiedMetadataService.getMetrics());
+    setMetrics(fastMetadataService.getStats());
   }, []);
 
   const clearCache = useCallback(() => {
-    unifiedMetadataService.clearCache();
-    setMetrics(unifiedMetadataService.getMetrics());
+    fastMetadataService.clearCache();
+    setMetrics(fastMetadataService.getStats());
   }, []);
 
   useEffect(() => {

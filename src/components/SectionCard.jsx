@@ -1,5 +1,5 @@
 import React from 'react';
-import { useThemeColors } from '@hooks/useThemeColors';
+import { useThemeColors } from '@hooks';
 
 /**
  * Karta sekce s automatickým pozadím podle tématu

@@ -33,9 +33,6 @@ const DataStorageCharts = () => {
     setLoading(true);
     try {
       // Import služeb dynamicky
-      const { realtimeMetadataService } = await import('@services/realtimeMetadataService');
-      const { firestoreMetadataService } = await import('@services/firestoreMetadataService');
-      const { staticMetadataService } = await import('@services/staticMetadataService');
       const { fastMetadataService } = await import('@services/fastMetadataService');
       const cacheService = (await import('@services/cacheServiceRefactored')).default;
 
@@ -48,59 +45,29 @@ const DataStorageCharts = () => {
         static: { status: 'unknown', count: 0, size: 0, lastUpdate: null }
       };
 
-      // Test Firestore
-      try {
-        const firestoreData = await firestoreMetadataService.getAllMetadata();
-        data.firestore = {
-          status: 'available',
-          count: Object.keys(firestoreData).length,
-          size: JSON.stringify(firestoreData).length,
-          lastUpdate: new Date().toISOString()
-        };
-      } catch (error) {
-        data.firestore.status = 'error';
-        console.warn('Firestore error:', error);
-      }
-
-      // Test Realtime Database
-      try {
-        const realtimeData = await realtimeMetadataService.getAllMetadata();
-        data.realtime = {
-          status: 'available',
-          count: Object.keys(realtimeData).length,
-          size: JSON.stringify(realtimeData).length,
-          lastUpdate: new Date().toISOString()
-        };
-      } catch (error) {
-        data.realtime.status = 'error';
-        console.warn('Realtime Database error:', error);
-      }
-
-      // Test Static Data
-      try {
-        await staticMetadataService.initialize();
-        const staticData = staticMetadataService.getAllFromCache();
-        data.static = {
-          status: 'available',
-          count: Object.keys(staticData).length,
-          size: JSON.stringify(staticData).length,
-          lastUpdate: new Date().toISOString()
-        };
-      } catch (error) {
-        data.static.status = 'error';
-        console.warn('Static data error:', error);
-      }
-
-      // Test Fast Metadata Service
+      // Test Fast Metadata Service (Hlavní sjednocená služba)
       try {
         await fastMetadataService.initialize();
         const fastData = fastMetadataService.getAllMetadata();
+        const fastDataArray = Object.values(fastData);
+
         data.storage = {
           status: 'available',
-          count: Object.keys(fastData).length,
+          count: fastDataArray.length,
           size: JSON.stringify(fastData).length,
           lastUpdate: new Date().toISOString()
         };
+
+        // Extrahuj statistiky podle zdrojů pokud jsou dostupné v metadatech
+        const stats = fastMetadataService.getStats();
+        if (stats) {
+          data.static = {
+            status: 'available',
+            count: stats.totalFiles || 0,
+            size: 0, // Odhad
+            lastUpdate: new Date().toISOString()
+          };
+        }
       } catch (error) {
         data.storage.status = 'error';
         console.warn('Fast metadata service error:', error);

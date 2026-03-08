@@ -11,7 +11,7 @@ import { lazy } from 'react';
 export const IntroScreen = lazy(() => import('@features/meditation/screens/IntroScreen'));
 export const HomeScreen = lazy(() => import('@features/meditation/screens/HomeScreen'));
 export const MeditationScreen = lazy(() => import('@features/meditation/screens/MeditationScreen'));
-export const BreathMeditationScreen = lazy(() => import('@features/meditation/screens/BreathMeditationScreen'));
+
 export const BreathScreen = lazy(() => import('@features/meditation/screens/BreathScreen'));
 export const HudbaScreen = lazy(() => import('@features/meditation/screens/HudbaScreen'));
 export const HelpScreen = lazy(() => import('@features/meditation/screens/HelpScreen'));
@@ -19,7 +19,6 @@ export const SettingsScreen = lazy(() => import('@features/meditation/screens/Se
 export const ActivityHistoryScreen = lazy(() => import('@features/meditation/screens/ActivityHistoryScreen'));
 export const AlbumDetailScreen = lazy(() => import('@features/meditation/screens/AlbumDetailScreen'));
 export const SimpleAdminScreen = lazy(() => import('@features/meditation/screens/SimpleAdminScreen'));
-export const NewAdminScreen = lazy(() => import('@features/meditation/screens/NewAdminScreen'));
 export const SoundThemeGalleryScreen = lazy(() => import('@features/meditation/screens/SoundThemeGalleryScreen'));
 export const BreathProfilesScreen = lazy(() => import('@features/meditation/screens/BreathProfilesScreen'));
 export const PreparationTimePickerScreen = lazy(() => import('@features/meditation/screens/PreparationTimePickerScreen'));
@@ -37,7 +36,7 @@ export const FramerSection = lazy(() => import('@components/FramerSection'));
 export const LazyIntroScreen = IntroScreen;
 export const LazyHomeScreen = HomeScreen;
 export const LazyMeditationScreen = MeditationScreen;
-export const LazyBreathMeditationScreen = BreathMeditationScreen;
+
 export const LazyBreathScreen = BreathScreen;
 export const LazyHudbaScreen = HudbaScreen;
 export const LazyHelpScreen = HelpScreen;

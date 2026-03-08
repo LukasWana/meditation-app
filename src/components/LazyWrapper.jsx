@@ -3,7 +3,7 @@ import {
   LazyIntroScreen,
   LazyHomeScreen,
   LazyMeditationScreen,
-  LazyBreathMeditationScreen,
+
   LazyBreathScreen,
   LazyHudbaScreen,
   LazyHelpScreen,
@@ -31,7 +31,7 @@ export {
   LazyIntroScreen,
   LazyHomeScreen,
   LazyMeditationScreen,
-  LazyBreathMeditationScreen,
+
   LazyBreathScreen,
   LazyHudbaScreen,
   LazyHelpScreen,

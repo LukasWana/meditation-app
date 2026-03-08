@@ -1,7 +1,7 @@
 
 
 import { AudioCache, MetadataCache, FirebaseCache, ImageCache } from './cache/index.js';
-import { staticMetadataService } from './staticMetadataService.js';
+import { fastMetadataService } from './fastMetadataService.js';
 import log from './logger.js';
 import { parseAudioFileName } from '@utils/hudbaParser';
 
@@ -238,7 +238,7 @@ class CacheServiceRefactored {
 
       if (!url) {
         log.warn(`PreloadAudio called with undefined url for ${fileName}, using metadata-only preload`);
-        return this._preloadFirebaseMetadata(null, fileName);
+        return this._preloadFastMetadata(null, fileName);
       }
 
       log.cache(`Preloading audio metadata: ${fileName}`);
@@ -251,7 +251,7 @@ class CacheServiceRefactored {
 
       // Pro Firebase Storage soubory použij metadata-only preloading
       if (url.includes('firebasestorage.googleapis.com') || url.includes('firebase')) {
-        return this._preloadFirebaseMetadata(url, fileName);
+        return this._preloadFastMetadata(url, fileName);
       }
 
       // Pro ostatní URL použij tradiční Audio preloading
@@ -263,23 +263,23 @@ class CacheServiceRefactored {
     }
   }
 
-  async _preloadFirebaseMetadata(url, fileName) {
+  async _preloadFastMetadata(url, fileName) {
     try {
-      // Načti metadata ze statické služby
-      const metadata = staticMetadataService.getMetadata(fileName);
+      // Načti metadata z FastMetadataService
+      const metadata = fastMetadataService.getMetadata(fileName);
 
       if (metadata) {
         // Ulož metadata do cache
         this.metadataCache.setMetadata(fileName, metadata);
-        log.cache(`Static metadata preloaded: ${fileName}`);
+        log.cache(`Fast metadata preloaded: ${fileName}`);
         return metadata;
       } else {
-        log.cache(`No static metadata found for: ${fileName}`);
+        log.cache(`No metadata found with FastMetadataService for: ${fileName}`);
         return null;
       }
 
     } catch (error) {
-      log.error(`Static metadata preload failed for ${fileName}:`, error);
+      log.error(`Metadata preload failed for ${fileName} via FastMetadataService:`, error);
       return null;
     }
   }
@@ -315,14 +315,14 @@ class CacheServiceRefactored {
     try {
       log.cache('🚀 Preloading metadata from database (non-blocking)...');
 
-      // Inicializuj statickou metadata službu
-      await staticMetadataService.initialize();
+      // Inicializuj fast metadata službu (vyřeší si cache i fallbacky)
+      await fastMetadataService.initialize();
 
-      // Načti všechna metadata ze statické služby
-      const allMetadata = staticMetadataService.getAllFromCache();
+      // Načti všechna metadata z FastMetadataService
+      const allMetadata = fastMetadataService.cache;
 
       // Rozděl načítání do malých chunků pro non-blocking UI
-      const entries = Object.entries(allMetadata);
+      const entries = Array.from(allMetadata.entries());
       const chunkSize = 20; // Načti po 20 položkách
 
       for (let i = 0; i < entries.length; i += chunkSize) {
@@ -337,8 +337,7 @@ class CacheServiceRefactored {
         }
       }
 
-      log.success(`✅ Metadata loaded: ${Object.keys(allMetadata).length} entries cached from static JSON`);
-      log.info(`ℹ️ Note: New files not in static JSON will be loaded from Firebase when needed`);
+      log.success(`✅ Metadata loaded: ${allMetadata.size} entries cached via FastMetadataService`);
 
       // Preload hudba data do cache
       log.cache('🎵 Starting hudba data preloading...');
@@ -356,7 +355,7 @@ class CacheServiceRefactored {
 
       // Import Firebase Storage dynamicky
       const { ref, getDownloadURL } = await import('firebase/storage');
-        const { storage } = await import('@config/secure-firebase');
+      const { storage } = await import('@config/secure-firebase');
 
       // Místo root složky, načti přímo meditacie/ a hudba/ složky
       log.firebase('📂 Listing Firebase Storage folders...');
@@ -387,9 +386,9 @@ class CacheServiceRefactored {
           const name = item.name.toLowerCase();
           const isMp3 = name.endsWith('.mp3');
           const isMeditacie = item.folder === 'meditacie' ||
-                         item.folder === 'meditacie/CZ' ||
-                         item.folder === 'meditacie/SK' ||
-                         item.folder === 'meditacie/EN';
+            item.folder === 'meditacie/CZ' ||
+            item.folder === 'meditacie/SK' ||
+            item.folder === 'meditacie/EN';
           return isMp3 && isMeditacie; // Načti MP3 soubory ze meditacie/ a jazykových podsložek
         })
         .map(item => item.name);

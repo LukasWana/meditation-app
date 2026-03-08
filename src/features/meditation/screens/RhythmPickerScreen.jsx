@@ -3,6 +3,7 @@ import { Music2, Plus, Minus } from 'lucide-react';
 import { FramerPageTransition, BackButton } from '@components';
 import { useLanguage } from '@contexts/LanguageContext';
 import { useTheme } from '@contexts/ThemeContext';
+import { useBreathStore } from '@stores/breathStore';
 
 // Lazy loading WheelPicker komponent
 const WheelPicker = lazy(() => import('@components/WheelPicker').then(m => ({ default: m.default })));
@@ -12,12 +13,10 @@ const RhythmPickerScreen = ({
   onTouchStart,
   onTouchMove,
   onTouchEnd,
-  breathInDuration,
-  breathOutDuration,
-  onBreathRhythmChange
 }) => {
   const { t } = useLanguage();
   const { getScreenBackgroundColor, getCurrentThemeColors } = useTheme();
+  const { breathInDuration, breathOutDuration, setBreathRhythm } = useBreathStore();
   const [tempLeftValue, setTempLeftValue] = useState(breathInDuration || 4);
   const [tempRightValue, setTempRightValue] = useState(breathOutDuration || 4);
 
@@ -25,9 +24,9 @@ const RhythmPickerScreen = ({
   const backgroundColor = getScreenBackgroundColor() || themeColors?.background || '#f4ddc4';
   const textColor = themeColors?.text || '#000000';
   const isDarkMode = textColor.includes('255, 255, 255') ||
-                     textColor === '#ffffff' ||
-                     textColor === 'white' ||
-                     textColor.includes('rgba(255, 255, 255');
+    textColor === '#ffffff' ||
+    textColor === 'white' ||
+    textColor.includes('rgba(255, 255, 255');
 
   // Všechny texty by měly být bílé v dark mode, černé v light mode
   const displayTextColor = isDarkMode ? '#ffffff' : '#000000';
@@ -35,7 +34,7 @@ const RhythmPickerScreen = ({
   const cardColor = themeColors?.card || 'rgba(255, 255, 255, 0.7)';
 
   const handleConfirm = () => {
-    onBreathRhythmChange(tempLeftValue, tempRightValue);
+    setBreathRhythm(tempLeftValue, tempRightValue);
     onNavigateToScreen('breath');
   };
 

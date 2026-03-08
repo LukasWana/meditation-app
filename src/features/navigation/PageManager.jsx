@@ -20,6 +20,8 @@ import {
   DurationPickerScreen,
   RhythmPickerScreen
 } from '@config/lazyComponents';
+import { useUserPrefsStore } from '@stores/userPrefsStore';
+import { useMeditationStore } from '@stores/meditationStore';
 
 
 // Registry stránek s jejich konfigurací
@@ -54,7 +56,7 @@ const SCREEN_REGISTRY = {
   'dychani': {
     component: BreathScreen,
     requiresLayout: true,
-    props: ['breathPhase', 'setBreathPhase', 'onNavigateToScreen', 'onTouchStart', 'onTouchMove', 'onTouchEnd', 'breathInDuration', 'breathOutDuration', 'onBreathRhythmChange', 'preparationTime', 'onPreparationTimeChange', 'isPreparing', 'preparationCountdown', 'breathDuration', 'breathTime', 'setBreathTime', 'isBreathing', 'setIsBreathing', 'onBreathDurationChange', 'onReset', 'breathInSound', 'breathOutSound', 'breathClickSound', 'breathFinalSound', 'breathCountdownSound', 'breathSoundFadeEnabled', 'onBreathSoundChange'],
+    props: ['onNavigateToScreen', 'onTouchStart', 'onTouchMove', 'onTouchEnd'],
     transition: {
       type: 'fade',
       duration: 0.2
@@ -63,7 +65,7 @@ const SCREEN_REGISTRY = {
   'breath': {
     component: BreathScreen,
     requiresLayout: true,
-    props: ['breathPhase', 'setBreathPhase', 'onNavigateToScreen', 'onTouchStart', 'onTouchMove', 'onTouchEnd', 'breathInDuration', 'breathOutDuration', 'onBreathRhythmChange', 'preparationTime', 'onPreparationTimeChange', 'isPreparing', 'preparationCountdown', 'breathDuration', 'breathTime', 'setBreathTime', 'isBreathing', 'setIsBreathing', 'onBreathDurationChange', 'onReset', 'breathInSound', 'breathOutSound', 'breathClickSound', 'breathFinalSound', 'breathCountdownSound', 'breathSoundFadeEnabled', 'onBreathSoundChange'],
+    props: ['onNavigateToScreen', 'onTouchStart', 'onTouchMove', 'onTouchEnd'],
     transition: {
       type: 'fade',
       duration: 0.2
@@ -135,7 +137,7 @@ const SCREEN_REGISTRY = {
   'sound-theme-gallery': {
     component: SoundThemeGalleryScreen,
     requiresLayout: true,
-    props: ['onNavigateToScreen', 'onTouchStart', 'onTouchMove', 'onTouchEnd', 'onSelectSound', 'selectedInSound', 'selectedOutSound', 'selectedClickSound', 'selectedFinalSound', 'selectedCountdownSound'],
+    props: ['onNavigateToScreen', 'onTouchStart', 'onTouchMove', 'onTouchEnd'],
     transition: {
       type: 'fade',
       duration: 0.2
@@ -144,7 +146,7 @@ const SCREEN_REGISTRY = {
   'breath-profiles': {
     component: BreathProfilesScreen,
     requiresLayout: true,
-    props: ['onNavigateToScreen', 'onTouchStart', 'onTouchMove', 'onTouchEnd', 'breathInDuration', 'breathOutDuration', 'breathDuration', 'preparationTime', 'breathInSound', 'breathOutSound', 'breathClickSound', 'breathFinalSound', 'breathCountdownSound', 'breathSoundFadeEnabled', 'onBreathRhythmChange', 'onBreathDurationChange', 'onPreparationTimeChange', 'onBreathSoundChange', 'onBreathSoundFadeChange'],
+    props: ['onNavigateToScreen', 'onTouchStart', 'onTouchMove', 'onTouchEnd'],
     transition: {
       type: 'fade',
       duration: 0.2
@@ -153,7 +155,7 @@ const SCREEN_REGISTRY = {
   'preparation-time-picker': {
     component: PreparationTimePickerScreen,
     requiresLayout: true,
-    props: ['onNavigateToScreen', 'onTouchStart', 'onTouchMove', 'onTouchEnd', 'preparationTime', 'onPreparationTimeChange'],
+    props: ['onNavigateToScreen', 'onTouchStart', 'onTouchMove', 'onTouchEnd'],
     transition: {
       type: 'fade',
       duration: 0.2
@@ -162,7 +164,7 @@ const SCREEN_REGISTRY = {
   'duration-picker': {
     component: DurationPickerScreen,
     requiresLayout: true,
-    props: ['onNavigateToScreen', 'onTouchStart', 'onTouchMove', 'onTouchEnd', 'breathDuration', 'onBreathDurationChange', 'setBreathTime'],
+    props: ['onNavigateToScreen', 'onTouchStart', 'onTouchMove', 'onTouchEnd'],
     transition: {
       type: 'fade',
       duration: 0.2
@@ -171,7 +173,7 @@ const SCREEN_REGISTRY = {
   'rhythm-picker': {
     component: RhythmPickerScreen,
     requiresLayout: true,
-    props: ['onNavigateToScreen', 'onTouchStart', 'onTouchMove', 'onTouchEnd', 'breathInDuration', 'breathOutDuration', 'onBreathRhythmChange'],
+    props: ['onNavigateToScreen', 'onTouchStart', 'onTouchMove', 'onTouchEnd'],
     transition: {
       type: 'fade',
       duration: 0.2
@@ -191,45 +193,7 @@ const PageManager = ({
   onTouchMove,
   onTouchEnd,
 
-  // Global state
-  gender,
-  onGenderChange,
-  voicePreference,
-  onVoicePreferenceChange,
-  isPlayerActive,
-
-  // Meditace specifické
-  time,
-  selectedDuration,
-  isPlaying,
-  onDurationChange,
-  onPlayPause,
-  onReset,
-  breathPhase,
-  setBreathPhase,
-  breathInDuration,
-  breathOutDuration,
-  onBreathRhythmChange,
-  preparationTime,
-  onPreparationTimeChange,
-  breathInSound,
-  breathOutSound,
-  breathClickSound,
-  breathFinalSound,
-  breathCountdownSound,
-  onBreathSoundChange,
-  breathSoundFadeEnabled,
-  onBreathSoundFadeChange,
-  isPreparing,
-  preparationCountdown,
-  breathDuration,
-  breathTime,
-  setBreathTime,
-  isBreathing,
-  setIsBreathing,
-  onBreathDurationChange,
-
-  // Audio player specifické
+  // Audio player specifické (zatím ponecháno pro screens které ho potřebují)
   activeAudio,
   onPlayerStateChange,
   onCloseAudio,
@@ -237,6 +201,16 @@ const PageManager = ({
   onAlbumSelect,
   onAlbumClose
 }) => {
+  const { gender, setGender: onGenderChange } = useUserPrefsStore();
+  const {
+    time,
+    selectedDuration,
+    isPlaying,
+    togglePlayPause: onPlayPause,
+    resetMeditation: onReset,
+    setDuration: onDurationChange
+  } = useMeditationStore();
+
   // Získání konfigurace aktuální stránky
   const currentScreenConfig = useMemo(() => {
     return SCREEN_REGISTRY[currentScreen] || null;
@@ -302,72 +276,6 @@ const PageManager = ({
         case 'onReset':
           props.onReset = onReset;
           break;
-        case 'breathPhase':
-          props.breathPhase = breathPhase;
-          break;
-        case 'setBreathPhase':
-          props.setBreathPhase = setBreathPhase;
-          break;
-        case 'breathInDuration':
-          props.breathInDuration = breathInDuration;
-          break;
-        case 'breathOutDuration':
-          props.breathOutDuration = breathOutDuration;
-          break;
-        case 'breathInSound':
-          props.breathInSound = breathInSound;
-          break;
-        case 'breathOutSound':
-          props.breathOutSound = breathOutSound;
-          break;
-        case 'breathClickSound':
-          props.breathClickSound = breathClickSound;
-          break;
-        case 'breathFinalSound':
-          props.breathFinalSound = breathFinalSound;
-          break;
-        case 'breathCountdownSound':
-          props.breathCountdownSound = breathCountdownSound;
-          break;
-        case 'breathSoundFadeEnabled':
-          props.breathSoundFadeEnabled = breathSoundFadeEnabled;
-          break;
-        case 'onBreathSoundChange':
-          props.onBreathSoundChange = onBreathSoundChange;
-          break;
-        case 'onBreathRhythmChange':
-          props.onBreathRhythmChange = onBreathRhythmChange;
-          break;
-        case 'preparationTime':
-          props.preparationTime = preparationTime;
-          break;
-        case 'onPreparationTimeChange':
-          props.onPreparationTimeChange = onPreparationTimeChange;
-          break;
-        case 'isPreparing':
-          props.isPreparing = isPreparing;
-          break;
-        case 'preparationCountdown':
-          props.preparationCountdown = preparationCountdown;
-          break;
-        case 'breathDuration':
-          props.breathDuration = breathDuration;
-          break;
-        case 'breathTime':
-          props.breathTime = breathTime;
-          break;
-        case 'setBreathTime':
-          props.setBreathTime = setBreathTime;
-          break;
-        case 'isBreathing':
-          props.isBreathing = isBreathing;
-          break;
-        case 'setIsBreathing':
-          props.setIsBreathing = setIsBreathing;
-          break;
-        case 'onBreathDurationChange':
-          props.onBreathDurationChange = onBreathDurationChange;
-          break;
         case 'onIntroComplete':
           props.onIntroComplete = () => onNavigateToScreen('home');
           break;
@@ -380,27 +288,6 @@ const PageManager = ({
         case 'onClose':
           props.onClose = onCloseAudio;
           break;
-        case 'onSelectSound':
-          props.onSelectSound = onBreathSoundChange;
-          break;
-        case 'selectedInSound':
-          props.selectedInSound = breathInSound;
-          break;
-        case 'selectedOutSound':
-          props.selectedOutSound = breathOutSound;
-          break;
-        case 'selectedClickSound':
-          props.selectedClickSound = breathClickSound;
-          break;
-        case 'selectedFinalSound':
-          props.selectedFinalSound = breathFinalSound;
-          break;
-        case 'selectedCountdownSound':
-          props.selectedCountdownSound = breathCountdownSound;
-          break;
-        case 'onBreathSoundFadeChange':
-          props.onBreathSoundFadeChange = onBreathSoundFadeChange;
-          break;
         default:
           break;
       }
@@ -410,10 +297,7 @@ const PageManager = ({
   }, [
     onNavigateToScreen, onTouchStart, onTouchMove, onTouchEnd,
     gender, onPlayerStateChange, onGenderChange, time, selectedDuration, isPlaying,
-    onDurationChange, onPlayPause, onReset, breathPhase, setBreathPhase, breathInDuration, breathOutDuration, breathInSound, breathOutSound, breathClickSound, breathFinalSound, breathCountdownSound, breathSoundFadeEnabled, onBreathRhythmChange,
-    preparationTime, onPreparationTimeChange, onBreathSoundChange, onBreathSoundFadeChange,
-    isPreparing, preparationCountdown,
-    breathDuration, breathTime, setBreathTime, isBreathing, setIsBreathing, onBreathDurationChange,
+    onDurationChange, onPlayPause, onReset,
     activeAudio, onCloseAudio, selectedAlbum, onAlbumSelect, onAlbumClose
   ]);
 
@@ -450,11 +334,6 @@ const PageManager = ({
     if (currentScreenConfig.requiresLayout) {
       return (
         <Layout
-          gender={gender}
-          onGenderChange={onGenderChange}
-          voicePreference={voicePreference}
-          onVoicePreferenceChange={onVoicePreferenceChange}
-          isPlayerActive={isPlayerActive}
           currentScreen={currentScreen}
         >
           {screenElement}
@@ -463,7 +342,7 @@ const PageManager = ({
     }
 
     return screenElement;
-  }, [currentScreen, currentScreenConfig, getScreenProps, getTransitionVariantsLocal, gender, onGenderChange, voicePreference, onVoicePreferenceChange, isPlayerActive]);
+  }, [currentScreen, currentScreenConfig, getScreenProps, getTransitionVariantsLocal]);
 
   return (
     <AnimatePresence mode="wait">

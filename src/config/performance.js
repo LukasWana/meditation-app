@@ -30,7 +30,8 @@ export const performanceConfig = {
     errorMonitoring: false,
     yieldTimeout: 0
   }
-};
+};
+
 export const getCurrentConfig = () => {
   const env = import.meta.env.MODE || 'development';
 
@@ -40,26 +41,13 @@ export const getCurrentConfig = () => {
   }
 
   return performanceConfig[env] || performanceConfig.development;
-};
+};
+
 export const getComponentConfig = (componentName) => {
   const baseConfig = getCurrentConfig();
 
   // Specifické nastavení pro různé komponenty
   const componentConfigs = {
-    'useFirebaseHudbaScanner': {
-      ...baseConfig,
-      // Pro hudební scanner použij menší chunky
-      chunkSize: Math.min(baseConfig.chunkSize, 5),
-      imageChunkSize: Math.min(baseConfig.imageChunkSize, 3)
-    },
-
-    'useFirebaseCDNScanner': {
-      ...baseConfig,
-      // Pro CDN scanner použij standardní chunky
-      chunkSize: baseConfig.chunkSize,
-      imageChunkSize: baseConfig.imageChunkSize
-    },
-
     'AudioPlayer': {
       ...baseConfig,
       // Pro audio player není potřeba chunking
