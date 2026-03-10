@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { ref, getDownloadURL } from 'firebase/storage';
 import { storage } from '@config/secure-firebase';
 import cacheService from '@services/cacheServiceRefactored';
-import enhancedOfflineCacheService from '@services/enhancedOfflineCacheService';
+import offlineCacheService from '@services/offlineCacheService';
 
 export const useFirebaseAudio = (audioFileName) => {
   // console.log('🔗 useFirebaseAudio called with:', audioFileName);
@@ -40,10 +40,10 @@ export const useFirebaseAudio = (audioFileName) => {
         setError(null);
 
         // Inicializuj enhanced offline cache service
-        await enhancedOfflineCacheService.initialize();
+        await offlineCacheService.initialize();
 
         // Zkontroluj offline cache PRVNÍ - šetří mobilní data
-        const offlineUrl = await enhancedOfflineCacheService.getFile(audioFileName);
+        const offlineUrl = await offlineCacheService.getFile(audioFileName);
         if (offlineUrl) {
           console.log('🔗 Using offline URL for:', audioFileName, '(saving mobile data)');
           setAudioUrl(offlineUrl);

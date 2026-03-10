@@ -1,6 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
 import offlineCacheService from '@services/offlineCacheService';
-import enhancedOfflineCacheService from '@services/enhancedOfflineCacheService';
 import log from '@services/logger';
 
 export const useOfflineCache = () => {
@@ -57,8 +56,8 @@ export const useOfflineCache = () => {
       log.debug('🔄 Loading cache stats...');
 
       // Použij enhanced offline cache service pro lepší statistiky
-      await enhancedOfflineCacheService.initialize();
-      const stats = await enhancedOfflineCacheService.getCacheStats();
+      await offlineCacheService.initialize();
+      const stats = await offlineCacheService.getCacheStats();
 
       console.log('📊 Cache stats loaded:', stats);
       log.debug('📊 Cache stats loaded:', stats);
@@ -149,8 +148,8 @@ export const useOfflineCache = () => {
 
     try {
       // Použij enhanced offline cache service pro lepší fallback strategii
-      await enhancedOfflineCacheService.initialize();
-      return await enhancedOfflineCacheService.getAudioUrl(fileName, originalUrl);
+      await offlineCacheService.initialize();
+      return await offlineCacheService.getAudioUrl(fileName, originalUrl);
     } catch (error) {
       log.error('❌ Error getting audio URL:', error);
       return originalUrl;

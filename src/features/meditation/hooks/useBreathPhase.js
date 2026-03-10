@@ -10,7 +10,7 @@ import { useEffect, useRef } from 'react';
  * @param {number} breathOutDuration - Délka výdechu v sekundách
  * @param {Function} getCurrentPhase - Funkce z audio enginu pro získání aktuální fáze
  */
-export const useBreathPhaseNew = (
+export const useBreathPhase = (
   isPlaying,
   setBreathPhase,
   breathInDuration,

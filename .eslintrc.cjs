@@ -19,11 +19,9 @@ module.exports = {
     'src/components/**/*FilesViewer*.jsx',
     'src/components/UnifiedFilesOverview.jsx',
     'src/components/DurationDisplayTest.jsx',
-    'src/components/admin/**',
 
     // Debug/admin obrazovky
     'src/features/**/screens/**/*Debug*.jsx',
-    'src/features/**/screens/**/*Admin*.jsx',
 
     // Audio feature je zatím hodně “work-in-progress” (lint později)
     'src/features/audio/**',

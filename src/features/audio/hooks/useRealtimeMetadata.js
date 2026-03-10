@@ -1,8 +1,8 @@
 
 
 import { useState, useEffect, useCallback } from 'react';
-import { realtimeMetadataService } from '../services/realtimeMetadataService';
-import log from '../services/logger';
+import { realtimeMetadataService } from '@services/realtimeMetadataService';
+import log from '@services/logger';
 
 export function useRealtimeMetadata() {
   const [metadata, setMetadata] = useState({});

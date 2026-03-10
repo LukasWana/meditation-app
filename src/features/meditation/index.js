@@ -3,12 +3,11 @@
 export {
   HomeScreen,
   MeditationScreen,
-  BreathMeditationScreen,
   BreathScreen,
   SettingsScreen,
   HelpScreen,
   HudbaScreen,
   IntroScreen,
-  AlbumDetailScreen,
-  NewAdminScreen
+  AlbumDetailScreen
 } from './screens';
+

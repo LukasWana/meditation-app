@@ -1,5 +1,5 @@
 import { fastMetadataService } from '@services/fastMetadataService';
-import { realtimeMetadataService } from '@services/realtimeMetadataService';
+
 
 // Mockování Firebase Storage
 vi.mock('firebase/storage', () => ({
@@ -24,17 +24,7 @@ vi.mock('@services/logger', () => ({
   }
 }));
 
-// Mockování realtimeMetadataService
-vi.mock('@services/realtimeMetadataService', () => ({
-  realtimeMetadataService: {
-    getAllMetadata: vi.fn(),
-    normalizeWaveformData: vi.fn()
-  },
-  default: {
-    getAllMetadata: vi.fn(),
-    normalizeWaveformData: vi.fn()
-  }
-}));
+
 
 describe('FastMetadataService Characterization', () => {
   beforeEach(() => {
@@ -54,12 +44,9 @@ describe('FastMetadataService Characterization', () => {
         fileName: 'test.mp3',
         waveformData: { 0: 0.1, 1: 0.2, 2: 0.3 }
       };
-      // Mockování normalizace
-      realtimeMetadataService.normalizeWaveformData.mockReturnValue([0.1, 0.2, 0.3]);
 
       const result = fastMetadataService.normalizeRealtimeMetadata(input);
       expect(result.waveformData).toEqual([0.1, 0.2, 0.3]);
-      expect(realtimeMetadataService.normalizeWaveformData).toHaveBeenCalledWith(input.waveformData);
     });
 
     it('should handle already normalized waveformData', () => {
@@ -67,7 +54,6 @@ describe('FastMetadataService Characterization', () => {
         fileName: 'test.mp3',
         waveformData: [0.1, 0.2, 0.3]
       };
-      realtimeMetadataService.normalizeWaveformData.mockReturnValue([0.1, 0.2, 0.3]);
 
       const result = fastMetadataService.normalizeRealtimeMetadata(input);
       expect(result.waveformData).toEqual([0.1, 0.2, 0.3]);

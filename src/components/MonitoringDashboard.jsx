@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import errorHandler from '@utils/error-handler';
-import optimizedCache from '@services/optimized-cache';
+import cacheServiceRefactored from '@services/cacheServiceRefactored';
 import log from '@services/logger';
 
 /**
@@ -21,7 +21,7 @@ const MonitoringDashboard = ({ isVisible = false, onClose }) => {
     const updateStats = () => {
       setStats({
         errors: errorHandler.getStats(),
-        cache: optimizedCache.getStats(),
+        cache: cacheServiceRefactored.getStats(),
         performance: getPerformanceStats()
       });
     };
@@ -93,9 +93,8 @@ const MonitoringDashboard = ({ isVisible = false, onClose }) => {
 
   return (
     <div className="fixed bottom-4 right-4 z-50">
-      <div className={`bg-white rounded-lg shadow-lg border transition-all duration-300 ${
-        isExpanded ? 'w-96 h-96' : 'w-64 h-16'
-      }`}>
+      <div className={`bg-white rounded-lg shadow-lg border transition-all duration-300 ${isExpanded ? 'w-96 h-96' : 'w-64 h-16'
+        }`}>
         {/* Header */}
         <div className="flex items-center justify-between p-3 border-b">
           <div className="flex items-center space-x-2">
@@ -239,7 +238,7 @@ const MonitoringDashboard = ({ isVisible = false, onClose }) => {
               </button>
               <button
                 onClick={() => {
-                  optimizedCache.clear();
+                  cacheServiceRefactored.clear();
                   log.info('Manual cache clear triggered');
                 }}
                 className="flex-1 bg-blue-100 hover:bg-blue-200 text-blue-800 text-xs py-1 px-2 rounded"
