@@ -16,6 +16,57 @@ export default defineConfig({
     }),
     VitePWA({
       registerType: 'autoUpdate',
+      manifest: {
+        name: "Meditation App",
+        short_name: "Meditace",
+        description: "Aplikace pro meditaci, dýchací cvičení a relaxaci",
+        start_url: "/",
+        display: "standalone",
+        background_color: "#f4ddc4",
+        theme_color: "#f4ddc4",
+        orientation: "portrait",
+        scope: "/",
+        lang: "sk",
+        icons: [
+          {
+            src: "icon-192x192.svg",
+            sizes: "192x192",
+            type: "image/svg+xml",
+            purpose: "any maskable"
+          },
+          {
+            src: "icon-512x512.svg",
+            sizes: "512x512",
+            type: "image/svg+xml",
+            purpose: "any maskable"
+          }
+        ],
+        categories: ["health", "lifestyle", "wellness"],
+        screenshots: [
+          {
+            src: "screenshot-mobile.png",
+            sizes: "390x844",
+            type: "image/png",
+            form_factor: "narrow"
+          }
+        ],
+        shortcuts: [
+          {
+            name: "Rychlá meditace",
+            short_name: "Meditace",
+            description: "Spustit 5min meditaci",
+            url: "/?screen=meditation&duration=5",
+            icons: [{ src: "icon-192x192.png", sizes: "192x192" }]
+          },
+          {
+            name: "Dýchací cvičení",
+            short_name: "Dýchání",
+            description: "Spustit dýchací cvičení",
+            url: "/?screen=breath",
+            icons: [{ src: "icon-192x192.png", sizes: "192x192" }]
+          }
+        ]
+      },
       devOptions: {
         enabled: true
       }
