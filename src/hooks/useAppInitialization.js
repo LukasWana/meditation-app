@@ -1,5 +1,4 @@
 import { useEffect, useMemo, useState } from 'react';
-import { register as registerServiceWorker } from '@services/serviceWorker';
 import { app, realtimeDatabase as database } from '@config/secure-firebase';
 import { useBackgroundDataLoader } from './useBackgroundDataLoader';
 
@@ -21,10 +20,9 @@ const waitForFirebaseReady = async (timeout = 4000) => {
   throw new Error('Firebase initialization timeout');
 };
 
-export const useAppInitialization = ({ enableServiceWorker = true } = {}) => {
+export const useAppInitialization = () => {
   const [firebaseReady, setFirebaseReady] = useState(false);
   const [firebaseError, setFirebaseError] = useState(null);
-  const [serviceWorkerRegistered, setServiceWorkerRegistered] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -53,26 +51,6 @@ export const useAppInitialization = ({ enableServiceWorker = true } = {}) => {
 
   const isReady = firebaseReady && backgroundState.isComplete && !firebaseError && !backgroundState.error;
 
-  useEffect(() => {
-    if (!enableServiceWorker || serviceWorkerRegistered || !backgroundState.readyForServiceWorker) {
-      return;
-    }
-
-    if (!isReady) {
-      return;
-    }
-
-    if (typeof window === 'undefined') {
-      return;
-    }
-
-    if (import.meta.env.MODE === 'production' || window.location.protocol === 'https:') {
-      registerServiceWorker();
-    }
-
-    setServiceWorkerRegistered(true);
-  }, [enableServiceWorker, backgroundState.readyForServiceWorker, isReady, serviceWorkerRegistered]);
-
   const phase = useMemo(() => {
     if (firebaseError) {
       return 'error';
@@ -95,7 +73,6 @@ export const useAppInitialization = ({ enableServiceWorker = true } = {}) => {
     statusMessage,
     firebaseReady,
     firebaseError,
-    serviceWorkerRegistered,
     uiData: backgroundState.uiData,
     isReady,
     error: firebaseError || backgroundState.error

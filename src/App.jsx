@@ -1,4 +1,5 @@
-import React, { useState, Suspense } from 'react';
+import React, { useState, Suspense, useEffect } from 'react';
+import { useRegisterSW } from 'virtual:pwa-register/react';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { PageManager } from '@features/navigation';
@@ -19,6 +20,16 @@ import ErrorBoundary from '@components/ErrorBoundary';
 
 // Hlavní aplikace s routingem
 export default function App() {
+  // PWA registrace
+  useRegisterSW({
+    onRegistered(r) {
+      console.log('✅ PWA: Service Worker registered', r);
+    },
+    onRegisterError(error) {
+      console.error('❌ PWA: Service Worker registration failed', error);
+    }
+  });
+
   return (
     <AuthProvider>
       <BrowserRouter>
