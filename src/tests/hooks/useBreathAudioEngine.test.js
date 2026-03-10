@@ -144,7 +144,7 @@ describe('useBreathAudioEngine', () => {
   let ctx;
 
   beforeAll(async () => {
-    const mod = await import('@hooks/useBreathAudioEngine');
+    const mod = await import('@features/meditation/hooks/useBreathAudioEngine');
     useBreathAudioEngine = mod.useBreathAudioEngine;
   });
 
