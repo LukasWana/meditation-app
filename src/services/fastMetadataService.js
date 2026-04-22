@@ -76,20 +76,34 @@ class FastMetadataService {
   }
 
   async getAllMetadata() {
+    console.log('🚀 [CRITICAL DEBUG] fastMetadataService.getAllMetadata() CALLED', {
+      isLoading: this.isLoading,
+      isInitialized: this.isInitialized,
+      currentMetadataSize: this.metadata.size,
+      timestamp: new Date().toISOString()
+    });
+
     if (this.isLoading) {
+      console.warn('⚠️ [DEBUG] Already loading metadata, returning current state');
+      log.warn('⚠️ Already loading metadata, returning current state');
       return this.metadata;
     }
 
     // Nejdříve zkus načíst z cache
+    console.log('🔍 [DEBUG] Trying to load from cache...');
     if (this.loadFromCache()) {
       this.isLoading = false;
+      console.log('✅ [DEBUG] Loaded from cache, metadata size:', this.metadata.size);
+      log.success('✅ Loaded metadata from cache');
       return this.metadata;
     }
+    console.log('❌ [DEBUG] Cache load failed, loading from Firebase Storage...');
 
     this.isLoading = true;
 
     try {
       log.info('🚀 Loading metadata from Firebase Storage structure...');
+      console.log('🔍 [Firebase Storage DEBUG] Starting metadata load from Firebase Storage');
 
       const allFiles = [];
 
@@ -97,10 +111,15 @@ class FastMetadataService {
       try {
         const hudbaRef = ref(storage, 'hudba');
         log.debug(`🔍 Loading from Firebase Storage path: hudba`);
+        console.log('🔍 [Firebase Storage] Loading hudba folder...');
         const hudbaResult = await listAll(hudbaRef);
         log.debug(`📊 Firebase Storage result for hudba:`, {
           itemsCount: hudbaResult.items.length,
           prefixesCount: hudbaResult.prefixes.length
+        });
+        console.log(`✅ [Firebase Storage] Hudba folder loaded:`, {
+          items: hudbaResult.items.length,
+          prefixes: hudbaResult.prefixes.length
         });
 
         // Přidej soubory z hudba složky
@@ -162,16 +181,22 @@ class FastMetadataService {
         }
       } catch (hudbaError) {
         log.warn(`Failed to load hudba folder:`, hudbaError);
+        console.error('❌ [Firebase Storage] Failed to load hudba folder:', hudbaError);
       }
 
       // Načti dychanie složku
       try {
         const dychanieRef = ref(storage, 'dychanie');
         log.debug(`🔍 Loading from Firebase Storage path: dychanie`);
+        console.log('🔍 [Firebase Storage] Loading dychanie folder...');
         const dychanieResult = await listAll(dychanieRef);
         log.debug(`📊 Firebase Storage result for dychanie:`, {
           itemsCount: dychanieResult.items.length,
           prefixesCount: dychanieResult.prefixes.length
+        });
+        console.log(`✅ [Firebase Storage] Dychanie folder loaded:`, {
+          items: dychanieResult.items.length,
+          prefixes: dychanieResult.prefixes.length
         });
 
         // Přidej soubory z dychanie složky (OGG formát)
@@ -251,6 +276,7 @@ class FastMetadataService {
         }
       } catch (dychanieError) {
         log.warn(`Failed to load dychanie folder:`, dychanieError);
+        console.error('❌ [Firebase Storage] Failed to load dychanie folder:', dychanieError);
       }
 
       // ✅ NOVÉ: Načti background složku (obrázky)
@@ -317,10 +343,15 @@ class FastMetadataService {
       try {
         const meditacieRef = ref(storage, 'meditacie');
         log.debug(`🔍 Loading from Firebase Storage path: meditacie`);
+        console.log('🔍 [Firebase Storage] Loading meditacie folder...');
         const meditacieResult = await listAll(meditacieRef);
         log.debug(`📊 Firebase Storage result for meditacie:`, {
           itemsCount: meditacieResult.items.length,
           prefixesCount: meditacieResult.prefixes.length
+        });
+        console.log(`✅ [Firebase Storage] Meditacie folder loaded:`, {
+          items: meditacieResult.items.length,
+          prefixes: meditacieResult.prefixes.length
         });
 
         // Prohledej jazykové podsložky (CZ, SK, EN)
@@ -352,6 +383,7 @@ class FastMetadataService {
         }
       } catch (meditacieError) {
         log.warn(`Failed to load meditacie folder:`, meditacieError);
+        console.error('❌ [Firebase Storage] Failed to load meditacie folder:', meditacieError);
       }
 
       // Root jazykové složky (CZ/SK/EN) se nepoužívají – držíme se struktury meditacie/{LANG}/
@@ -397,14 +429,22 @@ class FastMetadataService {
     const meditacieFiles = files.filter(file => file.folder === 'meditacie');
     const backgroundFiles = files.filter(file => file.folder === 'background');
 
-    const mp3Files = hudbaFiles.filter(file => file.name.toLowerCase().endsWith('.mp3'));
+    const mp3Files = hudbaFiles.filter(file => {
+      // FIX: file.name je "ALBUM/filename.mp3", takže musíme extrahovat jen filename
+      const fileName = file.name.toLowerCase();
+      const actualFileName = fileName.split('/').pop(); // Extrahuj "filename.mp3" z "ALBUM/filename.mp3"
+      return actualFileName.endsWith('.mp3');
+    });
     const oggFiles = dychanieFiles.filter(file => {
       const fileName = file.name.toLowerCase();
       return fileName.endsWith('.ogg') || fileName.endsWith('.oga') || fileName.endsWith('.mp3');
     });
     const meditacieAudioFiles = meditacieFiles.filter(file => {
+      // FIX: file.name je "LANG/filename.mp3", takže musíme extrahovat jen filename
+      // Použijeme split a vezmeme poslední část
       const fileName = file.name.toLowerCase();
-      return fileName.endsWith('.mp3') || fileName.endsWith('.ogg') || fileName.endsWith('.oga');
+      const actualFileName = fileName.split('/').pop(); // Extrahuj "filename.mp3" z "LANG/filename.mp3"
+      return actualFileName.endsWith('.mp3') || actualFileName.endsWith('.ogg') || actualFileName.endsWith('.oga');
     });
     const imageFiles = hudbaFiles.filter(file => /\.(jpg|jpeg|png|gif|webp)$/i.test(file.name));
     const backgroundImageFiles = backgroundFiles.filter(file => /\.(jpg|jpeg|png|gif|webp)$/i.test(file.name));
@@ -573,6 +613,24 @@ class FastMetadataService {
         }
       } catch (error) {
         log.warn(`Failed to load duration for ${filePath}:`, error);
+      }
+    }
+
+    // Generuj waveform data pro dychanie soubory
+    if (normalizedFolder === 'dychanie' && metadata.downloadURL) {
+      try {
+        const { generateWaveformFromUrl } = await import('@utils/waveformGenerator');
+        const waveformData = await generateWaveformFromUrl(metadata.downloadURL, 150);
+        if (waveformData) {
+          metadata.waveformData = waveformData;
+          metadata.waveformMax = Math.max(...waveformData);
+          log.debug(`🌊 Waveform generated for ${filePath}: ${waveformData.length} samples`);
+        }
+      } catch (error) {
+        log.warn(`Failed to generate waveform for ${filePath}:`, error);
+        // Pokud se nepodařilo vygenerovat waveform, nastav prázdné pole
+        metadata.waveformData = null;
+        metadata.waveformMax = null;
       }
     }
 
@@ -947,14 +1005,27 @@ class FastMetadataService {
   }
 
   async initialize(forceReload = false) {
+    console.log('🎯 [CRITICAL DEBUG] fastMetadataService.initialize() CALLED', {
+      forceReload,
+      isInitialized: this.isInitialized,
+      isLoading: this.isLoading,
+      metadataSize: this.metadata.size,
+      timestamp: new Date().toISOString()
+    });
+
+    // PRODUCTION DEBUG: Vždy loguj inicializaci
+    console.log('🚀 [PRODUCTION] FastMetadataService initialization starting...');
+
     // Guard proti vícenásobné inicializaci
     if (this.isInitialized && !forceReload) {
+      console.log('✅ [DEBUG] Already initialized, skipping');
+      console.log('✅ [PRODUCTION] FastMetadataService already initialized with', this.metadata.size, 'files');
       return;
     }
 
     // Pokud už inicializace probíhá, počkej na ni
     if (this.isLoading) {
-      console.log('⏳ FastMetadataService already initializing, waiting...');
+      console.log('⏳ [DEBUG] FastMetadataService already initializing, waiting...');
       // Počkej až do 5 sekund na dokončení inicializace
       let waitCount = 0;
       while (this.isLoading && waitCount < 50) {
@@ -962,13 +1033,13 @@ class FastMetadataService {
         waitCount++;
       }
       if (this.isInitialized) {
-        console.log('✅ FastMetadataService initialization completed');
+        console.log('✅ [DEBUG] FastMetadataService initialization completed after wait');
         return;
       }
     }
 
     log.info('Initializing FastMetadataService...');
-    console.log('🔄 FastMetadataService.initialize() started');
+    console.log('🔄 [DEBUG] FastMetadataService.initialize() starting actual initialization');
 
     if (forceReload) {
       log.info('Force reloading metadata from Firebase...');
@@ -998,13 +1069,24 @@ class FastMetadataService {
 
     // Fallback na Firebase Storage
     try {
+      console.log('🔄 [DEBUG] About to call getAllMetadata() from initialize...');
+      console.log('🔄 [PRODUCTION] Loading metadata from Firebase Storage...');
       log.info('🔄 Loading metadata from Firebase Storage...');
       await this.getAllMetadata();
       this.isLoading = false;
       this.isInitialized = true; // Nastav flag, že je inicializovaný
+      console.log('✅ [DEBUG] FastMetadataService initialized successfully, metadata size:', this.metadata.size);
+      console.log('✅ [PRODUCTION] FastMetadataService initialization completed with', this.metadata.size, 'files');
       log.success('✅ FastMetadataService initialized from Firebase Storage');
     } catch (error) {
       this.isLoading = false;
+      console.error('❌❌❌ [CRITICAL ERROR] FastMetadataService initialization FAILED:', error);
+      console.error('❌ [PRODUCTION] FastMetadataService FAILED - this is why audio is not working!');
+      console.error('Error details:', {
+        message: error.message,
+        code: error.code,
+        stack: error.stack
+      });
       log.warn('❌ Failed to initialize metadata service:', error);
       console.error('❌ FastMetadataService initialization failed:', error);
     }

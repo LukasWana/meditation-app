@@ -76,9 +76,31 @@ export const auth = getAuth(app);
 export const db = getFirestore(app);
 
 /**
- * Inicializace Firebase Storage s error handling
+ * Inicializace Firebase Storage s error handling a detailním logováním
  */
-export const storage = getStorage(app);
+export let storage;
+try {
+  storage = getStorage(app);
+  console.log('🔥 Firebase Storage initialized successfully', {
+    storageBucket: firebaseConfig.storageBucket,
+    storageExists: !!storage
+  });
+} catch (error) {
+  console.error('❌ Failed to initialize Firebase Storage:', error.message);
+  console.error('Error details:', {
+    code: error.code,
+    message: error.message,
+    stack: error.stack
+  });
+  // Fallback - pokus o reinicializaci
+  try {
+    console.log('🔄 Retrying Firebase Storage initialization...');
+    storage = getStorage(app);
+  } catch (retryError) {
+    console.error('❌ Firebase Storage retry failed:', retryError.message);
+    storage = null;
+  }
+}
 
 /**
  * Inicializace Firebase Realtime Database s error handling
@@ -120,18 +142,17 @@ if (import.meta.env.VITE_RECAPTCHA_SITE_KEY) {
 export { appCheck };
 
 /**
- * Debug Firebase připojení - pouze v development módu a bez citlivých dat
+ * Debug Firebase připojení - v development i production pro debugging
  */
-if (import.meta.env.MODE === 'development') {
-  console.log('🔥 Firebase initialized successfully');
-  console.log('📊 Services available:', {
-    auth: !!auth,
-    firestore: !!db,
-    storage: !!storage,
-    database: !!database,
-    appCheck: !!appCheck
-  });
-}
+console.log('🔥 Firebase initialized successfully');
+console.log('📊 Services available:', {
+  auth: !!auth,
+  firestore: !!db,
+  storage: !!storage,
+  database: !!database,
+  appCheck: !!appCheck,
+  mode: import.meta.env.MODE
+});
 
 /**
  * Error handling wrapper pro Firebase operace
