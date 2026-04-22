@@ -86,8 +86,8 @@ export const useFirebaseAudio = (audioFileName) => {
         setFallbackUsed(false); // Reset fallback flag při úspěchu
 
         // Spusť metadata preloading pro rychlejší přístup příště
-        cacheService._preloadFirebaseMetadata(url, audioFileName).catch(err => {
-          console.warn('Metadata preload failed:', err);
+        cacheService.preloadAudio(url, audioFileName).catch(err => {
+          console.warn('Audio preload failed:', err);
         });
 
       } catch (err) {
