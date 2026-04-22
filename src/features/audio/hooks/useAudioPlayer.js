@@ -6,68 +6,120 @@ import offlineCacheService from '@services/offlineCacheService';
 import { useAutoplay } from './useAutoplay';
 import { useAudioPlayback } from './useAudioPlayback';
 import { useAudioContextManager } from './useAudioContextManager';
-import { useFadeEffects } from '@hooks/useFadeEffects';
-import { useAudioElementState } from '@hooks/useAudioElementState';
-import { useLegacyPlayback } from '@hooks/useLegacyPlayback';
-import { useAutoplayLogic } from '@hooks/useAutoplayLogic';
-import { useAudioStateSync } from '@hooks/useAudioStateSync';
 
 export const useAudioPlayer = (audioUrl, albumTracks = null, currentTrackIndex = 0, onTrackChange = null, autoplayEnabled = true) => {
 
-  // Use new modular hooks - nahrazují starý state management
-  const { activateAudioContext } = useAudioContextManager();
-  const {
-    audioRef,
-    isPlaying,
-    currentTime,
-    duration,
-    durationStable,
-    progress,
-    togglePlayPause,
-    skipBackward,
-    skipForward,
-    handleSeek,
-    formatTime,
-    resolvedUrl,
-    isLoadingFromCache
-  } = useAudioPlayback(audioUrl);
+  // Pomocná funkce pro extrakci názvu souboru z URL
+  const extractFileNameFromUrl = (url) => {
+    if (!url || typeof url !== 'string') return null;
 
-  // Legacy state pro kompatibilitu s existujícím kódem
+    // Pokud už je to název souboru (ne URL), vrať ho
+    if (!url.startsWith('http')) {
+      return url; // Vrať celou cestu, ne jen název souboru
+    }
+
+    try {
+      // Pro Firebase Storage URL: https://firebasestorage.googleapis.com/v0/b/.../o/filename.mp3?alt=media
+      const match = url.match(/\/o\/([^?]+)/);
+      if (match) {
+        const fullPath = decodeURIComponent(match[1]);
+        // Vrať celou cestu k souboru (např. "hudba/ambient-journey/filename.mp3")
+        return fullPath;
+      }
+
+      // Fallback pro běžné URL
+      const pathname = new URL(url).pathname;
+      return pathname.startsWith('/') ? pathname.substring(1) : pathname;
+    } catch (error) {
+      // Pokud to není validní URL, zkusíme to jako název souboru
+      return url.includes('/') ? url : url;
+    }
+  };
+
+  // Zjednodušený state management - sloučené související stavy
   const [audioState, setAudioState] = useState({
+    isPlaying: false,
     isActivated: false,
     hasInteracted: false,
-    userPaused: false,
-    volume: 1
+    userPaused: false // Flag pro sledování, jestli uživatel explicitně vypnul přehrávání
   });
 
+  // State pro cached URL
+  const [cachedAudioUrl, setCachedAudioUrl] = useState(null);
+  const [isLoadingFromCache, setIsLoadingFromCache] = useState(false);
+
   const [playbackState, setPlaybackState] = useState({
+    currentTime: 0,
+    duration: 0,
     isLoading: true,
     shouldAutoplay: false,
     wasPlayingBeforeSwitch: false,
     hasError: false,
-    errorMessage: null
+    errorMessage: null,
+    durationStable: false // Flag pro stabilní duration
   });
-
-  // Use new modular hooks
-  const { fadeOut, fadeOutAndClose, cleanup: cleanupFadeEffects } = useFadeEffects(audioRef);
-  const { fixAudioElementState } = useAudioElementState(audioRef, audioUrl);
-  const { playAudio } = useLegacyPlayback(audioRef, audioUrl, audioState, setAudioState, setPlaybackState);
-
-  // Use autoplay and state sync hooks
-  useAutoplayLogic(audioUrl, isPlaying, togglePlayPause, audioState.userPaused, playbackState.shouldAutoplay, albumTracks, currentTrackIndex, onTrackChange, audioState.hasInteracted);
-  useAudioStateSync(audioRef, audioUrl, audioState, setAudioState, playbackState, setPlaybackState, albumTracks, currentTrackIndex, onTrackChange);
+  const audioRef = useRef(null);
+  const fadeTimeoutRef = useRef(null);
+  const fadeOutIntervalRef = useRef(null);
+  const fadeInIntervalRef = useRef(null);
 
   // Aktivuj audio při změně skladby
   useEffect(() => {
     if (audioUrl) {
-      setAudioState(prev => ({ ...prev, hasInteracted: true }));
+      try {
+        // Použij globální AudioContext pokud existuje, jinak vytvoř nový
+        let audioContext = window.globalAudioContext;
+        if (!audioContext) {
+          audioContext = new (window.AudioContext || window.webkitAudioContext)();
+          window.globalAudioContext = audioContext;
+        }
+
+        if (audioContext.state === 'suspended') {
+          audioContext.resume().then(() => {
+            window.audioActivated = true;
+            setAudioState(prev => ({ ...prev, hasInteracted: true }));
+          }).catch(() => {
+          });
+        } else {
+          window.audioActivated = true;
+          setAudioState(prev => ({ ...prev, hasInteracted: true }));
+        }
+      } catch {
+      }
     }
   }, [audioUrl]);
 
-  // Cleanup effect - vyčisti timeouty při unmount
+  // Funkce pro načítání z cache
+  const loadFromCache = useCallback(async (url) => {
+    if (!url) return null;
+
+    try {
+      const fileName = extractFileNameFromUrl(url);
+      if (!fileName) return null;
+
+      log.audio(`🔍 Checking cache for: ${fileName}`);
+
+      // Zkontroluj, jestli je soubor v cache
+      const isCached = await offlineCacheService.isFileCached(fileName);
+      if (isCached) {
+        log.audio(`✅ Found in cache: ${fileName}`);
+
+        // Získej cached URL
+        const cachedUrl = await offlineCacheService.getAudioUrl(fileName, url);
+        log.audio(`🎵 Using cached URL: ${cachedUrl}`);
+        return cachedUrl;
+      } else {
+        log.audio(`❌ Not in cache: ${fileName}`);
+        return null;
+      }
+    } catch (error) {
+      log.error(`❌ Error checking cache for ${url}:`, error);
+      return null;
+    }
+  }, [extractFileNameFromUrl]);
+
+  // Sleduj změnu audioUrl a zachovej stav přehrávání
   useEffect(() => {
-<<<<<<< HEAD
-=======
     const audio = audioRef.current;
     if (!audio || !audioUrl) {
       log.audio('🎵 Audio URL effect: skipping - no audio element or audioUrl:', { hasAudio: !!audio, audioUrl });
@@ -288,13 +340,12 @@ export const useAudioPlayer = (audioUrl, albumTracks = null, currentTrackIndex =
     log.audio('Audio source changed, was playing:', wasPlaying);
 
     // Cleanup event listeners
->>>>>>> 5586763 (Phase 3: Hook Consolidation & Service Refactoring (Finalized))
     return () => {
-      cleanupFadeEffects();
+      audio.removeEventListener('loadedmetadata', handleLoadedMetadata);
+      audio.removeEventListener('loadeddata', handleLoadedData);
+      audio.removeEventListener('error', handleError);
+      audio.removeEventListener('canplay', handleCanPlay);
     };
-<<<<<<< HEAD
-  }, [cleanupFadeEffects]);
-=======
   }, [audioUrl]); // Odstranil loadFromCache z dependency array
 
   useEffect(() => {
@@ -924,17 +975,14 @@ export const useAudioPlayer = (audioUrl, albumTracks = null, currentTrackIndex =
 
   // Autoplay hook pro automatické spuštění
   useAutoplay(audioUrl, audioState.isPlaying, togglePlayPause, audioState.userPaused, playbackState.shouldAutoplay);
->>>>>>> 5586763 (Phase 3: Hook Consolidation & Service Refactoring (Finalized))
 
   return {
     audioRef,
-    isPlaying,
-    currentTime,
-    duration,
-    durationStable,
-    isLoading: playbackState.isLoading || isLoadingFromCache,
-    hasError: playbackState.hasError,
-    errorMessage: playbackState.errorMessage,
+    isPlaying: audioState.isPlaying,
+    currentTime: playbackState.currentTime,
+    duration: playbackState.duration,
+    isLoading: playbackState.isLoading,
+    durationStable: playbackState.durationStable,
     progress,
     togglePlayPause,
     skipBackward,
@@ -942,8 +990,9 @@ export const useAudioPlayer = (audioUrl, albumTracks = null, currentTrackIndex =
     handleSeek,
     formatTime,
     fadeOutAndClose,
-    volume: audioState.volume,
-    isCached: !!resolvedUrl && resolvedUrl.startsWith('blob:'),
+    hasError: playbackState.hasError,
+    errorMessage: playbackState.errorMessage,
+    cachedAudioUrl,
     isLoadingFromCache
   };
 };

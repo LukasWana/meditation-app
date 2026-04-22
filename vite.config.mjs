@@ -7,6 +7,15 @@ import { VitePWA } from 'vite-plugin-pwa'
 
 // https://vitejs.dev/config/
 export default defineConfig({
+  // Explicitně nahraď Firebase environment variables pro production build
+  define: {
+    'import.meta.env.VITE_FIREBASE_API_KEY': '"AIzaSyC6vt1srBjcFkMzo-foYRkYaxiYo4qI0B8"',
+    'import.meta.env.VITE_FIREBASE_AUTH_DOMAIN': '"meditations-audio.firebaseapp.com"',
+    'import.meta.env.VITE_FIREBASE_PROJECT_ID': '"meditations-audio"',
+    'import.meta.env.VITE_FIREBASE_STORAGE_BUCKET': '"meditations-audio.firebasestorage.app"',
+    'import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID': '"312837067375"',
+    'import.meta.env.VITE_FIREBASE_APP_ID': '"1:312837067375:web:f80339384a77ef47f1f39a"',
+  },
   plugins: [
     react(),
     svgr({
@@ -99,13 +108,14 @@ export default defineConfig({
             }
           },
           {
-            urlPattern: /.*\.mp3|https:\/\/firebasestorage\.googleapis\.com\/.*/i,
+            // Audio files - use CacheFirst but with shorter expiration
+            urlPattern: /.*\.mp3|.*\.ogg|.*\.wav|.*\.m4a/i,
             handler: 'CacheFirst',
             options: {
               cacheName: 'meditation-audio',
               expiration: {
                 maxEntries: 50,
-                maxAgeSeconds: 60 * 60 * 24 * 30 // 30 days
+                maxAgeSeconds: 60 * 60 * 24 * 7 // 7 days (reduced from 30)
               },
               cacheableResponse: {
                 statuses: [0, 200]
@@ -116,6 +126,44 @@ export default defineConfig({
               },
               matchOptions: {
                 ignoreSearch: true
+              }
+            }
+          },
+          {
+            // Firebase Storage metadata/JSON files - use NetworkFirst to always get fresh data
+            urlPattern: /https:\/\/firebasestorage\.googleapis\.com\/.*\.json/i,
+            handler: 'NetworkFirst',
+            options: {
+              cacheName: 'firebase-metadata',
+              expiration: {
+                maxEntries: 20,
+                maxAgeSeconds: 60 * 60 * 24 * 1 // 1 day only
+              },
+              cacheableResponse: {
+                statuses: [0, 200]
+              },
+              fetchOptions: {
+                mode: 'cors',
+                credentials: 'omit'
+              }
+            }
+          },
+          {
+            // Firebase Storage images - use CacheFirst with medium expiration
+            urlPattern: /https:\/\/firebasestorage\.googleapis\.com\/.*(jpg|jpeg|png|webp|svg)/i,
+            handler: 'CacheFirst',
+            options: {
+              cacheName: 'firebase-images',
+              expiration: {
+                maxEntries: 30,
+                maxAgeSeconds: 60 * 60 * 24 * 7 // 7 days
+              },
+              cacheableResponse: {
+                statuses: [0, 200]
+              },
+              fetchOptions: {
+                mode: 'cors',
+                credentials: 'omit'
               }
             }
           }

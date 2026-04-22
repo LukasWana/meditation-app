@@ -1,0 +1,435 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Comprehensive Data Flow Diagnostics</title>
+  <style>
+    body {
+      font-family: 'Courier New', monospace;
+      max-width: 1400px;
+      margin: 0 auto;
+      padding: 20px;
+      background: #0d1117;
+      color: #c9d1d9;
+    }
+
+    h1 {
+      color: #58a6ff;
+      border-bottom: 2px solid #58a6ff;
+      padding-bottom: 10px;
+    }
+
+    .controls {
+      margin: 20px 0;
+      padding: 20px;
+      background: #161b22;
+      border: 1px solid #30363d;
+      border-radius: 4px;
+    }
+
+    button {
+      background: #238636;
+      color: white;
+      border: none;
+      padding: 12px 24px;
+      margin: 5px;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 14px;
+      font-weight: 600;
+    }
+
+    button:hover {
+      background: #2ea043;
+    }
+
+    button:disabled {
+      background: #21262d;
+      cursor: not-allowed;
+      opacity: 0.6;
+    }
+
+    button.secondary {
+      background: #30363d;
+    }
+
+    button.secondary:hover {
+      background: #3c444d;
+    }
+
+    .status {
+      display: inline-block;
+      padding: 4px 12px;
+      border-radius: 4px;
+      font-size: 12px;
+      margin-left: 10px;
+      font-weight: 600;
+    }
+
+    .status.running { background: #d29922; color: #0d1117; }
+    .status.passed { background: #238636; color: #ffffff; }
+    .status.failed { background: #da3633; color: #ffffff; }
+    .status.pending { background: #30363d; color: #8b949e; }
+
+    .test-results {
+      margin-top: 20px;
+    }
+
+    .phase-section {
+      margin: 20px 0;
+      padding: 20px;
+      background: #161b22;
+      border: 1px solid #30363d;
+      border-left: 4px solid #30363d;
+      border-radius: 4px;
+    }
+
+    .phase-section.passed { border-left-color: #238636; }
+    .phase-section.failed { border-left-color: #da3633; }
+
+    .phase-title {
+      font-size: 16px;
+      font-weight: 600;
+      margin-bottom: 15px;
+      color: #58a6ff;
+    }
+
+    .log-entry {
+      margin: 8px 0;
+      padding: 10px 12px;
+      background: #0d1117;
+      border-radius: 4px;
+      font-size: 13px;
+      font-family: 'Consolas', 'Monaco', monospace;
+      border-left: 2px solid #30363d;
+    }
+
+    .log-entry.success {
+      border-left-color: #238636;
+      background: #0a2f12;
+    }
+
+    .log-entry.error {
+      border-left-color: #da3633;
+      background: #290f12;
+    }
+
+    .log-entry.warning {
+      border-left-color: #d29922;
+      background: #2f2116;
+    }
+
+    .final-report {
+      margin: 30px 0;
+      padding: 30px;
+      background: #161b22;
+      border: 2px solid #58a6ff;
+      border-radius: 8px;
+    }
+
+    .summary-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 20px;
+      margin-top: 20px;
+    }
+
+    .summary-item {
+      padding: 20px;
+      background: #0d1117;
+      border-radius: 6px;
+      text-align: center;
+      border: 1px solid #30363d;
+    }
+
+    .summary-item h3 {
+      margin: 0 0 15px 0;
+      font-size: 14px;
+      color: #8b949e;
+    }
+
+    .summary-item .value {
+      font-size: 36px;
+      font-weight: bold;
+    }
+
+    .value.pass { color: #238636; }
+    .value.fail { color: #da3633; }
+    .value.total { color: #58a6ff; }
+
+    .recommendations {
+      margin-top: 30px;
+      padding: 20px;
+      background: #0d1117;
+      border: 1px solid #30363d;
+      border-radius: 6px;
+    }
+
+    .recommendations h3 {
+      margin-top: 0;
+      color: #d29922;
+    }
+
+    .recommendation {
+      margin: 10px 0;
+      padding: 10px;
+      background: #161b22;
+      border-left: 3px solid #58a6ff;
+      border-radius: 3px;
+    }
+
+    pre {
+      background: #0d1117;
+      padding: 15px;
+      border-radius: 4px;
+      overflow-x: auto;
+      font-size: 12px;
+      border: 1px solid #30363d;
+    }
+
+    .phase-result {
+      display: inline-block;
+      padding: 2px 8px;
+      border-radius: 3px;
+      font-size: 11px;
+      font-weight: 600;
+      margin-left: 10px;
+    }
+
+    .phase-result.pass { background: #238636; }
+    .phase-result.fail { background: #da3633; }
+    .phase-result.warn { background: #d29922; }
+  </style>
+</head>
+<body>
+  <h1>🔍 Comprehensive Data Flow Diagnostics</h1>
+  <p style="color: #8b949e; margin-bottom: 20px;">
+    Kompletní diagnostika toku dat od Firebase inicializace po UI zobrazení
+  </p>
+
+  <div class="controls">
+    <button id="runTests" onclick="runTests()">▶️ Spustit kompletní diagnostiku</button>
+    <button class="secondary" id="clearLogs" onclick="clearLogs()">🗑️ Vymazat logy</button>
+    <button class="secondary" id="exportResults" onclick="exportResults()" disabled>💾 Exportovat výsledky</button>
+    <span id="overallStatus" class="status pending">Čekám na spuštění</span>
+  </div>
+
+  <div id="testResults"></div>
+
+  <div class="final-report" id="finalReport" style="display: none;">
+    <h2>📊 Celkový report</h2>
+    <div class="summary-grid">
+      <div class="summary-item">
+        <h3>Celkem testů</h3>
+        <div class="value total" id="totalTests">0</div>
+      </div>
+      <div class="summary-item">
+        <h3>Prošlo</h3>
+        <div class="value pass" id="passedTests">0</div>
+      </div>
+      <div class="summary-item">
+        <h3>Selhalo</h3>
+        <div class="value fail" id="failedTests">0</div>
+      </div>
+      <div class="summary-item">
+        <h3>Úspěšnost</h3>
+        <div class="value" id="successRate">0%</div>
+      </div>
+    </div>
+    <div class="recommendations" id="recommendations" style="display: none;">
+      <h3>💡 Doporučení</h3>
+      <div id="recommendationList"></div>
+    </div>
+  </div>
+
+  <script type="module">
+    import { runAllDiagnosticTests } from './test-full-data-flow.js';
+
+    let currentResults = null;
+
+    window.runTests = async function() {
+      const runButton = document.getElementById('runTests');
+      const statusSpan = document.getElementById('overallStatus');
+      const resultsDiv = document.getElementById('testResults');
+      const finalReport = document.getElementById('finalReport');
+
+      runButton.disabled = true;
+      statusSpan.className = 'status running';
+      statusSpan.textContent = 'Diagnostika běží...';
+      resultsDiv.innerHTML = '<div class="log-entry">🚀 Spouštím kompletní diagnostiku...</div>';
+      finalReport.style.display = 'none';
+      document.getElementById('recommendations').style.display = 'none';
+
+      try {
+        const startTime = Date.now();
+        currentResults = await runAllDiagnosticTests();
+        const duration = ((Date.now() - startTime) / 1000).toFixed(2);
+
+        // Update final report
+        finalReport.style.display = 'block';
+        document.getElementById('totalTests').textContent = currentResults.testResults.length;
+        document.getElementById('passedTests').textContent = currentResults.passed;
+        document.getElementById('failedTests').textContent = currentResults.failed;
+        document.getElementById('successRate').textContent =
+          Math.round((currentResults.passed / currentResults.testResults.length) * 100) + '%';
+
+        // Update status
+        if (currentResults.failed === 0) {
+          statusSpan.className = 'status passed';
+          statusSpan.textContent = 'Všechny testy prošly';
+          showRecommendations('all-passed');
+        } else {
+          statusSpan.className = 'status failed';
+          statusSpan.textContent = `${currentResults.failed} testů selhalo`;
+          showRecommendations('some-failed');
+        }
+
+        // Enable export
+        document.getElementById('exportResults').disabled = false;
+
+        console.log(`✨ Diagnostika dokončena za ${duration}s`);
+
+      } catch (error) {
+        console.error('Test runtime error:', error);
+        resultsDiv.innerHTML += `<div class="log-entry error">❌ Kritická chyba: ${error.message}</div>`;
+        statusSpan.className = 'status failed';
+        statusSpan.textContent = 'Chyba při diagnostice';
+      } finally {
+        runButton.disabled = false;
+      }
+    };
+
+    function showRecommendations(scenario) {
+      const recommendationsDiv = document.getElementById('recommendations');
+      const recommendationList = document.getElementById('recommendationList');
+      recommendationsDiv.style.display = 'block';
+      recommendationList.innerHTML = '';
+
+      const recommendations = [];
+
+      if (scenario === 'all-passed') {
+        recommendations.push({
+          title: 'Všechny testy prošly - problém je jinde',
+          text: 'Tok dat od Firebase do UI je funkční. Problém může být:',
+          items: [
+            '1. V konzoli aplikace nejsou vidět diagnostické logy - aplikace může používat starou verzi kódu',
+            '2. Service Worker cachuje stará data - zkuste vymazat cache (Application → Clear storage → Clear site data)',
+            '3. React state se neaktualizuje - zkuste hard refresh (Ctrl+Shift+R)',
+            '4. Zkuste otevřít HudbaScreen v incognito módu'
+          ]
+        });
+        recommendations.push({
+          title: 'Další kroky',
+          text: 'Otevřete aplikaci v normálním prohlížeči (ne v testovacím režimu)',
+          items: [
+            '1. Otevřete http://localhost:3000',
+            '2. Otevřete konzoli (F12)',
+            '3. Refreshněte stránku',
+            '4. Pošlete mi logy z konzole'
+          ]
+        });
+      } else if (scenario === 'some-failed') {
+        recommendations.push({
+          title: 'Některé testy selhaly - viz detailní logy výše',
+          text: 'Podle selhání můžeme určit problém:',
+          items: []
+        });
+
+        // Analyze failures
+        currentResults.testResults.forEach(test => {
+          if (test.result === 'FAIL' || test.result === 'ERROR') {
+            recommendations.push({
+              title: `❌ ${test.name} selhal`,
+              text: 'Toto indikuje problém v této vrstvě architektury',
+              items: [
+                '1. Podívejte se na detailní logy výše',
+                '2. Hledejte ❌ symboly pro chyby',
+                '3.oprava musí cílit na tuto konkrétní fázi'
+              ]
+            });
+          }
+        });
+      }
+
+      recommendations.forEach(rec => {
+        const div = document.createElement('div');
+        div.className = 'recommendation';
+        div.innerHTML = `
+          <strong>${rec.title}</strong>
+          <p>${rec.text}</p>
+          <ul style="margin: 10px 0; padding-left: 20px;">
+            ${rec.items.map(item => `<li>${item}</li>`).join('')}
+          </ul>
+        `;
+        recommendationList.appendChild(div);
+      });
+    }
+
+    window.clearLogs = function() {
+      document.getElementById('testResults').innerHTML = '';
+      document.getElementById('finalReport').style.display = 'none';
+      document.getElementById('recommendations').style.display = 'none';
+      document.getElementById('overallStatus').className = 'status pending';
+      document.getElementById('overallStatus').textContent = 'Čekám na spuštění';
+    };
+
+    window.exportResults = function() {
+      if (!currentResults) {
+        alert('Žádné výsledky k exportu');
+        return;
+      }
+
+      const data = JSON.stringify(currentResults, null, 2);
+      const blob = new Blob([data], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `diagnostic-results-${Date.now()}.json`;
+      a.click();
+      URL.revokeObjectURL(url);
+    };
+
+    // Console log capture
+    const originalLog = console.log;
+    const originalError = console.error;
+    const originalWarn = console.warn;
+
+    function addLogEntry(message, type = '') {
+      const resultsDiv = document.getElementById('testResults');
+      const entry = document.createElement('div');
+      entry.className = `log-entry ${type}`;
+
+      if (typeof message === 'string') {
+        entry.textContent = message;
+      } else if (message instanceof Object) {
+        try {
+          entry.textContent = JSON.stringify(message, null, 2);
+        } catch {
+          entry.textContent = String(message);
+        }
+      } else {
+        entry.textContent = String(message);
+      }
+
+      resultsDiv.appendChild(entry);
+      resultsDiv.scrollTop = resultsDiv.scrollHeight;
+    }
+
+    console.log = function(...args) {
+      originalLog.apply(console, args);
+      addLogEntry(args.join(' '));
+    };
+
+    console.error = function(...args) {
+      originalError.apply(console, args);
+      addLogEntry(args.join(' '), 'error');
+    };
+
+    console.warn = function(...args) {
+      originalWarn.apply(console, args);
+      addLogEntry(args.join(' '), 'warning');
+    };
+  </script>
+</body>
+</html>

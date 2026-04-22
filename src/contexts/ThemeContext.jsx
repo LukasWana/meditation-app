@@ -169,6 +169,9 @@ export const ThemeProvider = ({ children }) => {
   // State pro sledování, zda je to první načtení (pro fade-in animaci)
   const [isFirstLoad, setIsFirstLoad] = useState(true);
 
+  // State pro vybranou barvu progress baru (extrahovaná z fotky)
+  const [progressBarColor, setProgressBarColor] = useState(null);
+
   // Získat URL obrázku z customBackground nebo použít defaultní
   const getBackgroundImageUrl = () => {
     const data = getBackgroundData();
@@ -195,6 +198,47 @@ export const ThemeProvider = ({ children }) => {
 
     return null;
   };
+
+  // Získat barvu progress baru (uloženou nebo extrahovanou)
+  const getProgressBarColor = () => {
+    // Pokud máme uloženou barvu, použij ji
+    if (progressBarColor) {
+      return progressBarColor;
+    }
+
+    // Jinak zkusím extrahovat z fotky
+    const data = getBackgroundData();
+    if (data?.colors && data.colors.length > 0) {
+      // Vrátí první dominantní barvu
+      return data.colors[0];
+    }
+
+    // Fallback barva
+    const themeColors = getCurrentThemeColors();
+    return themeColors?.primary || themeColors?.text || 'rgba(0, 0, 0, 1)';
+  };
+
+  // Nastavit barvu progress baru
+  const setProgressBarColorCustom = (color) => {
+    setProgressBarColor(color);
+    try {
+      localStorage.setItem('meditation-app-progress-bar-color', color);
+    } catch (error) {
+      console.warn('Failed to save progress bar color to localStorage:', error);
+    }
+  };
+
+  // Načíst uloženou barvu progress baru při startu
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem('meditation-app-progress-bar-color');
+      if (saved) {
+        setProgressBarColor(saved);
+      }
+    } catch (error) {
+      console.warn('Failed to load progress bar color from localStorage:', error);
+    }
+  }, []);
 
   // Získat barvu pozadí z customBackground
   const getBackgroundColor = () => {
@@ -489,8 +533,8 @@ export const ThemeProvider = ({ children }) => {
       const isDarkText = themeColors.text.includes('255, 255, 255') || themeColors.text === '#ffffff' || themeColors.text === 'white';
       const isLightText = themeColors.text.includes('0, 0, 0') || themeColors.text === '#000000' || themeColors.text === 'black';
 
-      // Aplikovat CSS pro tmavé i světlé pozadí
-      if (isDarkText || isLightText) {
+      // Aplikovat CSS POUZE pro tmavé pozadí (dark mode)
+      if (isDarkText) {
         // Přidat CSS pro přepsání text-gray-* tříd a bg-white/* tříd na tmavých pozadích
         let styleElement = document.getElementById('dark-theme-text-override');
         if (!styleElement) {
@@ -500,14 +544,13 @@ export const ThemeProvider = ({ children }) => {
         }
 
         // Získat barvu karty
-        const cardColor = themeColors.card || (isDarkText ? 'rgba(0, 0, 0, 0.4)' : 'rgba(255, 255, 255, 0.95)');
+        const cardColor = themeColors.card || 'rgba(0, 0, 0, 0.4)';
 
-        if (isDarkText) {
-          // CSS pro tmavé pozadí (bílý text)
-          styleElement.textContent = `
+        // CSS pro tmavé pozadí (bílý text)
+        styleElement.textContent = `
             /* Přepsat textové barvy na bílou pro tmavé pozadí */
             .text-gray-800, .text-gray-700, .text-gray-600, .text-gray-500, .text-gray-400, .text-gray-300,
-            .text-black, .text-gray-900 {
+            .text-black, .text-gray-900, .text-gray-100, .text-gray-200 {
               color: ${themeColors.text} !important;
             }
 
@@ -518,13 +561,39 @@ export const ThemeProvider = ({ children }) => {
 
             /* Přepsat bílé pozadí na tmavé, aby byl bílý text viditelný */
             .bg-white, .bg-white\\/50, .bg-white\\/70, .bg-white\\/30, .bg-white\\/20, .bg-white\\/90, .bg-white\\/95,
-            .bg-white\\/10, .bg-white\\/40, .bg-white\\/60, .bg-white\\/80 {
+            .bg-white\\/10, .bg-white\\/40, .bg-white\\/60, .bg-white\\/80, .bg-white\\/5 {
+              background-color: ${cardColor} !important;
+            }
+
+            /* Přepsat bg-gray pozadí na tmavé */
+            .bg-gray-50, .bg-gray-100, .bg-gray-200, .bg-gray-300, .bg-gray-400, .bg-gray-500,
+            .bg-gray-600, .bg-gray-700, .bg-gray-800, .bg-gray-900 {
+              background-color: ${cardColor} !important;
+            }
+
+            /* Přepsat bg-black pozadí */
+            .bg-black, .bg-black\\/10, .bg-black\\/20, .bg-black\\/30, .bg-black\\/40,
+            .bg-black\\/50, .bg-black\\/60, .bg-black\\/70, .bg-black\\/80, .bg-black\\/90 {
               background-color: ${cardColor} !important;
             }
 
             /* Přepsat hover stavy pro bílé pozadí */
             .hover\\:bg-white:hover, .hover\\:bg-white\\/70:hover, .hover\\:bg-white\\/30:hover,
-            .hover\\:bg-white\\/40:hover, .hover\\:bg-white\\/90:hover {
+            .hover\\:bg-white\\/40:hover, .hover\\:bg-white\\/90:hover, .hover\\:bg-white\\/50:hover,
+            .hover\\:bg-white\\/20:hover, .hover\\:bg-white\\/60:hover, .hover\\:bg-white\\/80:hover {
+              background-color: ${cardColor} !important;
+              opacity: 0.95;
+            }
+
+            /* Přepsat hover stavy pro bg-gray */
+            .hover\\:bg-gray-50:hover, .hover\\:bg-gray-100:hover, .hover\\:bg-gray-200:hover,
+            .hover\\:bg-gray-300:hover, .hover\\:bg-gray-400:hover {
+              background-color: ${cardColor} !important;
+              opacity: 0.95;
+            }
+
+            /* Přepsat hover stavy pro bg-black */
+            .hover\\:bg-black:hover, .hover\\:bg-black\\/10:hover, .hover\\:bg-black\\/20:hover {
               background-color: ${cardColor} !important;
               opacity: 0.95;
             }
@@ -537,30 +606,29 @@ export const ThemeProvider = ({ children }) => {
             }
 
             /* Přepsat border barvy na světlé pro tmavé pozadí */
-            .border-black\\/10, .border-gray-200, .border-gray-300 {
+            .border-black\\/10, .border-black\\/20, .border-gray-200, .border-gray-300, .border-gray-400 {
               border-color: rgba(255, 255, 255, 0.3) !important;
             }
-          `;
-        } else {
-          // CSS pro světlé pozadí (černý text)
-          styleElement.textContent = `
-            /* Přepsat textové barvy na černou pro světlé pozadí */
-            .text-gray-800, .text-gray-700, .text-gray-600, .text-gray-500, .text-gray-400, .text-gray-300,
-            .text-black, .text-gray-900 {
-              color: ${themeColors.text} !important;
+
+            /* Přepsat focus ring barvy */
+            .focus\\:ring-blue-500:focus, .focus\\:ring-gray-500:focus {
+              --tw-ring-color: ${themeColors.primary || 'rgba(255, 255, 255, 0.5)'} !important;
             }
 
-            /* Zajistit, aby všechny textové elementy měly správnou barvu */
-            h1, h2, h3, h4, h5, h6, p, span, div, a, button, label, input, textarea, select {
-              color: inherit;
+            .focus\\:border-blue-500:focus, .focus\\:border-gray-500:focus {
+              border-color: ${themeColors.primary || 'rgba(255, 255, 255, 0.5)'} !important;
             }
 
-            /* Přepsat border barvy na tmavé pro světlé pozadí */
-            .border-black\\/10, .border-gray-200, .border-gray-300 {
-              border-color: rgba(0, 0, 0, 0.15) !important;
+            /* Specifické přepsání pro placeholder */
+            ::placeholder {
+              color: ${themeColors.textSecondary || 'rgba(255, 255, 255, 0.7)'} !important;
+            }
+
+            .placeholder-gray-500::placeholder,
+            .placeholder-gray-400::placeholder {
+              color: ${themeColors.textSecondary || 'rgba(255, 255, 255, 0.7)'} !important;
             }
           `;
-        }
       } else {
         // Odstranit CSS pro tmavé pozadí, pokud není potřeba
         const styleElement = document.getElementById('dark-theme-text-override');
@@ -786,7 +854,10 @@ export const ThemeProvider = ({ children }) => {
     getBackgroundColor,
     allowsCustomBackground: baseTheme?.allowsCustomBackground || false,
     colorMode,
-    changeColorMode
+    changeColorMode,
+    progressBarColor,
+    setProgressBarColor: setProgressBarColorCustom,
+    getProgressBarColor
   };
 
   return (

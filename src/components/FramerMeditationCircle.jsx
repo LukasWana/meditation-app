@@ -1,5 +1,6 @@
-import React, { useRef, useEffect, useState } from 'react';
+import React, { useRef, useEffect, useState, useContext } from 'react';
 import { motion, useAnimation } from 'framer-motion';
+import { ThemeContext } from '@contexts/ThemeContext';
 
 const FramerMeditationCircle = ({
   time,
@@ -12,6 +13,11 @@ const FramerMeditationCircle = ({
   const innerCircleControls = useAnimation();
   const outerCircleControls = useAnimation();
   const [progress, setProgress] = useState(0);
+
+  // Theme context pro barvy
+  const themeContext = useContext(ThemeContext);
+  const themeColors = themeContext?.getCurrentThemeColors?.() || {};
+  const progressBarColor = themeContext?.getProgressBarColor?.() || themeColors?.primary || themeColors?.text || '#333';
 
   useEffect(() => {
     const newProgress = totalTime > 0 ? Math.max(0, Math.min(1, (totalTime - time) / totalTime)) : 0;
@@ -62,7 +68,7 @@ const FramerMeditationCircle = ({
           cx="160"
           cy="160"
           r="140"
-          stroke="#d9d6d0"
+          stroke={themeColors?.textSecondary || '#d9d6d0'}
           strokeWidth="2"
           fill="none"
         />
@@ -72,7 +78,7 @@ const FramerMeditationCircle = ({
           cx="160"
           cy="160"
           r="140"
-          stroke="#333"
+          stroke={progressBarColor}
           strokeWidth="2"
           fill="none"
           strokeDasharray={circumference}
@@ -93,11 +99,13 @@ const FramerMeditationCircle = ({
       >
         {!showTimeBelow ? (
           <motion.div
-            className="w-40 h-40 rounded-full bg-black/5 flex items-center justify-center p-4"
+            className="w-40 h-40 rounded-full flex items-center justify-center p-4"
+            style={{ backgroundColor: themeColors?.card || 'rgba(0, 0, 0, 0.05)' }}
             transition={{ type: "spring", stiffness: 300, damping: 20 }}
           >
             <motion.span
               className="text-6xl font-light leading-tight"
+              style={{ color: themeColors?.text || 'rgba(0, 0, 0, 1)' }}
               animate={isPlaying ? {
                 scale: [1, 1.05, 1],
                 transition: {
@@ -111,7 +119,10 @@ const FramerMeditationCircle = ({
             </motion.span>
           </motion.div>
         ) : (
-          <div className="w-40 h-40 rounded-full bg-black/5" />
+          <div
+            className="w-40 h-40 rounded-full"
+            style={{ backgroundColor: themeColors?.card || 'rgba(0, 0, 0, 0.05)' }}
+          />
         )}
       </motion.div>
 
@@ -119,7 +130,8 @@ const FramerMeditationCircle = ({
       {showTimeBelow && (
         <div className="absolute inset-x-0 -bottom-20 flex items-center justify-center">
           <motion.span
-            className="text-5xl font-light text-gray-800"
+            className="text-5xl font-light"
+            style={{ color: themeColors?.text || 'rgba(100, 100, 100, 1)' }}
             animate={isPlaying ? {
               scale: [1, 1.02, 1],
               transition: {

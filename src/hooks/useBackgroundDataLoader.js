@@ -28,11 +28,14 @@ export const useBackgroundDataLoader = ({ enabled = true } = {}) => {
   const [state, setState] = useState(INITIAL_STATE);
 
   useEffect(() => {
+    console.log('🎯 [CRITICAL DEBUG] useBackgroundDataLoader useEffect triggered', { enabled });
     if (!enabled) {
+      console.log('⚠️ [DEBUG] useBackgroundDataLoader NOT enabled, skipping');
       setState(INITIAL_STATE);
       return;
     }
 
+    console.log('✅ [DEBUG] useBackgroundDataLoader enabled, starting data load...');
     let stopWatching = null;
     let updateTimeout = null;
     let isMounted = true;
@@ -43,6 +46,8 @@ export const useBackgroundDataLoader = ({ enabled = true } = {}) => {
     };
 
     const loadDataInBackground = async () => {
+      console.log('🚀 [CRITICAL DEBUG] useBackgroundDataLoader.loadDataInBackground() START');
+
       safelySetState(prev => ({
         ...prev,
         isLoading: true,
@@ -51,8 +56,10 @@ export const useBackgroundDataLoader = ({ enabled = true } = {}) => {
       }));
 
       try {
+        console.log('🔍 [DEBUG] About to call initializationManager.initializeCategory("data")...');
         // Inicializuj UI data service
         await initializationManager.initializeCategory('data', false, (service, status) => {
+          console.log('📊 [DEBUG] UI Data service initializing:', status);
           if (status.name === 'ui') {
             safelySetState(prev => ({
               ...prev,
@@ -61,10 +68,13 @@ export const useBackgroundDataLoader = ({ enabled = true } = {}) => {
             }));
           }
         });
+        console.log('✅ [DEBUG] UI Data initialization completed');
 
         // Získej UI data
         const uiDataEntry = getService('data', 'ui');
+        console.log('🔍 [DEBUG] About to load UIData...');
         const uiData = await uiDataEntry.service.loadUIData();
+        console.log('✅ [DEBUG] UI Data loaded:', uiData);
         safelySetState(prev => ({
           ...prev,
           uiData
@@ -76,18 +86,23 @@ export const useBackgroundDataLoader = ({ enabled = true } = {}) => {
           statusMessage: 'Načítám metadata…'
         }));
 
+        console.log('🎯 [CRITICAL DEBUG] About to call initializationManager.initializeCategory("metadata")...');
         // Inicializuj metadata services
         await initializationManager.initializeCategory('metadata', false, (service, status) => {
+          console.log('📊 [DEBUG] Metadata service initializing:', status);
           safelySetState(prev => ({
             ...prev,
             phase: 'metadata',
             statusMessage: `Inicializuji ${status.name} metadata…`
           }));
         });
+        console.log('✅ [CRITICAL DEBUG] Metadata initialization completed');
 
+        console.log('🔍 [DEBUG] About to call realtimeMetadataService.getAllMetadata()...');
         // Načti metadata z Realtime Database a ulož do cache
         try {
           const realtimeMetadata = await realtimeMetadataService.getAllMetadata();
+          console.log('✅ [DEBUG] realtimeMetadataService.getAllMetadata() returned:', Object.keys(realtimeMetadata || {}).length, 'keys');
           if (realtimeMetadata && Object.keys(realtimeMetadata).length > 0) {
             Object.entries(realtimeMetadata).forEach(([key, value]) => {
               cacheServiceRefactored.setMetadata(key, value);
@@ -100,6 +115,12 @@ export const useBackgroundDataLoader = ({ enabled = true } = {}) => {
             throw new Error('No metadata in Realtime Database');
           }
         } catch (realtimeError) {
+          console.error('❌❌❌ [CRITICAL ERROR] realtimeMetadataService.getAllMetadata() FAILED:', realtimeError);
+          console.error('Error details:', {
+            message: realtimeError.message,
+            stack: realtimeError.stack,
+            name: realtimeError.name
+          });
           if (import.meta.env.MODE === 'development') {
             log.warn('⚠️ Realtime metadata unavailable, using static fallback:', realtimeError.message);
           }

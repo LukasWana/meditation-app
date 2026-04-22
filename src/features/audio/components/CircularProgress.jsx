@@ -25,7 +25,8 @@ const CircularProgress = ({
                      textColor.includes('rgba(255, 255, 255');
 
   // Použij barvy z theme jako výchozí, pokud nejsou explicitně předány
-  const finalProgressColor = progressColor || currentTheme?.colors?.progressIndicator || 'limegreen';
+  // Priority: progressColor prop > getProgressBarColor() > theme progressIndicator > fallback
+  const finalProgressColor = progressColor || themeContext?.getProgressBarColor?.() || currentTheme?.colors?.progressIndicator || 'limegreen';
   // Pro light mode použít černé pozadí, pro dark mode bílé pozadí
   const finalBackgroundColor = backgroundColor || (isDarkMode ? "rgba(255, 255, 255, 0.3)" : "rgba(0, 0, 0, 0.3)");
   const radius = 180; // Snížil radius aby se vešel do viewBox

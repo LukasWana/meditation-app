@@ -24,28 +24,53 @@ export const useAppInitialization = () => {
   const [firebaseReady, setFirebaseReady] = useState(false);
   const [firebaseError, setFirebaseError] = useState(null);
 
+  console.log('🎯 [CRITICAL] useAppInitialization() CALLED', {
+    firebaseReady,
+    hasError: !!firebaseError,
+    app: !!app,
+    database: !!database
+  });
+
   useEffect(() => {
+    console.log('🚀 [CRITICAL] useAppInitialization useEffect() FIRED');
     let cancelled = false;
 
     const ensureFirebase = async () => {
+      console.log('🔍 [DEBUG] ensureFirebase() called');
       try {
+        console.log('⏳ [DEBUG] Waiting for Firebase to be ready...');
         await waitForFirebaseReady();
+        console.log('✅ [DEBUG] Firebase is ready!');
         if (!cancelled) {
+          console.log('🎯 [DEBUG] Setting firebaseReady = true');
           setFirebaseReady(true);
+          console.log('✅ [DEBUG] firebaseReady state updated');
+        } else {
+          console.log('⚠️ [DEBUG] Component was cancelled, not setting state');
         }
       } catch (error) {
+        console.error('❌ [CRITICAL] ensureFirebase() FAILED:', error);
         if (!cancelled) {
+          console.log('🔴 [DEBUG] Setting firebaseError');
           setFirebaseError(error);
         }
       }
     };
 
+    console.log('📞 [DEBUG] Calling ensureFirebase()...');
     ensureFirebase();
 
     return () => {
+      console.log('🧹 [DEBUG] useAppInitialization cleanup - cancelling');
       cancelled = true;
     };
   }, []);
+
+  console.log('📊 [DEBUG] Current state:', {
+    firebaseReady,
+    hasError: !!firebaseError,
+    errorMessage: firebaseError?.message
+  });
 
   const backgroundState = useBackgroundDataLoader({ enabled: firebaseReady });
 

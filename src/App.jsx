@@ -1,35 +1,41 @@
 import React, { useState, Suspense, useEffect } from 'react';
-import { useRegisterSW } from 'virtual:pwa-register/react';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { PageManager } from '@features/navigation';
 import { useNavigation, useTouchNavigation } from '@features/navigation/hooks';
 import { useTimer } from '@features/meditation/hooks';
 import { useAppInitialization } from '@hooks/useAppInitialization';
-import { LazyIntroScreen, NewAdminScreen } from '@config/lazyComponents';
+import { LazyIntroScreen, SimpleAdminScreen } from '@config/lazyComponents';
 import { LanguageProvider } from '@contexts/LanguageContext';
 import { UIConfigProvider } from '@contexts/UIConfigContext';
-import { ThemeProvider } from '@contexts/ThemeContext';
+import { ThemeProvider, useTheme } from '@contexts/ThemeContext';
 import { AuthProvider } from '@contexts/AuthContext';
 import { useAudioPlayerStore } from '@stores/audioPlayerStore';
 import MonitoringDashboard from '@components/MonitoringDashboard';
 import OfflineIndicator from '@components/OfflineIndicator';
 import AdminGuard from '@components/AdminGuard';
+import ServiceWorkerManager from '@components/ServiceWorkerManager';
 
 import ErrorBoundary from '@components/ErrorBoundary';
 
+// Wrapper component pro aplikaci s dynamickým pozadím
+const AppWrapper = ({ children }) => {
+  const { getScreenBackgroundColor } = useTheme();
+
+  return (
+    <div
+      className="min-h-screen w-full overflow-x-hidden"
+      style={{
+        backgroundColor: getScreenBackgroundColor()
+      }}
+    >
+      {children}
+    </div>
+  );
+};
+
 // Hlavní aplikace s routingem
 export default function App() {
-  // PWA registrace
-  useRegisterSW({
-    onRegistered(r) {
-      console.log('✅ PWA: Service Worker registered', r);
-    },
-    onRegisterError(error) {
-      console.error('❌ PWA: Service Worker registration failed', error);
-    }
-  });
-
   return (
     <AuthProvider>
       <BrowserRouter>
@@ -45,11 +51,20 @@ export default function App() {
 
 // Meditační aplikace
 function MeditationApp() {
+  console.log('🎯 [CRITICAL] MeditationApp() RENDERED - React is working!');
+
   // Intro state
   const [showIntro, setShowIntro] = useState(true);
 
   // Inicializace dat z Firebase
   const initialization = useAppInitialization();
+  console.log('📊 [DEBUG] initialization state:', {
+    phase: initialization.phase,
+    isReady: initialization.isReady,
+    firebaseReady: initialization.firebaseReady,
+    hasError: !!initialization.error,
+    errorMessage: initialization.error?.message
+  });
 
   // Navigation state
   const { currentScreen, navigateToScreen } = useNavigation('intro');
@@ -237,37 +252,19 @@ function MeditationApp() {
         originalConsole.log('Poznámka: console.error() a console.warn() se vždy zobrazí');
       };
 
-<<<<<<< HEAD
-      // Funkce pro synchronizaci všech souborů pomocí Firebase Function
-      window.syncAllFiles = async () => {
-        console.log('🚀 Spouštím synchronizaci všech souborů...');
+      // Funkce pro vymazání persistent stavu dýchání
+      window.clearBreathState = () => {
         try {
-          const { syncAllFilesViaFunction } = await import('./utils/syncAllFilesViaFunction');
-          const result = await syncAllFilesViaFunction((current, total) => {
-            console.log(`🔄 Synchronizuji... ${current}/${total} souborů`);
-          });
-          if (result.success) {
-            console.log('✅ Synchronizace dokončena!', result.message);
-            console.log('📊 Results:', result.results);
-            return result;
-          } else {
-            console.error('❌ Chyba při synchronizaci:', result.error);
-            return result;
-          }
+          localStorage.removeItem('meditation-app-breath-state');
+          const originalConsole = window.console;
+          originalConsole.log('🧹 Breath state vymazán. Obnovte stránku pro aplikaci změn.');
+          return true;
         } catch (error) {
-          console.error('❌ Chyba:', error);
-          return { success: false, error: error.message };
+          console.error('❌ Failed to clear breath state:', error);
+          return false;
         }
       };
 
-    console.log('🔍 Debug funkce dostupné v konzoli:');
-    console.log('  - showDatabaseData() - zobrazí database viewer');
-    console.log('  - debugMeditacieFiles() - zobrazí meditacie soubory v Realtime Database');
-    console.log('  - debugCache() - zobrazí detaily cache');
-    console.log('  - clearCache() - vymaže cache');
-    console.log('  - testAudioPlayback(fileName) - otestuje přehrávání konkrétního souboru');
-    console.log('  - setLogLevel(level) - nastaví úroveň logování (silent, error, warn, info, debug)');
-=======
       console.log('🔍 Debug funkce dostupné v konzoli:');
       console.log('  - showDatabaseData() - zobrazí database viewer');
       console.log('  - debugMeditacieFiles() - zobrazí meditacie soubory v Realtime Database');
@@ -275,7 +272,7 @@ function MeditationApp() {
       console.log('  - clearCache() - vymaže cache');
       console.log('  - testAudioPlayback(fileName) - otestuje přehrávání konkrétního souboru');
       console.log('  - setLogLevel(level) - nastaví úroveň logování (silent, error, warn, info, debug)');
->>>>>>> 5586763 (Phase 3: Hook Consolidation & Service Refactoring (Finalized))
+      console.log('  - clearBreathState() - vymaže uložený stav dýchání z localStorage');
     }
   }, []);
 
@@ -287,13 +284,16 @@ function MeditationApp() {
 
   return (
     <ErrorBoundary>
+      {/* Service Worker - only registers in production */}
+      {import.meta.env.PROD && <ServiceWorkerManager />}
+
       <LanguageProvider initialTranslations={initialization.uiData?.translations}>
         <UIConfigProvider
           initialConfig={initialization.uiData?.config}
           initialTexts={initialization.uiData?.texts}
         >
           <ThemeProvider>
-            <div className="min-h-screen w-full bg-[#f4ddc4] overflow-x-hidden">
+            <AppWrapper>
               {/* Intro animace s písmem "Meditácia" */}
               {showIntro && (
                 <LazyIntroScreen onIntroComplete={handleIntroComplete} />
@@ -326,8 +326,7 @@ function MeditationApp() {
 
               {/* Offline Indicator */}
               <OfflineIndicator />
-
-            </div>
+            </AppWrapper>
           </ThemeProvider>
         </UIConfigProvider>
       </LanguageProvider>
@@ -349,7 +348,7 @@ export function AdminApp() {
             <p className="text-xl text-gray-700">Načítám admin panel...</p>
           </div>
         </div>}>
-          <NewAdminScreen />
+          <SimpleAdminScreen />
         </Suspense>
 
         {/* Monitoring Dashboard - pouze v admin */}

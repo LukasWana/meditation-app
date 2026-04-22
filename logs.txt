@@ -1,0 +1,469 @@
+workbox-ca84f546.js:44 workbox Precaching did not find a match for /@vite/client
+workbox-ca84f546.js:44 workbox No route found for: /@vite/client
+workbox-ca84f546.js:44 workbox Precaching did not find a match for /src/main.jsx
+workbox-ca84f546.js:44 workbox No route found for: /src/main.jsx
+workbox-ca84f546.js:44 workbox Precaching did not find a match for /@react-refresh
+workbox-ca84f546.js:44 workbox No route found for: /@react-refresh
+workbox-ca84f546.js:44 workbox Precaching did not find a match for /node_modules/vite/dist/client/env.mjs
+workbox-ca84f546.js:44 workbox No route found for: /node_modules/vite/dist/client/env.mjs
+workbox-ca84f546.js:44 workbox Precaching did not find a match for /src/App.jsx?t=1774023921830
+workbox-ca84f546.js:44 workbox No route found for: /src/App.jsx?t=1774023921830
+workbox-ca84f546.js:44 workbox Precaching did not find a match for /src/components/ErrorBoundary.jsx?t=1774023716666
+workbox-ca84f546.js:44 workbox No route found for: /src/components/ErrorBoundary.jsx?t=1774023716666
+workbox-ca84f546.js:44 workbox Precaching did not find a match for /src/services/logger.js
+workbox-ca84f546.js:44 workbox No route found for: /src/services/logger.js
+workbox-ca84f546.js:44 workbox Precaching did not find a match for /node_modules/@fontsource/petrona/400.css
+workbox-ca84f546.js:44 workbox No route found for: /node_modules/@fontsource/petrona/400.css
+workbox-ca84f546.js:44 workbox Precaching did not find a match for /node_modules/@fontsource/petrona/700.css
+workbox-ca84f546.js:44 workbox No route found for: /node_modules/@fontsource/petrona/700.css
+workbox-ca84f546.js:44 workbox Precaching did not find a match for /node_modules/@fontsource/inter/300.css
+workbox-ca84f546.js:44 workbox No route found for: /node_modules/@fontsource/inter/300.css
+workbox-ca84f546.js:44 workbox Precaching did not find a match for /node_modules/@fontsource/inter/400.css
+workbox-ca84f546.js:44 workbox No route found for: /node_modules/@fontsource/inter/400.css
+workbox-ca84f546.js:44 workbox Precaching did not find a match for /node_modules/@fontsource/inter/500.css
+workbox-ca84f546.js:44 workbox No route found for: /node_modules/@fontsource/inter/500.css
+workbox-ca84f546.js:44 workbox Precaching did not find a match for /node_modules/@fontsource/inter/600.css
+workbox-ca84f546.js:44 workbox No route found for: /node_modules/@fontsource/inter/600.css
+workbox-ca84f546.js:44 workbox Precaching did not find a match for /node_modules/@fontsource/inter/700.css
+workbox-ca84f546.js:44 workbox No route found for: /node_modules/@fontsource/inter/700.css
+workbox-ca84f546.js:44 workbox Precaching did not find a match for /node_modules/@fontsource/montserrat/300.css
+workbox-ca84f546.js:44 workbox No route found for: /node_modules/@fontsource/montserrat/300.css
+workbox-ca84f546.js:44 workbox Precaching did not find a match for /node_modules/@fontsource/montserrat/400.css
+workbox-ca84f546.js:44 workbox No route found for: /node_modules/@fontsource/montserrat/400.css
+workbox-ca84f546.js:44 workbox Precaching did not find a match for /node_modules/@fontsource/montserrat/500.css
+workbox-ca84f546.js:44 workbox No route found for: /node_modules/@fontsource/montserrat/500.css
+workbox-ca84f546.js:44 workbox Precaching did not find a match for /node_modules/@fontsource/montserrat/600.css
+workbox-ca84f546.js:44 workbox No route found for: /node_modules/@fontsource/montserrat/600.css
+workbox-ca84f546.js:44 workbox Precaching did not find a match for /node_modules/@fontsource/montserrat/700.css
+workbox-ca84f546.js:44 workbox No route found for: /node_modules/@fontsource/montserrat/700.css
+workbox-ca84f546.js:44 workbox Precaching did not find a match for /node_modules/@fontsource/quicksand/300.css
+workbox-ca84f546.js:44 workbox No route found for: /node_modules/@fontsource/quicksand/300.css
+workbox-ca84f546.js:44 workbox Precaching did not find a match for /node_modules/@fontsource/quicksand/400.css
+workbox-ca84f546.js:44 workbox No route found for: /node_modules/@fontsource/quicksand/400.css
+workbox-ca84f546.js:44 workbox Precaching did not find a match for /node_modules/@fontsource/quicksand/500.css
+workbox-ca84f546.js:44 workbox No route found for: /node_modules/@fontsource/quicksand/500.css
+workbox-ca84f546.js:44 workbox Precaching did not find a match for /node_modules/@fontsource/quicksand/600.css
+workbox-ca84f546.js:44 workbox No route found for: /node_modules/@fontsource/quicksand/600.css
+workbox-ca84f546.js:44 workbox Precaching did not find a match for /node_modules/@fontsource/quicksand/700.css
+workbox-ca84f546.js:44 workbox No route found for: /node_modules/@fontsource/quicksand/700.css
+workbox-ca84f546.js:44 workbox Precaching did not find a match for /src/index.css?t=1774023921830
+workbox-ca84f546.js:44 workbox No route found for: /src/index.css?t=1774023921830
+workbox-ca84f546.js:44 workbox Precaching did not find a match for /@vite-plugin-pwa/pwa-entry-point-loaded
+workbox-ca84f546.js:44 workbox No route found for: /@vite-plugin-pwa/pwa-entry-point-loaded
+workbox-ca84f546.js:44 workbox Precaching did not find a match for /manifest.webmanifest
+workbox-ca84f546.js:44 workbox No route found for: /manifest.webmanifest
+workbox-ca84f546.js:44 workbox Precaching did not find a match for /@vite-plugin-pwa/virtual:pwa-register/react
+workbox-ca84f546.js:44 workbox No route found for: /@vite-plugin-pwa/virtual:pwa-register/react
+workbox-ca84f546.js:44 workbox Precaching did not find a match for /src/features/navigation/index.js?t=1774023921830
+workbox-ca84f546.js:44 workbox No route found for: /src/features/navigation/index.js?t=1774023921830
+workbox-ca84f546.js:44 workbox Precaching did not find a match for /src/features/navigation/hooks/index.js
+workbox-ca84f546.js:44 workbox No route found for: /src/features/navigation/hooks/index.js
+workbox-ca84f546.js:44 workbox Precaching did not find a match for /src/features/meditation/hooks/index.js?t=1774023716666
+workbox-ca84f546.js:44 workbox No route found for: /src/features/meditation/hooks/index.js?t=1774023716666
+workbox-ca84f546.js:44 workbox Precaching did not find a match for /src/hooks/useAppInitialization.js?t=1774023921830
+workbox-ca84f546.js:44 workbox No route found for: /src/hooks/useAppInitialization.js?t=1774023921830
+workbox-ca84f546.js:44 workbox Precaching did not find a match for /src/config/lazyComponents.js?t=1774023921830
+workbox-ca84f546.js:44 workbox No route found for: /src/config/lazyComponents.js?t=1774023921830
+workbox-ca84f546.js:44 workbox Precaching did not find a match for /src/contexts/LanguageContext.jsx
+workbox-ca84f546.js:44 workbox No route found for: /src/contexts/LanguageContext.jsx
+workbox-ca84f546.js:44 workbox Precaching did not find a match for /src/contexts/UIConfigContext.jsx
+workbox-ca84f546.js:44 workbox No route found for: /src/contexts/UIConfigContext.jsx
+workbox-ca84f546.js:44 workbox Precaching did not find a match for /src/contexts/ThemeContext.jsx?t=1774023716666
+workbox-ca84f546.js:44 workbox No route found for: /src/contexts/ThemeContext.jsx?t=1774023716666
+workbox-ca84f546.js:44 workbox Precaching did not find a match for /src/contexts/AuthContext.jsx
+workbox-ca84f546.js:44 workbox No route found for: /src/contexts/AuthContext.jsx
+workbox-ca84f546.js:44 workbox Precaching did not find a match for /src/stores/audioPlayerStore.js
+workbox-ca84f546.js:44 workbox No route found for: /src/stores/audioPlayerStore.js
+workbox-ca84f546.js:44 workbox Precaching did not find a match for /src/components/MonitoringDashboard.jsx?t=1774023716666
+workbox-ca84f546.js:44 workbox No route found for: /src/components/MonitoringDashboard.jsx?t=1774023716666
+workbox-ca84f546.js:44 workbox Precaching did not find a match for /src/components/OfflineIndicator.jsx
+workbox-ca84f546.js:44 workbox No route found for: /src/components/OfflineIndicator.jsx
+workbox-ca84f546.js:44 workbox Precaching did not find a match for /src/components/AdminGuard.jsx
+workbox-ca84f546.js:44 workbox No route found for: /src/components/AdminGuard.jsx
+client:733 [vite] connecting...
+client:827 [vite] connected.
+workbox-ca84f546.js:44 workbox Precaching did not find a match for /src/features/navigation/Layout.jsx
+workbox-ca84f546.js:44 workbox No route found for: /src/features/navigation/Layout.jsx
+workbox-ca84f546.js:44 workbox Precaching did not find a match for /src/features/navigation/PageManager.jsx?t=1774023921830
+workbox-ca84f546.js:44 workbox No route found for: /src/features/navigation/PageManager.jsx?t=1774023921830
+workbox-ca84f546.js:44 workbox Precaching did not find a match for /src/features/navigation/hooks/useNavigation.js
+workbox-ca84f546.js:44 workbox No route found for: /src/features/navigation/hooks/useNavigation.js
+workbox-ca84f546.js:44 workbox Precaching did not find a match for /src/features/navigation/hooks/useTouchNavigation.js
+workbox-ca84f546.js:44 workbox No route found for: /src/features/navigation/hooks/useTouchNavigation.js
+workbox-ca84f546.js:44 workbox Precaching did not find a match for /src/features/meditation/hooks/useHudbaScreenData.js?t=1774023716666
+workbox-ca84f546.js:44 workbox No route found for: /src/features/meditation/hooks/useHudbaScreenData.js?t=1774023716666
+workbox-ca84f546.js:44 workbox Precaching did not find a match for /src/features/meditation/hooks/useBreathAudioEngine.js?t=1774023716666
+workbox-ca84f546.js:44 workbox No route found for: /src/features/meditation/hooks/useBreathAudioEngine.js?t=1774023716666
+workbox-ca84f546.js:44 workbox Precaching did not find a match for /src/features/meditation/hooks/useBreathTimer.js
+workbox-ca84f546.js:44 workbox No route found for: /src/features/meditation/hooks/useBreathTimer.js
+workbox-ca84f546.js:44 workbox Precaching did not find a match for /src/features/meditation/hooks/usePreparationTimer.js
+workbox-ca84f546.js:44 workbox No route found for: /src/features/meditation/hooks/usePreparationTimer.js
+workbox-ca84f546.js:44 workbox Precaching did not find a match for /src/features/meditation/hooks/useCountdownSound.js?t=1774023716666
+workbox-ca84f546.js:44 workbox No route found for: /src/features/meditation/hooks/useCountdownSound.js?t=1774023716666
+workbox-ca84f546.js:44 workbox Precaching did not find a match for /src/features/meditation/hooks/useFinalSound.js?t=1774023716666
+workbox-ca84f546.js:44 workbox No route found for: /src/features/meditation/hooks/useFinalSound.js?t=1774023716666
+workbox-ca84f546.js:44 workbox Precaching did not find a match for /src/features/meditation/hooks/useBreathPhase.js
+workbox-ca84f546.js:44 workbox No route found for: /src/features/meditation/hooks/useBreathPhase.js
+workbox-ca84f546.js:44 workbox Precaching did not find a match for /src/features/meditation/hooks/useTimer.js
+workbox-ca84f546.js:44 workbox No route found for: /src/features/meditation/hooks/useTimer.js
+workbox-ca84f546.js:44 workbox Precaching did not find a match for /src/features/meditation/hooks/useActivityTracking.js
+workbox-ca84f546.js:44 workbox No route found for: /src/features/meditation/hooks/useActivityTracking.js
+workbox-ca84f546.js:44 workbox Precaching did not find a match for /src/config/secure-firebase.js
+workbox-ca84f546.js:44 workbox No route found for: /src/config/secure-firebase.js
+workbox-ca84f546.js:44 workbox Precaching did not find a match for /src/hooks/useBackgroundDataLoader.js?t=1774023921830
+workbox-ca84f546.js:44 workbox No route found for: /src/hooks/useBackgroundDataLoader.js?t=1774023921830
+workbox-ca84f546.js:44 workbox Precaching did not find a match for /src/services/uiDataService.js
+workbox-ca84f546.js:44 workbox No route found for: /src/services/uiDataService.js
+workbox-ca84f546.js:44 workbox Precaching did not find a match for /src/locales/sk.json?import
+workbox-ca84f546.js:44 workbox No route found for: /src/locales/sk.json?import
+workbox-ca84f546.js:44 workbox Precaching did not find a match for /src/locales/cz.json?import
+workbox-ca84f546.js:44 workbox No route found for: /src/locales/cz.json?import
+workbox-ca84f546.js:44 workbox Precaching did not find a match for /src/locales/en.json?import
+workbox-ca84f546.js:44 workbox No route found for: /src/locales/en.json?import
+workbox-ca84f546.js:44 workbox Precaching did not find a match for /src/data/themes.js
+workbox-ca84f546.js:44 workbox No route found for: /src/data/themes.js
+workbox-ca84f546.js:44 workbox Precaching did not find a match for /src/services/cacheServiceRefactored.js?t=1774023716666
+workbox-ca84f546.js:44 workbox No route found for: /src/services/cacheServiceRefactored.js?t=1774023716666
+workbox-ca84f546.js:44 workbox Precaching did not find a match for /src/services/authService.js
+workbox-ca84f546.js:44 workbox No route found for: /src/services/authService.js
+workbox-ca84f546.js:44 workbox Precaching did not find a match for /src/services/userSettingsService.js
+workbox-ca84f546.js:44 workbox No route found for: /src/services/userSettingsService.js
+workbox-ca84f546.js:44 workbox Precaching did not find a match for /src/services/subscriptionService.js
+workbox-ca84f546.js:44 workbox No route found for: /src/services/subscriptionService.js
+workbox-ca84f546.js:44 workbox Precaching did not find a match for /src/services/activityHistoryService.js
+workbox-ca84f546.js:44 workbox No route found for: /src/services/activityHistoryService.js
+workbox-ca84f546.js:44 workbox Precaching did not find a match for /src/utils/error-handler.js
+workbox-ca84f546.js:44 workbox No route found for: /src/utils/error-handler.js
+workbox-ca84f546.js:44 workbox Precaching did not find a match for /src/components/UserProfile.jsx
+workbox-ca84f546.js:44 workbox No route found for: /src/components/UserProfile.jsx
+workbox-ca84f546.js:44 workbox Precaching did not find a match for /src/assets/flags/003-slovakia.svg?import
+workbox-ca84f546.js:44 workbox No route found for: /src/assets/flags/003-slovakia.svg?import
+workbox-ca84f546.js:44 workbox Precaching did not find a match for /src/assets/flags/002-czech-republic.svg?import
+workbox-ca84f546.js:44 workbox No route found for: /src/assets/flags/002-czech-republic.svg?import
+workbox-ca84f546.js:44 workbox Precaching did not find a match for /src/assets/flags/001-united-kingdom.svg?import
+workbox-ca84f546.js:44 workbox No route found for: /src/assets/flags/001-united-kingdom.svg?import
+workbox-ca84f546.js:44 workbox Precaching did not find a match for /src/stores/userPrefsStore.js
+workbox-ca84f546.js:44 workbox No route found for: /src/stores/userPrefsStore.js
+workbox-ca84f546.js:44 workbox Precaching did not find a match for /src/config/animations.js
+workbox-ca84f546.js:44 workbox No route found for: /src/config/animations.js
+workbox-ca84f546.js:44 workbox Precaching did not find a match for /src/stores/meditationStore.js
+workbox-ca84f546.js:44 workbox No route found for: /src/stores/meditationStore.js
+workbox-ca84f546.js:44 workbox Precaching did not find a match for /src/features/audio/hooks/useFirebaseHudbaFilter.js?t=1774023716666
+workbox-ca84f546.js:44 workbox No route found for: /src/features/audio/hooks/useFirebaseHudbaFilter.js?t=1774023716666
+workbox-ca84f546.js:44 workbox Precaching did not find a match for /src/services/fastMetadataService.js?t=1774023716666
+workbox-ca84f546.js:44 workbox No route found for: /src/services/fastMetadataService.js?t=1774023716666
+workbox-ca84f546.js:44 workbox Precaching did not find a match for /src/services/realtimeMetadataService.js?t=1774023716666
+workbox-ca84f546.js:44 workbox No route found for: /src/services/realtimeMetadataService.js?t=1774023716666
+workbox-ca84f546.js:44 workbox Precaching did not find a match for /src/utils/breathPhase.js
+workbox-ca84f546.js:44 workbox No route found for: /src/utils/breathPhase.js
+workbox-ca84f546.js:44 workbox Precaching did not find a match for /src/services/initializationManager.js?t=1774023716666
+workbox-ca84f546.js:44 workbox No route found for: /src/services/initializationManager.js?t=1774023716666
+workbox-ca84f546.js:44 workbox Precaching did not find a match for /src/services/serviceRegistry.js?t=1774023716666
+workbox-ca84f546.js:44 workbox No route found for: /src/services/serviceRegistry.js?t=1774023716666
+workbox-ca84f546.js:44 workbox Precaching did not find a match for /src/services/cache/index.js
+workbox-ca84f546.js:44 workbox No route found for: /src/services/cache/index.js
+workbox-ca84f546.js:44 workbox Precaching did not find a match for /src/utils/hudbaParser.js
+workbox-ca84f546.js:44 workbox No route found for: /src/utils/hudbaParser.js
+workbox-ca84f546.js:44 workbox Precaching did not find a match for /src/services/offlineCacheService.js
+workbox-ca84f546.js:44 workbox No route found for: /src/services/offlineCacheService.js
+workbox-ca84f546.js:44 workbox Precaching did not find a match for /src/services/slovaDataService.js?t=1774023716666
+workbox-ca84f546.js:44 workbox No route found for: /src/services/slovaDataService.js?t=1774023716666
+workbox-ca84f546.js:44 workbox Precaching did not find a match for /src/services/cache/BaseCache.js
+workbox-ca84f546.js:44 workbox No route found for: /src/services/cache/BaseCache.js
+workbox-ca84f546.js:44 workbox Precaching did not find a match for /src/services/cache/AudioCache.js
+workbox-ca84f546.js:44 workbox No route found for: /src/services/cache/AudioCache.js
+workbox-ca84f546.js:44 workbox Precaching did not find a match for /src/services/cache/MetadataCache.js
+workbox-ca84f546.js:44 workbox No route found for: /src/services/cache/MetadataCache.js
+workbox-ca84f546.js:44 workbox Precaching did not find a match for /src/services/cache/FirebaseCache.js
+workbox-ca84f546.js:44 workbox No route found for: /src/services/cache/FirebaseCache.js
+workbox-ca84f546.js:44 workbox Precaching did not find a match for /src/services/cache/ImageCache.js
+workbox-ca84f546.js:44 workbox No route found for: /src/services/cache/ImageCache.js
+chunk-NXESFFTV.js?v=3b6fe29c:21609 Download the React DevTools for a better development experience: https://reactjs.org/link/react-devtools
+secure-firebase.js:90 🗄️ Realtime Database: Using production database
+secure-firebase.js:126 🔥 Firebase initialized successfully
+secure-firebase.js:127 📊 Services available: {auth: true, firestore: true, storage: true, database: true, appCheck: false}
+workbox-ca84f546.js:44 workbox Precaching did not find a match for /src/utils/updateFirebaseTranslationsHelper.js
+workbox-ca84f546.js:44 workbox No route found for: /src/utils/updateFirebaseTranslationsHelper.js
+workbox-ca84f546.js:44 workbox Precaching did not find a match for /src/features/meditation/screens/IntroScreen.jsx?t=1774023716666
+workbox-ca84f546.js:44 workbox No route found for: /src/features/meditation/screens/IntroScreen.jsx?t=1774023716666
+workbox-ca84f546.js:44 workbox Precaching did not find a match for /src/assets/flags/meditatebody.svg?import
+workbox-ca84f546.js:44 workbox No route found for: /src/assets/flags/meditatebody.svg?import
+workbox-ca84f546.js:44 workbox Workbox Router only supports URLs that start with 'http'.
+content.js:11 [Voice Assistant v2] Content script v2 loaded
+workbox-ca84f546.js:44 workbox Precaching did not find a match for /node_modules/@fontsource/petrona/files/petrona-latin-400-normal.woff2
+workbox-ca84f546.js:44 workbox No route found for: /node_modules/@fontsource/petrona/files/petrona-latin-400-normal.woff2
+workbox-ca84f546.js:44 workbox Precaching did not find a match for /src/scripts/consoleDbViewer.js
+workbox-ca84f546.js:44 workbox No route found for: /src/scripts/consoleDbViewer.js
+workbox-ca84f546.js:44 workbox Precaching did not find a match for /src/assets/flags/meditatebody.svg
+workbox-ca84f546.js:44 workbox No route found for: /src/assets/flags/meditatebody.svg
+workbox-ca84f546.js:44 workbox Precaching did not find a match for https://firebasestorage.googleapis.com/v0/b/meditations-audio.firebasestorage.app/o/background%2Fpexels-ahmetyuksek-30623134.jpg?alt=media&token=b907097d-8aa4-42e4-9eeb-8550aef9da11
+workbox-ca84f546.js:44 workbox Router is responding to: https://firebasestorage.googleapis.com/v0/b/meditations-audio.firebasestorage.app/o/background%2Fpexels-ahmetyuksek-30623134.jpg?alt=media&token=b907097d-8aa4-42e4-9eeb-8550aef9da11
+workbox-ca84f546.js:44 workbox Precaching did not find a match for /node_modules/@fontsource/quicksand/files/quicksand-latin-300-normal.woff2
+workbox-ca84f546.js:44 workbox No route found for: /node_modules/@fontsource/quicksand/files/quicksand-latin-300-normal.woff2
+workbox-ca84f546.js:44 workbox Precaching did not find a match for /node_modules/@fontsource/quicksand/files/quicksand-latin-400-normal.woff2
+workbox-ca84f546.js:44 workbox No route found for: /node_modules/@fontsource/quicksand/files/quicksand-latin-400-normal.woff2
+workbox-ca84f546.js:44 workbox Found a cached response in 'meditation-audio'.
+workbox-ca84f546.js:44 workbox Using CacheFirst to respond to 'https://firebasestorage.googleapis.com/v0/b/meditations-audio.firebasestorage.app/o/background%2Fpexels-ahmetyuksek-30623134.jpg?alt=media&token=b907097d-8aa4-42e4-9eeb-8550aef9da11'
+workbox-ca84f546.js:44 View the final response here.
+workbox-ca84f546.js:44 workbox Cache expiration ran and found no entries to remove.
+workbox-ca84f546.js:44 workbox No route found for: https://identitytoolkit.googleapis.com/v1/accounts:lookup?key=AIzaSyC6vt1srBjcFkMzo-foYRkYaxiYo4qI0B8
+workbox-ca84f546.js:44 workbox Precaching did not find a match for /vite.svg
+workbox-ca84f546.js:44 workbox No route found for: /vite.svg
+workbox-ca84f546.js:44 workbox Precaching did not find a match for /icon-192x192.svg
+workbox-ca84f546.js:44 workbox No route found for: /icon-192x192.svg
+workbox-ca84f546.js:44 workbox No route found for: https://securetoken.googleapis.com/v1/token?key=AIzaSyC6vt1srBjcFkMzo-foYRkYaxiYo4qI0B8
+workbox-ca84f546.js:44 workbox Precaching did not find a match for https://firebasestorage.googleapis.com/v0/b/meditations-audio.firebasestorage.app/o?prefix=background%2F&delimiter=%2F
+workbox-ca84f546.js:44 workbox Router is responding to: https://firebasestorage.googleapis.com/v0/b/meditations-audio.firebasestorage.app/o?prefix=background%2F&delimiter=%2F
+workbox-ca84f546.js:44 workbox Found a cached response in 'meditation-audio'.
+workbox-ca84f546.js:44 workbox Using CacheFirst to respond to 'https://firebasestorage.googleapis.com/v0/b/meditations-audio.firebasestorage.app/o?prefix=background%2F&delimiter=%2F'
+workbox-ca84f546.js:44 View the final response here.
+workbox-ca84f546.js:44 workbox Cache expiration ran and found no entries to remove.
+workbox-ca84f546.js:44 workbox No route found for: https://firestore.googleapis.com/google.firestore.v1.Firestore/Listen/channel?VER=8&database=projects%2Fmeditations-audio%2Fdatabases%2F(default)&RID=77167&CVER=22&X-HTTP-Session-Id=gsessionid&zx=lmvkmof81120&t=1
+workbox-ca84f546.js:44 workbox Precaching did not find a match for https://firestore.googleapis.com/google.firestore.v1.Firestore/Listen/channel?gsessionid=HQBBblxYfN8LTi5QOBGKhKM_iSbVRTLRw_1_7STEgukxkOeLzrz2xA&VER=8&database=projects%2Fmeditations-audio%2Fdatabases%2F(default)&RID=rpc&SID=GpcYHLXi8RnRin9jWx1TEA&AID=0&CI=0&TYPE=xmlhttp&zx=z90vksf9zdqd&t=1
+workbox-ca84f546.js:44 workbox No route found for: https://firestore.googleapis.com/google.firestore.v1.Firestore/Listen/channel?gsessionid=HQBBblxYfN8LTi5QOBGKhKM_iSbVRTLRw_1_7STEgukxkOeLzrz2xA&VER=8&database=projects%2Fmeditations-audio%2Fdatabases%2F(default)&RID=rpc&SID=GpcYHLXi8RnRin9jWx1TEA&AID=0&CI=0&TYPE=xmlhttp&zx=z90vksf9zdqd&t=1
+workbox-ca84f546.js:44 workbox Precaching did not find a match for https://firestore.googleapis.com/google.firestore.v1.Firestore/Listen/channel?gsessionid=HQBBblxYfN8LTi5QOBGKhKM_iSbVRTLRw_1_7STEgukxkOeLzrz2xA&VER=8&database=projects%2Fmeditations-audio%2Fdatabases%2F(default)&RID=rpc&SID=GpcYHLXi8RnRin9jWx1TEA&AID=0&CI=1&TYPE=xmlhttp&zx=8mlarq3zdhlm&t=1
+workbox-ca84f546.js:44 workbox No route found for: https://firestore.googleapis.com/google.firestore.v1.Firestore/Listen/channel?gsessionid=HQBBblxYfN8LTi5QOBGKhKM_iSbVRTLRw_1_7STEgukxkOeLzrz2xA&VER=8&database=projects%2Fmeditations-audio%2Fdatabases%2F(default)&RID=rpc&SID=GpcYHLXi8RnRin9jWx1TEA&AID=0&CI=1&TYPE=xmlhttp&zx=8mlarq3zdhlm&t=1
+workbox-ca84f546.js:44 workbox Precaching did not find a match for https://firestore.googleapis.com/google.firestore.v1.Firestore/Listen/channel?gsessionid=HQBBblxYfN8LTi5QOBGKhKM_iSbVRTLRw_1_7STEgukxkOeLzrz2xA&VER=8&database=projects%2Fmeditations-audio%2Fdatabases%2F(default)&RID=rpc&SID=GpcYHLXi8RnRin9jWx1TEA&AID=6&CI=1&TYPE=xmlhttp&zx=ipcri6tprt07&t=1
+workbox-ca84f546.js:44 workbox No route found for: https://firestore.googleapis.com/google.firestore.v1.Firestore/Listen/channel?gsessionid=HQBBblxYfN8LTi5QOBGKhKM_iSbVRTLRw_1_7STEgukxkOeLzrz2xA&VER=8&database=projects%2Fmeditations-audio%2Fdatabases%2F(default)&RID=rpc&SID=GpcYHLXi8RnRin9jWx1TEA&AID=6&CI=1&TYPE=xmlhttp&zx=ipcri6tprt07&t=1
+workbox-ca84f546.js:44 workbox No route found for: https://firestore.googleapis.com/google.firestore.v1.Firestore/Listen/channel?VER=8&database=projects%2Fmeditations-audio%2Fdatabases%2F(default)&gsessionid=HQBBblxYfN8LTi5QOBGKhKM_iSbVRTLRw_1_7STEgukxkOeLzrz2xA&SID=GpcYHLXi8RnRin9jWx1TEA&RID=77168&AID=6&zx=yr0lp2ld6e0p&t=1
+workbox-ca84f546.js:44 workbox No route found for: https://firestore.googleapis.com/google.firestore.v1.Firestore/Listen/channel?VER=8&database=projects%2Fmeditations-audio%2Fdatabases%2F(default)&gsessionid=HQBBblxYfN8LTi5QOBGKhKM_iSbVRTLRw_1_7STEgukxkOeLzrz2xA&SID=GpcYHLXi8RnRin9jWx1TEA&RID=77169&AID=6&zx=gfw8lgpmfp8i&t=1
+workbox-ca84f546.js:44 workbox Precaching did not find a match for https://firestore.googleapis.com/google.firestore.v1.Firestore/Listen/channel?gsessionid=HQBBblxYfN8LTi5QOBGKhKM_iSbVRTLRw_1_7STEgukxkOeLzrz2xA&VER=8&database=projects%2Fmeditations-audio%2Fdatabases%2F(default)&RID=rpc&SID=GpcYHLXi8RnRin9jWx1TEA&AID=7&CI=1&TYPE=xmlhttp&zx=2ikpufiukv3j&t=1
+workbox-ca84f546.js:44 workbox No route found for: https://firestore.googleapis.com/google.firestore.v1.Firestore/Listen/channel?gsessionid=HQBBblxYfN8LTi5QOBGKhKM_iSbVRTLRw_1_7STEgukxkOeLzrz2xA&VER=8&database=projects%2Fmeditations-audio%2Fdatabases%2F(default)&RID=rpc&SID=GpcYHLXi8RnRin9jWx1TEA&AID=7&CI=1&TYPE=xmlhttp&zx=2ikpufiukv3j&t=1
+workbox-ca84f546.js:44 workbox Precaching did not find a match for https://firestore.googleapis.com/google.firestore.v1.Firestore/Listen/channel?gsessionid=HQBBblxYfN8LTi5QOBGKhKM_iSbVRTLRw_1_7STEgukxkOeLzrz2xA&VER=8&database=projects%2Fmeditations-audio%2Fdatabases%2F(default)&RID=rpc&SID=GpcYHLXi8RnRin9jWx1TEA&AID=10&CI=1&TYPE=xmlhttp&zx=njqa3o775rjo&t=1
+workbox-ca84f546.js:44 workbox No route found for: https://firestore.googleapis.com/google.firestore.v1.Firestore/Listen/channel?gsessionid=HQBBblxYfN8LTi5QOBGKhKM_iSbVRTLRw_1_7STEgukxkOeLzrz2xA&VER=8&database=projects%2Fmeditations-audio%2Fdatabases%2F(default)&RID=rpc&SID=GpcYHLXi8RnRin9jWx1TEA&AID=10&CI=1&TYPE=xmlhttp&zx=njqa3o775rjo&t=1
+workbox-ca84f546.js:44 workbox No route found for: https://firestore.googleapis.com/google.firestore.v1.Firestore/Listen/channel?VER=8&database=projects%2Fmeditations-audio%2Fdatabases%2F(default)&gsessionid=HQBBblxYfN8LTi5QOBGKhKM_iSbVRTLRw_1_7STEgukxkOeLzrz2xA&SID=GpcYHLXi8RnRin9jWx1TEA&RID=77170&AID=10&zx=frveijsoq6wy&t=1
+workbox-ca84f546.js:44 workbox No route found for: https://firestore.googleapis.com/google.firestore.v1.Firestore/Write/channel?VER=8&database=projects%2Fmeditations-audio%2Fdatabases%2F(default)&RID=92221&CVER=22&X-HTTP-Session-Id=gsessionid&zx=1iu2v6sh66c8&t=1
+workbox-ca84f546.js:44 workbox Precaching did not find a match for https://firestore.googleapis.com/google.firestore.v1.Firestore/Listen/channel?gsessionid=HQBBblxYfN8LTi5QOBGKhKM_iSbVRTLRw_1_7STEgukxkOeLzrz2xA&VER=8&database=projects%2Fmeditations-audio%2Fdatabases%2F(default)&RID=rpc&SID=GpcYHLXi8RnRin9jWx1TEA&AID=13&CI=1&TYPE=xmlhttp&zx=ewafq8r24trv&t=1
+workbox-ca84f546.js:44 workbox No route found for: https://firestore.googleapis.com/google.firestore.v1.Firestore/Listen/channel?gsessionid=HQBBblxYfN8LTi5QOBGKhKM_iSbVRTLRw_1_7STEgukxkOeLzrz2xA&VER=8&database=projects%2Fmeditations-audio%2Fdatabases%2F(default)&RID=rpc&SID=GpcYHLXi8RnRin9jWx1TEA&AID=13&CI=1&TYPE=xmlhttp&zx=ewafq8r24trv&t=1
+workbox-ca84f546.js:44 workbox Precaching did not find a match for https://firestore.googleapis.com/google.firestore.v1.Firestore/Write/channel?gsessionid=BFH3NpDkxfuvMk7hRX04ONm9017U8IJVL3PjuhbX9N6u_KgKKqpo1g&VER=8&database=projects%2Fmeditations-audio%2Fdatabases%2F(default)&RID=rpc&SID=vUVWbzu891wXkjoR9XvH4g&AID=0&CI=0&TYPE=xmlhttp&zx=gc4u0i1bymk7&t=1
+workbox-ca84f546.js:44 workbox No route found for: https://firestore.googleapis.com/google.firestore.v1.Firestore/Write/channel?gsessionid=BFH3NpDkxfuvMk7hRX04ONm9017U8IJVL3PjuhbX9N6u_KgKKqpo1g&VER=8&database=projects%2Fmeditations-audio%2Fdatabases%2F(default)&RID=rpc&SID=vUVWbzu891wXkjoR9XvH4g&AID=0&CI=0&TYPE=xmlhttp&zx=gc4u0i1bymk7&t=1
+workbox-ca84f546.js:44 workbox No route found for: https://firestore.googleapis.com/google.firestore.v1.Firestore/Write/channel?VER=8&database=projects%2Fmeditations-audio%2Fdatabases%2F(default)&gsessionid=BFH3NpDkxfuvMk7hRX04ONm9017U8IJVL3PjuhbX9N6u_KgKKqpo1g&SID=vUVWbzu891wXkjoR9XvH4g&RID=92222&AID=1&zx=kqmueiiq8uns&t=1
+workbox-ca84f546.js:44 workbox No route found for: https://firestore.googleapis.com/google.firestore.v1.Firestore/Listen/channel?VER=8&database=projects%2Fmeditations-audio%2Fdatabases%2F(default)&gsessionid=HQBBblxYfN8LTi5QOBGKhKM_iSbVRTLRw_1_7STEgukxkOeLzrz2xA&SID=GpcYHLXi8RnRin9jWx1TEA&RID=77171&AID=14&zx=yk1q8fwb34my&t=1
+workbox-ca84f546.js:44 workbox Precaching did not find a match for /src/features/meditation/screens/HomeScreen.jsx?t=1774023921830
+workbox-ca84f546.js:44 workbox No route found for: /src/features/meditation/screens/HomeScreen.jsx?t=1774023921830
+workbox-ca84f546.js:44 workbox Precaching did not find a match for https://lh3.googleusercontent.com/a/ACg8ocLndguL6ekOlh7VGe341nXgqAlY1omLUGzCtH-YRQZoW_kxokLr4Q=s96-c
+workbox-ca84f546.js:44 workbox No route found for: https://lh3.googleusercontent.com/a/ACg8ocLndguL6ekOlh7VGe341nXgqAlY1omLUGzCtH-YRQZoW_kxokLr4Q=s96-c
+workbox-ca84f546.js:44 workbox Precaching did not find a match for /src/components/index.js?t=1774023921830
+workbox-ca84f546.js:44 workbox No route found for: /src/components/index.js?t=1774023921830
+workbox-ca84f546.js:44 workbox Precaching did not find a match for /src/hooks/index.js?t=1774023921830
+workbox-ca84f546.js:44 workbox No route found for: /src/hooks/index.js?t=1774023921830
+workbox-ca84f546.js:44 workbox Precaching did not find a match for /src/components/AnimatedText.jsx
+workbox-ca84f546.js:44 workbox No route found for: /src/components/AnimatedText.jsx
+workbox-ca84f546.js:44 workbox Precaching did not find a match for /src/components/ArrowPrewIcon.jsx
+workbox-ca84f546.js:44 workbox No route found for: /src/components/ArrowPrewIcon.jsx
+workbox-ca84f546.js:44 workbox Precaching did not find a match for /src/components/ArrowRewIcon.jsx
+workbox-ca84f546.js:44 workbox No route found for: /src/components/ArrowRewIcon.jsx
+workbox-ca84f546.js:44 workbox Precaching did not find a match for /src/components/BackButton.jsx
+workbox-ca84f546.js:44 workbox No route found for: /src/components/BackButton.jsx
+workbox-ca84f546.js:44 workbox Precaching did not find a match for /src/components/FramerButton.jsx
+workbox-ca84f546.js:44 workbox No route found for: /src/components/FramerButton.jsx
+workbox-ca84f546.js:44 workbox Precaching did not find a match for /src/components/FramerMeditationCircle.jsx?t=1774023716666
+workbox-ca84f546.js:44 workbox No route found for: /src/components/FramerMeditationCircle.jsx?t=1774023716666
+workbox-ca84f546.js:44 workbox Precaching did not find a match for /src/components/FramerPageTransition.jsx
+workbox-ca84f546.js:44 workbox No route found for: /src/components/FramerPageTransition.jsx
+workbox-ca84f546.js:44 workbox Precaching did not find a match for /src/components/FramerSection.jsx
+workbox-ca84f546.js:44 workbox No route found for: /src/components/FramerSection.jsx
+workbox-ca84f546.js:44 workbox Precaching did not find a match for /src/components/SimpleLoading.jsx?t=1774023716666
+workbox-ca84f546.js:44 workbox No route found for: /src/components/SimpleLoading.jsx?t=1774023716666
+workbox-ca84f546.js:44 workbox Precaching did not find a match for /src/components/SoundThemeGallery.jsx?t=1774023716666
+workbox-ca84f546.js:44 workbox No route found for: /src/components/SoundThemeGallery.jsx?t=1774023716666
+workbox-ca84f546.js:44 workbox Precaching did not find a match for /src/components/ThemeSelector.jsx?t=1774023716666
+workbox-ca84f546.js:44 workbox No route found for: /src/components/ThemeSelector.jsx?t=1774023716666
+workbox-ca84f546.js:44 workbox Precaching did not find a match for /src/components/ThemedContainer.jsx?t=1774023716666
+workbox-ca84f546.js:44 workbox No route found for: /src/components/ThemedContainer.jsx?t=1774023716666
+workbox-ca84f546.js:44 workbox Precaching did not find a match for /src/components/SectionCard.jsx?t=1774023921830
+workbox-ca84f546.js:44 workbox No route found for: /src/components/SectionCard.jsx?t=1774023921830
+workbox-ca84f546.js:44 workbox Precaching did not find a match for /src/components/WheelPicker.jsx
+workbox-ca84f546.js:44 workbox No route found for: /src/components/WheelPicker.jsx
+workbox-ca84f546.js:44 workbox Precaching did not find a match for /src/components/TimePickerModal.jsx?t=1774023716666
+workbox-ca84f546.js:44 workbox No route found for: /src/components/TimePickerModal.jsx?t=1774023716666
+workbox-ca84f546.js:44 workbox Precaching did not find a match for /src/hooks/useThemeColors.js?t=1774023716666
+workbox-ca84f546.js:44 workbox No route found for: /src/hooks/useThemeColors.js?t=1774023716666
+workbox-ca84f546.js:44 workbox Precaching did not find a match for /src/components/Waveform.jsx
+workbox-ca84f546.js:44 workbox No route found for: /src/components/Waveform.jsx
+workbox-ca84f546.js:44 workbox Precaching did not find a match for /src/components/ProgressBarColorPicker.jsx?t=1774023716666
+workbox-ca84f546.js:44 workbox No route found for: /src/components/ProgressBarColorPicker.jsx?t=1774023716666
+workbox-ca84f546.js:44 workbox Precaching did not find a match for https://firestore.googleapis.com/google.firestore.v1.Firestore/Listen/channel?gsessionid=HQBBblxYfN8LTi5QOBGKhKM_iSbVRTLRw_1_7STEgukxkOeLzrz2xA&VER=8&database=projects%2Fmeditations-audio%2Fdatabases%2F(default)&RID=rpc&SID=GpcYHLXi8RnRin9jWx1TEA&AID=15&CI=1&TYPE=xmlhttp&zx=18rnypqs0voi&t=1
+workbox-ca84f546.js:44 workbox No route found for: https://firestore.googleapis.com/google.firestore.v1.Firestore/Listen/channel?gsessionid=HQBBblxYfN8LTi5QOBGKhKM_iSbVRTLRw_1_7STEgukxkOeLzrz2xA&VER=8&database=projects%2Fmeditations-audio%2Fdatabases%2F(default)&RID=rpc&SID=GpcYHLXi8RnRin9jWx1TEA&AID=15&CI=1&TYPE=xmlhttp&zx=18rnypqs0voi&t=1
+workbox-ca84f546.js:44 workbox Precaching did not find a match for /src/utils/colorUtils.js
+workbox-ca84f546.js:44 workbox No route found for: /src/utils/colorUtils.js
+workbox-ca84f546.js:44 workbox Precaching did not find a match for https://firestore.googleapis.com/google.firestore.v1.Firestore/Listen/channel?gsessionid=HQBBblxYfN8LTi5QOBGKhKM_iSbVRTLRw_1_7STEgukxkOeLzrz2xA&VER=8&database=projects%2Fmeditations-audio%2Fdatabases%2F(default)&RID=rpc&SID=GpcYHLXi8RnRin9jWx1TEA&AID=19&CI=1&TYPE=xmlhttp&zx=llq4dn29ok7t&t=1
+workbox-ca84f546.js:44 workbox No route found for: https://firestore.googleapis.com/google.firestore.v1.Firestore/Listen/channel?gsessionid=HQBBblxYfN8LTi5QOBGKhKM_iSbVRTLRw_1_7STEgukxkOeLzrz2xA&VER=8&database=projects%2Fmeditations-audio%2Fdatabases%2F(default)&RID=rpc&SID=GpcYHLXi8RnRin9jWx1TEA&AID=19&CI=1&TYPE=xmlhttp&zx=llq4dn29ok7t&t=1
+workbox-ca84f546.js:44 workbox No route found for: https://firestore.googleapis.com/google.firestore.v1.Firestore/Listen/channel?VER=8&database=projects%2Fmeditations-audio%2Fdatabases%2F(default)&gsessionid=HQBBblxYfN8LTi5QOBGKhKM_iSbVRTLRw_1_7STEgukxkOeLzrz2xA&SID=GpcYHLXi8RnRin9jWx1TEA&RID=77172&AID=19&zx=7gys53qciyqu&t=1
+workbox-ca84f546.js:44 workbox No route found for: https://firestore.googleapis.com/google.firestore.v1.Firestore/Listen/channel?VER=8&database=projects%2Fmeditations-audio%2Fdatabases%2F(default)&gsessionid=HQBBblxYfN8LTi5QOBGKhKM_iSbVRTLRw_1_7STEgukxkOeLzrz2xA&SID=GpcYHLXi8RnRin9jWx1TEA&RID=77173&AID=19&zx=3n3vmmtm8p8p&t=1
+workbox-ca84f546.js:44 workbox Precaching did not find a match for https://firestore.googleapis.com/google.firestore.v1.Firestore/Listen/channel?gsessionid=HQBBblxYfN8LTi5QOBGKhKM_iSbVRTLRw_1_7STEgukxkOeLzrz2xA&VER=8&database=projects%2Fmeditations-audio%2Fdatabases%2F(default)&RID=rpc&SID=GpcYHLXi8RnRin9jWx1TEA&AID=21&CI=1&TYPE=xmlhttp&zx=26aq8qxqda30&t=1
+workbox-ca84f546.js:44 workbox No route found for: https://firestore.googleapis.com/google.firestore.v1.Firestore/Listen/channel?gsessionid=HQBBblxYfN8LTi5QOBGKhKM_iSbVRTLRw_1_7STEgukxkOeLzrz2xA&VER=8&database=projects%2Fmeditations-audio%2Fdatabases%2F(default)&RID=rpc&SID=GpcYHLXi8RnRin9jWx1TEA&AID=21&CI=1&TYPE=xmlhttp&zx=26aq8qxqda30&t=1
+workbox-ca84f546.js:44 workbox Precaching did not find a match for https://firestore.googleapis.com/google.firestore.v1.Firestore/Listen/channel?gsessionid=HQBBblxYfN8LTi5QOBGKhKM_iSbVRTLRw_1_7STEgukxkOeLzrz2xA&VER=8&database=projects%2Fmeditations-audio%2Fdatabases%2F(default)&RID=rpc&SID=GpcYHLXi8RnRin9jWx1TEA&AID=23&CI=1&TYPE=xmlhttp&zx=ewcj80ttu2kj&t=1
+workbox-ca84f546.js:44 workbox No route found for: https://firestore.googleapis.com/google.firestore.v1.Firestore/Listen/channel?gsessionid=HQBBblxYfN8LTi5QOBGKhKM_iSbVRTLRw_1_7STEgukxkOeLzrz2xA&VER=8&database=projects%2Fmeditations-audio%2Fdatabases%2F(default)&RID=rpc&SID=GpcYHLXi8RnRin9jWx1TEA&AID=23&CI=1&TYPE=xmlhttp&zx=ewcj80ttu2kj&t=1
+workbox-ca84f546.js:44 workbox No route found for: https://firestore.googleapis.com/google.firestore.v1.Firestore/Listen/channel?VER=8&database=projects%2Fmeditations-audio%2Fdatabases%2F(default)&gsessionid=HQBBblxYfN8LTi5QOBGKhKM_iSbVRTLRw_1_7STEgukxkOeLzrz2xA&SID=GpcYHLXi8RnRin9jWx1TEA&RID=77174&AID=23&zx=v84s0wc2y4og&t=1
+workbox-ca84f546.js:44 workbox No route found for: https://firestore.googleapis.com/google.firestore.v1.Firestore/Write/channel?VER=8&database=projects%2Fmeditations-audio%2Fdatabases%2F(default)&gsessionid=BFH3NpDkxfuvMk7hRX04ONm9017U8IJVL3PjuhbX9N6u_KgKKqpo1g&SID=vUVWbzu891wXkjoR9XvH4g&RID=92223&AID=2&zx=ou8xaduairw&t=1
+workbox-ca84f546.js:44 workbox Precaching did not find a match for https://firestore.googleapis.com/google.firestore.v1.Firestore/Listen/channel?gsessionid=HQBBblxYfN8LTi5QOBGKhKM_iSbVRTLRw_1_7STEgukxkOeLzrz2xA&VER=8&database=projects%2Fmeditations-audio%2Fdatabases%2F(default)&RID=rpc&SID=GpcYHLXi8RnRin9jWx1TEA&AID=26&CI=1&TYPE=xmlhttp&zx=5q0bx1bwqafc&t=1
+workbox-ca84f546.js:44 workbox No route found for: https://firestore.googleapis.com/google.firestore.v1.Firestore/Listen/channel?gsessionid=HQBBblxYfN8LTi5QOBGKhKM_iSbVRTLRw_1_7STEgukxkOeLzrz2xA&VER=8&database=projects%2Fmeditations-audio%2Fdatabases%2F(default)&RID=rpc&SID=GpcYHLXi8RnRin9jWx1TEA&AID=26&CI=1&TYPE=xmlhttp&zx=5q0bx1bwqafc&t=1
+workbox-ca84f546.js:44 workbox No route found for: https://firestore.googleapis.com/google.firestore.v1.Firestore/Listen/channel?VER=8&database=projects%2Fmeditations-audio%2Fdatabases%2F(default)&gsessionid=HQBBblxYfN8LTi5QOBGKhKM_iSbVRTLRw_1_7STEgukxkOeLzrz2xA&SID=GpcYHLXi8RnRin9jWx1TEA&RID=77175&AID=26&zx=j3yywdju4rg2&t=1
+workbox-ca84f546.js:44 workbox Precaching did not find a match for https://firestore.googleapis.com/google.firestore.v1.Firestore/Listen/channel?gsessionid=HQBBblxYfN8LTi5QOBGKhKM_iSbVRTLRw_1_7STEgukxkOeLzrz2xA&VER=8&database=projects%2Fmeditations-audio%2Fdatabases%2F(default)&RID=rpc&SID=GpcYHLXi8RnRin9jWx1TEA&AID=28&CI=1&TYPE=xmlhttp&zx=rgl6tz8w2bpt&t=1
+workbox-ca84f546.js:44 workbox No route found for: https://firestore.googleapis.com/google.firestore.v1.Firestore/Listen/channel?gsessionid=HQBBblxYfN8LTi5QOBGKhKM_iSbVRTLRw_1_7STEgukxkOeLzrz2xA&VER=8&database=projects%2Fmeditations-audio%2Fdatabases%2F(default)&RID=rpc&SID=GpcYHLXi8RnRin9jWx1TEA&AID=28&CI=1&TYPE=xmlhttp&zx=rgl6tz8w2bpt&t=1
+workbox-ca84f546.js:44 workbox Precaching did not find a match for https://firestore.googleapis.com/google.firestore.v1.Firestore/Listen/channel?gsessionid=HQBBblxYfN8LTi5QOBGKhKM_iSbVRTLRw_1_7STEgukxkOeLzrz2xA&VER=8&database=projects%2Fmeditations-audio%2Fdatabases%2F(default)&RID=rpc&SID=GpcYHLXi8RnRin9jWx1TEA&AID=32&CI=1&TYPE=xmlhttp&zx=3hceuhiwghrz&t=1
+workbox-ca84f546.js:44 workbox No route found for: https://firestore.googleapis.com/google.firestore.v1.Firestore/Listen/channel?gsessionid=HQBBblxYfN8LTi5QOBGKhKM_iSbVRTLRw_1_7STEgukxkOeLzrz2xA&VER=8&database=projects%2Fmeditations-audio%2Fdatabases%2F(default)&RID=rpc&SID=GpcYHLXi8RnRin9jWx1TEA&AID=32&CI=1&TYPE=xmlhttp&zx=3hceuhiwghrz&t=1
+workbox-ca84f546.js:44 workbox No route found for: https://firestore.googleapis.com/google.firestore.v1.Firestore/Listen/channel?VER=8&database=projects%2Fmeditations-audio%2Fdatabases%2F(default)&gsessionid=HQBBblxYfN8LTi5QOBGKhKM_iSbVRTLRw_1_7STEgukxkOeLzrz2xA&SID=GpcYHLXi8RnRin9jWx1TEA&RID=77176&AID=32&zx=fuawht54jowt&t=1
+workbox-ca84f546.js:44 workbox No route found for: https://firestore.googleapis.com/google.firestore.v1.Firestore/Listen/channel?VER=8&database=projects%2Fmeditations-audio%2Fdatabases%2F(default)&gsessionid=HQBBblxYfN8LTi5QOBGKhKM_iSbVRTLRw_1_7STEgukxkOeLzrz2xA&SID=GpcYHLXi8RnRin9jWx1TEA&RID=77177&AID=32&zx=oazvv8tgo9q2&t=1
+workbox-ca84f546.js:44 workbox Precaching did not find a match for https://firestore.googleapis.com/google.firestore.v1.Firestore/Listen/channel?gsessionid=HQBBblxYfN8LTi5QOBGKhKM_iSbVRTLRw_1_7STEgukxkOeLzrz2xA&VER=8&database=projects%2Fmeditations-audio%2Fdatabases%2F(default)&RID=rpc&SID=GpcYHLXi8RnRin9jWx1TEA&AID=34&CI=1&TYPE=xmlhttp&zx=o2hpxr8306hw&t=1
+workbox-ca84f546.js:44 workbox No route found for: https://firestore.googleapis.com/google.firestore.v1.Firestore/Listen/channel?gsessionid=HQBBblxYfN8LTi5QOBGKhKM_iSbVRTLRw_1_7STEgukxkOeLzrz2xA&VER=8&database=projects%2Fmeditations-audio%2Fdatabases%2F(default)&RID=rpc&SID=GpcYHLXi8RnRin9jWx1TEA&AID=34&CI=1&TYPE=xmlhttp&zx=o2hpxr8306hw&t=1
+workbox-ca84f546.js:44 workbox Precaching did not find a match for https://firestore.googleapis.com/google.firestore.v1.Firestore/Listen/channel?gsessionid=HQBBblxYfN8LTi5QOBGKhKM_iSbVRTLRw_1_7STEgukxkOeLzrz2xA&VER=8&database=projects%2Fmeditations-audio%2Fdatabases%2F(default)&RID=rpc&SID=GpcYHLXi8RnRin9jWx1TEA&AID=36&CI=1&TYPE=xmlhttp&zx=386kye51qlq4&t=1
+workbox-ca84f546.js:44 workbox No route found for: https://firestore.googleapis.com/google.firestore.v1.Firestore/Listen/channel?gsessionid=HQBBblxYfN8LTi5QOBGKhKM_iSbVRTLRw_1_7STEgukxkOeLzrz2xA&VER=8&database=projects%2Fmeditations-audio%2Fdatabases%2F(default)&RID=rpc&SID=GpcYHLXi8RnRin9jWx1TEA&AID=36&CI=1&TYPE=xmlhttp&zx=386kye51qlq4&t=1
+workbox-ca84f546.js:44 workbox Precaching did not find a match for https://firestore.googleapis.com/google.firestore.v1.Firestore/Listen/channel?gsessionid=HQBBblxYfN8LTi5QOBGKhKM_iSbVRTLRw_1_7STEgukxkOeLzrz2xA&VER=8&database=projects%2Fmeditations-audio%2Fdatabases%2F(default)&RID=rpc&SID=GpcYHLXi8RnRin9jWx1TEA&AID=39&CI=1&TYPE=xmlhttp&zx=fxmpmiy1i5bd&t=1
+workbox-ca84f546.js:44 workbox No route found for: https://firestore.googleapis.com/google.firestore.v1.Firestore/Listen/channel?gsessionid=HQBBblxYfN8LTi5QOBGKhKM_iSbVRTLRw_1_7STEgukxkOeLzrz2xA&VER=8&database=projects%2Fmeditations-audio%2Fdatabases%2F(default)&RID=rpc&SID=GpcYHLXi8RnRin9jWx1TEA&AID=39&CI=1&TYPE=xmlhttp&zx=fxmpmiy1i5bd&t=1
+workbox-ca84f546.js:44 workbox No route found for: https://firestore.googleapis.com/google.firestore.v1.Firestore/Listen/channel?VER=8&database=projects%2Fmeditations-audio%2Fdatabases%2F(default)&gsessionid=HQBBblxYfN8LTi5QOBGKhKM_iSbVRTLRw_1_7STEgukxkOeLzrz2xA&SID=GpcYHLXi8RnRin9jWx1TEA&RID=77178&AID=39&zx=6aeu1dp1jpmx&t=1
+workbox-ca84f546.js:44 workbox No route found for: https://firestore.googleapis.com/google.firestore.v1.Firestore/Write/channel?VER=8&database=projects%2Fmeditations-audio%2Fdatabases%2F(default)&gsessionid=BFH3NpDkxfuvMk7hRX04ONm9017U8IJVL3PjuhbX9N6u_KgKKqpo1g&SID=vUVWbzu891wXkjoR9XvH4g&RID=92224&AID=3&zx=xj5cqcje9odo&t=1
+workbox-ca84f546.js:44 workbox Precaching did not find a match for https://firestore.googleapis.com/google.firestore.v1.Firestore/Listen/channel?gsessionid=HQBBblxYfN8LTi5QOBGKhKM_iSbVRTLRw_1_7STEgukxkOeLzrz2xA&VER=8&database=projects%2Fmeditations-audio%2Fdatabases%2F(default)&RID=rpc&SID=GpcYHLXi8RnRin9jWx1TEA&AID=40&CI=1&TYPE=xmlhttp&zx=sxu98w616k4i&t=1
+workbox-ca84f546.js:44 workbox No route found for: https://firestore.googleapis.com/google.firestore.v1.Firestore/Listen/channel?gsessionid=HQBBblxYfN8LTi5QOBGKhKM_iSbVRTLRw_1_7STEgukxkOeLzrz2xA&VER=8&database=projects%2Fmeditations-audio%2Fdatabases%2F(default)&RID=rpc&SID=GpcYHLXi8RnRin9jWx1TEA&AID=40&CI=1&TYPE=xmlhttp&zx=sxu98w616k4i&t=1
+workbox-ca84f546.js:44 workbox No route found for: https://firestore.googleapis.com/google.firestore.v1.Firestore/Listen/channel?VER=8&database=projects%2Fmeditations-audio%2Fdatabases%2F(default)&gsessionid=HQBBblxYfN8LTi5QOBGKhKM_iSbVRTLRw_1_7STEgukxkOeLzrz2xA&SID=GpcYHLXi8RnRin9jWx1TEA&RID=77179&AID=40&zx=85j72yvzihro&t=1
+workbox-ca84f546.js:44 workbox Precaching did not find a match for https://firestore.googleapis.com/google.firestore.v1.Firestore/Listen/channel?gsessionid=HQBBblxYfN8LTi5QOBGKhKM_iSbVRTLRw_1_7STEgukxkOeLzrz2xA&VER=8&database=projects%2Fmeditations-audio%2Fdatabases%2F(default)&RID=rpc&SID=GpcYHLXi8RnRin9jWx1TEA&AID=42&CI=1&TYPE=xmlhttp&zx=ewpq3c8c9mr8&t=1
+workbox-ca84f546.js:44 workbox No route found for: https://firestore.googleapis.com/google.firestore.v1.Firestore/Listen/channel?gsessionid=HQBBblxYfN8LTi5QOBGKhKM_iSbVRTLRw_1_7STEgukxkOeLzrz2xA&VER=8&database=projects%2Fmeditations-audio%2Fdatabases%2F(default)&RID=rpc&SID=GpcYHLXi8RnRin9jWx1TEA&AID=42&CI=1&TYPE=xmlhttp&zx=ewpq3c8c9mr8&t=1
+workbox-ca84f546.js:44 workbox Precaching did not find a match for https://firestore.googleapis.com/google.firestore.v1.Firestore/Listen/channel?gsessionid=HQBBblxYfN8LTi5QOBGKhKM_iSbVRTLRw_1_7STEgukxkOeLzrz2xA&VER=8&database=projects%2Fmeditations-audio%2Fdatabases%2F(default)&RID=rpc&SID=GpcYHLXi8RnRin9jWx1TEA&AID=113&CI=1&TYPE=xmlhttp&zx=tb8xm52s1evw&t=1
+workbox-ca84f546.js:44 workbox No route found for: https://firestore.googleapis.com/google.firestore.v1.Firestore/Listen/channel?gsessionid=HQBBblxYfN8LTi5QOBGKhKM_iSbVRTLRw_1_7STEgukxkOeLzrz2xA&VER=8&database=projects%2Fmeditations-audio%2Fdatabases%2F(default)&RID=rpc&SID=GpcYHLXi8RnRin9jWx1TEA&AID=113&CI=1&TYPE=xmlhttp&zx=tb8xm52s1evw&t=1
+workbox-ca84f546.js:44 workbox No route found for: https://firestore.googleapis.com/google.firestore.v1.Firestore/Listen/channel?VER=8&database=projects%2Fmeditations-audio%2Fdatabases%2F(default)&gsessionid=HQBBblxYfN8LTi5QOBGKhKM_iSbVRTLRw_1_7STEgukxkOeLzrz2xA&SID=GpcYHLXi8RnRin9jWx1TEA&RID=77180&AID=113&zx=hmunml5juo9q&t=1
+workbox-ca84f546.js:44 workbox Precaching did not find a match for https://firestore.googleapis.com/google.firestore.v1.Firestore/Listen/channel?gsessionid=HQBBblxYfN8LTi5QOBGKhKM_iSbVRTLRw_1_7STEgukxkOeLzrz2xA&VER=8&database=projects%2Fmeditations-audio%2Fdatabases%2F(default)&RID=rpc&SID=GpcYHLXi8RnRin9jWx1TEA&AID=115&CI=1&TYPE=xmlhttp&zx=txid6geowjb5&t=1
+workbox-ca84f546.js:44 workbox No route found for: https://firestore.googleapis.com/google.firestore.v1.Firestore/Listen/channel?gsessionid=HQBBblxYfN8LTi5QOBGKhKM_iSbVRTLRw_1_7STEgukxkOeLzrz2xA&VER=8&database=projects%2Fmeditations-audio%2Fdatabases%2F(default)&RID=rpc&SID=GpcYHLXi8RnRin9jWx1TEA&AID=115&CI=1&TYPE=xmlhttp&zx=txid6geowjb5&t=1
+workbox-ca84f546.js:44 workbox Precaching did not find a match for /src/features/meditation/screens/BreathScreen.jsx?t=1774023921830
+workbox-ca84f546.js:44 workbox No route found for: /src/features/meditation/screens/BreathScreen.jsx?t=1774023921830
+workbox-ca84f546.js:44 workbox Precaching did not find a match for /src/stores/breathStore.js
+workbox-ca84f546.js:44 workbox No route found for: /src/stores/breathStore.js
+workbox-ca84f546.js:44 workbox Precaching did not find a match for /src/features/meditation/components/PreparationSection.jsx?t=1774023921830
+workbox-ca84f546.js:44 workbox No route found for: /src/features/meditation/components/PreparationSection.jsx?t=1774023921830
+workbox-ca84f546.js:44 workbox Precaching did not find a match for /src/features/meditation/components/BreathingSection.jsx?t=1774023921830
+workbox-ca84f546.js:44 workbox No route found for: /src/features/meditation/components/BreathingSection.jsx?t=1774023921830
+workbox-ca84f546.js:44 workbox Precaching did not find a match for /src/features/meditation/components/BreathHeader.jsx?t=1774023716666
+workbox-ca84f546.js:44 workbox No route found for: /src/features/meditation/components/BreathHeader.jsx?t=1774023716666
+workbox-ca84f546.js:44 workbox Precaching did not find a match for /src/features/meditation/components/BreathProgressCircle.jsx?t=1774023716666
+workbox-ca84f546.js:44 workbox No route found for: /src/features/meditation/components/BreathProgressCircle.jsx?t=1774023716666
+workbox-ca84f546.js:44 workbox Precaching did not find a match for /src/features/meditation/components/BreathParameters.jsx?t=1774023921830
+workbox-ca84f546.js:44 workbox No route found for: /src/features/meditation/components/BreathParameters.jsx?t=1774023921830
+workbox-ca84f546.js:44 workbox Precaching did not find a match for /src/features/meditation/components/BreathActionButtons.jsx?t=1774023921830
+workbox-ca84f546.js:44 workbox No route found for: /src/features/meditation/components/BreathActionButtons.jsx?t=1774023921830
+workbox-ca84f546.js:44 workbox Precaching did not find a match for /src/features/audio/components/CircularProgress.jsx?t=1774023716666
+workbox-ca84f546.js:44 workbox No route found for: /src/features/audio/components/CircularProgress.jsx?t=1774023716666
+workbox-ca84f546.js:44 workbox Precaching did not find a match for /src/features/audio/components/CurrentTimeDisplay.jsx
+workbox-ca84f546.js:44 workbox No route found for: /src/features/audio/components/CurrentTimeDisplay.jsx
+workbox-ca84f546.js:44 workbox Precaching did not find a match for /src/features/audio/components/PlayPauseButton.jsx?t=1774023716666
+workbox-ca84f546.js:44 workbox No route found for: /src/features/audio/components/PlayPauseButton.jsx?t=1774023716666
+workbox-ca84f546.js:44 workbox Precaching did not find a match for /src/features/meditation/components/BreathingAnimation.jsx
+workbox-ca84f546.js:44 workbox No route found for: /src/features/meditation/components/BreathingAnimation.jsx
+workbox-ca84f546.js:44 workbox Precaching did not find a match for /node_modules/@fontsource/quicksand/files/quicksand-latin-500-normal.woff2
+workbox-ca84f546.js:44 workbox No route found for: /node_modules/@fontsource/quicksand/files/quicksand-latin-500-normal.woff2
+workbox-ca84f546.js:44 workbox Precaching did not find a match for /node_modules/@fontsource/quicksand/files/quicksand-latin-ext-300-normal.woff2
+workbox-ca84f546.js:44 workbox No route found for: /node_modules/@fontsource/quicksand/files/quicksand-latin-ext-300-normal.woff2
+workbox-ca84f546.js:44 workbox Precaching did not find a match for /src/features/meditation/screens/SoundThemeGalleryScreen.jsx?t=1774023921830
+workbox-ca84f546.js:44 workbox No route found for: /src/features/meditation/screens/SoundThemeGalleryScreen.jsx?t=1774023921830
+workbox-ca84f546.js:44 workbox Precaching did not find a match for /node_modules/@fontsource/quicksand/files/quicksand-latin-ext-400-normal.woff2
+workbox-ca84f546.js:44 workbox No route found for: /node_modules/@fontsource/quicksand/files/quicksand-latin-ext-400-normal.woff2
+workbox-ca84f546.js:44 workbox Precaching did not find a match for /src/features/meditation/screens/HudbaScreen.jsx?t=1774023921830
+workbox-ca84f546.js:44 workbox No route found for: /src/features/meditation/screens/HudbaScreen.jsx?t=1774023921830
+workbox-ca84f546.js:44 workbox Precaching did not find a match for /src/features/audio/index.js?t=1774023921830
+workbox-ca84f546.js:44 workbox No route found for: /src/features/audio/index.js?t=1774023921830
+workbox-ca84f546.js:44 workbox Precaching did not find a match for /src/features/meditation/components/index.js?t=1774023921830
+workbox-ca84f546.js:44 workbox No route found for: /src/features/meditation/components/index.js?t=1774023921830
+workbox-ca84f546.js:44 workbox Precaching did not find a match for /src/features/audio/AudioPlayer.jsx?t=1774023921830
+workbox-ca84f546.js:44 workbox No route found for: /src/features/audio/AudioPlayer.jsx?t=1774023921830
+workbox-ca84f546.js:44 workbox Precaching did not find a match for /src/features/audio/AudioPlayerPage.jsx?t=1774023921830
+workbox-ca84f546.js:44 workbox No route found for: /src/features/audio/AudioPlayerPage.jsx?t=1774023921830
+workbox-ca84f546.js:44 workbox Precaching did not find a match for /src/features/audio/components/index.js?t=1774023921830
+workbox-ca84f546.js:44 workbox No route found for: /src/features/audio/components/index.js?t=1774023921830
+workbox-ca84f546.js:44 workbox Precaching did not find a match for /src/features/audio/hooks/index.js?t=1774023716666
+workbox-ca84f546.js:44 workbox No route found for: /src/features/audio/hooks/index.js?t=1774023716666
+workbox-ca84f546.js:44 workbox Precaching did not find a match for /src/features/meditation/components/BreathModals.jsx?t=1774023716666
+workbox-ca84f546.js:44 workbox No route found for: /src/features/meditation/components/BreathModals.jsx?t=1774023716666
+workbox-ca84f546.js:44 workbox Precaching did not find a match for /src/features/meditation/components/AlbumGrid.jsx?t=1774023921830
+workbox-ca84f546.js:44 workbox No route found for: /src/features/meditation/components/AlbumGrid.jsx?t=1774023921830
+workbox-ca84f546.js:44 workbox Precaching did not find a match for /src/features/meditation/components/AlbumCard.jsx?t=1774023921830
+workbox-ca84f546.js:44 workbox No route found for: /src/features/meditation/components/AlbumCard.jsx?t=1774023921830
+workbox-ca84f546.js:44 workbox Precaching did not find a match for /src/features/audio/components/AudioPlayerHeader.jsx
+workbox-ca84f546.js:44 workbox No route found for: /src/features/audio/components/AudioPlayerHeader.jsx
+workbox-ca84f546.js:44 workbox Precaching did not find a match for /src/features/audio/components/SkipButton.jsx?t=1774023921830
+workbox-ca84f546.js:44 workbox No route found for: /src/features/audio/components/SkipButton.jsx?t=1774023921830
+workbox-ca84f546.js:44 workbox Precaching did not find a match for /src/features/audio/components/CloseButton.jsx
+workbox-ca84f546.js:44 workbox No route found for: /src/features/audio/components/CloseButton.jsx
+workbox-ca84f546.js:44 workbox Precaching did not find a match for /src/features/audio/components/LoadingIndicator.jsx
+workbox-ca84f546.js:44 workbox No route found for: /src/features/audio/components/LoadingIndicator.jsx
+workbox-ca84f546.js:44 workbox Precaching did not find a match for /src/features/audio/components/AudioControls.jsx?t=1774023921830
+workbox-ca84f546.js:44 workbox No route found for: /src/features/audio/components/AudioControls.jsx?t=1774023921830
+workbox-ca84f546.js:44 workbox Precaching did not find a match for /src/features/audio/components/VoiceSwitcher.jsx
+workbox-ca84f546.js:44 workbox No route found for: /src/features/audio/components/VoiceSwitcher.jsx
+workbox-ca84f546.js:44 workbox Precaching did not find a match for /src/features/audio/components/TrackSwitcher.jsx
+workbox-ca84f546.js:44 workbox No route found for: /src/features/audio/components/TrackSwitcher.jsx
+workbox-ca84f546.js:44 workbox Precaching did not find a match for /src/features/audio/components/AudioPlayerAnimations.jsx?t=1774023716666
+workbox-ca84f546.js:44 workbox No route found for: /src/features/audio/components/AudioPlayerAnimations.jsx?t=1774023716666
+workbox-ca84f546.js:44 workbox Precaching did not find a match for /src/features/audio/hooks/useAudioPlayer.js?t=1774023716666
+workbox-ca84f546.js:44 workbox No route found for: /src/features/audio/hooks/useAudioPlayer.js?t=1774023716666
+workbox-ca84f546.js:44 workbox Precaching did not find a match for /src/features/audio/hooks/useAudioPlayerSimple.js
+workbox-ca84f546.js:44 workbox No route found for: /src/features/audio/hooks/useAudioPlayerSimple.js
+workbox-ca84f546.js:44 workbox Precaching did not find a match for /src/features/audio/hooks/useFirebaseAudio.js?t=1774023716666
+workbox-ca84f546.js:44 workbox No route found for: /src/features/audio/hooks/useFirebaseAudio.js?t=1774023716666
+workbox-ca84f546.js:44 workbox Precaching did not find a match for /src/features/audio/hooks/useDirectAudio.js
+workbox-ca84f546.js:44 workbox No route found for: /src/features/audio/hooks/useDirectAudio.js
+workbox-ca84f546.js:44 workbox Precaching did not find a match for /src/features/audio/hooks/useFirebaseAudioFilter.js?t=1774023716666
+workbox-ca84f546.js:44 workbox No route found for: /src/features/audio/hooks/useFirebaseAudioFilter.js?t=1774023716666
+workbox-ca84f546.js:44 workbox Precaching did not find a match for /src/features/audio/hooks/useFirebaseDychanieFilter.js?t=1774023716666
+workbox-ca84f546.js:44 workbox No route found for: /src/features/audio/hooks/useFirebaseDychanieFilter.js?t=1774023716666
+workbox-ca84f546.js:44 workbox Precaching did not find a match for /src/features/audio/hooks/useRealtimeMeditationFilter.js?t=1774023716666
+workbox-ca84f546.js:44 workbox No route found for: /src/features/audio/hooks/useRealtimeMeditationFilter.js?t=1774023716666
+workbox-ca84f546.js:44 workbox Precaching did not find a match for /src/features/audio/hooks/useVoiceSwitcher.js
+workbox-ca84f546.js:44 workbox No route found for: /src/features/audio/hooks/useVoiceSwitcher.js
+workbox-ca84f546.js:44 workbox Precaching did not find a match for /src/features/audio/hooks/useAudioContext.js
+workbox-ca84f546.js:44 workbox No route found for: /src/features/audio/hooks/useAudioContext.js
+workbox-ca84f546.js:44 workbox Precaching did not find a match for /src/features/audio/hooks/useAutoplay.js
+workbox-ca84f546.js:44 workbox No route found for: /src/features/audio/hooks/useAutoplay.js
+workbox-ca84f546.js:44 workbox Precaching did not find a match for /src/features/audio/hooks/useAudioPlayerLogic.js?t=1774023716666
+workbox-ca84f546.js:44 workbox No route found for: /src/features/audio/hooks/useAudioPlayerLogic.js?t=1774023716666
+workbox-ca84f546.js:44 workbox Precaching did not find a match for /src/features/audio/hooks/useAudioPlayback.js?t=1774023716666
+workbox-ca84f546.js:44 workbox No route found for: /src/features/audio/hooks/useAudioPlayback.js?t=1774023716666
+workbox-ca84f546.js:44 workbox Precaching did not find a match for /src/features/audio/hooks/useAudioContextManager.js
+workbox-ca84f546.js:44 workbox No route found for: /src/features/audio/hooks/useAudioContextManager.js
+workbox-ca84f546.js:44 workbox Precaching did not find a match for /src/features/audio/hooks/useRealtimeMetadata.js?t=1774023716666
+workbox-ca84f546.js:44 workbox No route found for: /src/features/audio/hooks/useRealtimeMetadata.js?t=1774023716666
+workbox-ca84f546.js:44 workbox Precaching did not find a match for /src/features/audio/hooks/useUnifiedMetadata.js?t=1774023716666
+workbox-ca84f546.js:44 workbox No route found for: /src/features/audio/hooks/useUnifiedMetadata.js?t=1774023716666
+workbox-ca84f546.js:44 workbox Precaching did not find a match for /src/features/audio/hooks/useOfflineCache.js
+workbox-ca84f546.js:44 workbox No route found for: /src/features/audio/hooks/useOfflineCache.js
+workbox-ca84f546.js:44 workbox Precaching did not find a match for /src/features/audio/hooks/useOfflineStatus.js
+workbox-ca84f546.js:44 workbox No route found for: /src/features/audio/hooks/useOfflineStatus.js
+workbox-ca84f546.js:44 workbox Precaching did not find a match for /src/utils/audioParser.js
+workbox-ca84f546.js:44 workbox No route found for: /src/utils/audioParser.js
+workbox-ca84f546.js:44 workbox Precaching did not find a match for /src/features/audio/hooks/useOfflineAudio.js
+workbox-ca84f546.js:44 workbox No route found for: /src/features/audio/hooks/useOfflineAudio.js
+workbox-ca84f546.js:44 workbox Precaching did not find a match for https://firebasestorage.googleapis.com/v0/b/meditations-audio.firebasestorage.app/o/hudba%2Fambient-journey%2Fcover.jpg?alt=media&token=bdd80a30-00cb-4c4e-b4e3-ad3857c2dce2
+workbox-ca84f546.js:44 workbox Router is responding to: https://firebasestorage.googleapis.com/v0/b/meditations-audio.firebasestorage.app/o/hudba%2Fambient-journey%2Fcover.jpg?alt=media&token=bdd80a30-00cb-4c4e-b4e3-ad3857c2dce2
+workbox-ca84f546.js:44 workbox Found a cached response in 'meditation-audio'.
+workbox-ca84f546.js:44 workbox Using CacheFirst to respond to 'https://firebasestorage.googleapis.com/v0/b/meditations-audio.firebasestorage.app/o/hudba%2Fambient-journey%2Fcover.jpg?alt=media&token=bdd80a30-00cb-4c4e-b4e3-ad3857c2dce2'
+workbox-ca84f546.js:44 View the final response here.
+workbox-ca84f546.js:44 workbox Cache expiration ran and found no entries to remove.
+workbox-ca84f546.js:44 workbox Precaching did not find a match for https://firebasestorage.googleapis.com/v0/b/meditations-audio.firebasestorage.app/o/hudba%2Fambient-journey%2Fcover.jpg?alt=media&token=bdd80a30-00cb-4c4e-b4e3-ad3857c2dce2
+workbox-ca84f546.js:44 workbox Router is responding to: https://firebasestorage.googleapis.com/v0/b/meditations-audio.firebasestorage.app/o/hudba%2Fambient-journey%2Fcover.jpg?alt=media&token=bdd80a30-00cb-4c4e-b4e3-ad3857c2dce2
+workbox-ca84f546.js:44 workbox Precaching did not find a match for /node_modules/@fontsource/quicksand/files/quicksand-latin-700-normal.woff2
+workbox-ca84f546.js:44 workbox No route found for: /node_modules/@fontsource/quicksand/files/quicksand-latin-700-normal.woff2
+workbox-ca84f546.js:44 workbox Found a cached response in 'meditation-audio'.
+workbox-ca84f546.js:44 workbox Using CacheFirst to respond to 'https://firebasestorage.googleapis.com/v0/b/meditations-audio.firebasestorage.app/o/hudba%2Fambient-journey%2Fcover.jpg?alt=media&token=bdd80a30-00cb-4c4e-b4e3-ad3857c2dce2'
+workbox-ca84f546.js:44 View the final response here.
+workbox-ca84f546.js:44 workbox Precaching did not find a match for https://firebasestorage.googleapis.com/v0/b/meditations-audio.firebasestorage.app/o/hudba%2Fambient-journey%2FAmbient%20Journey%20-%2001%20Zhooliox.mp3
+workbox-ca84f546.js:44 workbox Router is responding to: https://firebasestorage.googleapis.com/v0/b/meditations-audio.firebasestorage.app/o/hudba%2Fambient-journey%2FAmbient%20Journey%20-%2001%20Zhooliox.mp3
+workbox-ca84f546.js:44 workbox Precaching did not find a match for https://firebasestorage.googleapis.com/v0/b/meditations-audio.firebasestorage.app/o/hudba%2Fambient-journey%2FAmbient%20Journey%20-%2001%20Zhooliox.mp3
+workbox-ca84f546.js:44 workbox Router is responding to: https://firebasestorage.googleapis.com/v0/b/meditations-audio.firebasestorage.app/o/hudba%2Fambient-journey%2FAmbient%20Journey%20-%2001%20Zhooliox.mp3
+workbox-ca84f546.js:44 workbox Found a cached response in 'meditation-audio'.
+workbox-ca84f546.js:44 workbox Using CacheFirst to respond to 'https://firebasestorage.googleapis.com/v0/b/meditations-audio.firebasestorage.app/o/hudba%2Fambient-journey%2FAmbient%20Journey%20-%2001%20Zhooliox.mp3'
+workbox-ca84f546.js:44 View the final response here.
+workbox-ca84f546.js:44 workbox Found a cached response in 'meditation-audio'.
+workbox-ca84f546.js:44 workbox Using CacheFirst to respond to 'https://firebasestorage.googleapis.com/v0/b/meditations-audio.firebasestorage.app/o/hudba%2Fambient-journey%2FAmbient%20Journey%20-%2001%20Zhooliox.mp3'
+workbox-ca84f546.js:44 View the final response here.
+workbox-ca84f546.js:44 workbox Cache expiration ran and found no entries to remove.
+workbox-ca84f546.js:44 workbox Cache expiration ran and found no entries to remove.
+workbox-ca84f546.js:44 workbox Precaching did not find a match for https://firebasestorage.googleapis.com/v0/b/meditations-audio.firebasestorage.app/o/hudba%2Fambient-journey%2FAmbient%20Journey%20-%2001%20Zhooliox.mp3?alt=media&token=bf8ac8f1-581b-42ed-8805-c4c21cc2d718
+workbox-ca84f546.js:44 workbox Router is responding to: https://firebasestorage.googleapis.com/v0/b/meditations-audio.firebasestorage.app/o/hudba%2Fambient-journey%2FAmbient%20Journey%20-%2001%20Zhooliox.mp3?alt=media&token=bf8ac8f1-581b-42ed-8805-c4c21cc2d718
+workbox-ca84f546.js:44 workbox Found a cached response in 'meditation-audio'.
+workbox-ca84f546.js:44 workbox Using CacheFirst to respond to 'https://firebasestorage.googleapis.com/v0/b/meditations-audio.firebasestorage.app/o/hudba%2Fambient-journey%2FAmbient%20Journey%20-%2001%20Zhooliox.mp3?alt=media&token=bf8ac8f1-581b-42ed-8805-c4c21cc2d718'
+workbox-ca84f546.js:44 View the final response here.
+workbox-ca84f546.js:44 workbox Cache expiration ran and found no entries to remove.
+workbox-ca84f546.js:44 workbox Precaching did not find a match for /src/features/meditation/screens/MeditationScreen.jsx?t=1774023921830
+workbox-ca84f546.js:44 workbox No route found for: /src/features/meditation/screens/MeditationScreen.jsx?t=1774023921830
+workbox-ca84f546.js:44 workbox Precaching did not find a match for /node_modules/@fontsource/quicksand/files/quicksand-latin-ext-500-normal.woff2
+workbox-ca84f546.js:44 workbox No route found for: /node_modules/@fontsource/quicksand/files/quicksand-latin-ext-500-normal.woff2
+workbox-ca84f546.js:44 workbox Precaching did not find a match for https://firestore.googleapis.com/google.firestore.v1.Firestore/Listen/channel?gsessionid=HQBBblxYfN8LTi5QOBGKhKM_iSbVRTLRw_1_7STEgukxkOeLzrz2xA&VER=8&database=projects%2Fmeditations-audio%2Fdatabases%2F(default)&RID=rpc&SID=GpcYHLXi8RnRin9jWx1TEA&AID=117&CI=1&TYPE=xmlhttp&zx=paldgvvmq5rc&t=1
+workbox-ca84f546.js:44 workbox No route found for: https://firestore.googleapis.com/google.firestore.v1.Firestore/Listen/channel?gsessionid=HQBBblxYfN8LTi5QOBGKhKM_iSbVRTLRw_1_7STEgukxkOeLzrz2xA&VER=8&database=projects%2Fmeditations-audio%2Fdatabases%2F(default)&RID=rpc&SID=GpcYHLXi8RnRin9jWx1TEA&AID=117&CI=1&TYPE=xmlhttp&zx=paldgvvmq5rc&t=1

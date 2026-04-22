@@ -10,6 +10,7 @@ import { ref, listAll, getDownloadURL } from 'firebase/storage';
 import { storage } from '@config/secure-firebase';
 import log from '@services/logger';
 import cacheService from '@services/cacheServiceRefactored';
+import ProgressBarColorPicker from '@components/ProgressBarColorPicker';
 
 const ThemeSelector = () => {
   const { t, language } = useLanguage();
@@ -23,6 +24,7 @@ const ThemeSelector = () => {
   const [firebaseBackgroundsLoading, setFirebaseBackgroundsLoading] = useState(false);
   const [firebaseBackgroundsError, setFirebaseBackgroundsError] = useState(null);
   const [backgroundType, setBackgroundType] = useState('image'); // 'image' nebo 'color'
+  const [extractedColors, setExtractedColors] = useState([]); // Extrahované barvy z aktuální fotky
 
   // Předdefinované barvy pro výběr
   const predefinedColors = [
@@ -117,20 +119,37 @@ const ThemeSelector = () => {
       setFirebaseBackgroundsLoading(true);
       setFirebaseBackgroundsError(null);
 
-      console.log('🔄 Loading backgrounds from Firebase Storage...');
-      console.log('🔄 Storage:', storage);
+      console.log('🔄 [Firebase Backgrounds] Starting load...');
+      console.log('🔄 [Firebase Backgrounds] Storage instance:', storage);
+      console.log('🔄 [Firebase Backgrounds] Storage bucket:', storage?._bucket?.name || 'unknown');
+      console.log('🔄 [Firebase Backgrounds] Storage app:', storage?.app?.name || 'unknown');
       log.info('🔄 Loading backgrounds from Firebase Storage...');
+
+      // Check if storage is properly initialized
+      if (!storage) {
+        throw new Error('Firebase Storage is not initialized');
+      }
 
       // Načti soubory ze složky background/
       const backgroundRef = ref(storage, 'background');
-      console.log('🔄 Background ref:', backgroundRef);
+      console.log('🔄 [Firebase Backgrounds] Background ref:', backgroundRef);
+      console.log('🔄 [Firebase Backgrounds] Background ref bucket:', backgroundRef?._location?.bucket || 'unknown');
 
       const backgroundResult = await listAll(backgroundRef);
-      console.log('🔄 Background result:', {
+      console.log('🔄 [Firebase Backgrounds] List result:', {
         items: backgroundResult.items.length,
         prefixes: backgroundResult.prefixes.length,
-        itemsList: backgroundResult.items.map(item => item.name)
+        itemsList: backgroundResult.items.map(item => item.name),
+        prefixesList: backgroundResult.prefixes.map(p => p.name)
       });
+
+      // Check if the background folder exists
+      if (backgroundResult.items.length === 0 && backgroundResult.prefixes.length === 0) {
+        console.warn('⚠️ [Firebase Backgrounds] Background folder is empty or does not exist!');
+        console.warn('⚠️ [Firebase Backgrounds] Expected path: background/');
+        console.warn('⚠️ [Firebase Backgrounds] Storage bucket:', storage?._bucket?.name);
+        console.warn('⚠️ [Firebase Backgrounds] Check Firebase Console > Storage > Rules to verify permissions');
+      }
 
       // Filtruj pouze obrázky (ne složky)
       const imageFiles = backgroundResult.items.filter(item => {
@@ -190,14 +209,28 @@ const ThemeSelector = () => {
       setFirebaseBackgrounds(backgrounds);
       log.success(`✅ Loaded ${backgrounds.length} backgrounds from Firebase Storage`);
     } catch (error) {
-      console.error('❌ Failed to load backgrounds from Firebase Storage:', error);
-      console.error('❌ Error details:', {
+      console.error('❌ [Firebase Backgrounds] Failed to load backgrounds from Firebase Storage:', error);
+      console.error('❌ [Firebase Backgrounds] Error details:', {
         code: error.code,
         message: error.message,
-        stack: error.stack
+        stack: error.stack,
+        name: error.name
       });
+
+      // Check for specific error types
+      if (error.code === 'storage/unauthorized') {
+        console.error('❌ [Firebase Backgrounds] UNAUTHORIZED - Check Firebase Storage rules!');
+      } else if (error.code === 'storage/object-not-found') {
+        console.error('❌ [Firebase Backgrounds] NOT FOUND - The background folder does not exist in Firebase Storage!');
+        console.error('❌ [Firebase Backgrounds] Solution: Create the folder in Firebase Console or upload images via Firebase Console');
+      } else if (error.code === 'storage/canceled') {
+        console.error('❌ [Firebase Backgrounds] CANCELED - Request was canceled');
+      } else if (error.code === 'storage/quota-exceeded') {
+        console.error('❌ [Firebase Backgrounds] QUOTA EXCEEDED - Storage quota exceeded');
+      }
+
       log.error('Failed to load backgrounds from Firebase Storage:', error);
-      setFirebaseBackgroundsError(`Chyba při načítání pozadí: ${error.message}`);
+      setFirebaseBackgroundsError(`Chyba při načítání pozadí: ${error.message} (${error.code || 'unknown'})`);
     } finally {
       setFirebaseBackgroundsLoading(false);
     }
@@ -286,6 +319,22 @@ const ThemeSelector = () => {
       // Nastavení jako pozadí (uložit jako JSON string)
       setCustomBackground(JSON.stringify(backgroundData));
       setBackgroundType('image');
+
+      // Uložit extrahované barvy pro výběr
+      setExtractedColors(extractedColors || []);
+
+      // Pokud existuje uložená barva progress baru, zkusit ji najít v extrahovaných barvách
+      const savedProgressBarColor = localStorage.getItem('meditation-app-progress-bar-color');
+      if (savedProgressBarColor && extractedColors && extractedColors.length > 0) {
+        const colorExists = extractedColors.some(color => {
+          const normalizeColor = (c) => c.replace(/\s+/g, '').toLowerCase();
+          return normalizeColor(color) === normalizeColor(savedProgressBarColor);
+        });
+        if (!colorExists) {
+          localStorage.removeItem('meditation-app-progress-bar-color');
+          themeContext?.setProgressBarColor(null);
+        }
+      }
     } catch (err) {
       setError(err.message || 'Chyba při zpracování obrázku');
       console.error('Error processing image:', err);
@@ -334,6 +383,28 @@ const ThemeSelector = () => {
     handleColorSelect(rgbaColor);
   };
 
+  const handleProgressBarColorSelect = (color) => {
+    if (themeContext?.setProgressBarColor) {
+      themeContext.setProgressBarColor(color);
+    }
+  };
+
+  // Načíst uloženou barvu progress baru
+  useEffect(() => {
+    const savedColor = localStorage.getItem('meditation-app-progress-bar-color');
+    if (savedColor) {
+      // Zkusíme načíst barvy z aktuálního pozadí
+      try {
+        const bgData = customBackground ? JSON.parse(customBackground) : null;
+        if (bgData?.colors && bgData.colors.length > 0) {
+          setExtractedColors(bgData.colors);
+        }
+      } catch (e) {
+        // Ignorovat chybu při parsování
+      }
+    }
+  }, [customBackground]);
+
   const handleDefaultImageSelect = async (imageUrl) => {
     setError(null);
     setIsProcessing(true);
@@ -374,6 +445,22 @@ const ThemeSelector = () => {
       // Nastavení jako pozadí (uložit jako JSON string)
       setCustomBackground(JSON.stringify(backgroundData));
       setBackgroundType('image');
+
+      // Uložit extrahované barvy pro výběr
+      setExtractedColors(extractedColors || []);
+
+      // Pokud existuje uložená barva progress baru, zkusit ji najít v extrahovaných barvách
+      const savedProgressBarColor = localStorage.getItem('meditation-app-progress-bar-color');
+      if (savedProgressBarColor && extractedColors && extractedColors.length > 0) {
+        const colorExists = extractedColors.some(color => {
+          const normalizeColor = (c) => c.replace(/\s+/g, '').toLowerCase();
+          return normalizeColor(color) === normalizeColor(savedProgressBarColor);
+        });
+        if (!colorExists) {
+          localStorage.removeItem('meditation-app-progress-bar-color');
+          themeContext?.setProgressBarColor(null);
+        }
+      }
     } catch (err) {
       setError(err.message || 'Chyba při zpracování obrázku');
       console.error('Error processing default image:', err);
@@ -526,7 +613,7 @@ const ThemeSelector = () => {
 
             {customBackground ? (
               <div className="relative">
-                {backgroundType === 'image' ? (
+                {backgroundType === 'image' && (
                   <div
                     className="relative w-full h-32 rounded-lg overflow-hidden border"
                     style={{ borderColor: borderColor }}
@@ -540,17 +627,17 @@ const ThemeSelector = () => {
                     />
                     <div className="absolute inset-0 bg-black/20" />
                   </div>
-                ) : (
-                  <div
-                    className="relative w-full h-32 rounded-lg overflow-hidden border"
-                    style={{
-                      borderColor: borderColor,
-                      backgroundColor: typeof customBackground === 'string' && customBackground.startsWith('{')
-                        ? JSON.parse(customBackground).backgroundColor
-                        : customBackground
-                    }}
+                )}
+
+                {/* Výběr barvy pro progress bar - pokud jsou extrahované barvy */}
+                {backgroundType === 'image' && extractedColors && extractedColors.length > 0 && (
+                  <ProgressBarColorPicker
+                    extractedColors={extractedColors}
+                    currentColor={themeContext?.progressBarColor}
+                    onColorSelect={handleProgressBarColorSelect}
                   />
                 )}
+
                 <motion.button
                   onClick={handleRemoveBackground}
                   className="mt-3 px-4 py-2 rounded-lg text-sm font-medium transition-colors flex items-center gap-2"

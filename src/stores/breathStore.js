@@ -1,10 +1,16 @@
 import { create } from 'zustand';
+import { persist } from 'zustand/middleware';
 
 /**
  * Store pro stav dýchání — rytmus, zvuky, timer, příprava.
  * Nahrazuje breathing-related state z useAppState.
+ *
+ * Persist middleware ukládá poslední nastavení do localStorage,
+ * aby se při dalším spuštění aplikace obnovilo poslední použité nastavení.
  */
-export const useBreathStore = create((set, _get) => ({
+export const useBreathStore = create(
+  persist(
+    (set, _get) => ({
   // ─── Breath Cycle ──────────────────────────────────────────────────
   breathInDuration: 6,   // sekund
   breathOutDuration: 8,  // sekund
@@ -60,4 +66,35 @@ export const useBreathStore = create((set, _get) => ({
     isPreparing: false,
     preparationCountdown: 0,
   })),
-}));
+}),
+    {
+      name: 'meditation-app-breath-state', // localStorage key
+
+      // Uložit jen konfigurační hodnoty, ne běžný stav
+      partialize: (state) => ({
+        breathInDuration: state.breathInDuration,
+        breathOutDuration: state.breathOutDuration,
+        breathDuration: state.breathDuration,
+        preparationTime: state.preparationTime,
+        breathInSound: state.breathInSound,
+        breathOutSound: state.breathOutSound,
+        breathClickSound: state.breathClickSound,
+        breathFinalSound: state.breathFinalSound,
+        breathCountdownSound: state.breathCountdownSound,
+        breathSoundFadeEnabled: state.breathSoundFadeEnabled,
+      }),
+
+      // Při načtení ze storage resetovat běžný stav
+      onRehydrateStorage: () => (state) => {
+        if (state) {
+          // Reset běžného stavu po načtení z localStorage
+          state.isBreathing = false;
+          state.breathTime = state.breathDuration * 60;
+          state.breathPhase = 'in';
+          state.isPreparing = false;
+          state.preparationCountdown = 0;
+        }
+      },
+    }
+  )
+);

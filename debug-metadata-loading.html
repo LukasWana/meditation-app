@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Debug Metadata Loading</title>
+  <style>
+    body { font-family: monospace; padding: 20px; background: #1a1a1a; color: #eee; }
+    h1 { color: #4CAF50; }
+    .section { margin: 20px 0; padding: 15px; background: #2a2a2a; border-radius: 8px; }
+    .error { color: #f44336; }
+    .success { color: #4CAF50; }
+    .warning { color: #ff9800; }
+    .info { color: #2196F3; }
+    table { width: 100%; border-collapse: collapse; margin: 10px 0; }
+    th, td { padding: 8px; text-align: left; border: 1px solid #444; }
+    th { background: #333; }
+    .count { font-size: 1.2em; font-weight: bold; }
+    button { padding: 10px 20px; margin: 5px; background: #4CAF50; color: white; border: none; border-radius: 4px; cursor: pointer; }
+    button:hover { background: #45a049; }
+    #output { max-height: 400px; overflow-y: auto; background: #1e1e1e; padding: 10px; border-radius: 4px; }
+    .log-entry { padding: 5px; border-bottom: 1px solid #333; }
+  </style>
+</head>
+<body>
+  <h1>🔍 Debug Metadata Loading - Meditacie Files</h1>
+
+  <div class="section">
+    <h2>Phase 1: Firebase Storage Check</h2>
+    <p>Tento skript ověří, jaké soubory jsou ve Firebase Storage ve složce <code>meditacie/</code></p>
+    <button onclick="testFirebaseStructure()">1. Test Firebase Structure</button>
+    <button onclick="testMetadataLoading()">2. Test Metadata Loading</button>
+    <button onclick="testSlovaDataService()">3. Test SlovaDataService</button>
+    <button onclick="analyzeLanguageFiltering()">4. Analyze Language Filtering</button>
+  </div>
+
+  <div class="section">
+    <h2>Results:</h2>
+    <div id="output"></div>
+  </div>
+
+  <script type="module">
+    import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
+    import { getStorage, ref, listAll } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-storage.js';
+    import { getDatabase, ref as dbRef, get } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js';
+
+    // Firebase config
+    const firebaseConfig = {
+      apiKey: "AIzaSyB3KqUqXHtW4dDxVqQW5vX6Y7Z8A9B0C1D",
+      authDomain: "meditacia-app.firebaseapp.com",
+      databaseURL: "https://meditacia-app-default-rtdb.firebaseio.com",
+      projectId: "meditacia-app",
+      storageBucket: "meditacia-app.appspot.com",
+      messagingSenderId: "123456789",
+      appId: "1:123456789:web:abcdef"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const storage = getStorage(app);
+    const database = getDatabase(app);
+
+    const output = document.getElementById('output');
+
+    function log(message, type = 'info') {
+      const entry = document.createElement('div');
+      entry.className = `log-entry ${type}`;
+      entry.innerHTML = message;
+      output.appendChild(entry);
+      output.scrollTop = output.scrollHeight;
+      console.log(message);
+    }
+
+    function logSection(title) {
+      log(`<h3>${title}</h3>`, 'info');
+    }
+
+    function logCount(label, count) {
+      const color = count > 0 ? 'success' : 'error';
+      log(`<span class="${color}">${label}: <span class="count">${count}</span></span>`, count > 0 ? 'success' : 'error');
+    }
+
+    window.testFirebaseStructure = async function() {
+      output.innerHTML = '';
+      logSection('📁 Testing Firebase Storage Structure');
+
+      try {
+        const meditacieRef = ref(storage, 'meditacie');
+        const result = await listAll(meditacieRef);
+
+        log(`Found prefixes: ${result.prefixes.length}`, 'info');
+        log(`Found items: ${result.items.length}`, 'info');
+
+        if (result.prefixes.length > 0) {
+          log('<h4>Language folders found:</h4>', 'success');
+          for (const folderRef of result.prefixes) {
+            log(`📂 ${folderRef.name}`, 'info');
+
+            // List contents of each language folder
+            try {
+              const langResult = await listAll(folderRef);
+              const mp3Files = langResult.items.filter(item =>
+                item.name.toLowerCase().endsWith('.mp3')
+              );
+
+              logCount(`  MP3 files in ${folderRef.name}`, mp3Files.length);
+
+              // Show first few files as examples
+              if (mp3Files.length > 0) {
+                const sample = mp3Files.slice(0, 3).map(f => f.name).join(', ');
+                log(`  Sample: ${sample}${mp3Files.length > 3 ? '...' : ''}`, 'info');
+              }
+            } catch (err) {
+              log(`  ❌ Error listing ${folderRef.name}: ${err.message}`, 'error');
+            }
+          }
+        } else {
+          log('❌ No language folders found in meditacie/', 'error');
+        }
+      } catch (error) {
+        log(`❌ Error accessing Firebase Storage: ${error.message}`, 'error');
+        log(`Error code: ${error.code}`, 'error');
+      }
+    };
+
+    window.testMetadataLoading = async function() {
+      output.innerHTML = '';
+      logSection('📊 Testing Metadata Loading');
+
+      try {
+        // Try to access the metadata from Realtime Database
+        const metaRef = dbRef(database, 'audio-metadata');
+        const snapshot = await get(metaRef);
+
+        if (snapshot.exists()) {
+          const data = snapshot.val();
+          log('✅ Metadata exists in Realtime Database', 'success');
+
+          // Analyze structure
+          if (data.files && Array.isArray(data.files)) {
+            logCount('Total files in metadata', data.files.length);
+
+            // Count by folder
+            const byFolder = {};
+            const byLanguage = {};
+
+            data.files.forEach(file => {
+              if (file.folder) {
+                byFolder[file.folder] = (byFolder[file.folder] || 0) + 1;
+              }
+              if (file.language) {
+                byLanguage[file.language] = (byLanguage[file.language] || 0) + 1;
+              }
+            });
+
+            log('<h4>Files by folder:</h4>', 'info');
+            Object.entries(byFolder).forEach(([folder, count]) => {
+              logCount(`  ${folder}`, count);
+            });
+
+            log('<h4>Files by language:</h4>', 'info');
+            Object.entries(byLanguage).forEach(([lang, count]) => {
+              logCount(`  ${lang}`, count);
+            });
+
+            // Show sample meditacie files
+            const meditacieFiles = data.files.filter(f => f.folder === 'meditacie');
+            logCount('Meditacie files found', meditacieFiles.length);
+
+            if (meditacieFiles.length > 0) {
+              log('<h4>Sample meditacie files:</h4>', 'info');
+              meditacieFiles.slice(0, 5).forEach(file => {
+                log(`  📄 ${file.fileName || file.name}`, 'info');
+                log(`     Language: ${file.language || 'NOT SET'}`, file.language ? 'success' : 'warning');
+                log(`     Folder: ${file.folder}`, 'info');
+              });
+            }
+          } else {
+            log('⚠️ Unexpected metadata structure', 'warning');
+            log(`Type: ${typeof data}`, 'info');
+            log(`Keys: ${Object.keys(data).join(', ')}`, 'info');
+          }
+        } else {
+          log('❌ No metadata found in Realtime Database', 'error');
+          log('💡 Hint: Metadata needs to be generated first', 'warning');
+        }
+      } catch (error) {
+        log(`❌ Error accessing Realtime Database: ${error.message}`, 'error');
+      }
+    };
+
+    window.testSlovaDataService = async function() {
+      output.innerHTML = '';
+      logSection('🔧 Testing SlovaDataService Filtering');
+
+      // Simulate the filtering logic from slovaDataService
+      const testFiles = [
+        { fileName: 'SK/uzkost-zen', folder: 'meditacie', language: 'SK' },
+        { fileName: 'CZ/strach-muz', folder: 'meditacie', language: 'CZ' },
+        { fileName: 'EN/stress', folder: 'meditacie', language: 'EN' },
+        { fileName: 'meditacia-SK', folder: 'meditacie' },
+        { fileName: 'meditacia', folder: 'meditacie' }
+      ];
+
+      const languages = ['sk', 'cz', 'en'];
+
+      languages.forEach(lang => {
+        log(`<h4>Testing language: ${lang.toUpperCase()}</h4>`, 'info');
+
+        const filtered = testFiles.filter(item => {
+          const fileName = item.fileName;
+          const languageMap = { 'sk': 'sk', 'SK': 'sk', 'cz': 'cz', 'CZ': 'cz', 'en': 'en', 'EN': 'en' };
+          const normalizedUserLang = languageMap[lang] || 'sk';
+
+          let languageMatch = false;
+          if (normalizedUserLang === 'sk') {
+            languageMatch = fileName.includes('SK') ||
+              (!fileName.includes('CZ') && !fileName.includes('EN'));
+          } else if (normalizedUserLang === 'cz') {
+            languageMatch = fileName.includes('CZ');
+          } else if (normalizedUserLang === 'en') {
+            languageMatch = fileName.includes('EN');
+          }
+
+          return languageMatch;
+        });
+
+        logCount(`Files passed for ${lang.toUpperCase()}`, filtered.length);
+        filtered.forEach(f => {
+          log(`  ✓ ${f.fileName} (lang: ${f.language || 'N/A'})`, 'success');
+        });
+
+        const rejected = testFiles.filter(f => !filtered.includes(f));
+        if (rejected.length > 0) {
+          log(`  Rejected files:`, 'warning');
+          rejected.forEach(f => {
+            log(`    ✗ ${f.fileName} (lang: ${f.language || 'N/A'})`, 'warning');
+          });
+        }
+      });
+    };
+
+    window.analyzeLanguageFiltering = function() {
+      output.innerHTML = '';
+      logSection('🔍 Analyzing Language Filtering Logic');
+
+      log('<h4>The Problem:</h4>', 'error');
+      log('The filtering logic in slovaDataService checks for language markers in the FILENAME:', 'warning');
+      log(`<pre>  fileName.includes('SK') || (!fileName.includes('CZ') && !fileName.includes('EN'))</pre>`, 'info');
+
+      log('<h4>But files are named with FOLDER structure:</h4>', 'warning');
+      log(`<pre>  FastMetadataService: name = "\${langFolderRef.name}/\${item.name}"
+  Example: "SK/meditacia.mp3" or "CZ/stah.mp3"</pre>`, 'info');
+
+      log('<h4>Result:</h4>', 'error');
+      log('When user is SK and file is "CZ/meditacia.mp3":', 'warning');
+      log(`  <ul>
+    <li>fileName.includes('SK') → <strong>false</strong> (filename is "CZ/meditacia.mp3")</li>
+    <li>!fileName.includes('CZ') → <strong>false</strong> ("CZ" IS in filename!)</li>
+    <li>Result: File is filtered out!</li>
+  </ul>`, 'error');
+
+      log('<h4>The Fix:</h4>', 'success');
+      log('Filtering should check the <code>language</code> property, not the filename:', 'info');
+      log(`<pre>  // Use language property set by fastMetadataService
+  if (normalizedUserLang === 'sk') {
+    languageMatch = item.language === 'SK' || item.language === 'sk' || !item.language;
+  }</pre>`, 'success');
+    };
+
+    // Run initial analysis
+    analyzeLanguageFiltering();
+  </script>
+</body>
+</html>

@@ -1,0 +1,366 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Audio Loading Debug</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .section {
+            background: white;
+            padding: 20px;
+            margin: 10px 0;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .error {
+            color: #d32f2f;
+            background: #ffebee;
+            padding: 10px;
+            border-radius: 4px;
+            margin: 10px 0;
+        }
+        .success {
+            color: #388e3c;
+            background: #e8f5e9;
+            padding: 10px;
+            border-radius: 4px;
+            margin: 10px 0;
+        }
+        .info {
+            color: #1976d2;
+            background: #e3f2fd;
+            padding: 10px;
+            border-radius: 4px;
+            margin: 10px 0;
+        }
+        ul {
+            list-style: none;
+            padding: 0;
+        }
+        li {
+            padding: 8px 0;
+            border-bottom: 1px solid #eee;
+        }
+        button {
+            background: #1976d2;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover {
+            background: #1565c0;
+        }
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 2px solid #f3f3f3;
+            border-top: 2px solid #3498db;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-left: 10px;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <h1>🔍 Audio Loading Debug Tool</h1>
+
+    <div class="section">
+        <h2>📋 Firebase Configuration</h2>
+        <div id="firebase-config"></div>
+    </div>
+
+    <div class="section">
+        <h2>🔧 Actions</h2>
+        <button onclick="testFirebaseConnection()">Test Firebase Connection</button>
+        <button onclick="listHudbaFiles()">List Hudba Files</button>
+        <button onclick="listMeditacieFiles()">List Meditacie Files</button>
+        <button onclick="listDychanieFiles()">List Dýchanie Files</button>
+        <button onclick="testAudioPlayback()">Test Audio Playback</button>
+        <button onclick="checkMetadataService()">Check Metadata Service</button>
+    </div>
+
+    <div class="section">
+        <h2>📊 Results</h2>
+        <div id="results"></div>
+    </div>
+
+    <div class="section">
+        <h2>🎵 Audio Files Found</h2>
+        <div id="audio-files"></div>
+    </div>
+
+    <div class="section">
+        <h2>⚠️ Errors</h2>
+        <div id="errors"></div>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
+        import { getStorage, ref, listAll, getDownloadURL } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-storage.js';
+
+        // Firebase config
+        const firebaseConfig = {
+            apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
+            authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,
+            projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID,
+            storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET,
+            messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID,
+            appId: import.meta.env.VITE_FIREBASE_APP_ID
+        };
+
+        // Display config
+        document.getElementById('firebase-config').innerHTML = `
+            <div class="info">
+                <strong>Project ID:</strong> ${firebaseConfig.projectId}<br>
+                <strong>Storage Bucket:</strong> ${firebaseConfig.storageBucket}<br>
+                <strong>API Key:</strong> ${firebaseConfig.apiKey ? '✅ Set' : '❌ Missing'}<br>
+                <strong>Auth Domain:</strong> ${firebaseConfig.authDomain || 'Not set'}
+            </div>
+        `;
+
+        let app;
+        let storage;
+        const resultsDiv = document.getElementById('results');
+        const audioFilesDiv = document.getElementById('audio-files');
+        const errorsDiv = document.getElementById('errors');
+
+        function log(message, type = 'info') {
+            const timestamp = new Date().toLocaleTimeString();
+            const className = type;
+            resultsDiv.innerHTML += `<div class="${className}">[${timestamp}] ${message}</div>`;
+            resultsDiv.scrollTop = resultsDiv.scrollHeight;
+            console.log(`[${type.toUpperCase()}] ${message}`);
+        }
+
+        function logError(message, error) {
+            log(message, 'error');
+            errorsDiv.innerHTML += `<div class="error"><strong>${message}</strong><br>${error.message || error}</div>`;
+            console.error(message, error);
+        }
+
+        function initializeFirebase() {
+            try {
+                if (!app) {
+                    app = initializeApp(firebaseConfig);
+                    storage = getStorage(app);
+                    log('✅ Firebase initialized successfully', 'success');
+                }
+            } catch (error) {
+                logError('❌ Failed to initialize Firebase', error);
+            }
+        }
+
+        window.testFirebaseConnection = async () => {
+            resultsDiv.innerHTML = '';
+            errorsDiv.innerHTML = '';
+            log('🔍 Testing Firebase connection...', 'info');
+            initializeFirebase();
+        };
+
+        window.listHudbaFiles = async () => {
+            resultsDiv.innerHTML = '';
+            audioFilesDiv.innerHTML = '<div class="loading"></div> Loading...';
+            errorsDiv.innerHTML = '';
+            log('🎵 Listing hudba files...', 'info');
+            initializeFirebase();
+
+            try {
+                const hudbaRef = ref(storage, 'hudba');
+                const result = await listAll(hudbaRef);
+
+                log(`✅ Found ${result.items.length} files in hudba root`, 'success');
+                log(`📁 Found ${result.prefixes.length} subfolders in hudba`, 'info');
+
+                let html = '<h3>Hudba Files:</h3><ul>';
+                result.items.forEach(item => {
+                    html += `<li>📄 ${item.name}</li>`;
+                });
+                html += '</ul>';
+
+                if (result.prefixes.length > 0) {
+                    html += '<h3>Subfolders:</h3><ul>';
+                    for (const prefix of result.prefixes) {
+                        html += `<li>📁 ${prefix.name}</li>`;
+                    }
+                    html += '</ul>';
+                }
+
+                audioFilesDiv.innerHTML = html;
+            } catch (error) {
+                logError('❌ Failed to list hudba files', error);
+                audioFilesDiv.innerHTML = `<div class="error">Failed to load hudba files: ${error.message}</div>`;
+            }
+        };
+
+        window.listMeditacieFiles = async () => {
+            resultsDiv.innerHTML = '';
+            audioFilesDiv.innerHTML = '<div class="loading"></div> Loading...';
+            errorsDiv.innerHTML = '';
+            log('🧘 Listing meditacie files...', 'info');
+            initializeFirebase();
+
+            try {
+                const meditacieRef = ref(storage, 'meditacie');
+                const result = await listAll(meditacieRef);
+
+                log(`✅ Found ${result.items.length} files in meditacie root`, 'success');
+                log(`📁 Found ${result.prefixes.length} subfolders in meditacie`, 'info');
+
+                let html = '<h3>Meditacie Files:</h3><ul>';
+                result.items.forEach(item => {
+                    html += `<li>📄 ${item.name}</li>`;
+                });
+                html += '</ul>';
+
+                if (result.prefixes.length > 0) {
+                    html += '<h3>Subfolders:</h3><ul>';
+                    for (const prefix of result.prefixes) {
+                        html += `<li>📁 ${prefix.name}</li>`;
+                    }
+                    html += '</ul>';
+                }
+
+                audioFilesDiv.innerHTML = html;
+            } catch (error) {
+                logError('❌ Failed to list meditacie files', error);
+                audioFilesDiv.innerHTML = `<div class="error">Failed to load meditacie files: ${error.message}</div>`;
+            }
+        };
+
+        window.listDychanieFiles = async () => {
+            resultsDiv.innerHTML = '';
+            audioFilesDiv.innerHTML = '<div class="loading"></div> Loading...';
+            errorsDiv.innerHTML = '';
+            log('🫁 Listing dýchanie files...', 'info');
+            initializeFirebase();
+
+            try {
+                const dychanieRef = ref(storage, 'dychanie');
+                const result = await listAll(dychanieRef);
+
+                log(`✅ Found ${result.items.length} files in dychanie root`, 'success');
+                log(`📁 Found ${result.prefixes.length} subfolders in dychanie`, 'info');
+
+                let html = '<h3>Dýchanie Files:</h3><ul>';
+                result.items.forEach(item => {
+                    html += `<li>📄 ${item.name}</li>`;
+                });
+                html += '</ul>';
+
+                if (result.prefixes.length > 0) {
+                    html += '<h3>Subfolders:</h3><ul>';
+                    for (const prefix of result.prefixes) {
+                        html += `<li>📁 ${prefix.name}</li>`;
+                    }
+                    html += '</ul>';
+                }
+
+                audioFilesDiv.innerHTML = html;
+            } catch (error) {
+                logError('❌ Failed to list dýchanie files', error);
+                audioFilesDiv.innerHTML = `<div class="error">Failed to load dýchanie files: ${error.message}</div>`;
+            }
+        };
+
+        window.testAudioPlayback = async () => {
+            resultsDiv.innerHTML = '';
+            errorsDiv.innerHTML = '';
+            log('🎧 Testing audio playback...', 'info');
+            initializeFirebase();
+
+            try {
+                // Test with a sample file from each folder
+                const testFiles = [
+                    { path: 'hudba', name: 'Test hudba file' },
+                    { path: 'meditacie', name: 'Test meditacie file' },
+                    { path: 'dychanie', name: 'Test dýchanie file' }
+                ];
+
+                for (const testFile of testFiles) {
+                    try {
+                        const fileRef = ref(storage, testFile.path);
+                        const result = await listAll(fileRef);
+
+                        if (result.items.length > 0) {
+                            const firstFile = result.items[0];
+                            const url = await getDownloadURL(firstFile);
+
+                            log(`✅ Got URL for ${testFile.name}: ${firstFile.name}`, 'success');
+
+                            // Try to play the audio
+                            const audio = new Audio(url);
+                            audio.play().then(() => {
+                                log(`🎵 Playing ${firstFile.name}`, 'success');
+                                audio.pause();
+                            }).catch(err => {
+                                logError(`❌ Failed to play ${firstFile.name}`, err);
+                            });
+                        } else {
+                            log(`⚠️ No files found in ${testFile.path}`, 'info');
+                        }
+                    } catch (error) {
+                        logError(`❌ Failed to test ${testFile.name}`, error);
+                    }
+                }
+            } catch (error) {
+                logError('❌ Audio playback test failed', error);
+            }
+        };
+
+        window.checkMetadataService = () => {
+            resultsDiv.innerHTML = '';
+            log('🔍 Checking metadata service...', 'info');
+
+            // Check if metadata is loaded
+            if (window.fastMetadataService) {
+                const metadata = window.fastMetadataService.metadata;
+                log(`✅ Metadata service loaded with ${metadata.size} records`, 'success');
+
+                // Group by folder
+                const byFolder = {};
+                metadata.forEach((value, key) => {
+                    const folder = value.folder || 'unknown';
+                    if (!byFolder[folder]) {
+                        byFolder[folder] = [];
+                    }
+                    byFolder[folder].push({ key, ...value });
+                });
+
+                let html = '';
+                for (const [folder, files] of Object.entries(byFolder)) {
+                    html += `<h3>${folder} (${files.length} files)</h3><ul>`;
+                    files.slice(0, 10).forEach(file => {
+                        html += `<li>📄 ${file.fileName || file.name}</li>`;
+                    });
+                    if (files.length > 10) {
+                        html += `<li>... and ${files.length - 10} more</li>`;
+                    }
+                    html += '</ul>';
+                }
+
+                audioFilesDiv.innerHTML = html;
+            } else {
+                log('❌ Metadata service not found', 'error');
+            }
+        };
+
+        // Auto-run connection test on load
+        setTimeout(() => {
+            log('🚀 Debug tool loaded. Click buttons above to test.', 'info');
+        }, 500);
+    </script>
+</body>
+</html>

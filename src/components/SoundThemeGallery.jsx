@@ -225,15 +225,18 @@ const SoundThemeGallery = ({ isOpen, onClose, onSelectSound, selectedInSound, se
 
 
   useEffect(() => {
+    console.log('🎯 [DEBUG] SoundThemeGallery useEffect triggered', { isOpen });
     if (isOpen) {
       // Reset kategorie na 'background' při otevření galerie
       setSelectedCategory('background');
       setCurrentPage(0);
+      console.log('🚀 [DEBUG] About to call loadMusicFiles()');
       loadMusicFiles();
     }
 
     // Cleanup při zavření galerie
     return () => {
+      console.log('🧹 [DEBUG] SoundThemeGallery cleanup');
       // Zastav preview při zavření
       if (previewAudioRef.current) {
         previewAudioRef.current.pause();
@@ -245,9 +248,12 @@ const SoundThemeGallery = ({ isOpen, onClose, onSelectSound, selectedInSound, se
   }, [isOpen]);
 
   const loadMusicFiles = async () => {
+    console.log('📥 [DEBUG] loadMusicFiles() START');
     try {
       setLoading(true);
+      console.log('🔍 [DEBUG] Calling realtimeMetadataService.getAllMetadata()...');
       const allMetadata = await realtimeMetadataService.getAllMetadata();
+      console.log('✅ [DEBUG] getAllMetadata() returned:', typeof allMetadata, Object.keys(allMetadata || {}).length, 'keys');
 
       console.log('🔍 SoundThemeGallery: Načteno metadata:', Object.keys(allMetadata).length);
 

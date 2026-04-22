@@ -40,7 +40,19 @@ class RealtimeMetadataService {
       return Object.fromEntries(fastMetadataService.metadata);
     }
 
-    // 2. Try Realtime DB
+    // 2. FIX: Initialize fastMetadataService if not already initialized
+    // This ensures metadata is loaded from Firebase Storage into memory
+    if (fastMetadataService.metadata.size === 0 && !fastMetadataService.isLoading) {
+      log.debug('realtimeMetadataService: Initializing fastMetadataService...');
+      await fastMetadataService.getAllMetadata();
+    }
+
+    // 3. Return metadata now that it's loaded
+    if (fastMetadataService.metadata && fastMetadataService.metadata.size > 0) {
+      return Object.fromEntries(fastMetadataService.metadata);
+    }
+
+    // 4. Try Realtime DB as final fallback
     try {
       if (!database) return {};
       const metaRef = ref(database, 'audio-metadata');

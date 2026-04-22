@@ -5,21 +5,46 @@ export const useFirebaseHudbaFilter = () => {
   const [metadataLoaded, setMetadataLoaded] = useState(false);
   const [availableFiles, setAvailableFiles] = useState([]);
 
+  console.log('🎯 [HUDBA FILTER] useFirebaseHudbaFilter called', {
+    isInitialized: fastMetadataService.isInitialized,
+    metadataSize: fastMetadataService.metadata?.size || 0,
+    isLoading: fastMetadataService.isLoading
+  });
+
   // Sleduj načtení metadata a aktualizuj state
   useEffect(() => {
+    console.log('🎯 [HUDBA FILTER] useEffect triggered');
+
     const updateFiles = () => {
+      console.log('🔍 [HUDBA FILTER] updateFiles() called');
       const allFiles = Array.from(fastMetadataService.metadata.values());
+      console.log(`📊 [HUDBA FILTER] Total metadata: ${allFiles.length} files`);
+
       const hudbaFiles = allFiles.filter(file =>
         file.folder === 'hudba' || file.fileName.startsWith('hudba/')
       );
+
+      console.log(`✅ [HUDBA FILTER] Filtered ${hudbaFiles.length} hudba files:`, hudbaFiles.map(f => ({
+        fileName: f.fileName,
+        type: f.type,
+        hasDownloadURL: !!f.downloadURL
+      })));
+
       setAvailableFiles(hudbaFiles);
       setMetadataLoaded(true);
     };
 
     if (fastMetadataService.isInitialized) {
+      console.log('✅ [HUDBA FILTER] Already initialized, updating files directly');
       updateFiles();
     } else {
-      fastMetadataService.initialize().then(updateFiles);
+      console.log('⏳ [HUDBA FILTER] Not initialized, calling initialize()...');
+      fastMetadataService.initialize().then(() => {
+        console.log('✅ [HUDBA FILTER] Initialization complete, updating files');
+        updateFiles();
+      }).catch(err => {
+        console.error('❌ [HUDBA FILTER] Initialization failed:', err);
+      });
     }
   }, []);
 

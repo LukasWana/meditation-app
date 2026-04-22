@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Firebase Flow Tests</title>
+  <style>
+    body {
+      font-family: 'Courier New', monospace;
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 20px;
+      background: #1e1e1e;
+      color: #d4d4d4;
+    }
+
+    h1 {
+      color: #4ec9b0;
+      border-bottom: 2px solid #4ec9b0;
+      padding-bottom: 10px;
+    }
+
+    .controls {
+      margin: 20px 0;
+      padding: 20px;
+      background: #252526;
+      border: 1px solid #3e3e42;
+      border-radius: 4px;
+    }
+
+    button {
+      background: #0e639c;
+      color: white;
+      border: none;
+      padding: 10px 20px;
+      margin: 5px;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 14px;
+    }
+
+    button:hover {
+      background: #1177bb;
+    }
+
+    button:disabled {
+      background: #3e3e42;
+      cursor: not-allowed;
+    }
+
+    .status {
+      display: inline-block;
+      padding: 4px 8px;
+      border-radius: 4px;
+      font-size: 12px;
+      margin-left: 10px;
+    }
+
+    .status.running { background: #dcdcaa; color: #1e1e1e; }
+    .status.passed { background: #4ec9b0; color: #1e1e1e; }
+    .status.failed { background: #f48771; color: #1e1e1e; }
+    .status.pending { background: #3e3e42; color: #d4d4d4; }
+
+    .test-section {
+      margin: 20px 0;
+      padding: 15px;
+      background: #252526;
+      border-left: 4px solid #3e3e42;
+      border-radius: 4px;
+    }
+
+    .test-section.passed { border-left-color: #4ec9b0; }
+    .test-section.failed { border-left-color: #f48771; }
+
+    .log-entry {
+      margin: 5px 0;
+      padding: 5px 10px;
+      background: #1e1e1e;
+      border-radius: 3px;
+      font-size: 13px;
+    }
+
+    .log-entry.success { border-left: 3px solid #4ec9b0; }
+    .log-entry.error { border-left: 3px solid #f48771; }
+    .log-entry.warning { border-left: 3px solid #dcdcaa; }
+
+    .final-report {
+      margin: 30px 0;
+      padding: 20px;
+      background: #252526;
+      border: 2px solid #4ec9b0;
+      border-radius: 4px;
+    }
+
+    .summary-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 15px;
+      margin-top: 20px;
+    }
+
+    .summary-item {
+      padding: 15px;
+      background: #1e1e1e;
+      border-radius: 4px;
+      text-align: center;
+    }
+
+    .summary-item h3 {
+      margin: 0 0 10px 0;
+      font-size: 14px;
+      color: #d4d4d4;
+    }
+
+    .summary-item .value {
+      font-size: 32px;
+      font-weight: bold;
+    }
+
+    .value.pass { color: #4ec9b0; }
+    .value.fail { color: #f48771; }
+
+    pre {
+      background: #1e1e1e;
+      padding: 10px;
+      border-radius: 4px;
+      overflow-x: auto;
+      font-size: 12px;
+    }
+  </style>
+</head>
+<body>
+  <h1>🧪 Firebase Flow Automated Tests</h1>
+
+  <div class="controls">
+    <button id="runTests" onclick="runTests()">▶️ Spustit testy</button>
+    <button id="clearLogs" onclick="clearLogs()">🗑️ Vymazat logy</button>
+    <button id="exportResults" onclick="exportResults()" disabled>💾 Exportovat výsledky</button>
+    <span id="overallStatus" class="status pending">Čekám na spuštění</span>
+  </div>
+
+  <div id="testResults"></div>
+
+  <div class="final-report" id="finalReport" style="display: none;">
+    <h2>📊 Celkový report</h2>
+    <div class="summary-grid">
+      <div class="summary-item">
+        <h3>Celkem testů</h3>
+        <div class="value" id="totalTests">0</div>
+      </div>
+      <div class="summary-item">
+        <h3>Prošlo</h3>
+        <div class="value pass" id="passedTests">0</div>
+      </div>
+      <div class="summary-item">
+        <h3>Selhalo</h3>
+        <div class="value fail" id="failedTests">0</div>
+      </div>
+      <div class="summary-item">
+        <h3>Úspěšnost</h3>
+        <div class="value" id="successRate">0%</div>
+      </div>
+    </div>
+  </div>
+
+  <script type="module">
+    import { runAllTests } from './test-firebase-flow.js';
+
+    let currentResults = null;
+
+    window.runTests = async function() {
+      const runButton = document.getElementById('runTests');
+      const statusSpan = document.getElementById('overallStatus');
+      const resultsDiv = document.getElementById('testResults');
+      const finalReport = document.getElementById('finalReport');
+
+      // Disable button during test
+      runButton.disabled = true;
+      statusSpan.className = 'status running';
+      statusSpan.textContent = 'Testy běží...';
+      resultsDiv.innerHTML = '<div class="log-entry">🚀 Spouštím testy...</div>';
+      finalReport.style.display = 'none';
+
+      try {
+        currentResults = await runAllTests();
+
+        // Update final report
+        finalReport.style.display = 'block';
+        document.getElementById('totalTests').textContent = currentResults.testResults.length;
+        document.getElementById('passedTests').textContent = currentResults.passed;
+        document.getElementById('failedTests').textContent = currentResults.failed;
+        document.getElementById('successRate').textContent =
+          Math.round((currentResults.passed / currentResults.testResults.length) * 100) + '%';
+
+        // Update overall status
+        if (currentResults.failed === 0) {
+          statusSpan.className = 'status passed';
+          statusSpan.textContent = 'Všechny testy prošly';
+        } else {
+          statusSpan.className = 'status failed';
+          statusSpan.textContent = `${currentResults.failed} testů selhalo`;
+        }
+
+        // Enable export
+        document.getElementById('exportResults').disabled = false;
+
+      } catch (error) {
+        console.error('Test runtime error:', error);
+        resultsDiv.innerHTML += `<div class="log-entry error">❌ Kritická chyba: ${error.message}</div>`;
+        statusSpan.className = 'status failed';
+        statusSpan.textContent = 'Chyba při spouštění testů';
+      } finally {
+        runButton.disabled = false;
+      }
+    };
+
+    window.clearLogs = function() {
+      document.getElementById('testResults').innerHTML = '';
+      document.getElementById('finalReport').style.display = 'none';
+      document.getElementById('overallStatus').className = 'status pending';
+      document.getElementById('overallStatus').textContent = 'Čekám na spuštění';
+    };
+
+    window.exportResults = function() {
+      if (!currentResults) {
+        alert('Žádné výsledky k exportu');
+        return;
+      }
+
+      const data = JSON.stringify(currentResults, null, 2);
+      const blob = new Blob([data], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `firebase-test-results-${Date.now()}.json`;
+      a.click();
+      URL.revokeObjectURL(url);
+    };
+
+    // Override console.log to capture output
+    const originalLog = console.log;
+    const originalError = console.error;
+    const originalWarn = console.warn;
+
+    function addLogEntry(message, type = '') {
+      const resultsDiv = document.getElementById('testResults');
+      const entry = document.createElement('div');
+      entry.className = `log-entry ${type}`;
+
+      // Parse message
+      if (typeof message === 'string') {
+        entry.textContent = message;
+      } else if (message instanceof Object) {
+        try {
+          entry.textContent = JSON.stringify(message, null, 2);
+        } catch {
+          entry.textContent = String(message);
+        }
+      } else {
+        entry.textContent = String(message);
+      }
+
+      resultsDiv.appendChild(entry);
+
+      // Auto-scroll to bottom
+      resultsDiv.scrollTop = resultsDiv.scrollHeight;
+    }
+
+    console.log = function(...args) {
+      originalLog.apply(console, args);
+      addLogEntry(args.join(' '));
+    };
+
+    console.error = function(...args) {
+      originalError.apply(console, args);
+      addLogEntry(args.join(' '), 'error');
+    };
+
+    console.warn = function(...args) {
+      originalWarn.apply(console, args);
+      addLogEntry(args.join(' '), 'warning');
+    };
+  </script>
+</body>
+</html>

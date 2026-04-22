@@ -1,7 +1,7 @@
 import { useState, useRef, useCallback, useEffect } from 'react';
 import { useAudioContextManager } from './useAudioContextManager';
 import { useOfflineAudio } from './useOfflineAudio';
-import globalMetadataPreloader from '@services/globalMetadataPreloader';
+import { fastMetadataService } from '@services/fastMetadataService';
 import cacheService from '@services/cacheServiceRefactored';
 import log from '@services/logger';
 
@@ -106,8 +106,8 @@ export const useAudioPlayback = (audioUrl) => {
     let durationFromMetadata = null;
     const fileName = extractFileNameFromUrl(audioUrl);
 
-    if (fileName && globalMetadataPreloader.isReady()) {
-      const meta = globalMetadataPreloader.getMetadata(fileName);
+    if (fileName && fastMetadataService.isReady()) {
+      const meta = fastMetadataService.getMetadata(fileName);
       if (meta && meta.duration) {
         durationFromMetadata = meta.duration;
       }

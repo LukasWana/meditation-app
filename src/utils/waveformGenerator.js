@@ -47,14 +47,17 @@ export const generateWaveformFromBuffer = (audioBuffer, samples = 150) => {
  * @returns {Promise<Array<number>|null>} - Pole amplitud (0-1) nebo null při chybě
  */
 export const generateWaveformFromUrl = async (audioUrl, samples = 150) => {
-  // Firebase Storage má CORS omezení, takže generování na klientovi obvykle selže
-  // Vrátíme null místo prázdného pole, aby bylo jasné, že generování selhalo
-  console.warn('⚠️ Waveform generation from URL is not reliable due to CORS restrictions. Use server-side generation instead.');
+  // Firebase Storage má CORS omezení - v produkci waveformy negenerujeme
+  // V dev módu to zkoušíme, ale v produkci rovnou vratíme null
+  if (import.meta.env.PROD) {
+    return null; // V produkci rovnau skipneme
+  }
 
+  // V dev módu zkusíme, ale nebudeme logovat jako error
   try {
     const audioContext = new (window.AudioContext || window.webkitAudioContext)();
 
-    // Zkus XMLHttpRequest jako primární metodu (může fungovat i s CORS)
+    // Zkus XMLHttpRequest jako primární metodu
     let arrayBuffer;
     try {
       arrayBuffer = await new Promise((resolve, reject) => {
@@ -65,7 +68,7 @@ export const generateWaveformFromUrl = async (audioUrl, samples = 150) => {
         const timeout = setTimeout(() => {
           xhr.abort();
           reject(new Error('XHR timeout'));
-        }, 30000); // 30 sekund timeout
+        }, 10000); // 10 sekund timeout
 
         xhr.onload = () => {
           clearTimeout(timeout);
@@ -78,49 +81,23 @@ export const generateWaveformFromUrl = async (audioUrl, samples = 150) => {
 
         xhr.onerror = () => {
           clearTimeout(timeout);
-          reject(new Error('XHR network error (likely CORS)'));
-        };
-
-        xhr.ontimeout = () => {
-          clearTimeout(timeout);
-          reject(new Error('XHR timeout'));
+          reject(new Error('XHR network error'));
         };
 
         xhr.send();
       });
     } catch (xhrError) {
-      // Pokud XHR selže (obvykle kvůli CORS), zkus fetch jako fallback
-      console.warn('XHR failed, trying fetch:', xhrError.message);
-
-      try {
-        const response = await fetch(audioUrl, {
-          mode: 'cors',
-          credentials: 'omit'
-        });
-
-        if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`);
-        }
-
-        arrayBuffer = await response.arrayBuffer();
-      } catch (fetchError) {
-        // Obě metody selhaly - pravděpodobně CORS problém
-        console.error('Both XHR and fetch failed (CORS restriction):', fetchError.message);
-        throw new Error('CORS restriction: Cannot generate waveform from client-side. Use server-side generation.');
-      }
+      // Selhání je očekávané - CORS
+      return null;
     }
 
     const audioBuffer = await audioContext.decodeAudioData(arrayBuffer);
-
-    // Zavři AudioContext
     audioContext.close();
 
-    // Generuj waveformu
     return generateWaveformFromBuffer(audioBuffer, samples);
   } catch (error) {
-    // Vrátíme null místo prázdného pole, aby bylo jasné, že generování selhalo
-    console.error('Error generating waveform from URL (CORS restriction):', error.message);
-    return null; // Null znamená, že generování selhalo
+    // Ticho selhání - waveform se nepovedlo vygenerovat
+    return null;
   }
 };
 

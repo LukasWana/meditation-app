@@ -31,6 +31,70 @@ if (import.meta.env.MODE === 'development') {
   import('./utils/updateFirebaseTranslationsHelper.js').catch(() => {
     // Ignoruj chyby při načítání (není kritické)
   });
+
+  // Diagnostické funkce pro ladění (pouze development)
+  window.runDiagnostics = async () => {
+    console.log('🔍 Spouštím komplexní diagnostiku...');
+    try {
+      const { runAllDiagnosticTests } = await import('/test-full-data-flow.js');
+      const results = await runAllDiagnosticTests();
+      console.log('✅ Diagnostika dokončena:', results);
+      return results;
+    } catch (err) {
+      console.error('❌ Diagnostika selhala:', err);
+      throw err;
+    }
+  };
+
+  window.quickDiagnose = () => {
+    console.log('🔍 Rychlá diagnostika - stav služeb:');
+    import('./services/fastMetadataService.js').then(({ fastMetadataService }) => {
+      console.log('📊 fastMetadataService:', {
+        isInitialized: fastMetadataService.isInitialized,
+        isLoading: fastMetadataService.isLoading,
+        metadataSize: fastMetadataService.metadata?.size || 0
+      });
+      console.log('📂 Metadata položky:', Array.from(fastMetadataService.metadata.entries()).slice(0, 5));
+    });
+  };
+
+  console.log('🔧 Development diagnostika aktivní:');
+  console.log('   - window.runDiagnostics() - Kompletní diagnostika');
+  console.log('   - window.quickDiagnose() - Rychlý přehled stavu');
+  console.log('   - window.clearServiceWorkerCache() - Vymazání SW cache');
+
+  // Funkce pro vymazání Service Worker cache
+  window.clearServiceWorkerCache = async () => {
+    console.log('🧹 Clearing Service Worker cache...');
+
+    try {
+      // Zruš registraci všech Service Workerů
+      const registrations = await navigator.serviceWorker.getRegistrations();
+      console.log(`Found ${registrations.length} Service Worker registrations`);
+
+      for (const registration of registrations) {
+        await registration.unregister();
+        console.log('✅ Unregistered Service Worker:', registration.scope);
+      }
+
+      // Vymaž všechny Cache Storage caches
+      const cacheNames = await caches.keys();
+      console.log(`Found ${cacheNames.length} caches`);
+
+      for (const cacheName of cacheNames) {
+        await caches.delete(cacheName);
+        console.log('✅ Deleted cache:', cacheName);
+      }
+
+      console.log('✅ Service Worker cache cleared successfully!');
+      console.log('🔄 Please refresh the page (Ctrl+Shift+R) to reload fresh data');
+
+      return true;
+    } catch (error) {
+      console.error('❌ Error clearing Service Worker cache:', error);
+      return false;
+    }
+  };
 }
 
 ReactDOM.createRoot(document.getElementById('root')).render(

@@ -1,0 +1,24 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(git add:*)",
+      "Bash(git rebase:*)",
+      "Bash(git checkout:*)",
+      "Bash(ls:*)",
+      "Bash(node:*)",
+      "Bash(npm test:*)",
+      "Bash(npm run:*)",
+      "Bash(firebase deploy:*)",
+      "Bash(npx firebase:*)",
+      "Bash(grep:*)",
+      "Bash(gsutil cors:*)",
+      "Bash(start:*)",
+      "Bash(taskkill /F /IM node.exe)",
+      "Bash(where gsutil:*)",
+      "Bash(gsutil ls:*)",
+      "Bash(git commit *)",
+      "Bash(npx firebase-tools *)",
+      "Bash(curl -s \"https://meditations-audio.web.app\")"
+    ]
+  }
+}
