@@ -7,6 +7,7 @@ import { useTheme } from '@contexts/ThemeContext';
 import { realtimeMetadataService } from '@services/realtimeMetadataService';
 import Waveform from '@components/Waveform';
 import { useBreathStore } from '@stores/breathStore';
+import { BREATH_SOUND_THEMES, findBestMatchingFile } from '../data/soundThemes';
 
 const SoundThemeGalleryScreen = ({
   onNavigateToScreen,
@@ -65,9 +66,10 @@ const SoundThemeGalleryScreen = ({
   const [audioFiles, setAudioFiles] = useState([]);
   const [loading, setLoading] = useState(true);
   const [playingPreview, setPlayingPreview] = useState(null); // Aktuálně přehrávaný soubor
-  const previewAudioRef = useRef(null); // Audio element pro preview
+  const [previewAudioRef] = useState(() => ({ current: null })); // Audio element pro preview - fix pro nechtěné render cykly
   const [selectedCategory, setSelectedCategory] = useState('background'); // Vybraná kategorie (výchozí: background)
   const [currentPage, setCurrentPage] = useState(0); // Aktuální stránka pro paginaci
+  const [viewMode, setViewMode] = useState('themes'); // 'themes' | 'advanced'
   const filesPerPage = 12; // Počet souborů na stránku
 
   // Funkce pro určení kategorie souboru podle názvu
@@ -379,6 +381,31 @@ const SoundThemeGalleryScreen = ({
     }
   };
 
+  const applyTheme = (theme) => {
+    if (theme.isSilence) {
+      handleFileSelect('in', 'none');
+      handleFileSelect('out', 'none');
+      handleFileSelect('click', 'none');
+      handleFileSelect('final', 'none');
+      handleFileSelect('countdown', 'none');
+      onNavigateToScreen('breath'); // Jdi zpět hned po výběru
+      return;
+    }
+
+    const inFile = findBestMatchingFile(audioFiles, 'in', theme.keywords.in);
+    const outFile = findBestMatchingFile(audioFiles, 'out', theme.keywords.out);
+    const clickFile = findBestMatchingFile(audioFiles, 'click', theme.keywords.click);
+    const finalFile = findBestMatchingFile(audioFiles, 'final', theme.keywords.final);
+    
+    handleFileSelect('in', inFile);
+    handleFileSelect('out', outFile);
+    handleFileSelect('click', clickFile);
+    handleFileSelect('final', finalFile);
+    handleFileSelect('countdown', 'none');
+    
+    onNavigateToScreen('breath'); // Jdi zpět hned po výběru
+  };
+
   const backgroundColor = getScreenBackgroundColor();
 
   return (
@@ -406,8 +433,52 @@ const SoundThemeGalleryScreen = ({
             </div>
           </FramerSection>
 
-          {/* Kategorie záložky */}
-          {!loading && (
+          {/* Zobrazení témat (Výchozí) */}
+          {viewMode === 'themes' && !loading && (
+            <div className="flex flex-col gap-4">
+              {BREATH_SOUND_THEMES.map((theme) => (
+                <button
+                  key={theme.id}
+                  onClick={() => applyTheme(theme)}
+                  className={`w-full p-5 rounded-3xl flex items-center gap-4 transition-all duration-300 text-white ${theme.color} shadow-xl hover:scale-[1.02] active:scale-95`}
+                >
+                  <div className="text-4xl flex-shrink-0">{theme.icon}</div>
+                  <div className="flex flex-col items-start text-left flex-1">
+                    <h3 className="font-bold text-lg mb-0.5">{theme.name}</h3>
+                    <p className="text-sm opacity-90 leading-snug">{theme.description}</p>
+                  </div>
+                </button>
+              ))}
+              
+              <button
+                onClick={() => setViewMode('advanced')}
+                className="w-full mt-4 p-5 rounded-3xl flex items-center gap-4 transition-all duration-300 bg-white/70 text-gray-800 shadow-lg hover:bg-white/90 border border-black/10 hover:scale-[1.02] active:scale-95"
+              >
+                <div className="text-3xl flex-shrink-0">🎛️</div>
+                <div className="flex flex-col items-start text-left flex-1">
+                  <h3 className="font-bold text-lg mb-0.5">Moje vlastní (Pokročilé)</h3>
+                  <p className="text-sm opacity-80 text-gray-600 leading-snug">Složit si zvuky z jednotlivých souborů přesně podle sebe</p>
+                </div>
+              </button>
+            </div>
+          )}
+
+          {/* Pokročilý (geeky) režim */}
+          {viewMode === 'advanced' && (
+            <>
+              {!loading && (
+                <div className="mb-6 flex justify-start items-center">
+                  <button
+                    onClick={() => setViewMode('themes')}
+                    className="px-5 py-2.5 rounded-full bg-black/90 text-white text-sm font-medium hover:bg-black transition-colors flex items-center gap-2 shadow-md"
+                  >
+                    &larr; Zpět na Témata
+                  </button>
+                </div>
+              )}
+
+              {/* Kategorie záložky */}
+              {!loading && (
             <div className="mb-4 flex flex-wrap gap-2">
               {/* Ostatní kategorie - zobrazí se pouze pokud existují */}
               {categories.length > 0 && (
@@ -876,6 +947,9 @@ const SoundThemeGalleryScreen = ({
             <div className="text-center py-4 text-gray-600">
               <p>Žádné soubory na této stránce</p>
             </div>
+          )}
+          
+          </>
           )}
         </div>
       </div>

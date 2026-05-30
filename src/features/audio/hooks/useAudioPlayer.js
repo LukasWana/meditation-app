@@ -390,19 +390,17 @@ export const useAudioPlayer = (audioUrl, albumTracks = null, currentTrackIndex =
 
         // Definuj proceedWithAutoplay funkci před jejím použitím
         const proceedWithAutoplay = () => {
-          // Přidej delší delay pro autoplay aby se audio element stihl připravit
-          setTimeout(() => {
-            // Zjednodušený autoplay - jen spusť audio bez složitých kontrol
-            audio.play().then(() => {
-              setAudioState(prev => ({ ...prev, isPlaying: true, userPaused: false }));
-              setPlaybackState(prev => ({ ...prev, shouldAutoplay: false, wasPlayingBeforeSwitch: false }));
-              // console.log('✅ AUTOPLAY: Auto-play successful');
-            }).catch((error) => {
-              // console.log('❌ AUTOPLAY: Failed to auto-play:', error);
-              setAudioState(prev => ({ ...prev, isPlaying: false }));
-              setPlaybackState(prev => ({ ...prev, shouldAutoplay: false, wasPlayingBeforeSwitch: false }));
-            });
-          }, 500); // Zvýšen delay na 500ms
+          // Zjednodušený autoplay - jen spusť audio bez složitých kontrol
+          // ODSTRANĚN setTimeout - na Androidu to přerušuje kontext uživatelského gesta a způsobuje NotAllowedError
+          audio.play().then(() => {
+            setAudioState(prev => ({ ...prev, isPlaying: true, userPaused: false }));
+            setPlaybackState(prev => ({ ...prev, shouldAutoplay: false, wasPlayingBeforeSwitch: false }));
+            // console.log('✅ AUTOPLAY: Auto-play successful');
+          }).catch((error) => {
+            // console.log('❌ AUTOPLAY: Failed to auto-play:', error);
+            setAudioState(prev => ({ ...prev, isPlaying: false }));
+            setPlaybackState(prev => ({ ...prev, shouldAutoplay: false, wasPlayingBeforeSwitch: false }));
+          });
         };
 
         // Zkontroluj jestli je audio element připravený pro autoplay
@@ -420,19 +418,15 @@ export const useAudioPlayer = (audioUrl, albumTracks = null, currentTrackIndex =
 
             if (audioContext.state === 'suspended') {
               console.log('🎵 AUTOPLAY: AudioContext suspended, attempting resume');
-              audioContext.resume().then(() => {
-                console.log('🎵 AUTOPLAY: AudioContext resumed, proceeding with autoplay');
-                window.audioActivated = true;
-                proceedWithAutoplay();
-              }).catch((error) => {
+              // ODSTRANĚN .then() aby se audio.play() zavolal synchronně (nutné pro mobilní prohlížeče)
+              audioContext.resume().catch((error) => {
                 console.log('🎵 AUTOPLAY: Failed to resume AudioContext:', error);
-                proceedWithAutoplay();
               });
-            } else {
-              console.log('🎵 AUTOPLAY: AudioContext is active, proceeding with autoplay');
-              window.audioActivated = true;
-              proceedWithAutoplay();
             }
+            
+            console.log('🎵 AUTOPLAY: AudioContext is active (or resuming), proceeding with autoplay');
+            window.audioActivated = true;
+            proceedWithAutoplay();
           } catch (error) {
             console.log('🎵 AUTOPLAY: No AudioContext available, proceeding with autoplay');
             proceedWithAutoplay();
@@ -794,32 +788,22 @@ export const useAudioPlayer = (audioUrl, albumTracks = null, currentTrackIndex =
           }
 
           if (audioContext.state === 'suspended') {
-            audioContext.resume().then(() => {
-              console.log('🎵 Audio aktivován automaticky, pokračuji s přehráváním...');
-              setAudioState(prev => ({ ...prev, hasInteracted: true }));
-              window.audioActivated = true;
-              audio.play().then(() => {
-                setAudioState(prev => ({ ...prev, isPlaying: true, userPaused: false }));
-                console.log('🎵 User interaction recorded - autoplay now enabled');
-              }).catch(() => {
-                console.log('🎵 Audio play failed');
-                setAudioState(prev => ({ ...prev, isPlaying: false }));
-              });
-            }).catch(() => {
+            audioContext.resume().catch(() => {
               console.log('🎵 PRVNÍ SPUŠTĚNÍ: Automatická aktivace selhala');
             });
-          } else {
-            console.log('🎵 Audio už je aktivní, pokračuji s přehráváním...');
-            setAudioState(prev => ({ ...prev, hasInteracted: true }));
-            window.audioActivated = true;
-            audio.play().then(() => {
-              setAudioState(prev => ({ ...prev, isPlaying: true, userPaused: false }));
-              console.log('🎵 User interaction recorded - autoplay now enabled');
-            }).catch(() => {
-              console.log('🎵 Audio play failed');
-              setAudioState(prev => ({ ...prev, isPlaying: false }));
-            });
           }
+          
+          console.log('🎵 Audio aktivován automaticky, pokračuji s přehráváním...');
+          setAudioState(prev => ({ ...prev, hasInteracted: true }));
+          window.audioActivated = true;
+          
+          audio.play().then(() => {
+            setAudioState(prev => ({ ...prev, isPlaying: true, userPaused: false }));
+            console.log('🎵 User interaction recorded - autoplay now enabled');
+          }).catch(() => {
+            console.log('🎵 Audio play failed');
+            setAudioState(prev => ({ ...prev, isPlaying: false }));
+          });
         } catch {
           console.log('🎵 PRVNÍ SPUŠTĚNÍ: Chyba při aktivaci');
         }

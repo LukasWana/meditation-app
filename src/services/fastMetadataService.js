@@ -105,6 +105,7 @@ class FastMetadataService {
       log.info('🚀 Loading metadata from Firebase Storage structure...');
       console.log('🔍 [Firebase Storage DEBUG] Starting metadata load from Firebase Storage');
 
+      let hasPartialErrors = false;
       const allFiles = [];
 
       // Načti hudba složku
@@ -182,6 +183,7 @@ class FastMetadataService {
       } catch (hudbaError) {
         log.warn(`Failed to load hudba folder:`, hudbaError);
         console.error('❌ [Firebase Storage] Failed to load hudba folder:', hudbaError);
+        hasPartialErrors = true;
       }
 
       // Načti dychanie složku
@@ -277,6 +279,7 @@ class FastMetadataService {
       } catch (dychanieError) {
         log.warn(`Failed to load dychanie folder:`, dychanieError);
         console.error('❌ [Firebase Storage] Failed to load dychanie folder:', dychanieError);
+        hasPartialErrors = true;
       }
 
       // ✅ NOVÉ: Načti background složku (obrázky)
@@ -337,6 +340,7 @@ class FastMetadataService {
         }
       } catch (backgroundError) {
         log.warn(`Failed to load background folder:`, backgroundError);
+        hasPartialErrors = true;
       }
 
       // ✅ NOVÉ: Načti meditacie složku s jazykovými podsložkami
@@ -384,6 +388,7 @@ class FastMetadataService {
       } catch (meditacieError) {
         log.warn(`Failed to load meditacie folder:`, meditacieError);
         console.error('❌ [Firebase Storage] Failed to load meditacie folder:', meditacieError);
+        hasPartialErrors = true;
       }
 
       // Root jazykové složky (CZ/SK/EN) se nepoužívají – držíme se struktury meditacie/{LANG}/
@@ -395,7 +400,13 @@ class FastMetadataService {
       await this.loadAudioDurations();
 
       this.lastUpdate = new Date();
-      this.saveToCache();
+      
+      if (!hasPartialErrors) {
+        this.saveToCache();
+      } else {
+        log.warn('⚠️ Not saving to cache due to partial load errors (cache poisoning prevention)');
+        console.warn('⚠️ [Firebase Storage] Skipping cache save because some folders failed to load');
+      }
 
       log.success(`✅ Fast metadata loading completed: ${this.metadata.size} files processed`);
 

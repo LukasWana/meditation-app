@@ -18,7 +18,8 @@
       "Bash(gsutil ls:*)",
       "Bash(git commit *)",
       "Bash(npx firebase-tools *)",
-      "Bash(curl -s \"https://meditations-audio.web.app\")"
+      "Bash(curl -s \"https://meditations-audio.web.app\")",
+      "Bash(npx *)"
     ]
   }
 }

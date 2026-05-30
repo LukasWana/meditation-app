@@ -240,13 +240,20 @@ export const useBreathAudioEngine = (
 
     // Počkej na načtení všech bufferů a aktualizuj state
     Promise.all(loadPromises).then(() => {
-      // Zkontroluj, zda jsou všechny potřebné buffery načtené
+      // Zkontroluj, zda jsou všechny potřebné buffery načtené.
+      // Pokud dojde k chybě (setLoadError), považujeme buffer za "vyřešený",
+      // aby se dýchací cyklus nezasekl navždy na "Nádech".
       const needsInBuffer = breathInSound && breathInSound !== 'none';
       const needsOutBuffer = breathOutSound && breathOutSound !== 'none';
-      const hasInBuffer = !needsInBuffer || inBufferRef.current !== null;
-      const hasOutBuffer = !needsOutBuffer || outBufferRef.current !== null;
-
-      setBuffersReady(hasInBuffer && hasOutBuffer);
+      
+      // Problém: Pokud fetch nebo decodeAudioData selže, bufferRef.current bude null.
+      // Abychom nezasekli dýchací cyklus (fáze se nepřepínají pokud buffersReady je false),
+      // musíme to povolit i když je to null, ALE ZÁROVEŇ víme, že proces načítání SKONČIL.
+      // Promise.all(loadPromises).then se zavolá AŽ když se všechny try/catch bloky dokončí.
+      // To znamená, že načítání je kompletní (ať už s úspěchem nebo ne).
+      // Proto můžeme s jistotou nastavit buffersReady na true.
+      
+      setBuffersReady(true);
     });
   }, [inSoundUrl, outSoundUrl, clickSoundUrl, initializeAudioContext, breathInSound, breathOutSound]);
 
