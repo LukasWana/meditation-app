@@ -106,12 +106,12 @@ const AuthGate = ({ children, onAuthenticated }) => {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
-          <p className="mt-4 text-gray-600">Kontrola přístupu...</p>
-        </div>
+      <div className="min-h-screen flex items-center justify-center app-content-container relative">
+      <div className="text-center glass-panel p-8 relative z-10">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-white mx-auto"></div>
+        <p className="mt-4 text-white">Kontrola přístupu...</p>
       </div>
+    </div>
     );
   }
 
@@ -120,24 +120,24 @@ const AuthGate = ({ children, onAuthenticated }) => {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-md w-full space-y-8">
+    <div className="min-h-screen flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8 app-content-container relative">
+      <div className="max-w-md w-full space-y-8 glass-panel p-8 relative z-10">
         <div>
-          <div className="mx-auto h-12 w-12 bg-blue-600 rounded-full flex items-center justify-center">
+          <div className="mx-auto h-12 w-12 glass-panel-inner flex items-center justify-center" style={{ borderRadius: '50%' }}>
             <svg className="h-6 w-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
             </svg>
           </div>
-          <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
+          <h2 className="mt-6 text-center text-3xl font-extrabold text-white">
             🔐 Admin přístup
           </h2>
-          <p className="mt-2 text-center text-sm text-gray-600">
+          <p className="mt-2 text-center text-sm text-white/80">
             Správa databází vyžaduje přihlášení
           </p>
         </div>
 
         <form className="mt-8 space-y-6" onSubmit={handleSignIn}>
-          <div className="rounded-md shadow-sm -space-y-px">
+          <div className="space-y-4">
             <div>
               <label htmlFor="email" className="sr-only">
                 Email
@@ -148,7 +148,7 @@ const AuthGate = ({ children, onAuthenticated }) => {
                 type="email"
                 autoComplete="email"
                 required
-                className="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-t-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 focus:z-10 sm:text-sm"
+                className="glass-input relative block w-full px-4 py-3 text-white placeholder-white/70 sm:text-sm"
                 placeholder="Email adresa"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
@@ -164,7 +164,7 @@ const AuthGate = ({ children, onAuthenticated }) => {
                 type="password"
                 autoComplete="current-password"
                 required
-                className="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-b-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 focus:z-10 sm:text-sm"
+                className="glass-input relative block w-full px-4 py-3 text-white placeholder-white/70 sm:text-sm"
                 placeholder="Heslo"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
@@ -173,7 +173,7 @@ const AuthGate = ({ children, onAuthenticated }) => {
           </div>
 
           {error && (
-            <div className="bg-red-50 border border-red-200 rounded-md p-4">
+            <div className="glass-panel-inner p-4" style={{ backgroundColor: 'rgba(239, 68, 68, 0.2)', borderColor: 'rgba(239, 68, 68, 0.5)' }}>
               <div className="flex">
                 <div className="flex-shrink-0">
                   <svg className="h-5 w-5 text-red-400" viewBox="0 0 20 20" fill="currentColor">
@@ -181,10 +181,10 @@ const AuthGate = ({ children, onAuthenticated }) => {
                   </svg>
                 </div>
                 <div className="ml-3">
-                  <h3 className="text-sm font-medium text-red-800">
+                  <h3 className="text-sm font-medium text-red-200">
                     Chyba přihlášení
                   </h3>
-                  <div className="mt-2 text-sm text-red-700">
+                  <div className="mt-2 text-sm text-red-100">
                     <p>{error}</p>
                   </div>
                 </div>
@@ -196,7 +196,7 @@ const AuthGate = ({ children, onAuthenticated }) => {
             <button
               type="submit"
               disabled={isSigningIn}
-              className="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="glass-button w-full flex justify-center py-3 px-4 text-sm font-medium text-white disabled:opacity-50"
             >
               {isSigningIn ? (
                 <>
@@ -213,22 +213,22 @@ const AuthGate = ({ children, onAuthenticated }) => {
             <button
               type="button"
               onClick={testAuth}
-              className="text-xs text-blue-600 hover:text-blue-800 underline"
+              className="text-xs text-white/70 hover:text-white underline transition-colors"
             >
               🧪 Test Firebase Auth
             </button>
 
             {authTestResult && (
-              <div className={`text-xs p-2 rounded ${
+              <div className={`text-xs p-2 rounded glass-panel-inner ${
                 authTestResult.success
-                  ? 'bg-green-50 text-green-700 border border-green-200'
-                  : 'bg-red-50 text-red-700 border border-red-200'
+                  ? 'text-green-300 border-green-500/50'
+                  : 'text-red-300 border-red-500/50'
               }`}>
                 {authTestResult.success ? '✅' : '❌'} {authTestResult.message || authTestResult.error}
               </div>
             )}
 
-            <p className="text-xs text-gray-500">
+            <p className="text-xs text-white/50">
               Pro přístup k administraci databází kontaktujte administrátora
             </p>
           </div>

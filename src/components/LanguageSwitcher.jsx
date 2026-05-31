@@ -23,47 +23,34 @@ const LanguageSwitcher = ({ className = "" }) => {
   return (
     <div className={`flex items-center space-x-3 ${className}`}>
       <motion.div
-        className="flex backdrop-blur-sm rounded-full p-1 shadow-sm border"
-        style={{
-          backgroundColor: bgColor,
-          borderColor: borderColor
-        }}
+        className="flex gap-1 glass-pill p-1"
         initial={{ opacity: 0, scale: 0.9 }}
         animate={{ opacity: 1, scale: 1 }}
         transition={{ duration: 0.3, ease: "easeOut" }}
       >
         <motion.button
           onClick={() => handleLanguageChange('SK')}
-          className="p-2 rounded-full transition-colors duration-200 flex items-center justify-center"
-          style={{
-            backgroundColor: language === 'SK' ? activeBgColor : 'transparent'
-          }}
-          whileHover={{ backgroundColor: language !== 'SK' ? hoverBgColor : activeBgColor }}
+          className={`w-9 h-9 transition-colors duration-200 flex items-center justify-center ${language === 'SK' ? 'glass-button !rounded-full' : 'hover:opacity-80 rounded-full'}`}
+          whileHover={{ opacity: 1 }}
           transition={{ type: "spring", stiffness: 300, damping: 20 }}
         >
-          <img src={SlovakiaFlagUrl} alt="Slovakia" className="w-6 h-6" />
+          <img src={SlovakiaFlagUrl} alt="Slovakia" className="w-5 h-5" />
         </motion.button>
         <motion.button
           onClick={() => handleLanguageChange('CZ')}
-          className="p-2 rounded-full transition-colors duration-200 flex items-center justify-center"
-          style={{
-            backgroundColor: language === 'CZ' ? activeBgColor : 'transparent'
-          }}
-          whileHover={{ backgroundColor: language !== 'CZ' ? hoverBgColor : activeBgColor }}
+          className={`w-9 h-9 transition-colors duration-200 flex items-center justify-center ${language === 'CZ' ? 'glass-button !rounded-full' : 'hover:opacity-80 rounded-full'}`}
+          whileHover={{ opacity: 1 }}
           transition={{ type: "spring", stiffness: 300, damping: 20 }}
         >
-          <img src={CzechFlagUrl} alt="Czech Republic" className="w-6 h-6" />
+          <img src={CzechFlagUrl} alt="Czech Republic" className="w-5 h-5" />
         </motion.button>
         <motion.button
           onClick={() => handleLanguageChange('EN')}
-          className="p-2 rounded-full transition-colors duration-200 flex items-center justify-center"
-          style={{
-            backgroundColor: language === 'EN' ? activeBgColor : 'transparent'
-          }}
-          whileHover={{ backgroundColor: language !== 'EN' ? hoverBgColor : activeBgColor }}
+          className={`w-9 h-9 transition-colors duration-200 flex items-center justify-center ${language === 'EN' ? 'glass-button !rounded-full' : 'hover:opacity-80 rounded-full'}`}
+          whileHover={{ opacity: 1 }}
           transition={{ type: "spring", stiffness: 300, damping: 20 }}
         >
-          <img src={UKFlagUrl} alt="United Kingdom" className="w-6 h-6" />
+          <img src={UKFlagUrl} alt="United Kingdom" className="w-5 h-5" />
         </motion.button>
       </motion.div>
     </div>

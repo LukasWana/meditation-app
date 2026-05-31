@@ -111,24 +111,16 @@ const RhythmPickerScreen = ({
                     <button
                       onClick={handleLeftDecrement}
                       disabled={tempLeftValue <= 1}
-                      className="flex items-center justify-center w-14 h-12 rounded-full transition-all disabled:opacity-40 disabled:cursor-not-allowed"
-                      style={{
-                        backgroundColor: cardColor,
-                        border: `2px solid ${borderColor}`,
-                        color: displayTextColor
-                      }}
+                      className="glass-button flex items-center justify-center w-14 h-12 transition-all disabled:opacity-40 disabled:cursor-not-allowed"
+                      style={{ color: displayTextColor }}
                     >
                       <Minus size={18} />
                     </button>
                     <button
                       onClick={handleLeftIncrement}
                       disabled={tempLeftValue >= 20}
-                      className="flex items-center justify-center w-14 h-12 rounded-full transition-all disabled:opacity-40 disabled:cursor-not-allowed"
-                      style={{
-                        backgroundColor: cardColor,
-                        border: `2px solid ${borderColor}`,
-                        color: displayTextColor
-                      }}
+                      className="glass-button flex items-center justify-center w-14 h-12 transition-all disabled:opacity-40 disabled:cursor-not-allowed"
+                      style={{ color: displayTextColor }}
                     >
                       <Plus size={18} />
                     </button>
@@ -152,24 +144,16 @@ const RhythmPickerScreen = ({
                     <button
                       onClick={handleRightDecrement}
                       disabled={tempRightValue <= 1}
-                      className="flex items-center justify-center w-14 h-12 rounded-full transition-all disabled:opacity-40 disabled:cursor-not-allowed"
-                      style={{
-                        backgroundColor: cardColor,
-                        border: `2px solid ${borderColor}`,
-                        color: displayTextColor
-                      }}
+                      className="glass-button flex items-center justify-center w-14 h-12 transition-all disabled:opacity-40 disabled:cursor-not-allowed"
+                      style={{ color: displayTextColor }}
                     >
                       <Minus size={18} />
                     </button>
                     <button
                       onClick={handleRightIncrement}
                       disabled={tempRightValue >= 20}
-                      className="flex items-center justify-center w-14 h-12 rounded-full transition-all disabled:opacity-40 disabled:cursor-not-allowed"
-                      style={{
-                        backgroundColor: cardColor,
-                        border: `2px solid ${borderColor}`,
-                        color: displayTextColor
-                      }}
+                      className="glass-button flex items-center justify-center w-14 h-12 transition-all disabled:opacity-40 disabled:cursor-not-allowed"
+                      style={{ color: displayTextColor }}
                     >
                       <Plus size={18} />
                     </button>
@@ -184,14 +168,8 @@ const RhythmPickerScreen = ({
             {/* Tlačítko ZVUKY */}
             <button
               onClick={handleSoundButtonClick}
-              className="px-6 py-3 rounded transition-colors flex items-center justify-center gap-2"
-              style={{
-                backgroundColor: cardColor,
-                color: displayTextColor,
-                borderColor,
-                borderWidth: '1px',
-                borderStyle: 'solid'
-              }}
+              className="glass-button px-6 py-3 transition-colors flex items-center justify-center gap-2"
+              style={{ color: displayTextColor }}
             >
               <Music2 size={18} />
               <span>{t('zvuky') || 'zvuky'}</span>
@@ -199,14 +177,8 @@ const RhythmPickerScreen = ({
             {/* Hlavní tlačítko */}
             <button
               onClick={handleConfirm}
-              className="px-8 py-3 rounded transition-colors"
-              style={{
-                backgroundColor: cardColor,
-                color: displayTextColor,
-                borderColor,
-                borderWidth: '1px',
-                borderStyle: 'solid'
-              }}
+              className="glass-button px-8 py-3 transition-colors"
+              style={{ color: displayTextColor }}
             >
               {t('hotovo')}
             </button>

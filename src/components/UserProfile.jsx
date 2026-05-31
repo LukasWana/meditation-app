@@ -125,7 +125,7 @@ const UserProfile = () => {
 
   if (isLoading) {
     return (
-      <div className="bg-white/90 backdrop-blur-sm border border-gray-200 rounded-full p-2 shadow-sm">
+      <div className="glass-pill p-2">
         <Loader className="w-6 h-6 animate-spin text-gray-600" />
       </div>
     );
@@ -135,7 +135,7 @@ const UserProfile = () => {
     return (
       <button
         onClick={handleSignIn}
-        className="bg-white/90 backdrop-blur-sm border border-gray-200 rounded-full px-4 py-2 shadow-sm hover:bg-gray-50 transition-colors flex items-center gap-2"
+        className="glass-pill h-[44px] px-5 hover:bg-black/10 dark:hover:bg-white/10 transition-colors flex items-center gap-2"
         type="button"
       >
         <LogIn className="w-5 h-5 text-gray-700" />
@@ -167,7 +167,7 @@ const UserProfile = () => {
         <button
           ref={buttonRef}
           onClick={handleButtonClick}
-          className="bg-white/90 backdrop-blur-sm border border-gray-200 rounded-full p-1.5 shadow-sm hover:bg-gray-50 transition-colors flex items-center gap-2 overflow-visible cursor-pointer"
+          className="glass-pill h-[44px] p-1 pr-4 hover:bg-black/10 dark:hover:bg-white/10 transition-colors flex items-center gap-2 overflow-visible cursor-pointer"
           type="button"
           style={{ pointerEvents: 'auto', position: 'relative', zIndex: 100 }}
         >
@@ -175,7 +175,7 @@ const UserProfile = () => {
             <img
               src={photoURL}
               alt={displayName}
-              className="w-7 h-7 rounded-full object-cover"
+              className="w-9 h-9 rounded-full object-cover"
               onLoad={() => {
                 console.log('✅ Profile image loaded successfully:', photoURL);
               }}
@@ -186,7 +186,7 @@ const UserProfile = () => {
               }}
             />
           ) : null}
-          <div className={`w-7 h-7 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center avatar-fallback ${photoURL && !imageError ? 'hidden' : ''}`}>
+          <div className={`w-9 h-9 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center avatar-fallback ${photoURL && !imageError ? 'hidden' : ''}`}>
             <span className="text-white text-xs font-semibold">
               {displayName.charAt(0).toUpperCase()}
             </span>

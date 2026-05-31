@@ -49,72 +49,62 @@ const HomeScreen = ({
           } : {})
         }}
       >
-        <div
-          className="flex-1 flex items-center justify-center cursor-pointer relative"
-          onClick={() => onNavigateToScreen('meditace')}
-          onTouchStart={onTouchStart}
-          style={{
-            backgroundColor: getSectionBackgroundColor(true) // true = primary color
-          }}
-        >
-          <div className="text-center px-2 sm:px-8 py-4">
-            <div
-              className="text-5xl font-light tracking-wide py-4 leading-loose"
-              style={{ color: displayTextColor }}
-            >
-              {t('slova')}
+        <div className="flex-1 p-4 flex flex-col gap-4 max-w-lg mx-auto w-full justify-center">
+          <div
+            className="glass-panel flex-1 flex items-center justify-center cursor-pointer transition-transform active:scale-95"
+            onClick={() => onNavigateToScreen('meditace')}
+            onTouchStart={onTouchStart}
+          >
+            <div className="text-center px-4 py-2">
+              <div
+                className="text-4xl sm:text-5xl font-light tracking-wide py-2"
+                style={{ color: displayTextColor }}
+              >
+                {t('slova')}
+              </div>
             </div>
           </div>
-        </div>
 
-        <div
-          className="flex-1 flex items-center justify-center cursor-pointer"
-          onClick={() => onNavigateToScreen('hudba')}
-          onTouchStart={onTouchStart}
-          style={{
-            backgroundColor: getSectionBackgroundColor(false) // false = card color
-          }}
-        >
-          <div className="text-center px-2 sm:px-8 py-4">
-            <div
-              className="text-5xl font-light tracking-wide py-4 leading-loose"
-              style={{ color: displayTextColor }}
-            >
-              {t('hudba')}
+          <div
+            className="glass-panel flex-1 flex items-center justify-center cursor-pointer transition-transform active:scale-95"
+            onClick={() => onNavigateToScreen('hudba')}
+            onTouchStart={onTouchStart}
+          >
+            <div className="text-center px-4 py-2">
+              <div
+                className="text-4xl sm:text-5xl font-light tracking-wide py-2"
+                style={{ color: displayTextColor }}
+              >
+                {t('hudba')}
+              </div>
             </div>
           </div>
-        </div>
 
-        <div
-          className="flex-1 flex items-center justify-center cursor-pointer"
-          onClick={() => onNavigateToScreen('dychani')}
-          style={{
-            backgroundColor: getSectionBackgroundColor(true) // true = primary color
-          }}
-        >
-          <div className="text-center px-2 sm:px-8 py-4">
-            <div
-              className="text-5xl font-light tracking-wide mb-4 py-4 leading-loose"
-              style={{ color: displayTextColor }}
-            >
-              {t('dychanie') || 'dýchání'}
+          <div
+            className="glass-panel flex-1 flex items-center justify-center cursor-pointer transition-transform active:scale-95"
+            onClick={() => onNavigateToScreen('dychani')}
+          >
+            <div className="text-center px-4 py-2">
+              <div
+                className="text-4xl sm:text-5xl font-light tracking-wide py-2"
+                style={{ color: displayTextColor }}
+              >
+                {t('dychanie') || 'dýchání'}
+              </div>
             </div>
           </div>
-        </div>
 
-        <div
-          className="flex-1 flex items-center justify-center cursor-pointer"
-          onClick={() => onNavigateToScreen('settings')}
-          style={{
-            backgroundColor: getSectionBackgroundColor(false) // false = card color
-          }}
-        >
-          <div className="text-center px-2 sm:px-8 py-4">
-            <div
-              className="text-5xl font-light tracking-wide py-4 leading-loose"
-              style={{ color: displayTextColor }}
-            >
-              {t('nastavenie')}
+          <div
+            className="glass-panel flex-1 flex items-center justify-center cursor-pointer transition-transform active:scale-95"
+            onClick={() => onNavigateToScreen('settings')}
+          >
+            <div className="text-center px-4 py-2">
+              <div
+                className="text-4xl sm:text-5xl font-light tracking-wide py-2"
+                style={{ color: displayTextColor }}
+              >
+                {t('nastavenie')}
+              </div>
             </div>
           </div>
         </div>

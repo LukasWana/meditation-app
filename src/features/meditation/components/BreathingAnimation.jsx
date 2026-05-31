@@ -50,7 +50,8 @@ const BreathingAnimation = ({
           maxHeight: '120px',
           minWidth: '80px',
           minHeight: '80px',
-          background: 'radial-gradient(circle, rgba(255,255,255,1) 0%, rgba(255,255,255,1) 25%, rgba(255,255,255,1) 25%, rgba(255,255,255,1) 100%)',
+          background: 'radial-gradient(circle, rgba(255,255,255,0.8) 0%, rgba(255,255,255,0.4) 40%, rgba(255,255,255,0) 70%)',
+          filter: 'blur(4px)',
           transformOrigin: 'center center',
           borderRadius: '50%',
           overflow: 'visible',
@@ -60,7 +61,7 @@ const BreathingAnimation = ({
         }}
         initial={{
           scale: 1.0,  // Začínáme ve velikosti play tlačítka (scale 1.0)
-          opacity: 0.8
+          opacity: 0.6
         }}
         animate={isBreathing ? {
           scale: breathPhase === 'in'

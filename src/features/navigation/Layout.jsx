@@ -58,7 +58,7 @@ const Layout = ({
 
           {/* Language Switcher - desktop/tablet */}
           <motion.div
-            className="hidden sm:flex bg-white/90 backdrop-blur-sm border border-gray-200 rounded-full p-1 shadow-sm"
+            className="hidden sm:flex glass-pill p-1"
             initial={{ opacity: 0, scale: 0.9 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ duration: 0.3, ease: "easeOut" }}
@@ -66,8 +66,8 @@ const Layout = ({
             <motion.button
               onClick={() => handleLanguageChange('SK')}
               className={`p-2 rounded-full transition-colors duration-200 flex items-center justify-center ${language === 'SK'
-                ? 'bg-gray-800'
-                : 'hover:bg-gray-100'
+                ? 'glass-button !rounded-full'
+                : 'hover:bg-black/10 dark:hover:bg-white/10'
                 }`}
               transition={{ type: "spring", stiffness: 300, damping: 20 }}
             >
@@ -76,8 +76,8 @@ const Layout = ({
             <motion.button
               onClick={() => handleLanguageChange('CZ')}
               className={`p-2 rounded-full transition-colors duration-200 flex items-center justify-center ${language === 'CZ'
-                ? 'bg-gray-800'
-                : 'hover:bg-gray-100'
+                ? 'glass-button !rounded-full'
+                : 'hover:bg-black/10 dark:hover:bg-white/10'
                 }`}
               transition={{ type: "spring", stiffness: 300, damping: 20 }}
             >
@@ -86,8 +86,8 @@ const Layout = ({
             <motion.button
               onClick={() => handleLanguageChange('EN')}
               className={`p-2 rounded-full transition-colors duration-200 flex items-center justify-center ${language === 'EN'
-                ? 'bg-gray-800'
-                : 'hover:bg-gray-100'
+                ? 'glass-button !rounded-full'
+                : 'hover:bg-black/10 dark:hover:bg-white/10'
                 }`}
               transition={{ type: "spring", stiffness: 300, damping: 20 }}
             >
@@ -98,27 +98,29 @@ const Layout = ({
           {/* Language Switcher - mobile (one flag, cycles on tap) */}
           <motion.button
             onClick={cycleLanguage}
-            className="sm:hidden flex bg-gray-800 backdrop-blur-sm border border-gray-200 rounded-full p-1 shadow-sm items-center justify-center"
+            className="sm:hidden flex glass-pill p-1 items-center justify-center h-[44px] w-[44px]"
             initial={{ opacity: 0, scale: 0.9 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ duration: 0.3, ease: "easeOut" }}
           >
-            <img src={getFlagUrl(language)} alt={language} className="w-6 h-6" />
+            <div className="w-9 h-9 rounded-full overflow-hidden flex items-center justify-center">
+              <img src={getFlagUrl(language)} alt={language} className="w-5 h-5" />
+            </div>
           </motion.button>
 
           {/* Gender Switcher - desktop/tablet - zobraz pouze v sekci meditace */}
           {currentScreen === 'meditace' && (
             <motion.div
-              className="hidden sm:flex bg-white/90 backdrop-blur-sm border border-gray-200 rounded-full p-1 shadow-sm"
+              className="hidden sm:flex glass-pill p-1"
               initial={{ opacity: 0, scale: 0.9 }}
               animate={{ opacity: 1, scale: 1 }}
               transition={{ duration: 0.3, ease: "easeOut" }}
             >
               <motion.button
                 onClick={() => handleGenderSelect('male')}
-                className={`px-3 py-2 rounded-full text-sm font-medium transition-colors duration-200 ${gender === 'male'
-                  ? 'bg-gray-800 text-white'
-                  : 'text-gray-600 hover:text-gray-800'
+                className={`px-4 h-9 flex items-center justify-center rounded-full text-sm font-medium transition-colors duration-200 ${gender === 'male'
+                  ? 'glass-button !rounded-full'
+                  : 'hover:bg-black/10 dark:hover:bg-white/10 opacity-70 hover:opacity-100'
                   }`}
                 transition={{ type: "spring", stiffness: 300, damping: 20 }}
               >
@@ -126,9 +128,9 @@ const Layout = ({
               </motion.button>
               <motion.button
                 onClick={() => handleGenderSelect('female')}
-                className={`px-3 py-2 rounded-full text-sm font-medium transition-colors duration-200 ${gender === 'female'
-                  ? 'bg-gray-800 text-white'
-                  : 'text-gray-600 hover:text-gray-800'
+                className={`px-4 h-9 flex items-center justify-center rounded-full text-sm font-medium transition-colors duration-200 ${gender === 'female'
+                  ? 'glass-button !rounded-full'
+                  : 'hover:bg-black/10 dark:hover:bg-white/10 opacity-70 hover:opacity-100'
                   }`}
                 transition={{ type: "spring", stiffness: 300, damping: 20 }}
               >
@@ -141,7 +143,7 @@ const Layout = ({
           {currentScreen === 'meditace' && (
             <motion.button
               onClick={() => handleGenderSelect(gender === 'male' ? 'female' : 'male')}
-              className="sm:hidden px-3 py-2 bg-gray-800 backdrop-blur-sm border border-gray-200 rounded-full shadow-sm text-sm font-medium text-white"
+              className="sm:hidden px-4 h-[44px] flex items-center justify-center glass-pill text-sm font-medium"
               initial={{ opacity: 0, scale: 0.9 }}
               animate={{ opacity: 1, scale: 1 }}
               transition={{ duration: 0.3, ease: "easeOut" }}

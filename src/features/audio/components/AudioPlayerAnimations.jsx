@@ -32,7 +32,7 @@ export const AudioPlayerAnimations = ({
     >
       {/* Responsive Player Container */}
       <motion.div
-        className="w-full h-full flex flex-col items-center justify-center relative overflow-hidden"
+        className="w-full h-full sm:w-[95vw] sm:max-w-4xl sm:h-[90vh] sm:max-h-[800px] sm:rounded-[2rem] flex flex-col items-center justify-center relative overflow-hidden glass-modal shadow-2xl border-0 sm:border border-white/20"
         style={{
           // Pokud má album vlastní obrázek, použij pozadí z tématu pouze jako fallback
           // Jinak použij pozadí z tématu (obrázek nebo barvu)
@@ -46,9 +46,9 @@ export const AudioPlayerAnimations = ({
             ? `${backgroundColor}B3`
             : (backgroundStyle?.backgroundColor || backgroundColor)
         }}
-        initial={{ scale: 0.95, opacity: 0 }}
-        animate={{ scale: 1, opacity: 1 }}
-        exit={{ scale: 0.95, opacity: 0 }}
+        initial={{ scale: 0.95, opacity: 0, y: 20 }}
+        animate={{ scale: 1, opacity: 1, y: 0 }}
+        exit={{ scale: 0.95, opacity: 0, y: 20 }}
         transition={{
           duration: 0.4,
           ease: "easeOut",

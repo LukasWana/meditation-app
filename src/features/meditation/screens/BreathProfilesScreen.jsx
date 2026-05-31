@@ -359,21 +359,22 @@ const BreathProfilesScreen = ({
                 {!showNameInput ? (
                   <button
                     onClick={() => setShowNameInput(true)}
-                    className="flex-1 p-4 bg-white/70 hover:bg-white text-gray-700 rounded-lg transition-colors flex items-center gap-3 border border-black/10"
+                    className="glass-button flex-1 px-4 py-3 flex items-center gap-3 text-left"
+                    style={{ color: themeColors?.text || (colorMode === 'dark' ? 'white' : 'black') }}
                   >
-                    <Plus size={24} className="text-gray-700" />
+                    <Plus size={24} />
                     <span className="text-xl font-light">
                       {t('ulozit') || 'Uložit'}
                     </span>
                   </button>
                 ) : (
-                  <div className="flex-1 bg-white rounded-lg p-4 shadow-sm border border-black/10">
+                  <div className="flex-1 glass-panel p-4" style={{ borderRadius: '16px' }}>
                     <input
                       type="text"
                       value={newProfileName}
                       onChange={(e) => setNewProfileName(e.target.value)}
                       placeholder={t('nazevProfilu') || 'Název profilu'}
-                      className="w-full px-4 py-2 text-lg border border-black/10 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-500 mb-3"
+                      className="glass-input w-full px-4 py-2 text-lg mb-3"
                       autoFocus
                       onKeyPress={(e) => {
                         if (e.key === 'Enter') {
@@ -388,7 +389,8 @@ const BreathProfilesScreen = ({
                       <button
                         onClick={handleSaveCurrentProfile}
                         disabled={saving || !newProfileName.trim()}
-                        className="flex-1 px-4 py-2 bg-white/70 hover:bg-white text-gray-700 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed border border-black/10"
+                        className="glass-button flex-1 px-4 py-2 disabled:opacity-50"
+                        style={{ color: themeColors?.text || (colorMode === 'dark' ? 'white' : 'black') }}
                       >
                         {saving ? (t('ukladani') || 'Ukládání...') : (t('ulozit') || 'Uložit')}
                       </button>
@@ -397,7 +399,8 @@ const BreathProfilesScreen = ({
                           setShowNameInput(false);
                           setNewProfileName('');
                         }}
-                        className="px-4 py-2 bg-white/70 hover:bg-white text-gray-700 rounded-lg border border-black/10"
+                        className="glass-button px-4 py-2"
+                        style={{ color: themeColors?.text || (colorMode === 'dark' ? 'white' : 'black') }}
                       >
                         {t('zrusit') || 'Zrušit'}
                       </button>
@@ -409,9 +412,10 @@ const BreathProfilesScreen = ({
                 <button
                   onClick={handleOpenImportDialog}
                   disabled={importing}
-                  className="flex-1 py-3 bg-white/70 hover:bg-white text-gray-700 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 border border-black/10"
+                  className="glass-button flex-1 py-3 flex items-center justify-center gap-2 disabled:opacity-50"
+                  style={{ color: themeColors?.text || (colorMode === 'dark' ? 'white' : 'black') }}
                 >
-                  <Upload size={20} className="text-gray-700" />
+                  <Upload size={20} />
                   {importing ? (t('nahravani') || 'Nahrávání...') : (t('nahrat') || 'Nahrát')}
                 </button>
               </div>
@@ -420,9 +424,10 @@ const BreathProfilesScreen = ({
               {profiles.length > 0 && (
                 <button
                   onClick={handleExportAllProfiles}
-                  className="w-full py-3 bg-white/70 hover:bg-white text-gray-700 rounded-lg flex items-center justify-center gap-2 border border-black/10"
+                  className="glass-button w-full py-3 flex items-center justify-center gap-2"
+                  style={{ color: themeColors?.text || (colorMode === 'dark' ? 'white' : 'black') }}
                 >
-                  <Download size={20} className="text-gray-700" />
+                  <Download size={20} />
                   <span className="text-lg font-light">
                     {t('exportovatVsechnyProfily') || 'Exportovat všechny profily'}
                   </span>
@@ -454,7 +459,7 @@ const BreathProfilesScreen = ({
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: 0.3 + index * 0.05 }}
                   >
-                    <div className="w-full p-4 bg-white rounded-lg shadow-sm hover:shadow-md transition-shadow flex items-center justify-between gap-4">
+                    <div className="glass-panel w-full p-4 flex items-center justify-between gap-4">
                       <div
                         onClick={() => editingProfileId !== profile.id && handleLoadProfile(profile)}
                         className="flex-1 cursor-pointer"
@@ -465,7 +470,7 @@ const BreathProfilesScreen = ({
                               type="text"
                               value={editingProfileName}
                               onChange={(e) => setEditingProfileName(e.target.value)}
-                              className="w-full px-3 py-2 text-xl font-medium border border-black/20 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-500"
+                              className="glass-input w-full px-3 py-2 text-xl font-medium mb-2"
                               autoFocus
                               onClick={(e) => e.stopPropagation()}
                               onKeyPress={(e) => {
@@ -483,7 +488,7 @@ const BreathProfilesScreen = ({
                                   handleSaveProfileName(profile.id);
                                 }}
                                 disabled={saving || !editingProfileName.trim()}
-                                className="px-3 py-1 text-sm bg-white/70 hover:bg-white text-gray-700 rounded disabled:opacity-50 disabled:cursor-not-allowed border border-black/10"
+                                className="glass-button px-3 py-1 text-sm disabled:opacity-50"
                               >
                                 {saving ? (t('ukladani') || 'Ukládání...') : (t('ulozit') || 'Uložit')}
                               </button>
@@ -492,7 +497,7 @@ const BreathProfilesScreen = ({
                                   e.stopPropagation();
                                   handleCancelEditProfile();
                                 }}
-                                className="px-3 py-1 text-sm bg-white/70 hover:bg-white text-gray-700 rounded border border-black/10"
+                                className="glass-button px-3 py-1 text-sm"
                               >
                                 {t('zrusit') || 'Zrušit'}
                               </button>
@@ -516,7 +521,7 @@ const BreathProfilesScreen = ({
                             </div>
                           )}
                           {/* Zobrazení přiřazených zvuků */}
-                          <div className="mt-2 pt-2 border-t border-gray-200">
+                          <div className="mt-2 pt-2 border-t border-black/20 dark:border-white/20">
                             <div className="text-xs font-medium text-gray-700 mb-1">
                               {t('zvuky') || 'Zvuky'}:
                             </div>

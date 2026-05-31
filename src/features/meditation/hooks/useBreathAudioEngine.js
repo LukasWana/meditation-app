@@ -240,19 +240,13 @@ export const useBreathAudioEngine = (
 
     // Počkej na načtení všech bufferů a aktualizuj state
     Promise.all(loadPromises).then(() => {
-      // Zkontroluj, zda jsou všechny potřebné buffery načtené.
-      // Pokud dojde k chybě (setLoadError), považujeme buffer za "vyřešený",
-      // aby se dýchací cyklus nezasekl navždy na "Nádech".
-      const needsInBuffer = breathInSound && breathInSound !== 'none';
-      const needsOutBuffer = breathOutSound && breathOutSound !== 'none';
-      
-      // Problém: Pokud fetch nebo decodeAudioData selže, bufferRef.current bude null.
-      // Abychom nezasekli dýchací cyklus (fáze se nepřepínají pokud buffersReady je false),
-      // musíme to povolit i když je to null, ALE ZÁROVEŇ víme, že proces načítání SKONČIL.
-      // Promise.all(loadPromises).then se zavolá AŽ když se všechny try/catch bloky dokončí.
-      // To znamená, že načítání je kompletní (ať už s úspěchem nebo ne).
-      // Proto můžeme s jistotou nastavit buffersReady na true.
-      
+      // Důležité: Můžeme označit za připravené pouze tehdy, pokud pro požadované zvuky už máme URL.
+      // Jinak to znamená, že useEffect běží na "null" URLs před tím, než loadSoundUrl dokončí.
+      const needsIn = breathInSound && breathInSound !== 'none';
+      const needsOut = breathOutSound && breathOutSound !== 'none';
+      if (needsIn && !inSoundUrl) return;
+      if (needsOut && !outSoundUrl) return;
+
       setBuffersReady(true);
     });
   }, [inSoundUrl, outSoundUrl, clickSoundUrl, initializeAudioContext, breathInSound, breathOutSound]);
@@ -579,20 +573,9 @@ export const useBreathAudioEngine = (
 
     // DŮLEŽITÉ: Zkontroluj, zda jsou buffery načtené před spuštěním
     // Pokud jsou zvuky nastavené (ne 'none'), musí být buffery načtené
-    const needsInBuffer = breathInSound && breathInSound !== 'none';
-    const needsOutBuffer = breathOutSound && breathOutSound !== 'none';
-    const hasInBuffer = !needsInBuffer || inBufferRef.current !== null;
-    const hasOutBuffer = !needsOutBuffer || outBufferRef.current !== null;
-
-    if (!hasInBuffer || !hasOutBuffer) {
+    if (!buffersReady) {
       // Buffery se ještě načítají, počkej
       console.log('⏳ Waiting for audio buffers to load...', {
-        needsInBuffer,
-        needsOutBuffer,
-        hasInBuffer,
-        hasOutBuffer,
-        inBuffer: !!inBufferRef.current,
-        outBuffer: !!outBufferRef.current,
         buffersReady
       });
       return;
@@ -666,12 +649,7 @@ export const useBreathAudioEngine = (
     if (!isPlaying) return;
     if (!buffersReady) return; // Buffery ještě nejsou připravené
 
-    const needsInBuffer = breathInSound && breathInSound !== 'none';
-    const needsOutBuffer = breathOutSound && breathOutSound !== 'none';
-    const hasInBuffer = !needsInBuffer || inBufferRef.current !== null;
-    const hasOutBuffer = !needsOutBuffer || outBufferRef.current !== null;
-
-    if (!hasInBuffer || !hasOutBuffer) return;
+    if (!buffersReady) return;
 
     // Bug 1: Nepoužívej schedulerIntervalRef jako guard - mohlo být vyčištěno cleanup funkcí
     // Místo toho vždy restartuj scheduler pokud buffery jsou ready a isPlaying

@@ -16,9 +16,10 @@ const PlayPauseButton = ({
                      textColor === 'white' ||
                      textColor.includes('rgba(255, 255, 255');
 
-  // Pro dark mode použít bílou ikonku na tmavém pozadí, pro light mode bílou ikonku na černém pozadí
-  const iconColor = isDarkMode ? '#ffffff' : '#ffffff';
-  const buttonBackgroundColor = isDarkMode ? 'rgba(0, 0, 0, 0.8)' : 'rgba(0, 0, 0, 0.8)';
+  // Pro dark mode použít bílou ikonku na tmavém pozadí, pro light mode bílou ikonku na černém pozadí (nebo glass)
+  const iconColor = '#ffffff';
+  const buttonBackgroundColor = isDarkMode ? 'rgba(255, 255, 255, 0.15)' : 'rgba(0, 0, 0, 0.2)';
+  const buttonBorderColor = isDarkMode ? 'rgba(255, 255, 255, 0.3)' : 'rgba(255, 255, 255, 0.5)';
 
   // Vynutit, aby tlačítko bylo vždy kulaté - pouze border-radius, bez změny velikosti
   const buttonRef = useRef(null);
@@ -84,9 +85,10 @@ const PlayPauseButton = ({
     >
       {/* Pozadí buttonu - stále stejné, nemění se při přepínání */}
       <div
-        className="absolute inset-0 backdrop-blur-sm pointer-events-none"
+        className="absolute inset-0 backdrop-blur-md pointer-events-none shadow-lg"
         style={{
           backgroundColor: buttonBackgroundColor,
+          border: `1px solid ${buttonBorderColor}`,
           opacity: 1,
           overflow: 'hidden',
           borderRadius: '50%',

@@ -54,7 +54,7 @@ const BreathParameters = ({
       animationType="fadeIn"
       delay={0.3}
     >
-      <div className="flex justify-center items-start gap-8 md:gap-12 mb-4">
+      <div className="flex justify-center items-start gap-4 sm:gap-8 md:gap-12 mb-4">
         {/* Příprava */}
         <motion.div
           className="flex flex-col items-center"
@@ -65,20 +65,16 @@ const BreathParameters = ({
         >
           <button
             onClick={onPreparationClick}
-            className="text-4xl md:text-5xl font-sans font-medium transition-all cursor-pointer mb-1 relative"
+            className={`text-3xl sm:text-4xl md:text-5xl font-sans font-medium transition-all duration-300 cursor-pointer mb-2 px-3 py-1 rounded-2xl whitespace-nowrap ${activeParameter === 'preparation' ? 'glass-panel scale-105' : 'hover:bg-white/10 active:scale-95'}`}
             style={{
               color: timeIndicatorColor,
               fontFamily: currentTheme?.fontFamily || "'Petrona', serif",
-              padding: activeParameter === 'preparation' ? '0.25rem' : '0',
-              borderRadius: activeParameter === 'preparation' ? '0.5rem' : '0',
-              backgroundColor: activeParameter === 'preparation' ? `${cardColor}80` : 'transparent',
-              border: activeParameter === 'preparation' ? `2px solid ${borderColor}` : '2px solid transparent'
             }}
           >
             {formatPreparationTime(preparationTime)}
           </button>
           <span
-            className="text-base md:text-lg font-light"
+            className="text-sm sm:text-base md:text-lg font-light tracking-wide opacity-80"
             style={{
               color: displayTextColor,
               fontFamily: currentTheme?.fontFamily || "'Petrona', serif"
@@ -98,20 +94,16 @@ const BreathParameters = ({
         >
           <button
             onClick={onDurationClick}
-            className="text-4xl md:text-5xl font-sans font-medium transition-all cursor-pointer mb-1 relative"
+            className={`text-3xl sm:text-4xl md:text-5xl font-sans font-medium transition-all duration-300 cursor-pointer mb-2 px-3 py-1 rounded-2xl whitespace-nowrap ${activeParameter === 'duration' ? 'glass-panel scale-105' : 'hover:bg-white/10 active:scale-95'}`}
             style={{
               color: timeIndicatorColor,
               fontFamily: currentTheme?.fontFamily || "'Petrona', serif",
-              padding: activeParameter === 'duration' ? '0.25rem' : '0',
-              borderRadius: activeParameter === 'duration' ? '0.5rem' : '0',
-              backgroundColor: activeParameter === 'duration' ? `${cardColor}80` : 'transparent',
-              border: activeParameter === 'duration' ? `2px solid ${borderColor}` : '2px solid transparent'
             }}
           >
             {formatTime(totalTime)}
           </button>
           <span
-            className="text-base md:text-lg font-light"
+            className="text-sm sm:text-base md:text-lg font-light tracking-wide opacity-80"
             style={{
               color: displayTextColor,
               fontFamily: currentTheme?.fontFamily || "'Petrona', serif"
@@ -131,20 +123,16 @@ const BreathParameters = ({
         >
           <button
             onClick={onRhythmClick}
-            className="text-4xl md:text-5xl font-sans font-medium transition-all cursor-pointer mb-1 relative"
+            className={`text-3xl sm:text-4xl md:text-5xl font-sans font-medium transition-all duration-300 cursor-pointer mb-2 px-3 py-1 rounded-2xl whitespace-nowrap ${activeParameter === 'rhythm' ? 'glass-panel scale-105' : 'hover:bg-white/10 active:scale-95'}`}
             style={{
               color: timeIndicatorColor,
               fontFamily: currentTheme?.fontFamily || "'Petrona', serif",
-              padding: activeParameter === 'rhythm' ? '0.25rem' : '0',
-              borderRadius: activeParameter === 'rhythm' ? '0.5rem' : '0',
-              backgroundColor: activeParameter === 'rhythm' ? `${cardColor}80` : 'transparent',
-              border: activeParameter === 'rhythm' ? `2px solid ${borderColor}` : '2px solid transparent'
             }}
           >
             {breathInDuration} : {breathOutDuration}
           </button>
           <span
-            className="text-base md:text-lg font-light"
+            className="text-sm sm:text-base md:text-lg font-light"
             style={{
               color: displayTextColor,
               fontFamily: currentTheme?.fontFamily || "'Petrona', serif"

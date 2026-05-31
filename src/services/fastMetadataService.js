@@ -10,8 +10,8 @@ class FastMetadataService {
     this.isLoading = false;
     this.isInitialized = false;
     this.lastUpdate = null;
-    this.cacheKey = 'fast-metadata-cache';
-    this.cacheExpiry = 7 * 24 * 60 * 60 * 1000; // 7 dní - delší cache pro lepší performance
+    this.cacheKey = 'fast-metadata-cache-v4';
+    this.cacheExpiry = 24 * 60 * 60 * 1000; // 24 hodin
   }
 
   loadFromCache() {

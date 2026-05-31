@@ -16,12 +16,8 @@ html {
   width: 100%;
   max-width: 100vw;
   height: 100dvh;
-  /* Pozadí - aplikováno dynamicky z ThemeContext */
-  background-size: cover;
-  background-position: center center;
-  background-repeat: no-repeat;
-  background-attachment: scroll;
-  image-rendering: auto;
+  /* Pozadí - aplikováno dynamicky z ThemeContext přes CSS proměnné */
+  background-color: var(--theme-bg-color, transparent);
 }
 
 body {
@@ -39,12 +35,8 @@ body {
   -moz-user-select: none;
   -ms-user-select: none;
   user-select: none;
-  /* Pozadí - aplikováno dynamicky z ThemeContext */
-  background-size: cover;
-  background-position: center center;
-  background-repeat: no-repeat;
-  background-attachment: scroll;
-  image-rendering: auto;
+  /* Pozadí - aplikováno dynamicky z ThemeContext přes CSS proměnné */
+  background-color: var(--theme-bg-color, transparent);
 }
 
 #root {
@@ -55,12 +47,8 @@ body {
   overflow-y: auto;
   /* Safe area support pro iOS/Android */
   padding-bottom: env(safe-area-inset-bottom);
-  /* Pozadí - aplikováno dynamicky z ThemeContext */
-  background-size: cover;
-  background-position: center center;
-  background-repeat: no-repeat;
-  background-attachment: scroll;
-  image-rendering: auto;
+  /* Pozadí - aplikováno dynamicky z ThemeContext přes CSS proměnné */
+  background-color: transparent;
 }
 
 /* ============================================
@@ -75,6 +63,48 @@ body {
   margin-right: auto;
   position: relative;
   min-height: 100vh;
+  isolation: isolate;
+}
+
+/* Zde je ostré pozadí aplikace - fixní na střed */
+.app-content-container::before {
+  content: "";
+  position: fixed;
+  top: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 100%;
+  max-width: 650px;
+  height: 100vh;
+  z-index: -1;
+  background-image: var(--bg-image, none);
+  background-size: cover;
+  background-position: center center;
+  background-repeat: no-repeat;
+  box-shadow: 0 0 50px rgba(0, 0, 0, 0.3);
+  /* GPU akcelerace pozadi */
+  will-change: transform;
+}
+
+/* Rozmazané pozadí na celé obrazovce pro desktop */
+@media (min-width: 651px) {
+  body::before {
+    content: "";
+    position: fixed;
+    top: -5%;
+    left: -5%;
+    width: 110%;
+    height: 110%;
+    z-index: -2;
+    background-image: var(--bg-image, none);
+    background-size: cover;
+    background-position: center center;
+    filter: blur(30px);
+    pointer-events: none;
+    /* GPU Rasterization optimalizace pro blur */
+    will-change: transform, filter;
+    transform: translateZ(0);
+  }
 }
 
 /* Všechny obrazovky a jejich přímé děti - respektovat max-width */
@@ -201,16 +231,16 @@ body, html, #root {
   box-sizing: border-box;
 }
 
-/* Zabránění horizontálnímu scrollingu */
-body, html, #root, main, div, section, article {
+/* Zabránění horizontálnímu scrollingu pouze na hlavní úrovni,
+   aby se neořezávaly stíny (box-shadow) u vnořených prvků */
+body, html, #root {
   overflow-x: hidden;
   max-width: 100vw;
 }
 
-/* Kontajnery nesmí přesahovat šířku */
-.container, .max-w-md, .w-full {
+/* Základní omezení šířky */
+main, .container {
   max-width: 100vw;
-  overflow-x: hidden;
 }
 
 /* ============================================
@@ -448,3 +478,142 @@ html [data-framer-name] button.play-pause-button {
   border-radius: 50% !important;
   aspect-ratio: 1 / 1 !important;
 }
+
+/* Zajistit, aby glass-pill a další specifické UI prvky byly VŽDY plně zaoblené do tvaru pilulky */
+html .glass-pill,
+html button.glass-pill,
+html [class*="glass-pill"],
+html body .glass-pill,
+html body button.glass-pill,
+html #root .glass-pill,
+html #root button.glass-pill,
+html [data-rounded-style="true"] .glass-pill,
+html [data-rounded-style="true"] button.glass-pill,
+html:not([data-rounded-style="true"]) .glass-pill,
+html:not([data-rounded-style="true"]) button.glass-pill {
+  border-radius: 9999px !important;
+}
+
+/* ============================================
+   Glassmorphism UI System
+   ============================================ */
+
+.glass-panel {
+  background-color: rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+  border-radius: 32px;
+  outline: none;
+}
+
+.glass-panel-inner {
+  background-color: rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.05);
+  border-radius: 16px;
+  outline: none;
+}
+
+body.theme-dark .glass-panel {
+  background-color: rgba(0, 0, 0, 0.2);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  box-shadow: 0 16px 64px rgba(0, 0, 0, 0.5);
+}
+
+body.theme-dark .glass-panel-inner {
+  background-color: rgba(0, 0, 0, 0.2);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+}
+
+.glass-button {
+  background-color: rgba(255, 255, 255, 0.15);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  border-radius: 8px; /* Standardize button rounding to 8px */
+  outline: none;
+}
+
+.glass-pill {
+  background-color: rgba(255, 255, 255, 0.15);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+  border-radius: 9999px !important;
+  outline: none;
+}
+
+.glass-button:focus, .glass-button:active, .glass-button:focus-visible {
+  outline: none !important;
+}
+
+.glass-button:hover {
+  background-color: rgba(255, 255, 255, 0.25);
+  transform: translateY(-1px);
+}
+
+.glass-button:active {
+  transform: scale(0.98);
+}
+
+body.theme-dark .glass-button {
+  background-color: rgba(0, 0, 0, 0.2);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+body.theme-dark .glass-button:hover {
+  background-color: rgba(0, 0, 0, 0.3);
+}
+
+body.theme-dark .glass-pill {
+  background-color: rgba(0, 0, 0, 0.2);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+}
+
+.glass-modal {
+  background-color: rgba(255, 255, 255, 0.15);
+  backdrop-filter: blur(32px);
+  -webkit-backdrop-filter: blur(32px);
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  box-shadow: 0 16px 64px rgba(0, 0, 0, 0.2);
+  border-radius: 32px;
+  outline: none;
+}
+
+body.theme-dark .glass-modal {
+  background-color: rgba(25, 25, 25, 0.45);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  box-shadow: 0 16px 64px rgba(0, 0, 0, 0.5);
+}
+
+.glass-input {
+  background-color: rgba(255, 255, 255, 0.2);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.05);
+  transition: all 0.3s ease;
+  border-radius: 8px;
+  outline: none;
+}
+.glass-input:focus {
+  border-color: rgba(255, 255, 255, 0.6);
+  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.05), 0 0 0 2px rgba(255, 255, 255, 0.2);
+}
+body.theme-dark .glass-input {
+  background-color: rgba(0, 0, 0, 0.2);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  color: white;
+}
+body.theme-dark .glass-input:focus {
+  border-color: rgba(255, 255, 255, 0.4);
+  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.2), 0 0 0 2px rgba(255, 255, 255, 0.1);
+}
+

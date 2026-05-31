@@ -34,7 +34,7 @@ const FramerSection = ({
 
   return (
     <motion.div
-      className={`${className} max-w-full overflow-x-hidden`}
+      className={`${className} max-w-full`}
       onClick={onClick}
       initial="initial"
       animate="animate"

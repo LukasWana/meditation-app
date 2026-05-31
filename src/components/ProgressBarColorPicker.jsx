@@ -37,11 +37,10 @@ const ProgressBarColorPicker = ({ extractedColors, onColorSelect, currentColor }
             <motion.button
               key={index}
               onClick={() => onColorSelect(color)}
-              className="w-12 h-12 rounded-lg border-2 relative overflow-hidden transition-all"
+              className="w-12 h-12 rounded-lg relative overflow-hidden transition-all glass-panel hover:opacity-90"
               style={{
                 backgroundColor: color,
-                borderColor: isSelected ? (textColor === 'rgba(255, 255, 255, 1)' ? 'rgba(0, 0, 0, 1)' : 'rgba(255, 255, 255, 1)') : borderColor,
-                borderWidth: isSelected ? '3px' : '1px'
+                transform: isSelected ? 'scale(1.1)' : 'scale(1)',
               }}
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}

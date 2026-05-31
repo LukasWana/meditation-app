@@ -40,17 +40,10 @@ const Dropdown = ({
           console.log('Dropdown clicked, current state:', isOpen);
           setIsOpen(!isOpen);
         }}
+        className="glass-button flex items-center justify-between gap-2 px-4 py-2 cursor-pointer min-w-[120px]"
         style={{
-          display: 'flex',
-          alignItems: 'center',
-          gap: '8px',
-          padding: '8px 16px',
-          backgroundColor: 'rgba(255, 255, 255, 0.9)',
-          border: '1px solid #e5e7eb',
           borderRadius: '9999px',
-          boxShadow: '0 1px 3px rgba(0, 0, 0, 0.1)',
-          cursor: 'pointer',
-          minWidth: '120px'
+          boxShadow: '0 1px 3px rgba(0, 0, 0, 0.1)'
         }}
       >
         <span className="text-14 font-medium text-gray-700">
@@ -69,19 +62,10 @@ const Dropdown = ({
       {/* Dropdown menu */}
       {isOpen && (
         <div
+          className="glass-panel absolute top-full left-0 right-0 mt-2 rounded-lg overflow-hidden min-w-[120px]"
           style={{
-            position: 'absolute',
-            top: '100%',
-            left: '0',
-            right: '0',
-            marginTop: '8px',
-            backgroundColor: 'white',
-            border: '1px solid #e5e7eb',
-            borderRadius: '8px',
             boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1)',
-            zIndex: 10001,
-            overflow: 'hidden',
-            minWidth: '120px'
+            zIndex: 10001
           }}
         >
           {options.map((option) => (

@@ -47,8 +47,8 @@ const IntroScreen = ({ onIntroComplete }) => {
           rootElement.style.overflowY = '';
         }
         onIntroComplete();
-      }, 800); // Fade out trvá 800ms
-    }, 1000); // Celkem 1.8 sekundy (1s animace + 0.8s fade out)
+      }, 400); // Fade out trvá 400ms
+    }, 500); // Celkem 0.9 sekundy (0.5s animace + 0.4s fade out)
 
     return () => {
       clearTimeout(timer);
@@ -70,7 +70,7 @@ const IntroScreen = ({ onIntroComplete }) => {
           }}
           initial={{ opacity: 1 }}
           exit={{ opacity: 0 }}
-          transition={{ duration: 0.8, ease: "easeInOut" }}
+          transition={{ duration: 0.4, ease: "easeOut" }}
         >
           {/* Kompozice s meditující siluetou a bílým kruhem */}
           <motion.div
@@ -80,64 +80,64 @@ const IntroScreen = ({ onIntroComplete }) => {
               opacity: 1,
               y: 0
             }}
-            transition={{ duration: 0.4, ease: "easeInOut" }}
+            transition={{ duration: 0.3, ease: "easeOut" }}
           >
             {/* Bílý kruh na pozadí */}
             <motion.div
               className="relative flex items-center justify-center mb-6"
-              initial={{ scale: 0.8, opacity: 0 }}
-              animate={{
-                scale: 1,
-                opacity: 1
-              }}
-              transition={{
-                duration: 0.8,
-                ease: "easeOut",
-                delay: 0.1
-              }}
             >
               {/* Kroužek jako halo - přizpůsobí se tématu */}
-              <div
+              <motion.div
                 ref={introCircleRef}
                 className="absolute w-48 h-48 rounded-full intro-animation-circle z-0"
-                style={{ backgroundColor: circleColor, borderRadius: '50%' }}
-              ></div>
+                style={{ backgroundColor: circleColor, borderRadius: '50%', willChange: 'transform, opacity' }}
+                initial={{ scale: 0.95, opacity: 0 }}
+                animate={{
+                  scale: 1,
+                  opacity: 1
+                }}
+                transition={{
+                  duration: 0.5,
+                  ease: "easeOut"
+                }}
+              />
 
               {/* SVG silueta meditujícího člověka */}
               <motion.img
                 src={meditatebodySvg}
                 alt="Meditující osoba"
                 className="relative z-10 w-64 h-auto"
-                initial={{ scale: 0.9, opacity: 0 }}
+                initial={{ y: 12, opacity: 0 }}
                 animate={{
-                  scale: 1,
+                  y: 0,
                   opacity: 1
                 }}
                 transition={{
-                  duration: 0.8,
+                  duration: 0.5,
                   ease: "easeOut",
-                  delay: 0.2
+                  delay: 0.08
                 }}
+                style={{ willChange: 'transform, opacity' }}
               />
             </motion.div>
 
             {/* Text "Meditácia" */}
             <motion.h1
               className="text-6xl font-light tracking-normal"
-              initial={{ scale: 0.5, opacity: 0 }}
+              initial={{ y: 8, opacity: 0 }}
               animate={{
-                scale: 1,
+                y: 0,
                 opacity: 1
               }}
               transition={{
-                duration: 0.8,
+                duration: 0.5,
                 ease: "easeOut",
-                delay: 0.3
+                delay: 0.15
               }}
               style={{
                 color: displayTextColor,
                 fontSize: '4.05rem',
-                transformOrigin: 'center center'
+                willChange: 'transform, opacity'
               }}
             >
               meditácia

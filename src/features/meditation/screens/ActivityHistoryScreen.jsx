@@ -160,11 +160,8 @@ const ActivityHistoryScreen = ({
             className="mb-4"
           >
             <div
-              className="w-full p-4 backdrop-blur rounded-none border"
-              style={{
-                backgroundColor: themeColors?.card || (colorMode === 'dark' ? 'rgba(15, 15, 15, 0.95)' : 'rgba(255, 255, 255, 0.95)'),
-                borderColor: colorMode === 'dark' ? 'rgba(255, 255, 255, 0.2)' : 'rgba(0, 0, 0, 0.1)'
-              }}
+              className="glass-panel w-full p-4"
+              style={{ color: themeColors?.text || (colorMode === 'dark' ? 'rgba(255, 255, 255, 1)' : 'rgba(0, 0, 0, 1)') }}
             >
               <div className="flex items-center gap-2 mb-3">
                 <Filter size={18} style={{ color: themeColors?.textSecondary || (colorMode === 'dark' ? 'rgba(180, 180, 180, 1)' : 'rgba(100, 100, 100, 1)') }} />
@@ -209,12 +206,8 @@ const ActivityHistoryScreen = ({
             >
               <motion.button
                 onClick={() => handleClearHistory(selectedSection)}
-                className="w-full p-3 rounded-none border flex items-center justify-center gap-2"
-                style={{
-                  backgroundColor: themeColors?.card || (colorMode === 'dark' ? 'rgba(15, 15, 15, 0.95)' : 'rgba(255, 255, 255, 0.95)'),
-                  borderColor: colorMode === 'dark' ? 'rgba(255, 255, 255, 0.2)' : 'rgba(0, 0, 0, 0.1)',
-                  color: themeColors?.text || (colorMode === 'dark' ? 'rgba(255, 255, 255, 1)' : 'rgba(0, 0, 0, 1)')
-                }}
+                className="glass-panel w-full p-3 flex items-center justify-center gap-2"
+                style={{ color: themeColors?.text || (colorMode === 'dark' ? 'rgba(255, 255, 255, 1)' : 'rgba(0, 0, 0, 1)') }}
                 whileHover={{ opacity: 0.8 }}
                 whileTap={{ scale: 0.98 }}
               >
@@ -231,12 +224,8 @@ const ActivityHistoryScreen = ({
               delay={0.3}
             >
               <div
-                className="w-full p-6 backdrop-blur rounded-none border text-center"
-                style={{
-                  backgroundColor: themeColors?.card || (colorMode === 'dark' ? 'rgba(15, 15, 15, 0.95)' : 'rgba(255, 255, 255, 0.95)'),
-                  borderColor: colorMode === 'dark' ? 'rgba(255, 255, 255, 0.2)' : 'rgba(0, 0, 0, 0.1)',
-                  color: themeColors?.text || (colorMode === 'dark' ? 'rgba(255, 255, 255, 1)' : 'rgba(0, 0, 0, 1)')
-                }}
+                className="glass-panel w-full p-6 text-center"
+                style={{ color: themeColors?.text || (colorMode === 'dark' ? 'rgba(255, 255, 255, 1)' : 'rgba(0, 0, 0, 1)') }}
               >
                 <p>{t('nacitaniHistorie')}</p>
               </div>
@@ -247,12 +236,8 @@ const ActivityHistoryScreen = ({
               delay={0.3}
             >
               <div
-                className="w-full p-6 backdrop-blur rounded-none border text-center"
-                style={{
-                  backgroundColor: themeColors?.card || (colorMode === 'dark' ? 'rgba(15, 15, 15, 0.95)' : 'rgba(255, 255, 255, 0.95)'),
-                  borderColor: colorMode === 'dark' ? 'rgba(255, 255, 255, 0.2)' : 'rgba(0, 0, 0, 0.1)',
-                  color: themeColors?.text || (colorMode === 'dark' ? 'rgba(255, 255, 255, 1)' : 'rgba(0, 0, 0, 1)')
-                }}
+                className="glass-panel w-full p-6 text-center"
+                style={{ color: themeColors?.text || (colorMode === 'dark' ? 'rgba(255, 255, 255, 1)' : 'rgba(0, 0, 0, 1)') }}
               >
                 <p className="text-red-500">{error}</p>
                 <button
@@ -273,12 +258,8 @@ const ActivityHistoryScreen = ({
               delay={0.3}
             >
               <div
-                className="w-full p-6 backdrop-blur rounded-none border text-center"
-                style={{
-                  backgroundColor: themeColors?.card || (colorMode === 'dark' ? 'rgba(15, 15, 15, 0.95)' : 'rgba(255, 255, 255, 0.95)'),
-                  borderColor: colorMode === 'dark' ? 'rgba(255, 255, 255, 0.2)' : 'rgba(0, 0, 0, 0.1)',
-                  color: themeColors?.textSecondary || (colorMode === 'dark' ? 'rgba(180, 180, 180, 1)' : 'rgba(100, 100, 100, 1)')
-                }}
+                className="glass-panel w-full p-6 text-center"
+                style={{ color: themeColors?.textSecondary || (colorMode === 'dark' ? 'rgba(180, 180, 180, 1)' : 'rgba(100, 100, 100, 1)') }}
               >
                 <p>{t('zadnaHistorieKZobrazeni')}</p>
               </div>
@@ -293,11 +274,7 @@ const ActivityHistoryScreen = ({
                     delay={0.3 + index * 0.05}
                   >
                     <div
-                      className="w-full p-4 backdrop-blur rounded-none border"
-                      style={{
-                        backgroundColor: themeColors?.card || (colorMode === 'dark' ? 'rgba(15, 15, 15, 0.95)' : 'rgba(255, 255, 255, 0.95)'),
-                        borderColor: colorMode === 'dark' ? 'rgba(255, 255, 255, 0.2)' : 'rgba(0, 0, 0, 0.1)'
-                      }}
+                      className="glass-panel w-full p-4"
                     >
                       {/* Sekce a popis */}
                       <div className="flex items-start justify-between mb-2">

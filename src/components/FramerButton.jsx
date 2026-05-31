@@ -12,17 +12,18 @@ const FramerButton = ({
   ...props
 }) => {
   const getVariantClasses = () => {
+    // Všechny tlačítka používají glassmorphism styl pro sjednocení designu bez tvrdých outlineů
     switch (variant) {
       case 'primary':
-        return 'bg-black text-white';
+        return 'glass-button font-medium';
       case 'secondary':
-        return 'bg-white border-2 border-black text-black';
+        return 'glass-button font-normal opacity-90';
       case 'ghost':
-        return 'bg-transparent border-2 border-black/20 text-black';
+        return 'glass-button font-light opacity-80 border-opacity-50';
       case 'rounded':
-        return 'bg-black text-white rounded-full';
+        return 'glass-button rounded-full';
       default:
-        return 'bg-black text-white';
+        return 'glass-button';
     }
   };
 

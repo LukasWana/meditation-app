@@ -90,12 +90,12 @@ const ThemeSelector = () => {
       // Zkontroluj cache PRVNÍ
       const cachedUrl = cacheService.getImageUrl(cacheKey);
       if (cachedUrl) {
-        console.log(`✅ Thumbnail cache hit for: ${imageName}`);
+        log.debug(`✅ Thumbnail cache hit for: ${imageName}`);
         return cachedUrl;
       }
 
       // Pokud není v cache, načti z Firebase
-      console.log(`🔄 Loading thumbnail from Firebase: ${imageName}`);
+      log.debug(`🔄 Loading thumbnail from Firebase: ${imageName}`);
       const thumbnailRef = ref(storage, cacheKey);
       const thumbnailURL = await getDownloadURL(thumbnailRef);
 
@@ -103,12 +103,12 @@ const ThemeSelector = () => {
       cacheService.setImageUrl(cacheKey, thumbnailURL);
       // A rovnou přednačti do Cache Storage, aby se později nezdržovalo renderování gridu
       cacheService.preloadImage(thumbnailURL, cacheKey).catch(() => {});
-      console.log(`✅ Thumbnail cached: ${imageName}`);
+      log.debug(`✅ Thumbnail cached: ${imageName}`);
 
       return thumbnailURL;
     } catch (error) {
       // Náhled neexistuje - není to chyba
-      console.log(`⚠️ Thumbnail not found: ${imageName}`);
+      log.debug(`⚠️ Thumbnail not found: ${imageName}`);
       return null;
     }
   }, []);
@@ -119,10 +119,6 @@ const ThemeSelector = () => {
       setFirebaseBackgroundsLoading(true);
       setFirebaseBackgroundsError(null);
 
-      console.log('🔄 [Firebase Backgrounds] Starting load...');
-      console.log('🔄 [Firebase Backgrounds] Storage instance:', storage);
-      console.log('🔄 [Firebase Backgrounds] Storage bucket:', storage?._bucket?.name || 'unknown');
-      console.log('🔄 [Firebase Backgrounds] Storage app:', storage?.app?.name || 'unknown');
       log.info('🔄 Loading backgrounds from Firebase Storage...');
 
       // Check if storage is properly initialized
@@ -132,23 +128,14 @@ const ThemeSelector = () => {
 
       // Načti soubory ze složky background/
       const backgroundRef = ref(storage, 'background');
-      console.log('🔄 [Firebase Backgrounds] Background ref:', backgroundRef);
-      console.log('🔄 [Firebase Backgrounds] Background ref bucket:', backgroundRef?._location?.bucket || 'unknown');
-
       const backgroundResult = await listAll(backgroundRef);
-      console.log('🔄 [Firebase Backgrounds] List result:', {
-        items: backgroundResult.items.length,
-        prefixes: backgroundResult.prefixes.length,
-        itemsList: backgroundResult.items.map(item => item.name),
-        prefixesList: backgroundResult.prefixes.map(p => p.name)
-      });
 
       // Check if the background folder exists
       if (backgroundResult.items.length === 0 && backgroundResult.prefixes.length === 0) {
-        console.warn('⚠️ [Firebase Backgrounds] Background folder is empty or does not exist!');
-        console.warn('⚠️ [Firebase Backgrounds] Expected path: background/');
-        console.warn('⚠️ [Firebase Backgrounds] Storage bucket:', storage?._bucket?.name);
-        console.warn('⚠️ [Firebase Backgrounds] Check Firebase Console > Storage > Rules to verify permissions');
+        log.warn('⚠️ [Firebase Backgrounds] Background folder is empty or does not exist!', {
+          path: 'background/',
+          bucket: storage?._bucket?.name
+        });
       }
 
       // Filtruj pouze obrázky (ne složky)
@@ -157,7 +144,7 @@ const ThemeSelector = () => {
         return name.endsWith('.jpg') || name.endsWith('.jpeg') || name.endsWith('.png') || name.endsWith('.webp');
       });
 
-      console.log('🔄 Filtered image files:', imageFiles.length);
+      log.debug('Filtered image files count:', imageFiles.length);
 
       // PARALELNÍ načítání místo sekvenčního loopu - výrazně rychlejší
       const backgroundPromises = imageFiles.map(async (itemRef) => {
@@ -171,14 +158,14 @@ const ThemeSelector = () => {
             downloadURL = await getDownloadURL(itemRef);
             // Ulož do cache
             cacheService.setImageUrl(imageCacheKey, downloadURL);
-            console.log(`✅ Full image cached: ${itemRef.name}`);
+            log.debug(`✅ Full image cached: ${itemRef.name}`);
           } else {
-            console.log(`✅ Full image cache hit: ${itemRef.name}`);
+            log.debug(`✅ Full image cache hit: ${itemRef.name}`);
           }
 
           // Zkusit načíst náhled (s cachováním) - paralelně
           const thumbnailURL = await loadThumbnailForBackground(itemRef.name);
-          console.log(`✅ Loaded ${itemRef.name}, thumbnail: ${thumbnailURL ? 'yes' : 'no'}`);
+          log.debug(`✅ Loaded ${itemRef.name}, thumbnail: ${thumbnailURL ? 'yes' : 'no'}`);
 
           // Prefetch: thumbnail (nebo fallback plný obrázek) do Cache Storage
           const bestPreviewUrl = thumbnailURL || downloadURL;
@@ -195,7 +182,6 @@ const ThemeSelector = () => {
             contentType: null // Lazy load pokud bude potřeba
           };
         } catch (metaError) {
-          console.warn(`❌ Failed to process ${itemRef.name}:`, metaError);
           log.warn(`Failed to process ${itemRef.name}:`, metaError.message);
           return null;
         }
@@ -205,31 +191,10 @@ const ThemeSelector = () => {
       const results = await Promise.all(backgroundPromises);
       const backgrounds = results.filter(bg => bg !== null);
 
-      console.log(`✅ Loaded ${backgrounds.length} backgrounds from Firebase Storage:`, backgrounds);
       setFirebaseBackgrounds(backgrounds);
       log.success(`✅ Loaded ${backgrounds.length} backgrounds from Firebase Storage`);
     } catch (error) {
-      console.error('❌ [Firebase Backgrounds] Failed to load backgrounds from Firebase Storage:', error);
-      console.error('❌ [Firebase Backgrounds] Error details:', {
-        code: error.code,
-        message: error.message,
-        stack: error.stack,
-        name: error.name
-      });
-
-      // Check for specific error types
-      if (error.code === 'storage/unauthorized') {
-        console.error('❌ [Firebase Backgrounds] UNAUTHORIZED - Check Firebase Storage rules!');
-      } else if (error.code === 'storage/object-not-found') {
-        console.error('❌ [Firebase Backgrounds] NOT FOUND - The background folder does not exist in Firebase Storage!');
-        console.error('❌ [Firebase Backgrounds] Solution: Create the folder in Firebase Console or upload images via Firebase Console');
-      } else if (error.code === 'storage/canceled') {
-        console.error('❌ [Firebase Backgrounds] CANCELED - Request was canceled');
-      } else if (error.code === 'storage/quota-exceeded') {
-        console.error('❌ [Firebase Backgrounds] QUOTA EXCEEDED - Storage quota exceeded');
-      }
-
-      log.error('Failed to load backgrounds from Firebase Storage:', error);
+      log.error('❌ [Firebase Backgrounds] Failed to load backgrounds from Firebase Storage:', error);
       setFirebaseBackgroundsError(`Chyba při načítání pozadí: ${error.message} (${error.code || 'unknown'})`);
     } finally {
       setFirebaseBackgroundsLoading(false);
@@ -238,13 +203,9 @@ const ThemeSelector = () => {
 
   // Načti Firebase pozadí při mount komponenty
   useEffect(() => {
-    console.log('🔄 ThemeSelector: useEffect triggered, loading Firebase backgrounds...');
-    console.log('🔄 Storage instance:', storage);
-    console.log('🔄 ThemeContext available:', !!themeContext);
-
     // Načti pozadí z Firebase vždy, nezávisle na theme contextu
     loadFirebaseBackgrounds().catch(err => {
-      console.error('❌ Failed to load Firebase backgrounds in useEffect:', err);
+      log.error('❌ Failed to load Firebase backgrounds in useEffect:', err);
     });
   }, [loadFirebaseBackgrounds]);
 
@@ -300,9 +261,9 @@ const ThemeSelector = () => {
       try {
         const { extractColorsFromImage } = await import('@utils/colorExtractor');
         extractedColors = await extractColorsFromImage(imageUrl, 5);
-        console.log('🎨 Extrahované barvy z fotky:', extractedColors);
+        log.debug('🎨 Extrahované barvy z fotky:', extractedColors);
       } catch (colorError) {
-        console.warn('Nepodařilo se extrahovat barvy z fotky:', colorError);
+        log.warn('Nepodařilo se extrahovat barvy z fotky:', colorError.message);
         // Pokračovat i bez extrahovaných barev
       }
 
@@ -337,7 +298,7 @@ const ThemeSelector = () => {
       }
     } catch (err) {
       setError(err.message || 'Chyba při zpracování obrázku');
-      console.error('Error processing image:', err);
+      log.error('Error processing image:', err);
     } finally {
       setIsProcessing(false);
       // Reset input
@@ -366,7 +327,7 @@ const ThemeSelector = () => {
       setBackgroundType('color');
     } catch (err) {
       setError(err.message || 'Chyba při nastavení barvy');
-      console.error('Error setting color:', err);
+      log.error('Error setting color:', err);
     } finally {
       setIsProcessing(false);
     }
@@ -427,9 +388,9 @@ const ThemeSelector = () => {
       try {
         const { extractColorsFromImage } = await import('@utils/colorExtractor');
         extractedColors = await extractColorsFromImage(imageUrl, 5);
-        console.log('🎨 Extrahované barvy z defaultního obrázku:', extractedColors);
+        log.debug('🎨 Extrahované barvy z defaultního obrázku:', extractedColors);
       } catch (colorError) {
-        console.warn('Nepodařilo se extrahovat barvy z obrázku:', colorError);
+        log.warn('Nepodařilo se extrahovat barvy z obrázku:', colorError.message);
       }
 
       // Uložit obrázek s informací o rozměrech, barvách a vlastnostech tématu
@@ -463,7 +424,7 @@ const ThemeSelector = () => {
       }
     } catch (err) {
       setError(err.message || 'Chyba při zpracování obrázku');
-      console.error('Error processing default image:', err);
+      log.error('Error processing default image:', err);
     } finally {
       setIsProcessing(false);
     }
@@ -471,14 +432,13 @@ const ThemeSelector = () => {
 
   const themeColors = themeContext?.getCurrentThemeColors?.() || {};
   const isDarkMode = themeContext?.colorMode === 'dark';
-  const cardColor = themeColors.card || (isDarkMode ? 'rgba(15, 15, 15, 0.95)' : 'rgba(255, 255, 255, 0.95)');
   const textColor = themeColors.text || (isDarkMode ? 'rgba(255, 255, 255, 1)' : 'rgba(0, 0, 0, 1)');
   const textSecondaryColor = themeColors.textSecondary || (isDarkMode ? 'rgba(180, 180, 180, 1)' : 'rgba(100, 100, 100, 1)');
-  const borderColor = isDarkMode ? 'rgba(255, 255, 255, 0.2)' : 'rgba(0, 0, 0, 0.1)';
-  const activeBorderColor = isDarkMode ? 'rgba(255, 255, 255, 0.5)' : 'rgba(0, 0, 0, 0.3)';
-  const activeBgColor = isDarkMode ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.05)';
+  const borderColor = themeColors.border || (isDarkMode ? 'rgba(255, 255, 255, 0.2)' : 'rgba(0, 0, 0, 0.1)');
   const checkmarkBgColor = isDarkMode ? 'rgba(255, 255, 255, 1)' : 'rgba(0, 0, 0, 1)';
   const checkmarkIconColor = isDarkMode ? 'rgba(0, 0, 0, 1)' : 'rgba(255, 255, 255, 1)';
+  
+  const glassClass = 'glass-panel';
 
   return (
     <FramerSection
@@ -486,12 +446,8 @@ const ThemeSelector = () => {
       delay={0.22}
     >
       <div
-        className="w-full p-6 backdrop-blur rounded-none border"
-        style={{
-          backgroundColor: cardColor,
-          borderColor: borderColor,
-          color: textColor
-        }}
+        className={`w-full p-6 sm:p-8 mb-6 ${glassClass}`}
+        style={{ color: textColor }}
       >
         <h3 className="text-2xl font-light mb-4" style={{ color: textColor }}>
           {t('vzhledAplikace')}
@@ -507,23 +463,21 @@ const ThemeSelector = () => {
               <motion.button
                 key={theme.id}
                 onClick={() => handleThemeChange(theme.id)}
-                className="w-full p-4 rounded-lg border-2 transition-all duration-200"
-                style={{
-                  borderColor: isActive ? activeBorderColor : borderColor,
-                  backgroundColor: isActive ? activeBgColor : 'transparent'
-                }}
+                className={`w-full p-4 mb-3 rounded-2xl transition-all duration-300 flex items-center justify-between ${
+                  isActive 
+                    ? 'glass-button shadow-lg scale-[1.02]' 
+                    : 'hover:opacity-80'
+                }`}
                 whileTap={{ scale: 0.98 }}
               >
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    {/* Barevný náhled */}
-                    <div
-                      className="w-12 h-12 rounded-lg border shadow-sm"
-                      style={{
-                        background: `linear-gradient(135deg, ${theme.colors.primary} 0%, ${theme.colors.background || theme.colors.primary} 100%)`,
-                        borderColor: borderColor
-                      }}
-                    />
+                <div className="flex items-center gap-4">
+                  {/* Barevný náhled */}
+                  <div
+                    className="w-14 h-14 rounded-xl shadow-md"
+                    style={{
+                      background: `linear-gradient(135deg, ${theme.colors.primary} 0%, ${theme.colors.background || theme.colors.primary} 100%)`,
+                    }}
+                  />
                     <div className="text-left">
                       <div
                         className="text-lg font-medium"
@@ -543,11 +497,11 @@ const ThemeSelector = () => {
                   </div>
                   {isActive && (
                     <div
-                      className="w-6 h-6 rounded-full flex items-center justify-center"
+                      className="w-8 h-8 rounded-full flex items-center justify-center shadow-sm"
                       style={{ backgroundColor: checkmarkBgColor }}
                     >
                       <svg
-                        className="w-4 h-4"
+                        className="w-5 h-5"
                         style={{ color: checkmarkIconColor }}
                         fill="none"
                         strokeLinecap="round"
@@ -560,7 +514,6 @@ const ThemeSelector = () => {
                       </svg>
                     </div>
                   )}
-                </div>
               </motion.button>
             );
           })}
@@ -580,16 +533,12 @@ const ThemeSelector = () => {
             </h4>
 
             {/* Přepínač mezi fotkou a barvou */}
-            <div className="flex gap-2 mb-4">
+            <div className="flex gap-2 mb-4 p-1 rounded-full glass-panel border-white/20">
               <motion.button
                 onClick={() => setBackgroundType('image')}
-                className={`flex-1 px-4 py-2 rounded-lg text-sm font-medium transition-colors flex items-center justify-center gap-2 border-2`}
-                style={{
-                  backgroundColor: backgroundType === 'image' ? activeBgColor : 'transparent',
-                  borderColor: backgroundType === 'image' ? activeBorderColor : borderColor,
-                  color: backgroundType === 'image' ? textColor : textSecondaryColor
-                }}
-                whileHover={{ opacity: 0.8 }}
+                className={`flex-1 px-4 py-2 rounded-full text-sm font-medium transition-all duration-300 flex items-center justify-center gap-2 ${
+                  backgroundType === 'image' ? 'bg-white/30 shadow-md' : 'hover:bg-white/10 text-white/70'
+                }`}
                 whileTap={{ scale: 0.98 }}
               >
                 <ImageIcon className="w-4 h-4" />
@@ -597,13 +546,9 @@ const ThemeSelector = () => {
               </motion.button>
               <motion.button
                 onClick={() => setBackgroundType('color')}
-                className={`flex-1 px-4 py-2 rounded-lg text-sm font-medium transition-colors flex items-center justify-center gap-2 border-2`}
-                style={{
-                  backgroundColor: backgroundType === 'color' ? activeBgColor : 'transparent',
-                  borderColor: backgroundType === 'color' ? activeBorderColor : borderColor,
-                  color: backgroundType === 'color' ? textColor : textSecondaryColor
-                }}
-                whileHover={{ opacity: 0.8 }}
+                className={`flex-1 px-4 py-2 rounded-full text-sm font-medium transition-all duration-300 flex items-center justify-center gap-2 ${
+                  backgroundType === 'color' ? 'bg-white/30 shadow-md' : 'hover:bg-white/10 text-white/70'
+                }`}
                 whileTap={{ scale: 0.98 }}
               >
                 <Palette className="w-4 h-4" />
@@ -615,8 +560,7 @@ const ThemeSelector = () => {
               <div className="relative">
                 {backgroundType === 'image' && (
                   <div
-                    className="relative w-full h-32 rounded-lg overflow-hidden border"
-                    style={{ borderColor: borderColor }}
+                    className="relative w-full h-32 rounded-lg overflow-hidden glass-panel"
                   >
                     <img
                       src={typeof customBackground === 'string' && customBackground.startsWith('{')
@@ -640,11 +584,8 @@ const ThemeSelector = () => {
 
                 <motion.button
                   onClick={handleRemoveBackground}
-                  className="mt-3 px-4 py-2 rounded-lg text-sm font-medium transition-colors flex items-center gap-2"
-                  style={{
-                    backgroundColor: isDarkMode ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.05)',
-                    color: textColor
-                  }}
+                  className="mt-3 px-4 py-2 glass-button text-sm font-medium transition-colors flex items-center gap-2"
+                  style={{ color: textColor }}
                   whileHover={{ opacity: 0.8 }}
                   whileTap={{ scale: 0.95 }}
                 >
@@ -660,9 +601,8 @@ const ThemeSelector = () => {
                     <motion.button
                       key={index}
                       onClick={() => handleColorSelect(color.value)}
-                      className="relative w-full aspect-square rounded-lg overflow-hidden border-2"
+                      className="relative w-full aspect-square rounded-lg overflow-hidden transition-transform glass-panel hover:opacity-90"
                       style={{
-                        borderColor: borderColor,
                         backgroundColor: color.value
                       }}
                       whileHover={{ scale: 1.05 }}
@@ -685,8 +625,7 @@ const ThemeSelector = () => {
                     <input
                       type="color"
                       onChange={handleCustomColorSelect}
-                      className="w-16 h-16 rounded-lg border-2 cursor-pointer"
-                      style={{ borderColor: borderColor }}
+                      className="w-16 h-16 rounded-lg cursor-pointer glass-panel"
                       disabled={isProcessing}
                     />
                     <span className="text-xs" style={{ color: textSecondaryColor }}>
@@ -707,12 +646,8 @@ const ThemeSelector = () => {
                 />
                 <motion.label
                   htmlFor="background-image-input"
-                  className="flex items-center justify-center gap-2 px-4 py-3 rounded-lg cursor-pointer transition-colors border"
-                  style={{
-                    backgroundColor: isDarkMode ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.05)',
-                    borderColor: borderColor,
-                    color: textColor
-                  }}
+                  className="glass-button flex items-center justify-center gap-2 px-4 py-3 cursor-pointer transition-colors"
+                  style={{ color: textColor }}
                   whileHover={{ opacity: 0.8 }}
                   whileTap={{ scale: 0.98 }}
                 >
@@ -748,12 +683,8 @@ const ThemeSelector = () => {
                   )}
                   {firebaseBackgroundsError && (
                     <div
-                      className="mb-3 p-2 rounded-lg text-xs border"
-                      style={{
-                        backgroundColor: isDarkMode ? 'rgba(220, 38, 38, 0.2)' : 'rgba(254, 242, 242, 1)',
-                        borderColor: isDarkMode ? 'rgba(220, 38, 38, 0.5)' : 'rgba(254, 202, 202, 1)',
-                        color: isDarkMode ? 'rgba(254, 202, 202, 1)' : 'rgba(185, 28, 28, 1)'
-                      }}
+                      className="mb-3 p-2 rounded-lg text-xs glass-panel"
+                      style={{ color: isDarkMode ? 'rgba(254, 202, 202, 1)' : 'rgba(185, 28, 28, 1)' }}
                     >
                       {firebaseBackgroundsError}
                       {import.meta.env.MODE === 'development' && (
@@ -774,10 +705,7 @@ const ThemeSelector = () => {
                         <motion.button
                           key={index}
                           onClick={() => handleDefaultImageSelect(bg.downloadURL)}
-                          className="relative w-full aspect-square rounded-lg overflow-hidden border-2"
-                          style={{
-                            borderColor: borderColor
-                          }}
+                          className="relative w-full aspect-square rounded-lg overflow-hidden glass-panel transition-transform hover:opacity-90"
                           whileHover={{ scale: 1.05 }}
                           whileTap={{ scale: 0.95 }}
                           disabled={isProcessing}
@@ -798,12 +726,8 @@ const ThemeSelector = () => {
 
             {error && (
               <div
-                className="mt-3 p-3 rounded-lg text-sm border"
-                style={{
-                  backgroundColor: isDarkMode ? 'rgba(220, 38, 38, 0.2)' : 'rgba(254, 242, 242, 1)',
-                  borderColor: isDarkMode ? 'rgba(220, 38, 38, 0.5)' : 'rgba(254, 202, 202, 1)',
-                  color: isDarkMode ? 'rgba(254, 202, 202, 1)' : 'rgba(185, 28, 28, 1)'
-                }}
+                className="mt-3 p-3 rounded-lg text-sm glass-panel"
+                style={{ color: isDarkMode ? 'rgba(254, 202, 202, 1)' : 'rgba(185, 28, 28, 1)' }}
               >
                 {error}
               </div>

@@ -46,49 +46,47 @@ const BreathActionButtons = ({
 
   return (
     <FramerSection
-      className="flex justify-center gap-4"
+      className="flex justify-center w-full px-4"
       animationType="fadeIn"
       delay={0.4}
     >
-      {/* Reset tlačítko - bílé kulaté tlačítko s dark grey refresh ikonou */}
-      <button
-        onClick={onReset}
-        className="w-20 h-20 rounded-full bg-white flex items-center justify-center shadow-sm hover:shadow-md transition-shadow cursor-pointer"
-        title={t('reset') || 'Reset'}
-      >
-        <RotateCcw size={28} style={{ color: iconColor }} />
-      </button>
+      <div className="flex items-center justify-center gap-2 sm:gap-6 px-4 py-3 sm:px-6 sm:py-4 mx-auto glass-panel rounded-[2rem]">
+        {/* Reset tlačítko */}
+        <button
+          onClick={onReset}
+          className="w-14 h-14 sm:w-16 sm:h-16 flex items-center justify-center transition-all cursor-pointer rounded-full hover:bg-white/10 active:scale-95"
+          title={t('reset') || 'Reset'}
+        >
+          <RotateCcw size={26} style={{ color: iconColor }} />
+        </button>
 
-      {/* Tlačítko pro zvukovou galerii - bílé kulaté tlačítko s dark grey notičkou */}
-      <button
-        onClick={onGalleryClick}
-        className="w-20 h-20 rounded-full bg-white flex items-center justify-center shadow-sm hover:shadow-md transition-shadow cursor-pointer"
-        title={t('zvukovaGalerie') || 'Zvuková galerie'}
-      >
-        <Music2 size={28} style={{ color: iconColor }} />
-      </button>
+        {/* Tlačítko pro zvukovou galerii */}
+        <button
+          onClick={onGalleryClick}
+          className="w-14 h-14 sm:w-16 sm:h-16 flex items-center justify-center transition-all cursor-pointer rounded-full hover:bg-white/10 active:scale-95"
+          title={t('zvukovaGalerie') || 'Zvuková galerie'}
+        >
+          <Music2 size={26} style={{ color: iconColor }} />
+        </button>
 
-      {/* Tlačítko pro profily dýchání - bílé kulaté tlačítko s dark grey bookmark ikonou */}
-      <button
-        onClick={onProfilesClick}
-        className="w-20 h-20 rounded-full bg-white flex items-center justify-center shadow-sm hover:shadow-md transition-shadow cursor-pointer"
-        title={t('profilyDychani') || 'Profily dýchání'}
-      >
-        <Bookmark size={28} style={{ color: iconColor }} />
-      </button>
+        {/* Tlačítko pro profily dýchání */}
+        <button
+          onClick={onProfilesClick}
+          className="w-14 h-14 sm:w-16 sm:h-16 flex items-center justify-center transition-all cursor-pointer rounded-full hover:bg-white/10 active:scale-95"
+          title={t('profilyDychani') || 'Profily dýchání'}
+        >
+          <Bookmark size={26} style={{ color: iconColor }} />
+        </button>
 
-      {/* Tlačítko pro pokračování v počítání po skončení */}
-      <button
-        onClick={() => onContinueAfterEndChange?.(!continueAfterEnd)}
-        className="w-20 h-20 rounded-full flex items-center justify-center shadow-sm hover:shadow-md transition-all cursor-pointer"
-        style={{
-          background: continueBg,
-          color: continueFg
-        }}
-        title={t('pokracovatPoSkonceni') || 'Pokračovat v počítání po skončení'}
-      >
-        <Clock size={28} style={{ color: continueFg }} />
-      </button>
+        {/* Tlačítko pro pokračování v počítání po skončení */}
+        <button
+          onClick={() => onContinueAfterEndChange?.(!continueAfterEnd)}
+          className={`w-14 h-14 sm:w-16 sm:h-16 flex items-center justify-center transition-all cursor-pointer rounded-full active:scale-95 ${continueAfterEnd ? 'bg-white/20 shadow-inner' : 'hover:bg-white/10'}`}
+          title={t('pokracovatPoSkonceni') || 'Pokračovat v počítání po skončení'}
+        >
+          <Clock size={26} style={{ color: iconColor }} />
+        </button>
+      </div>
     </FramerSection>
   );
 };

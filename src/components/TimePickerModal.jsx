@@ -50,18 +50,17 @@ export const WheelPickerModal = ({ isOpen, onClose, value, onChange, min, max, s
           }}
         >
           <motion.div
-            className="w-full max-w-sm min-h-screen p-6 relative mx-4 border border-black/10 rounded-none flex flex-col items-center"
-            initial={{ scale: 0.9, opacity: 0 }}
-            animate={{ scale: 1, opacity: 1 }}
-            exit={{ scale: 0.9, opacity: 0 }}
+            className="w-full max-w-sm p-6 relative mx-4 flex flex-col items-center glass-modal"
+            initial={{ scale: 0.9, opacity: 0, y: 20 }}
+            animate={{ scale: 1, opacity: 1, y: 0 }}
+            exit={{ scale: 0.9, opacity: 0, y: 20 }}
             onClick={(e) => e.stopPropagation()}
             style={{
               zIndex: 10001,
-              backgroundColor: backgroundColor
             }}
           >
             {/* Header */}
-            <div className="flex items-center justify-between mb-6 flex-shrink-0 w-full">
+            <div className="flex items-center justify-between mb-6 flex-shrink-0 w-full text-white">
               {title && (
                 <h2 className="text-2xl font-light">
                   {typeof title === 'string' ? title : t(title)}
@@ -69,7 +68,7 @@ export const WheelPickerModal = ({ isOpen, onClose, value, onChange, min, max, s
               )}
               <button
                 onClick={onClose}
-                className="p-2 hover:bg-black/10 rounded-full transition-colors"
+                className="p-2 hover:bg-white/10 rounded-full transition-colors text-white"
               >
                 <X size={24} />
               </button>
@@ -101,18 +100,17 @@ export const WheelPickerModal = ({ isOpen, onClose, value, onChange, min, max, s
               );
             })()}
 
-            {/* Footer - vždy viditelný dole - zarovnáno na střed */}
             {(() => {
               const isLargeModal = title === t('dlzka') || title === 'délka' || title === t('priprava') || title === 'příprava' || title === 'priprava';
               return (
-                <div className={`grid grid-cols-2 md:flex ${isLargeModal ? 'md:flex-row md:justify-center' : 'md:flex-col'} gap-3 pt-4 pb-2 flex-shrink-0 border-t border-black/10 w-full ${isLargeModal ? 'md:items-center' : ''}`}>
+                <div className={`grid grid-cols-2 md:flex ${isLargeModal ? 'md:flex-row md:justify-center' : 'md:flex-col'} gap-3 pt-4 pb-2 flex-shrink-0 border-t border-white/10 w-full ${isLargeModal ? 'md:items-center' : ''}`}>
                   {/* Tlačítko ZVUKY - zobraz pouze pokud je poskytnut callback */}
                   {onSoundButtonClick && (
                     <button
                       onClick={() => {
                         onSoundButtonClick();
                       }}
-                      className="px-6 py-3 rounded bg-white/70 hover:bg-white text-gray-700 border border-black/10 transition-colors flex items-center justify-center gap-2 md:w-auto"
+                      className="px-6 py-3 text-white flex items-center justify-center gap-2 md:w-auto glass-button"
                     >
                       <Music2 size={18} />
                       <span>{t('zvuky') || 'zvuky'}</span>
@@ -121,7 +119,7 @@ export const WheelPickerModal = ({ isOpen, onClose, value, onChange, min, max, s
                   {/* Hlavní tlačítko */}
                   <button
                     onClick={handleConfirm}
-                    className={`px-8 py-3 rounded bg-white/70 hover:bg-white text-gray-700 border border-black/10 transition-colors ${!onSoundButtonClick ? 'col-span-2 md:col-span-1' : ''} md:w-auto`}
+                    className={`px-8 py-3 text-white ${!onSoundButtonClick ? 'col-span-2 md:col-span-1' : ''} md:w-auto glass-button`}
                   >
                     {t('hotovo')}
                   </button>
@@ -206,18 +204,17 @@ export const DualWheelPickerModal = ({
           }}
         >
           <motion.div
-            className="w-full max-w-md min-h-screen p-6 relative mx-4 border border-black/10 rounded-none flex flex-col"
-            initial={{ scale: 0.9, opacity: 0 }}
-            animate={{ scale: 1, opacity: 1 }}
-            exit={{ scale: 0.9, opacity: 0 }}
+            className="w-full max-w-md p-6 relative mx-4 flex flex-col glass-modal"
+            initial={{ scale: 0.9, opacity: 0, y: 20 }}
+            animate={{ scale: 1, opacity: 1, y: 0 }}
+            exit={{ scale: 0.9, opacity: 0, y: 20 }}
             onClick={(e) => e.stopPropagation()}
             style={{
               zIndex: 10001,
-              backgroundColor: backgroundColor
             }}
           >
             {/* Header */}
-            <div className="flex items-center justify-between mb-6 flex-shrink-0">
+            <div className="flex items-center justify-between mb-6 flex-shrink-0 text-white">
               {title && (
                 <h2 className="text-2xl font-light">
                   {typeof title === 'string' ? title : t(title)}
@@ -225,7 +222,7 @@ export const DualWheelPickerModal = ({
               )}
               <button
                 onClick={onClose}
-                className="p-2 hover:bg-black/10 rounded-full transition-colors"
+                className="p-2 hover:bg-white/10 rounded-full transition-colors text-white"
               >
                 <X size={24} />
               </button>
@@ -263,18 +260,17 @@ export const DualWheelPickerModal = ({
               );
             })()}
 
-            {/* Footer - vždy viditelný dole */}
             {(() => {
               const isLargeModal = title === t('rytmus') || title === 'rytmus';
               return (
-                <div className={`flex flex-wrap sm:flex-nowrap ${isLargeModal ? 'sm:flex-row justify-center' : 'flex-col sm:flex-col'} gap-3 pt-4 pb-2 flex-shrink-0 border-t border-black/10 ${isLargeModal ? 'sm:items-center' : ''}`}>
+                <div className={`flex flex-wrap sm:flex-nowrap ${isLargeModal ? 'sm:flex-row justify-center' : 'flex-col sm:flex-col'} gap-3 pt-4 pb-2 flex-shrink-0 border-t border-white/10 ${isLargeModal ? 'sm:items-center' : ''}`}>
                   {/* Tlačítko ZVUKY - zobraz pouze pokud je poskytnut callback */}
                   {onSoundButtonClick && (
                     <button
                       onClick={() => {
                         onSoundButtonClick();
                       }}
-                      className="px-6 py-3 rounded bg-white/70 hover:bg-white text-gray-700 border border-black/10 transition-colors flex items-center justify-center gap-2 flex-1 sm:flex-initial"
+                      className="px-6 py-3 text-white flex items-center justify-center gap-2 flex-1 sm:flex-initial glass-button"
                     >
                       <Music2 size={18} />
                       <span>{t('zvuky') || 'zvuky'}</span>
@@ -283,7 +279,7 @@ export const DualWheelPickerModal = ({
                   {/* Hlavní tlačítko */}
                   <button
                     onClick={handleConfirm}
-                    className="px-8 py-3 rounded bg-white/70 hover:bg-white text-gray-700 border border-black/10 transition-colors flex-1 sm:flex-initial"
+                    className="px-8 py-3 text-white flex-1 sm:flex-initial glass-button"
                   >
                     {t('hotovo')}
                   </button>

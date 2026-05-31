@@ -14,7 +14,7 @@ const BackButton = ({ onClick, className = '' }) => {
       <FramerButton
         onClick={onClick}
         variant="ghost"
-        className="w-12 h-12 rounded-full bg-white/20 backdrop-blur-sm border border-black/10 hover:bg-white/30 flex items-center justify-center p-0"
+        className="w-12 h-12 flex items-center justify-center p-0 z-50 shadow-md"
       >
         <ArrowLeft size={20} />
       </FramerButton>

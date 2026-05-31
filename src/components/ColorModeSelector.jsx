@@ -36,12 +36,8 @@ const ColorModeSelector = () => {
       delay={0.23}
     >
       <div
-        className="w-full p-6 backdrop-blur rounded-none border"
-        style={{
-          backgroundColor: cardColor,
-          borderColor: borderColor,
-          color: textColor
-        }}
+        className="glass-panel w-full p-6"
+        style={{ color: textColor }}
       >
         <h3 className="text-2xl font-light mb-4" style={{ color: textColor }}>
           {t('barevnyRezim') || 'Barevný režim'}
@@ -55,11 +51,7 @@ const ColorModeSelector = () => {
               <motion.button
                 key={mode.id}
                 onClick={() => changeColorMode(mode.id)}
-                className="w-full p-4 rounded-lg border-2 transition-all duration-200 flex items-center justify-between"
-                style={{
-                  borderColor: isActive ? activeBorderColor : borderColor,
-                  backgroundColor: isActive ? activeBgColor : 'transparent'
-                }}
+                className={`w-full p-4 rounded-lg transition-all duration-200 flex items-center justify-between ${isActive ? 'glass-button' : 'hover:opacity-80'}`}
                 whileTap={{ scale: 0.98 }}
               >
                 <div className="flex items-center gap-3">

@@ -396,12 +396,13 @@ const SoundThemeGalleryScreen = ({
     const outFile = findBestMatchingFile(audioFiles, 'out', theme.keywords.out);
     const clickFile = findBestMatchingFile(audioFiles, 'click', theme.keywords.click);
     const finalFile = findBestMatchingFile(audioFiles, 'final', theme.keywords.final);
+    const countdownFile = findBestMatchingFile(audioFiles, 'countdown', theme.keywords.countdown);
     
     handleFileSelect('in', inFile);
     handleFileSelect('out', outFile);
     handleFileSelect('click', clickFile);
     handleFileSelect('final', finalFile);
-    handleFileSelect('countdown', 'none');
+    handleFileSelect('countdown', countdownFile);
     
     onNavigateToScreen('breath'); // Jdi zpět hned po výběru
   };
@@ -417,7 +418,13 @@ const SoundThemeGalleryScreen = ({
         onTouchMove={onTouchMove}
         onTouchEnd={onTouchEnd}
       >
-        <BackButton onClick={() => onNavigateToScreen('breath')} />
+        <BackButton onClick={() => {
+          if (viewMode === 'advanced') {
+            setViewMode('themes');
+          } else {
+            onNavigateToScreen('breath');
+          }
+        }} />
 
         <div className="max-w-md w-full" style={{ marginTop: '5rem', paddingTop: 0, paddingBottom: '2rem', position: 'relative', display: 'flex', flexDirection: 'column', alignItems: 'stretch' }}>
           {/* Header */}
@@ -440,7 +447,7 @@ const SoundThemeGalleryScreen = ({
                 <button
                   key={theme.id}
                   onClick={() => applyTheme(theme)}
-                  className={`w-full p-5 rounded-3xl flex items-center gap-4 transition-all duration-300 text-white ${theme.color} shadow-xl hover:scale-[1.02] active:scale-95`}
+                  className={`w-full p-5 flex items-center gap-4 transition-all duration-300 glass-panel-inner border ${theme.color} hover:scale-[1.02] active:scale-95 backdrop-blur-md`}
                 >
                   <div className="text-4xl flex-shrink-0">{theme.icon}</div>
                   <div className="flex flex-col items-start text-left flex-1">
@@ -452,7 +459,7 @@ const SoundThemeGalleryScreen = ({
               
               <button
                 onClick={() => setViewMode('advanced')}
-                className="w-full mt-4 p-5 rounded-3xl flex items-center gap-4 transition-all duration-300 bg-white/70 text-gray-800 shadow-lg hover:bg-white/90 border border-black/10 hover:scale-[1.02] active:scale-95"
+                className="w-full mt-4 p-5 flex items-center gap-4 transition-all duration-300 glass-panel-inner bg-white/20 text-gray-800 hover:bg-white/30 hover:scale-[1.02] active:scale-95"
               >
                 <div className="text-3xl flex-shrink-0">🎛️</div>
                 <div className="flex flex-col items-start text-left flex-1">
@@ -466,16 +473,7 @@ const SoundThemeGalleryScreen = ({
           {/* Pokročilý (geeky) režim */}
           {viewMode === 'advanced' && (
             <>
-              {!loading && (
-                <div className="mb-6 flex justify-start items-center">
-                  <button
-                    onClick={() => setViewMode('themes')}
-                    className="px-5 py-2.5 rounded-full bg-black/90 text-white text-sm font-medium hover:bg-black transition-colors flex items-center gap-2 shadow-md"
-                  >
-                    &larr; Zpět na Témata
-                  </button>
-                </div>
-              )}
+
 
               {/* Kategorie záložky */}
               {!loading && (

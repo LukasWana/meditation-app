@@ -208,10 +208,13 @@ const CircularProgress = ({
         stroke={finalProgressColor}
         strokeWidth={strokeWidth}
         fill="none"
-        strokeLinecap="butt"
+        strokeLinecap="round"
         strokeDasharray={circumference}
         strokeDashoffset={circumference * (1 - progress / 100)}
         transition={{ duration: 0.1 }}
+        style={{
+          filter: `drop-shadow(0px 0px 12px ${finalProgressColor}80)`
+        }}
       />
     </svg>
   );

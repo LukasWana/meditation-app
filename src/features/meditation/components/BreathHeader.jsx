@@ -1,5 +1,5 @@
 import React from 'react';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import CurrentTimeDisplay from '@features/audio/components/CurrentTimeDisplay';
 import { useTheme } from '@contexts/ThemeContext';
 
@@ -45,34 +45,36 @@ const BreathHeader = ({
       className="text-center flex flex-col justify-start"
       style={{ height: 'calc(3.5rem + clamp(32px, 3.5vw, 40px) + 1rem + 0.5rem)', paddingTop: 0, paddingBottom: 0, marginTop: 0, marginBottom: '1.5rem', position: 'relative', top: 0 }}
     >
-      <motion.h1
-        key={isBreathing ? breathPhase : 'default'}
-        className="text-4xl leading-normal overflow-visible"
-        style={{
-          height: '3.5rem',
-          minHeight: '3.5rem',
-          maxHeight: '3.5rem',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          lineHeight: '1.2',
-          marginTop: 0,
-          paddingTop: 0,
-          paddingBottom: 0,
-          marginBottom: 0,
-          color: displayTextColor,
-          fontFamily: currentTheme?.fontFamily || "'Petrona', serif"
-        }}
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        exit={{ opacity: 0 }}
-        transition={{ duration: 0.2 }}
-      >
-        {isBreathing
-          ? (breathPhase === 'in' ? t('nadech') || 'nádech' : t('vydech') || 'výdech')
-          : t('dychanie') || 'dýchání'
-        }
-      </motion.h1>
+      <AnimatePresence mode="wait">
+        <motion.h1
+          key={isBreathing ? breathPhase : 'default'}
+          className="text-4xl md:text-5xl font-light tracking-wide overflow-visible"
+          style={{
+            height: '3.5rem',
+            minHeight: '3.5rem',
+            maxHeight: '3.5rem',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            lineHeight: '1.2',
+            marginTop: 0,
+            paddingTop: 0,
+            paddingBottom: 0,
+            marginBottom: 0,
+            color: displayTextColor,
+            fontFamily: currentTheme?.fontFamily || "'Petrona', serif"
+          }}
+          initial={{ opacity: 0, y: 15, filter: 'blur(8px)' }}
+          animate={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
+          exit={{ opacity: 0, y: -15, filter: 'blur(8px)' }}
+          transition={{ duration: 0.8, ease: "easeInOut" }}
+        >
+          {isBreathing
+            ? (breathPhase === 'in' ? t('nadech') || 'nádech' : t('vydech') || 'výdech')
+            : t('dychanie') || 'dýchání'
+          }
+        </motion.h1>
+      </AnimatePresence>
       {/* Current Time Display - pod nadpisem */}
       <div className="flex flex-col items-center justify-center mt-4 mb-2 pointer-events-auto w-full gap-2">
         <div className="flex items-center justify-center gap-4" style={{ height: 'clamp(32px, 3.5vw, 40px)', minHeight: 'clamp(32px, 3.5vw, 40px)', maxHeight: 'clamp(32px, 3.5vw, 40px)' }}>

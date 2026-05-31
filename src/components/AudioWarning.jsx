@@ -10,7 +10,7 @@ const AudioWarning = ({ isVisible, onClose, onActivateAudio }) => {
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         exit={{ opacity: 0, y: 20 }}
-        className="fixed bottom-4 left-4 right-4 bg-blue-100 border border-blue-400 rounded-lg p-4 shadow-lg z-50 max-w-md mx-auto"
+        className="fixed bottom-4 left-4 right-4 rounded-2xl p-4 shadow-lg z-50 max-w-md mx-auto glass-modal"
       >
         <div className="flex items-start space-x-3">
           {/* Icon */}

@@ -99,8 +99,8 @@ const FramerMeditationCircle = ({
       >
         {!showTimeBelow ? (
           <motion.div
-            className="w-40 h-40 rounded-full flex items-center justify-center p-4"
-            style={{ backgroundColor: themeColors?.card || 'rgba(0, 0, 0, 0.05)' }}
+            className="glass-panel w-40 h-40 flex items-center justify-center p-4"
+            style={{ borderRadius: '9999px' }}
             transition={{ type: "spring", stiffness: 300, damping: 20 }}
           >
             <motion.span
@@ -120,8 +120,8 @@ const FramerMeditationCircle = ({
           </motion.div>
         ) : (
           <div
-            className="w-40 h-40 rounded-full"
-            style={{ backgroundColor: themeColors?.card || 'rgba(0, 0, 0, 0.05)' }}
+            className="glass-panel w-40 h-40"
+            style={{ borderRadius: '9999px' }}
           />
         )}
       </motion.div>

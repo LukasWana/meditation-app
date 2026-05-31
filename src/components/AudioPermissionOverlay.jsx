@@ -29,13 +29,12 @@ const AudioPermissionOverlay = ({
           initial={{ scale: 0.9, opacity: 0 }}
           animate={{ scale: 1, opacity: 1 }}
           exit={{ scale: 0.9, opacity: 0 }}
-          className="rounded-2xl p-8 mx-4 max-w-md w-full text-center shadow-2xl border border-black/10"
+          className="rounded-[2rem] p-8 mx-4 max-w-md w-full text-center shadow-2xl glass-modal"
           onClick={(e) => e.stopPropagation()}
-          style={{ backgroundColor: backgroundColor }}
         >
           {/* Icon */}
           <div className="mb-6">
-            <div className="w-20 h-20 mx-auto bg-white/50 rounded-full flex items-center justify-center border border-black/10">
+            <div className="w-20 h-20 mx-auto rounded-full flex items-center justify-center glass-panel">
               <svg
                 className="w-10 h-10 text-black"
                 fill="none"
