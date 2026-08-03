@@ -1,4 +1,6 @@
 import { useCallback, useRef, useEffect } from 'react';
+import { storage } from '@config/secure-firebase';
+import { ref as fbRef, getDownloadURL as fbGetDownloadURL } from 'firebase/storage';
 
 /**
  * Hook pro přehrávání finálního zvuku po dokončení dýchání
@@ -9,6 +11,7 @@ import { useCallback, useRef, useEffect } from 'react';
  */
 export const useFinalSound = (breathFinalSound, isBreathing) => {
   const finalSoundPlayedRef = useRef(false);
+  const audioRef = useRef(null);
 
   // Resetuj flag když se spustí nové dýchání
   useEffect(() => {
@@ -16,6 +19,17 @@ export const useFinalSound = (breathFinalSound, isBreathing) => {
       finalSoundPlayedRef.current = false;
     }
   }, [isBreathing]);
+
+  // Zastav a uvolni audio při odmountování
+  useEffect(() => {
+    return () => {
+      if (audioRef.current) {
+        audioRef.current.pause();
+        audioRef.current.src = '';
+        audioRef.current = null;
+      }
+    };
+  }, []);
 
   // Funkce pro přehrání finálního zvuku
   const playFinalSound = useCallback(async () => {
@@ -31,26 +45,28 @@ export const useFinalSound = (breathFinalSound, isBreathing) => {
     finalSoundPlayedRef.current = true;
 
     try {
-      const { realtimeMetadataService } = await import('@services/realtimeMetadataService');
-      const { ref, getDownloadURL } = await import('firebase/storage');
-      const { storage } = await import('@config/secure-firebase');
-
       let url = null;
 
-      // Zkus načíst z metadata
-      const metadata = await realtimeMetadataService.getFileMetadata(breathFinalSound);
-
-      if (metadata && (metadata.downloadURL || metadata.audioSrc)) {
-        url = metadata.downloadURL || metadata.audioSrc;
+      if (breathFinalSound.startsWith('dychanie/')) {
+        url = '/' + breathFinalSound;
       } else {
-        // Pokud není v metadata, zkus načíst přímo z Firebase Storage (fallback)
-        try {
-          const audioRef = ref(storage, breathFinalSound);
-          url = await getDownloadURL(audioRef);
-        } catch (storageError) {
-          console.error('Failed to load final sound from Firebase Storage:', storageError);
-          finalSoundPlayedRef.current = false;
-          return;
+        const { realtimeMetadataService } = await import('@services/realtimeMetadataService');
+
+        // Zkus načíst z metadata
+        const metadata = await realtimeMetadataService.getFileMetadata(breathFinalSound);
+
+        if (metadata && (metadata.downloadURL || metadata.audioSrc)) {
+          url = metadata.downloadURL || metadata.audioSrc;
+        } else {
+          // Pokud není v metadata, zkus načíst přímo z Firebase Storage (fallback)
+          try {
+            const audioRef = fbRef(storage, breathFinalSound);
+            url = await fbGetDownloadURL(audioRef);
+          } catch (storageError) {
+            console.error('Failed to load final sound from Firebase Storage:', storageError);
+            finalSoundPlayedRef.current = false;
+            return;
+          }
         }
       }
 
@@ -69,8 +85,22 @@ export const useFinalSound = (breathFinalSound, isBreathing) => {
         const audio = new Audio(url);
         audio.crossOrigin = 'anonymous'; // Povolí CORS pro Android Chrome
         audio.volume = 1;
+        audioRef.current = audio;
+
+        // Bez uvolnění po dohrání zůstane element i jeho dekódovaný buffer
+        // v paměti až do reloadu (každé dýchání = jeden navíc)
+        const release = () => {
+          audio.src = '';
+          if (audioRef.current === audio) {
+            audioRef.current = null;
+          }
+        };
+        audio.addEventListener('ended', release, { once: true });
+
         audio.play().catch((error) => {
           console.error('Failed to play final sound:', error);
+          audio.removeEventListener('ended', release);
+          release();
           // Resetuj flag při chybě, aby se mohl zkusit znovu
           finalSoundPlayedRef.current = false;
         });

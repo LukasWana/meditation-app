@@ -225,3 +225,13 @@ meditations-audio-09c55489f807.json
 tatus
 nul
 *.apk
+
+# Secrets / credentials
+android/app/google-services.json
+
+# IJFW
+.ijfw/
+
+# Temp/dev artifacts
+gradle-build.err
+test-storage.mjs

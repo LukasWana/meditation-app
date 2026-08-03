@@ -1,6 +1,8 @@
 import React, { createContext, useContext, useState, useEffect, useMemo } from 'react';
 import { THEMES, DEFAULT_THEME_ID, getThemeById } from '@data/themes';
 import cacheService from '@services/cacheServiceRefactored';
+import { StatusBar, Style } from '@capacitor/status-bar';
+import { Capacitor } from '@capacitor/core';
 
 export const ThemeContext = createContext();
 
@@ -264,8 +266,8 @@ export const ThemeProvider = ({ children }) => {
         ...colors,
         text: 'rgba(255, 255, 255, 1)',
         textSecondary: 'rgba(180, 180, 180, 1)',
-        background: 'rgba(10, 10, 10, 1)', // Vždy tmavá barva pozadí
-        card: 'rgba(15, 15, 15, 0.95)', // Vždy tmavá barva karty
+        background: 'rgba(21, 21, 21, 1)', // Vždy tmavá barva pozadí (#151515)
+        card: 'rgba(25, 25, 25, 0.75)', // Průsvitná tmavá barva karty
         primary: colors.primary ? adjustColorForDarkMode(colors.primary) : 'rgba(30, 30, 30, 1)',
         timeIndicator: 'rgba(255, 255, 255, 1)' // Bílá pro dark mode
       };
@@ -312,8 +314,16 @@ export const ThemeProvider = ({ children }) => {
     const customBackgroundColor = getBackgroundColor();
     const themeColors = getCurrentThemeColors();
 
-    // Pokud máme custom barvu pozadí, použít ji
-    if (customBackgroundColor) {
+    // Pokud je dark mode, VŽDY použijeme tmavé pozadí (#151515), ignorujeme customBackgroundColor
+    if (colorMode === 'dark' && !backgroundUrl) {
+      return {
+        backgroundColor: 'rgba(21, 21, 21, 1)',
+        transition: 'background-color 0.3s ease, background-image 0.3s ease'
+      };
+    }
+
+    // Pokud máme custom barvu pozadí, použít ji (ale ne v dark mode, což je vyřešeno nahoře)
+    if (customBackgroundColor && colorMode !== 'dark') {
       return {
         backgroundColor: customBackgroundColor,
         transition: 'background-color 0.3s ease, background-image 0.3s ease'
@@ -351,7 +361,7 @@ export const ThemeProvider = ({ children }) => {
 
       // Pokud je dark mode, použít tmavý overlay (upraveno pro lepší efekt)
       if (colorMode === 'dark') {
-        overlayColor = 'rgba(0, 0, 0, 0.6)'; // Černá s 60% průhledností pro jemnější tmavý efekt
+        overlayColor = 'rgba(10, 10, 10, 0.45)'; // Jemnější overlay, aby sunset pozadí krásně zářilo
       } else if (colorMode === 'light') {
         // Pro light mode použít světlý overlay
         overlayColor = 'rgba(255, 255, 255, 0.5)'; // Bílá s 50% průhledností pro světlejší efekt
@@ -380,8 +390,8 @@ export const ThemeProvider = ({ children }) => {
     const hasImage = !!targetBackgroundUrl && baseTheme?.allowsCustomBackground;
     const themeColors = getCurrentThemeColors();
 
-    // Pokud máme custom barvu, použít ji
-    if (customBackgroundColor) {
+    // Pokud máme custom barvu a nejsme v dark mode, použít ji
+    if (customBackgroundColor && colorMode !== 'dark') {
       return customBackgroundColor;
     }
 
@@ -408,13 +418,20 @@ export const ThemeProvider = ({ children }) => {
     // Nastavit jako CSS custom property pro použití v CSS
     root.style.setProperty('--theme-font-family', fontFamily);
     root.style.setProperty('--theme-use-rounded-style', useRoundedStyle ? '1' : '0');
-    // Radius pro rounded styl (umožňuje per-téma hodnotu)
+    
+    // Nový dynamický design systém pro zaoblení rohů
+    const defaultRadii = { card: '12px', inner: '8px', button: '6px', full: '9999px' };
+    const radii = currentTheme?.radii || baseTheme?.radii || defaultRadii;
+    root.style.setProperty('--radius-card', radii.card);
+    root.style.setProperty('--radius-inner', radii.inner);
+    root.style.setProperty('--radius-button', radii.button);
+    root.style.setProperty('--radius-full', radii.full);
+
+    // Starší proměnné pro zpětnou kompatibilitu
     const roundedRadiusPx =
       (currentTheme?.roundedRadiusPx ?? baseTheme?.roundedRadiusPx) ??
       (useRoundedStyle ? 12 : 0);
     root.style.setProperty('--theme-rounded-radius', `${roundedRadiusPx}px`);
-    // Radius pro čtvercové prvky (umožňuje per-téma hodnotu)
-    // Pro rounded témata: kruh (50%), pro non-rounded (Calma): čtverec (0%)
     const roundedSquareRadius =
       (currentTheme?.roundedSquareRadius ?? baseTheme?.roundedSquareRadius) ??
       (useRoundedStyle ? '50%' : '0%');
@@ -469,10 +486,17 @@ export const ThemeProvider = ({ children }) => {
 
         // CSS pro tmavé pozadí (bílý text)
         styleElement.textContent = `
-            /* Přepsat textové barvy na bílou pro tmavé pozadí */
-            .text-gray-800, .text-gray-700, .text-gray-600, .text-gray-500, .text-gray-400, .text-gray-300,
-            .text-black, .text-gray-900, .text-gray-100, .text-gray-200 {
-              color: ${themeColors.text} !important;
+            /* Elegantní hierarchie textu pro tmavý režim */
+            .text-black, .text-gray-900, .text-gray-800 {
+              color: rgba(255, 255, 255, 0.95) !important;
+            }
+
+            .text-gray-700, .text-gray-600, .text-gray-500 {
+              color: rgba(255, 255, 255, 0.65) !important;
+            }
+
+            .text-gray-400, .text-gray-300, .text-gray-200, .text-gray-100 {
+              color: rgba(255, 255, 255, 0.45) !important;
             }
 
             /* Zajistit, aby všechny textové elementy měly správnou barvu */
@@ -480,55 +504,109 @@ export const ThemeProvider = ({ children }) => {
               color: inherit;
             }
 
-            /* Přepsat bílé pozadí na tmavé, aby byl bílý text viditelný */
-            .bg-white, .bg-white\\/50, .bg-white\\/70, .bg-white\\/30, .bg-white\\/20, .bg-white\\/90, .bg-white\\/95,
-            .bg-white\\/10, .bg-white\\/40, .bg-white\\/60, .bg-white\\/80, .bg-white\\/5 {
-              background-color: ${cardColor} !important;
+            /* Mapování bílého pozadí z Tailwindu na moderní tmavý glassmorphism */
+            .bg-white {
+              background-color: rgba(25, 25, 25, 0.85) !important;
+              backdrop-filter: blur(16px) !important;
+              -webkit-backdrop-filter: blur(16px) !important;
+            }
+            .bg-white\\/95 {
+              background-color: rgba(25, 25, 25, 0.80) !important;
+              backdrop-filter: blur(16px) !important;
+              -webkit-backdrop-filter: blur(16px) !important;
+            }
+            .bg-white\\/90 {
+              background-color: rgba(25, 25, 25, 0.75) !important;
+              backdrop-filter: blur(16px) !important;
+              -webkit-backdrop-filter: blur(16px) !important;
+            }
+            .bg-white\\/80 {
+              background-color: rgba(25, 25, 25, 0.65) !important;
+              backdrop-filter: blur(16px) !important;
+              -webkit-backdrop-filter: blur(16px) !important;
+            }
+            .bg-white\\/70 {
+              background-color: rgba(25, 25, 25, 0.55) !important;
+              backdrop-filter: blur(12px) !important;
+              -webkit-backdrop-filter: blur(12px) !important;
+            }
+            .bg-white\\/60 {
+              background-color: rgba(25, 25, 25, 0.45) !important;
+              backdrop-filter: blur(12px) !important;
+              -webkit-backdrop-filter: blur(12px) !important;
+            }
+            .bg-white\\/50 {
+              background-color: rgba(15, 15, 15, 0.35) !important;
+              backdrop-filter: blur(12px) !important;
+              -webkit-backdrop-filter: blur(12px) !important;
+            }
+            .bg-white\\/40 {
+              background-color: rgba(15, 15, 15, 0.28) !important;
+              backdrop-filter: blur(10px) !important;
+              -webkit-backdrop-filter: blur(10px) !important;
+            }
+            .bg-white\\/30 {
+              background-color: rgba(15, 15, 15, 0.22) !important;
+              backdrop-filter: blur(8px) !important;
+              -webkit-backdrop-filter: blur(8px) !important;
+            }
+            .bg-white\\/20 {
+              background-color: rgba(255, 255, 255, 0.05) !important;
+              backdrop-filter: blur(8px) !important;
+              -webkit-backdrop-filter: blur(8px) !important;
+            }
+            .bg-white\\/10 {
+              background-color: rgba(255, 255, 255, 0.03) !important;
+              backdrop-filter: blur(6px) !important;
+              -webkit-backdrop-filter: blur(6px) !important;
+            }
+            .bg-white\\/5 {
+              background-color: rgba(255, 255, 255, 0.015) !important;
+              backdrop-filter: blur(4px) !important;
+              -webkit-backdrop-filter: blur(4px) !important;
             }
 
-            /* Přepsat bg-gray pozadí na tmavé */
+            /* Přepsat bg-gray pozadí na jemnou průsvitnou tmavou */
             .bg-gray-50, .bg-gray-100, .bg-gray-200, .bg-gray-300, .bg-gray-400, .bg-gray-500,
             .bg-gray-600, .bg-gray-700, .bg-gray-800, .bg-gray-900 {
-              background-color: ${cardColor} !important;
+              background-color: rgba(20, 20, 20, 0.8) !important;
             }
 
             /* Přepsat bg-black pozadí */
             .bg-black, .bg-black\\/10, .bg-black\\/20, .bg-black\\/30, .bg-black\\/40,
             .bg-black\\/50, .bg-black\\/60, .bg-black\\/70, .bg-black\\/80, .bg-black\\/90 {
-              background-color: ${cardColor} !important;
+              background-color: rgba(10, 10, 10, 0.5) !important;
             }
 
-            /* Přepsat hover stavy pro bílé pozadí */
-            .hover\\:bg-white:hover, .hover\\:bg-white\\/70:hover, .hover\\:bg-white\\/30:hover,
-            .hover\\:bg-white\\/40:hover, .hover\\:bg-white\\/90:hover, .hover\\:bg-white\\/50:hover,
-            .hover\\:bg-white\\/20:hover, .hover\\:bg-white\\/60:hover, .hover\\:bg-white\\/80:hover {
-              background-color: ${cardColor} !important;
-              opacity: 0.95;
+            /* Přepsat hover stavy */
+            .hover\\:bg-white:hover {
+              background-color: rgba(255, 255, 255, 0.15) !important;
+            }
+            .hover\\:bg-white\\/50:hover {
+              background-color: rgba(255, 255, 255, 0.12) !important;
+            }
+            .hover\\:bg-white\\/30:hover {
+              background-color: rgba(255, 255, 255, 0.10) !important;
+            }
+            .hover\\:bg-white\\/20:hover {
+              background-color: rgba(255, 255, 255, 0.08) !important;
+            }
+            .hover\\:bg-white\\/10:hover {
+              background-color: rgba(255, 255, 255, 0.06) !important;
             }
 
-            /* Přepsat hover stavy pro bg-gray */
             .hover\\:bg-gray-50:hover, .hover\\:bg-gray-100:hover, .hover\\:bg-gray-200:hover,
             .hover\\:bg-gray-300:hover, .hover\\:bg-gray-400:hover {
-              background-color: ${cardColor} !important;
-              opacity: 0.95;
+              background-color: rgba(255, 255, 255, 0.08) !important;
             }
 
-            /* Přepsat hover stavy pro bg-black */
             .hover\\:bg-black:hover, .hover\\:bg-black\\/10:hover, .hover\\:bg-black\\/20:hover {
-              background-color: ${cardColor} !important;
-              opacity: 0.95;
+              background-color: rgba(0, 0, 0, 0.4) !important;
             }
 
-            /* Přepsat text-gray-* barvy v komponentách s bílým pozadím */
-            .bg-white .text-gray-700, .bg-white\\/50 .text-gray-700, .bg-white\\/70 .text-gray-700,
-            .bg-white\\/30 .text-gray-700, .bg-white\\/90 .text-gray-700,
-            .bg-white .text-gray-800, .bg-white\\/50 .text-gray-800, .bg-white\\/70 .text-gray-800 {
-              color: ${themeColors.text} !important;
-            }
-
-            /* Přepsat border barvy na světlé pro tmavé pozadí */
+            /* Přepsat border barvy na velmi jemný a prémiový transparentní bílý border */
             .border-black\\/10, .border-black\\/20, .border-gray-200, .border-gray-300, .border-gray-400 {
-              border-color: rgba(255, 255, 255, 0.3) !important;
+              border-color: rgba(255, 255, 255, 0.1) !important;
             }
 
             /* Přepsat focus ring barvy */
@@ -542,12 +620,12 @@ export const ThemeProvider = ({ children }) => {
 
             /* Specifické přepsání pro placeholder */
             ::placeholder {
-              color: ${themeColors.textSecondary || 'rgba(255, 255, 255, 0.7)'} !important;
+              color: rgba(255, 255, 255, 0.5) !important;
             }
 
             .placeholder-gray-500::placeholder,
             .placeholder-gray-400::placeholder {
-              color: ${themeColors.textSecondary || 'rgba(255, 255, 255, 0.7)'} !important;
+              color: rgba(255, 255, 255, 0.5) !important;
             }
           `;
       } else {
@@ -655,6 +733,33 @@ export const ThemeProvider = ({ children }) => {
           }, 4000); // 2 sekundy pro fade-in
         });
       });
+    }
+
+    // Nastavit status bar barvu v Android aplikaci
+    if (Capacitor.isNativePlatform()) {
+      try {
+        const isDark = colorMode === 'dark';
+        StatusBar.setOverlaysWebView({ overlay: false });
+        StatusBar.setStyle({ style: isDark ? Style.Dark : Style.Light });
+        
+        let hexColor = isDark ? '#151515' : '#f4ddc4';
+        if (!isDark && bgStyle.backgroundColor) {
+           const bg = bgStyle.backgroundColor;
+           if (bg.startsWith('#')) { 
+             hexColor = bg; 
+           } else if (bg.startsWith('rgb')) {
+             const rgbMatch = bg.match(/\d+/g);
+             if (rgbMatch && rgbMatch.length >= 3) {
+               hexColor = '#' + Number(rgbMatch[0]).toString(16).padStart(2, '0') +
+                              Number(rgbMatch[1]).toString(16).padStart(2, '0') +
+                              Number(rgbMatch[2]).toString(16).padStart(2, '0');
+             }
+           }
+        }
+        StatusBar.setBackgroundColor({ color: hexColor });
+      } catch (e) {
+        console.warn('StatusBar error', e);
+      }
     }
   }, [themeId, customBackground, baseTheme, themeColors, colorMode, currentTheme, isFirstLoad]);
 

@@ -3,6 +3,8 @@ import { ref, listAll, getDownloadURL } from 'firebase/storage';
 import { storage } from '@config/secure-firebase';
 import log from './logger';
 import { parseAudioFileName } from '@utils/hudbaParser';
+import { LOCAL_BREATHING_FILES } from '@config/localBreathingFiles';
+import localBreathingMetadata from '@config/localBreathingMetadata.json';
 
 class FastMetadataService {
   constructor() {
@@ -10,7 +12,7 @@ class FastMetadataService {
     this.isLoading = false;
     this.isInitialized = false;
     this.lastUpdate = null;
-    this.cacheKey = 'fast-metadata-cache-v4';
+    this.cacheKey = 'fast-metadata-cache-v5';
     this.cacheExpiry = 24 * 60 * 60 * 1000; // 24 hodin
   }
 
@@ -186,99 +188,26 @@ class FastMetadataService {
         hasPartialErrors = true;
       }
 
-      // Načti dychanie složku
+      // Načti dychanie složku (LOKÁLNĚ)
       try {
-        const dychanieRef = ref(storage, 'dychanie');
-        log.debug(`🔍 Loading from Firebase Storage path: dychanie`);
-        console.log('🔍 [Firebase Storage] Loading dychanie folder...');
-        const dychanieResult = await listAll(dychanieRef);
-        log.debug(`📊 Firebase Storage result for dychanie:`, {
-          itemsCount: dychanieResult.items.length,
-          prefixesCount: dychanieResult.prefixes.length
+        console.log('🔍 [Local Assets] Loading dychanie folder from local config...');
+        log.info('🔍 Loading dychanie folder from local config');
+        
+        LOCAL_BREATHING_FILES.forEach(filePath => {
+          const parts = filePath.split('/');
+          const subFolder = parts.length > 1 ? parts[0] : null;
+          
+          allFiles.push({
+            name: filePath, // "prana-breath/bg00.ogg"
+            folder: 'dychanie',
+            subFolder: subFolder,
+            fullPath: `dychanie/${filePath}` // "dychanie/prana-breath/bg00.ogg"
+          });
         });
-        console.log(`✅ [Firebase Storage] Dychanie folder loaded:`, {
-          items: dychanieResult.items.length,
-          prefixes: dychanieResult.prefixes.length
-        });
-
-        // Přidej soubory z dychanie složky (OGG formát)
-        dychanieResult.items.forEach(item => {
-          const fileName = item.name.toLowerCase();
-          const isOggFile = fileName.endsWith('.ogg') || fileName.endsWith('.oga');
-          const isMp3File = fileName.endsWith('.mp3'); // Fallback pro MP3
-
-          if (isOggFile || isMp3File) {
-            const fileData = {
-              ...item,
-              name: item.name,
-              folder: 'dychanie',
-              fullPath: item.fullPath || `dychanie/${item.name}`
-            };
-            log.debug(`📄 Adding dychanie file:`, fileData);
-            allFiles.push(fileData);
-          }
-        });
-
-        // Prohledej podsložky dychanie složky (pokud existují) - rekurzivně
-        if (dychanieResult.prefixes.length > 0) {
-          log.debug(`🔍 Found dychanie subfolders:`, dychanieResult.prefixes.map(p => p.name));
-          for (const folderRef of dychanieResult.prefixes) {
-            try {
-              log.debug(`📁 Processing dychanie folder: ${folderRef.name}`);
-              const folderResult = await listAll(folderRef);
-              log.debug(`📄 Found ${folderResult.items.length} items and ${folderResult.prefixes.length} subfolders in ${folderRef.name}`);
-
-              // Přidej soubory z této složky
-              folderResult.items.forEach(item => {
-                const fileName = item.name.toLowerCase();
-                const isOggFile = fileName.endsWith('.ogg') || fileName.endsWith('.oga');
-                const isMp3File = fileName.endsWith('.mp3');
-
-                if (isOggFile || isMp3File) {
-                  allFiles.push({
-                    ...item,
-                    name: `${folderRef.name}/${item.name}`,
-                    folder: 'dychanie',
-                    subFolder: folderRef.name,
-                    fullPath: item.fullPath || `dychanie/${folderRef.name}/${item.name}`
-                  });
-                }
-              });
-
-              // Prohledej podsložky této složky (rekurzivně)
-              log.debug(`🔍 Checking subfolders for ${folderRef.name}:`, folderResult.prefixes.map(p => p.name));
-              for (const subFolderRef of folderResult.prefixes) {
-                try {
-                  log.debug(`📁 Processing dychanie subfolder: ${subFolderRef.name}`);
-                  const subFolderResult = await listAll(subFolderRef);
-                  log.debug(`📄 Found ${subFolderResult.items.length} items in ${subFolderRef.name}`);
-                  subFolderResult.items.forEach(item => {
-                    const fileName = item.name.toLowerCase();
-                    const isOggFile = fileName.endsWith('.ogg') || fileName.endsWith('.oga');
-                    const isMp3File = fileName.endsWith('.mp3');
-
-                    if (isOggFile || isMp3File) {
-                      allFiles.push({
-                        ...item,
-                        name: `${subFolderRef.name}/${item.name}`,
-                        folder: 'dychanie',
-                        subFolder: subFolderRef.name,
-                        fullPath: item.fullPath || `dychanie/${subFolderRef.name}/${item.name}`
-                      });
-                    }
-                  });
-                } catch (subErr) {
-                  log.warn(`Failed to check dychanie subfolder ${subFolderRef.name}:`, subErr);
-                }
-              }
-            } catch (err) {
-              log.warn(`Failed to check dychanie folder ${folderRef.name}:`, err);
-            }
-          }
-        }
+        
+        console.log(`✅ [Local Assets] Dychanie folder loaded locally: ${LOCAL_BREATHING_FILES.length} files`);
       } catch (dychanieError) {
-        log.warn(`Failed to load dychanie folder:`, dychanieError);
-        console.error('❌ [Firebase Storage] Failed to load dychanie folder:', dychanieError);
+        log.warn(`Failed to load local dychanie files:`, dychanieError);
         hasPartialErrors = true;
       }
 
@@ -566,8 +495,8 @@ class FastMetadataService {
       fileNameOnly: fileNameOnly,
       folder: normalizedFolder,
       subFolder: file.subFolder || null,
-      type: file.subFolder ? 'album_track' : 'audio',
-      contentType: 'audio/mpeg',
+      type: normalizedFolder === 'dychanie' ? 'dychanie' : (file.subFolder ? 'album_track' : 'audio'),
+      contentType: fileNameOnly.toLowerCase().endsWith('.mp3') ? 'audio/mpeg' : 'audio/ogg',
       timeCreated: new Date().toISOString(),
       updated: new Date().toISOString(),
       // Parsované informace - aktualizuj s informacemi o složce
@@ -603,45 +532,40 @@ class FastMetadataService {
       isHudba: metadata.isHudba
     });
 
-    // Získej download URL - přidej správný prefix s retry mechanismem
-    metadata.downloadURL = await this._getDownloadURLWithRetry(file);
-
-    // Debug log pro download URL
-    log.debug(`🔗 Download URL for ${filePath}:`, {
-      downloadURL: metadata.downloadURL ? 'OK' : 'FAILED',
-      isAlbum: metadata.isAlbum,
-      albumName: metadata.albumName
-    });
-
-    // Načti délku skladby
-    if (metadata.downloadURL) {
-      try {
-        const duration = await this._loadAudioDuration(metadata.downloadURL);
-        if (duration) {
-          metadata.duration = duration;
-          metadata.durationFormatted = this.formatDuration(duration);
-          log.debug(`⏱️ Duration loaded for ${filePath}: ${metadata.durationFormatted}`);
-        }
-      } catch (error) {
-        log.warn(`Failed to load duration for ${filePath}:`, error);
+    // Získej download URL a nahraj metadata - pro dychanie složku použijeme lokální cestu a předpočítaná metadata
+    if (normalizedFolder === 'dychanie') {
+      metadata.downloadURL = '/' + filePath;
+      
+      const localMeta = localBreathingMetadata[filePath];
+      if (localMeta) {
+        metadata.duration = localMeta.duration;
+        metadata.durationFormatted = localMeta.durationFormatted;
+        metadata.waveformData = localMeta.waveformData;
+        metadata.waveformMax = localMeta.waveformMax;
+        log.debug(`⚡ Offline metadata loaded for ${filePath}`);
       }
-    }
+    } else {
+      metadata.downloadURL = await this._getDownloadURLWithRetry(file);
 
-    // Generuj waveform data pro dychanie soubory
-    if (normalizedFolder === 'dychanie' && metadata.downloadURL) {
-      try {
-        const { generateWaveformFromUrl } = await import('@utils/waveformGenerator');
-        const waveformData = await generateWaveformFromUrl(metadata.downloadURL, 150);
-        if (waveformData) {
-          metadata.waveformData = waveformData;
-          metadata.waveformMax = Math.max(...waveformData);
-          log.debug(`🌊 Waveform generated for ${filePath}: ${waveformData.length} samples`);
+      // Debug log pro download URL
+      log.debug(`🔗 Download URL for ${filePath}:`, {
+        downloadURL: metadata.downloadURL ? 'OK' : 'FAILED',
+        isAlbum: metadata.isAlbum,
+        albumName: metadata.albumName
+      });
+
+      // Načti délku skladby
+      if (metadata.downloadURL) {
+        try {
+          const duration = await this._loadAudioDuration(metadata.downloadURL);
+          if (duration) {
+            metadata.duration = duration;
+            metadata.durationFormatted = this.formatDuration(duration);
+            log.debug(`⏱️ Duration loaded for ${filePath}: ${metadata.durationFormatted}`);
+          }
+        } catch (error) {
+          log.warn(`Failed to load duration for ${filePath}:`, error);
         }
-      } catch (error) {
-        log.warn(`Failed to generate waveform for ${filePath}:`, error);
-        // Pokud se nepodařilo vygenerovat waveform, nastav prázdné pole
-        metadata.waveformData = null;
-        metadata.waveformMax = null;
       }
     }
 
@@ -716,17 +640,19 @@ class FastMetadataService {
       (meta.type === 'audio' || meta.type === 'album_track') && meta.downloadURL
     );
 
-    log.info(`🎵 Loading durations for ${audioFiles.length} audio files...`);
+    log.info(`🎵 Preserving loaded durations and setting N/A only as fallback...`);
 
-    // Firebase Storage má CORS problémy s načítáním délky audio souborů
-    // Prozatím nastavíme všechny délky na 'N/A' a necháme je načíst při přehrávání
     audioFiles.forEach(metadata => {
-      metadata.duration = null;
-      metadata.durationFormatted = 'N/A';
-      log.debug(`⚠️ Duration set to N/A for ${metadata.fileName} (CORS issue with Firebase Storage)`);
+      if (!metadata.duration) {
+        metadata.duration = null;
+        metadata.durationFormatted = 'N/A';
+        log.debug(`⚠️ Duration set to N/A for ${metadata.fileName} (CORS issue with Firebase Storage)`);
+      } else {
+        log.debug(`⏱️ Preserved duration for ${metadata.fileName}: ${metadata.durationFormatted}`);
+      }
     });
 
-    log.success(`✅ Audio durations set to N/A for ${audioFiles.length} files (CORS issue with Firebase Storage)`);
+    log.success(`✅ Audio durations preserved and initialized for ${audioFiles.length} files`);
   }
 
   async getAudioDuration(audioSrc, retries = 2) {
@@ -965,6 +891,8 @@ class FastMetadataService {
         type = 'album_track';
       } else if (folder === 'hudba') {
         type = 'audio';
+      } else if (folder === 'dychanie') {
+        type = 'dychanie';
       } else {
         type = 'audio'; // default
       }
@@ -982,7 +910,7 @@ class FastMetadataService {
       fileName: fileName,
       fileNameOnly: fileNameOnly,
       folder: folder,
-      subFolder: folder === 'hudba' && fileName.split('/').length > 2 ? fileName.split('/')[1] : null,
+      subFolder: (folder === 'hudba' || folder === 'dychanie') && fileName.split('/').length > 2 ? fileName.split('/')[1] : (data.subFolder || null),
       type: type,
       contentType: data.contentType || 'audio/mpeg',
       timeCreated: data.timeCreated || data.lastUpdated || new Date().toISOString(),

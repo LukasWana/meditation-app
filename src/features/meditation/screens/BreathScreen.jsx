@@ -1,6 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import { AnimatePresence } from 'framer-motion';
-import { FramerPageTransition, BackButton } from '@components';
+import FramerPageTransition from '@components/FramerPageTransition';
+import BackButton from '@components/BackButton';
 import { useLanguage } from '@contexts/LanguageContext';
 import { useTheme } from '@contexts/ThemeContext';
 import {
@@ -241,15 +242,20 @@ const BreathScreen = ({
   return (
     <FramerPageTransition screenKey="dychani">
       <div
-        className="min-h-screen w-full max-w-full flex flex-col items-center justify-start p-2 sm:p-8 pb-20 overflow-x-hidden overflow-y-hidden relative"
-        style={{ backgroundColor: getScreenBackgroundColor() }}
+        className="h-dvh w-full max-w-full flex flex-col items-center justify-start overflow-hidden relative"
+        style={{
+          backgroundColor: getScreenBackgroundColor(),
+          height: '100dvh',
+          paddingTop: 'calc(5rem + env(safe-area-inset-top, 0px))',
+          paddingBottom: 'calc(1rem + env(safe-area-inset-bottom, 0px))'
+        }}
         onTouchStart={onTouchStart}
         onTouchMove={onTouchMove}
         onTouchEnd={onTouchEnd}
       >
         <BackButton onClick={handleBackClick} />
 
-        <div className="max-w-md w-full" style={{ marginTop: '4rem', paddingTop: 0, paddingBottom: '2rem', position: 'relative', display: 'flex', flexDirection: 'column', alignItems: 'stretch', minHeight: 'calc(100vh - 4rem - 5rem)' }}>
+        <div className="max-w-md w-full flex-1 flex flex-col items-stretch justify-center overflow-hidden" style={{ position: 'relative' }}>
           <AnimatePresence>
             {/* Sekce přípravy */}
             {currentIsPreparing && (

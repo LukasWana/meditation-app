@@ -13,7 +13,6 @@ import {
   HudbaScreen,
   AlbumDetailScreen,
   AudioPlayer,
-  SimpleAdminScreen,
   SoundThemeGalleryScreen,
   BreathProfilesScreen,
   PreparationTimePickerScreen,
@@ -120,15 +119,6 @@ const SCREEN_REGISTRY = {
     component: AudioPlayer,
     requiresLayout: false,
     props: ['audioSrc', 'title', 'onClose'],
-    transition: {
-      type: 'fade',
-      duration: 0.2
-    }
-  },
-  'database-admin': {
-    component: SimpleAdminScreen,
-    requiresLayout: false,
-    props: [],
     transition: {
       type: 'fade',
       duration: 0.2

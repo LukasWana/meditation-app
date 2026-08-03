@@ -1,6 +1,6 @@
 import React from 'react';
 import { RotateCcw, Music2, Bookmark, Clock } from 'lucide-react';
-import { FramerSection } from '@components';
+import FramerSection from '@components/FramerSection';
 import { useTheme } from '@contexts/ThemeContext';
 
 /**

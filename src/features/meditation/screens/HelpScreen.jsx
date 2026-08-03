@@ -1,5 +1,8 @@
 import React from 'react';
-import { FramerButton, FramerSection, FramerPageTransition, BackButton } from '@components';
+import FramerButton from '@components/FramerButton';
+import FramerSection from '@components/FramerSection';
+import FramerPageTransition from '@components/FramerPageTransition';
+import BackButton from '@components/BackButton';
 import { useTheme } from '@contexts/ThemeContext';
 
 const HelpScreen = ({

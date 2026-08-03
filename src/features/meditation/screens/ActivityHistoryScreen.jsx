@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { FramerSection, FramerPageTransition, BackButton } from '@components';
+import FramerSection from '@components/FramerSection';
+import FramerPageTransition from '@components/FramerPageTransition';
+import BackButton from '@components/BackButton';
 import { useLanguage } from '@contexts/LanguageContext';
 import { useTheme } from '@contexts/ThemeContext';
 import { useAuth } from '@contexts/AuthContext';

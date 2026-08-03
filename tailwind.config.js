@@ -10,6 +10,12 @@ export default {
         'petrona': ['Petrona', 'serif'],
         'sans': ['Petrona', 'serif'],
       },
+      borderRadius: {
+        'theme-card': 'var(--radius-card)',
+        'theme-inner': 'var(--radius-inner)',
+        'theme-button': 'var(--radius-button)',
+        'theme-full': 'var(--radius-full)',
+      }
     },
   },
   plugins: [],

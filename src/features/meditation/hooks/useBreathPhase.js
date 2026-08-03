@@ -1,4 +1,5 @@
 import { useEffect, useRef } from 'react';
+import { usePageVisible } from '@hooks/usePageVisible';
 
 /**
  * Hook pro aktualizaci UI fáze dýchání na základě audio času
@@ -18,6 +19,7 @@ export const useBreathPhase = (
   getCurrentPhase
 ) => {
   const intervalRef = useRef(null);
+  const isVisible = usePageVisible();
 
   useEffect(() => {
     if (!isPlaying || !getCurrentPhase) {
@@ -32,7 +34,17 @@ export const useBreathPhase = (
       return;
     }
 
-    // Aktualizuj fázi každých 100ms (pro plynulou UI aktualizaci)
+    // Na pozadí není co překreslovat — timing hlídá audio engine, ne tento interval
+    if (!isVisible) {
+      if (intervalRef.current) {
+        clearInterval(intervalRef.current);
+        intervalRef.current = null;
+      }
+      return;
+    }
+
+    // Aktualizuj fázi každých 200ms. Fáze dýchání trvají jednotky sekund,
+    // takže hustší polling jen budí CPU bez viditelného rozdílu.
     intervalRef.current = setInterval(() => {
       try {
         const phase = getCurrentPhase();
@@ -42,7 +54,7 @@ export const useBreathPhase = (
       } catch (error) {
         console.warn('Failed to get current phase:', error);
       }
-    }, 100);
+    }, 200);
 
     // Okamžitá aktualizace při startu
     try {
@@ -60,6 +72,6 @@ export const useBreathPhase = (
         intervalRef.current = null;
       }
     };
-  }, [isPlaying, setBreathPhase, breathInDuration, breathOutDuration, getCurrentPhase]);
+  }, [isPlaying, isVisible, setBreathPhase, breathInDuration, breathOutDuration, getCurrentPhase]);
 };
 

@@ -52,7 +52,12 @@ const Layout = ({
       {/* Top Right Controls - Hidden when player is active, show on all pages */}
       {/* Pozicování: na mobilech right-6, na větších obrazovkách relativní k max-width kontejneru */}
       {!isPlayerActive && (
-        <div className="fixed top-6 right-6 z-50 flex items-center space-x-3 app-content-controls">
+        <div 
+          className="fixed right-6 z-50 flex items-center space-x-3 app-content-controls"
+          style={{
+            top: 'calc(1.5rem + env(safe-area-inset-top, 0px))'
+          }}
+        >
           {/* User Profile */}
           <UserProfile />
 
@@ -65,8 +70,8 @@ const Layout = ({
           >
             <motion.button
               onClick={() => handleLanguageChange('SK')}
-              className={`p-2 rounded-full transition-colors duration-200 flex items-center justify-center ${language === 'SK'
-                ? 'glass-button !rounded-full'
+              className={`p-2 rounded-theme-full transition-colors duration-200 flex items-center justify-center ${language === 'SK'
+                ? 'glass-button !rounded-theme-full'
                 : 'hover:bg-black/10 dark:hover:bg-white/10'
                 }`}
               transition={{ type: "spring", stiffness: 300, damping: 20 }}
@@ -75,8 +80,8 @@ const Layout = ({
             </motion.button>
             <motion.button
               onClick={() => handleLanguageChange('CZ')}
-              className={`p-2 rounded-full transition-colors duration-200 flex items-center justify-center ${language === 'CZ'
-                ? 'glass-button !rounded-full'
+              className={`p-2 rounded-theme-full transition-colors duration-200 flex items-center justify-center ${language === 'CZ'
+                ? 'glass-button !rounded-theme-full'
                 : 'hover:bg-black/10 dark:hover:bg-white/10'
                 }`}
               transition={{ type: "spring", stiffness: 300, damping: 20 }}
@@ -85,8 +90,8 @@ const Layout = ({
             </motion.button>
             <motion.button
               onClick={() => handleLanguageChange('EN')}
-              className={`p-2 rounded-full transition-colors duration-200 flex items-center justify-center ${language === 'EN'
-                ? 'glass-button !rounded-full'
+              className={`p-2 rounded-theme-full transition-colors duration-200 flex items-center justify-center ${language === 'EN'
+                ? 'glass-button !rounded-theme-full'
                 : 'hover:bg-black/10 dark:hover:bg-white/10'
                 }`}
               transition={{ type: "spring", stiffness: 300, damping: 20 }}
@@ -94,7 +99,7 @@ const Layout = ({
               <img src={UKFlagUrl} alt="United Kingdom" className="w-6 h-6" />
             </motion.button>
           </motion.div>
-
+ 
           {/* Language Switcher - mobile (one flag, cycles on tap) */}
           <motion.button
             onClick={cycleLanguage}
@@ -103,11 +108,11 @@ const Layout = ({
             animate={{ opacity: 1, scale: 1 }}
             transition={{ duration: 0.3, ease: "easeOut" }}
           >
-            <div className="w-9 h-9 rounded-full overflow-hidden flex items-center justify-center">
+            <div className="w-9 h-9 rounded-theme-full overflow-hidden flex items-center justify-center">
               <img src={getFlagUrl(language)} alt={language} className="w-5 h-5" />
             </div>
           </motion.button>
-
+ 
           {/* Gender Switcher - desktop/tablet - zobraz pouze v sekci meditace */}
           {currentScreen === 'meditace' && (
             <motion.div
@@ -118,8 +123,8 @@ const Layout = ({
             >
               <motion.button
                 onClick={() => handleGenderSelect('male')}
-                className={`px-4 h-9 flex items-center justify-center rounded-full text-sm font-medium transition-colors duration-200 ${gender === 'male'
-                  ? 'glass-button !rounded-full'
+                className={`px-4 h-9 flex items-center justify-center rounded-theme-full text-sm font-medium transition-colors duration-200 ${gender === 'male'
+                  ? 'glass-button !rounded-theme-full'
                   : 'hover:bg-black/10 dark:hover:bg-white/10 opacity-70 hover:opacity-100'
                   }`}
                 transition={{ type: "spring", stiffness: 300, damping: 20 }}
@@ -128,8 +133,8 @@ const Layout = ({
               </motion.button>
               <motion.button
                 onClick={() => handleGenderSelect('female')}
-                className={`px-4 h-9 flex items-center justify-center rounded-full text-sm font-medium transition-colors duration-200 ${gender === 'female'
-                  ? 'glass-button !rounded-full'
+                className={`px-4 h-9 flex items-center justify-center rounded-theme-full text-sm font-medium transition-colors duration-200 ${gender === 'female'
+                  ? 'glass-button !rounded-theme-full'
                   : 'hover:bg-black/10 dark:hover:bg-white/10 opacity-70 hover:opacity-100'
                   }`}
                 transition={{ type: "spring", stiffness: 300, damping: 20 }}

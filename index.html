@@ -12,6 +12,39 @@
   <link rel="apple-touch-icon" href="/icon-192x192.svg">
   <!-- Fonty se načítají lokálně přes @fontsource (bez Google Fonts) -->
   <title>Meditačná aplikácia</title>
+  <style>
+    /* Výchozí barva než naběhne script, pokud by selhal */
+    html, body { margin: 0; padding: 0; background-color: #f4ddc4; }
+    @media (prefers-color-scheme: dark) {
+      html, body { background-color: #151515; }
+    }
+  </style>
+  <script>
+    (function() {
+      try {
+        var mode = localStorage.getItem('meditation-app-color-mode');
+        var themeDark = '#151515';
+        var themeLight = '#f4ddc4'; 
+        var bg = mode === 'dark' ? themeDark : themeLight;
+        
+        // Nastavit pozadí okamžitě pro kořenový element
+        document.documentElement.style.backgroundColor = bg;
+        
+        // Vložit CSS pravidlo pro zaručení, že se aplikuje hned na html i body
+        var css = 'html, body { background-color: ' + bg + ' !important; margin: 0; padding: 0; }';
+        var style = document.createElement('style');
+        style.id = 'theme-init-style';
+        style.textContent = css;
+        document.head.appendChild(style);
+        
+        // Také dynamicky nastavit theme color meta tag
+        var metaThemeColor = document.querySelector('meta[name="theme-color"]');
+        if (metaThemeColor) {
+          metaThemeColor.setAttribute('content', bg);
+        }
+      } catch (e) {}
+    })();
+  </script>
 </head>
 
 <body>

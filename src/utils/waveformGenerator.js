@@ -47,11 +47,10 @@ export const generateWaveformFromBuffer = (audioBuffer, samples = 150) => {
  * @returns {Promise<Array<number>|null>} - Pole amplitud (0-1) nebo null při chybě
  */
 export const generateWaveformFromUrl = async (audioUrl, samples = 150) => {
-  // Firebase Storage má CORS omezení - v produkci waveformy negenerujeme
-  // V dev módu to zkoušíme, ale v produkci rovnou vratíme null
-  if (import.meta.env.PROD) {
-    return null; // V produkci rovnau skipneme
-  }
+  // V produkci to nyní funguje, protože jsme nastavili CORS na Firebase Storage bucketu
+  // if (import.meta.env.PROD) {
+  //   return null; 
+  // }
 
   // V dev módu zkusíme, ale nebudeme logovat jako error
   try {

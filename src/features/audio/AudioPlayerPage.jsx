@@ -6,7 +6,8 @@ import {
   CloseButton,
   LoadingIndicator
 } from './components';
-import { FramerPageTransition, BackButton } from '@components';
+import FramerPageTransition from '@components/FramerPageTransition';
+import BackButton from '@components/BackButton';
 import { useTheme } from '@contexts/ThemeContext';
 
 const AudioPlayerPage = ({

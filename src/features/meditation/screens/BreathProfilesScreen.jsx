@@ -1,7 +1,9 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { motion } from 'framer-motion';
 import { Trash2, Plus, Play, Download, Upload, Edit2 } from 'lucide-react';
-import { FramerSection, FramerPageTransition, BackButton } from '@components';
+import FramerSection from '@components/FramerSection';
+import FramerPageTransition from '@components/FramerPageTransition';
+import BackButton from '@components/BackButton';
 import { useLanguage } from '@contexts/LanguageContext';
 import { useTheme } from '@contexts/ThemeContext';
 import breathProfilesService from '@services/breathProfilesService';
@@ -14,7 +16,8 @@ const BreathProfilesScreen = ({
   onTouchEnd,
 }) => {
   const { t } = useLanguage();
-  const { getScreenBackgroundColor } = useTheme();
+  const { getScreenBackgroundColor, getCurrentThemeColors, colorMode } = useTheme();
+  const themeColors = getCurrentThemeColors?.() || {};
   const {
     breathInDuration, breathOutDuration, breathDuration,
     preparationTime, breathInSound, breathOutSound,

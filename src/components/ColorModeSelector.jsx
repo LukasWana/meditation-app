@@ -51,7 +51,7 @@ const ColorModeSelector = () => {
               <motion.button
                 key={mode.id}
                 onClick={() => changeColorMode(mode.id)}
-                className={`w-full p-4 rounded-lg transition-all duration-200 flex items-center justify-between ${isActive ? 'glass-button' : 'hover:opacity-80'}`}
+                className={`w-full p-4 rounded-theme-button transition-all duration-200 flex items-center justify-between ${isActive ? 'glass-button' : 'hover:opacity-80'}`}
                 whileTap={{ scale: 0.98 }}
               >
                 <div className="flex items-center gap-3">
@@ -68,7 +68,7 @@ const ColorModeSelector = () => {
                 </div>
                 {isActive && (
                   <div
-                    className="w-6 h-6 rounded-full flex items-center justify-center"
+                    className="w-6 h-6 rounded-theme-full flex items-center justify-center"
                     style={{ backgroundColor: checkmarkBgColor }}
                   >
                     <svg

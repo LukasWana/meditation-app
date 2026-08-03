@@ -40,9 +40,8 @@ const Dropdown = ({
           console.log('Dropdown clicked, current state:', isOpen);
           setIsOpen(!isOpen);
         }}
-        className="glass-button flex items-center justify-between gap-2 px-4 py-2 cursor-pointer min-w-[120px]"
+        className="glass-button flex items-center justify-between gap-2 px-4 py-2 cursor-pointer min-w-[120px] rounded-theme-full"
         style={{
-          borderRadius: '9999px',
           boxShadow: '0 1px 3px rgba(0, 0, 0, 0.1)'
         }}
       >
@@ -58,11 +57,11 @@ const Dropdown = ({
           }}
         />
       </button>
-
+ 
       {/* Dropdown menu */}
       {isOpen && (
         <div
-          className="glass-panel absolute top-full left-0 right-0 mt-2 rounded-lg overflow-hidden min-w-[120px]"
+          className="glass-panel absolute top-full left-0 right-0 mt-2 rounded-theme-inner overflow-hidden min-w-[120px]"
           style={{
             boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1)',
             zIndex: 10001

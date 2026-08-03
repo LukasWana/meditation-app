@@ -3,6 +3,7 @@ import ReactDOM from 'react-dom/client'
 import App from './App.jsx'
 import ErrorBoundary from './components/ErrorBoundary.jsx'
 import { initConsoleWrapper } from './services/logger'
+import { applyDeviceTier } from './utils/deviceTier'
 import '@fontsource/petrona/400.css'
 import '@fontsource/petrona/700.css'
 import '@fontsource/inter/300.css'
@@ -25,6 +26,17 @@ import './index.css'
 // Inicializuj console wrapper PŘED renderováním aplikace
 // Tím se zachytí všechna console.log() volání a budou filtrována podle log levelu
 initConsoleWrapper();
+
+// Označ slabá zařízení (třída .low-gpu na <html>) PŘED prvním renderem,
+// aby se drahý backdrop-filter blur nikdy nestihl vykreslit
+applyDeviceTier();
+
+// Globální potlačení neškodných "AbortError" (typické pro přerušené načítání audia nebo Firebase spojení)
+window.addEventListener('unhandledrejection', (event) => {
+  if (event.reason && event.reason.name === 'AbortError') {
+    event.preventDefault(); // Zabrání výpisu červené chyby "Uncaught (in promise) AbortError" do konzole
+  }
+});
 
 // Načti helper pro aktualizaci Firebase překladů pouze v developmentu (dostupný v konzoli)
 if (import.meta.env.MODE === 'development') {

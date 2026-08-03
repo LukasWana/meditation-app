@@ -2,6 +2,16 @@
 
 const DEFAULT_MAX_HISTORY_SIZE = 100;
 
+// Předpočítané pořadí úrovní — shouldLog() se volá při každém console.* v aplikaci,
+// takže se vyplatí vyhnout se opakovanému indexOf nad polem.
+const LOG_LEVEL_ORDER = {
+  silent: 0,
+  error: 1,
+  warn: 2,
+  info: 3,
+  debug: 4
+};
+
 function getEnvMode() {
   // Vitest/Node
   if (typeof process !== 'undefined' && process?.env?.NODE_ENV) {
@@ -48,10 +58,9 @@ export class Logger {
   }
 
   shouldLog(level) {
-    const levels = ['silent', 'error', 'warn', 'info', 'debug'];
-    const currentLevelIndex = levels.indexOf(this.logLevel);
-    const messageLevelIndex = levels.indexOf(level);
-    if (currentLevelIndex === -1 || messageLevelIndex === -1) return false;
+    const currentLevelIndex = LOG_LEVEL_ORDER[this.logLevel];
+    const messageLevelIndex = LOG_LEVEL_ORDER[level];
+    if (currentLevelIndex === undefined || messageLevelIndex === undefined) return false;
     return messageLevelIndex <= currentLevelIndex;
   }
 
@@ -245,12 +254,19 @@ export function initConsoleWrapper() {
     };
   };
 
+  // Wrappery vytvoř JEDNOU dopředu. Dřív je Proxy tvořila v `get` trapu, takže
+  // každé jednotlivé console.log() v aplikaci alokovalo novou closure.
+  const wrappedMethods = {};
+  for (const [method, level] of Object.entries(consoleLevelMap)) {
+    wrappedMethods[method] = createWrappedMethod(method, level);
+  }
+
   // Vytvoř wrapper objekt
   consoleWrapper = new Proxy(console, {
     get(target, prop) {
       // Pokud je to metoda, kterou chceme wrapovat
-      if (prop in consoleLevelMap) {
-        return createWrappedMethod(prop, consoleLevelMap[prop]);
+      if (prop in wrappedMethods) {
+        return wrappedMethods[prop];
       }
 
       // Pro ostatní metody vrať originál

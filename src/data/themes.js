@@ -22,8 +22,14 @@ export const THEMES = [
     allowsCustomBackground: true, // Všechna témata nyní podporují vlastní pozadí (fotka nebo barva)
     fontFamily: "'Petrona', serif",
     useRoundedStyle: true, // Zaoblené rohy
-    roundedRadiusPx: 10, // Mírně zaoblené rohy pro obecné prvky
-    roundedSquareRadius: '50%' // Kruh pro čtvercové prvky
+    roundedRadiusPx: 0, // Používá se pro starší přepsání
+    roundedSquareRadius: '0%',
+    radii: {
+      card: '0px',
+      inner: '0px',
+      button: '0px',
+      full: '0px'
+    }
   },
   {
     id: 'calma',
@@ -49,7 +55,13 @@ export const THEMES = [
     allowsCustomBackground: true, // Tento styl umožňuje vlastní pozadí
     fontFamily: "'Inter', sans-serif",
     useRoundedStyle: false, // Pro barevná témata bez kulatého stylu
-    roundedSquareRadius: '0%' // Calma: jediný čtverec
+    roundedSquareRadius: '0%',
+    radii: {
+      card: '12px',
+      inner: '8px',
+      button: '6px',
+      full: '9999px'
+    }
   },
   {
     id: 'dreamy-lavender',
@@ -74,11 +86,15 @@ export const THEMES = [
     },
     allowsCustomBackground: true,
     fontFamily: "'Montserrat', sans-serif",
-    // Stejný "rounded" styl jako Jemné pastely
     useRoundedStyle: true,
     roundedRadiusPx: 6,
-    // Kruh pro čtvercové prvky
-    roundedSquareRadius: '50%'
+    roundedSquareRadius: '50%',
+    radii: {
+      card: '24px',
+      inner: '16px',
+      button: '12px',
+      full: '9999px'
+    }
   },
   {
     id: 'soft-pastels',
@@ -103,10 +119,15 @@ export const THEMES = [
     },
     allowsCustomBackground: true,
     fontFamily: "'Quicksand', sans-serif",
-    useRoundedStyle: true, // Pro barevná témata s kulatým stylem (Quicksand je kulatý font)
+    useRoundedStyle: true,
     roundedRadiusPx: 12,
-    // Kruh pro čtvercové prvky
-    roundedSquareRadius: '50%'
+    roundedSquareRadius: '50%',
+    radii: {
+      card: '32px',
+      inner: '24px',
+      button: '9999px',
+      full: '9999px'
+    }
   }
 
 ];

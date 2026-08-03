@@ -297,57 +297,14 @@ main, .container {
 }
 
 /* ============================================
-   Rounded Style System
+   Dynamic Theme Radii System
    ============================================ */
 
-/* Rounded style - kulaté rohy pro témata s useRoundedStyle */
-[data-rounded-style="true"] {
-  --rounded-radius: var(--theme-rounded-radius, 12px);
-  --rounded-square-radius: var(--theme-rounded-square-radius, 50%);
-}
-
-/* Obecné prvky s kulatými rohy */
-/* Vyloučit play-pause-button - ten je vždy kulatý */
-[data-rounded-style="true"] button:not(.play-pause-button):not([class*="play-pause-button"]),
-[data-rounded-style="true"] .rounded-none:not(.play-pause-button):not([class*="play-pause-button"]),
-[data-rounded-style="true"] [class*="rounded"]:not(.play-pause-button):not([class*="play-pause-button"]) {
-  border-radius: var(--rounded-radius) !important;
-}
-
-/* Čtvercové objekty - plně kulaté */
-/* Vyloučit play-pause-button - ten je vždy kulatý */
-[data-rounded-style="true"] .aspect-square:not(.play-pause-button):not([class*="play-pause-button"]),
-[data-rounded-style="true"] [class*="w-24"][class*="h-24"]:not(.play-pause-button):not([class*="play-pause-button"]),
-[data-rounded-style="true"] [class*="w-20"][class*="h-20"]:not(.play-pause-button):not([class*="play-pause-button"]),
-[data-rounded-style="true"] [class*="w-16"][class*="h-16"]:not(.play-pause-button):not([class*="play-pause-button"]),
-[data-rounded-style="true"] [class*="w-12"][class*="h-12"]:not(.play-pause-button):not([class*="play-pause-button"]),
-[data-rounded-style="true"] [class*="w-10"][class*="h-10"]:not(.play-pause-button):not([class*="play-pause-button"]),
-[data-rounded-style="true"] [class*="w-8"][class*="h-8"]:not(.play-pause-button):not([class*="play-pause-button"]),
-[data-rounded-style="true"] [class*="w-6"][class*="h-6"]:not(.play-pause-button):not([class*="play-pause-button"]),
-[data-rounded-style="true"] [class*="w-4"][class*="h-4"]:not(.play-pause-button):not([class*="play-pause-button"]) {
-  border-radius: var(--rounded-square-radius) !important;
-}
-
-/* Hranaté písmo - hranaté rohy (když není rounded style) */
-/* Vyloučit play-pause-button - ten je vždy kulatý */
-html:not([data-rounded-style="true"]) button:not([class*="rounded-full"]):not(.play-pause-button):not([class*="play-pause-button"]),
-html:not([data-rounded-style="true"]) [class*="rounded"]:not([class*="rounded-full"]):not(.play-pause-button):not([class*="play-pause-button"]) {
-  border-radius: 0 !important;
-}
-
-/* Čtvercové objekty pro non-rounded témata (např. Calma) - zaoblený čtverec */
-/* Vyloučit play-pause-button - ten je vždy kulatý */
-html:not([data-rounded-style="true"]) .aspect-square:not(.play-pause-button):not([class*="play-pause-button"]),
-html:not([data-rounded-style="true"]) [class*="w-24"][class*="h-24"]:not(.play-pause-button):not([class*="play-pause-button"]),
-html:not([data-rounded-style="true"]) [class*="w-20"][class*="h-20"]:not(.play-pause-button):not([class*="play-pause-button"]),
-html:not([data-rounded-style="true"]) [class*="w-16"][class*="h-16"]:not(.play-pause-button):not([class*="play-pause-button"]),
-html:not([data-rounded-style="true"]) [class*="w-12"][class*="h-12"]:not(.play-pause-button):not([class*="play-pause-button"]),
-html:not([data-rounded-style="true"]) [class*="w-10"][class*="h-10"]:not(.play-pause-button):not([class*="play-pause-button"]),
-html:not([data-rounded-style="true"]) [class*="w-8"][class*="h-8"]:not(.play-pause-button):not([class*="play-pause-button"]),
-html:not([data-rounded-style="true"]) [class*="w-6"][class*="h-6"]:not(.play-pause-button):not([class*="play-pause-button"]),
-html:not([data-rounded-style="true"]) [class*="w-4"][class*="h-4"]:not(.play-pause-button):not([class*="play-pause-button"]) {
-  border-radius: var(--theme-rounded-square-radius, 0%) !important;
-}
+/*
+   We use Tailwind config extensions (rounded-theme-card, rounded-theme-inner, rounded-theme-button, rounded-theme-full)
+   which map directly to CSS variables (--radius-card, --radius-inner, --radius-button, --radius-full) 
+   dynamically updated by ThemeContext.jsx.
+*/
 
 /* Z-index utilities - použijte konstanty z constants/zIndex.js */
 .z-10000 {
@@ -360,7 +317,7 @@ html:not([data-rounded-style="true"]) [class*="w-4"][class*="h-4"]:not(.play-pau
 }
 
 /* ============================================
-   Speciální komponenty - vždy kulaté
+   Speciální komponenty - vždy kruhové / přizpůsobené tématu
    ============================================ */
 
 /* PlayPauseButton - VŽDY kulaté, bez ohledu na téma, styly nebo jakékoli jiné pravidlo */
@@ -404,27 +361,6 @@ motion.button[class*="play-pause-button"],
   border-radius: 50% !important;
   overflow: visible !important;
   aspect-ratio: 1 / 1 !important;
-}
-
-/* Vyloučit play button z rounded style pravidel - explicitní pravidla pro všechny stavy */
-/* Přepsat všechny možné kombinace s rounded style atributy */
-[data-rounded-style="true"] .play-pause-button,
-[data-rounded-style="true"] button.play-pause-button,
-[data-rounded-style="true"] .play-pause-button[class*="w-24"],
-[data-rounded-style="true"] button.play-pause-button[class*="w-24"],
-[data-rounded-style="true"] .play-pause-button[class*="w-"],
-[data-rounded-style="true"] button[class*="play-pause-button"][class*="w-"],
-[data-rounded-style="true"] .play-pause-button.rounded-full,
-[data-rounded-style="true"] button.play-pause-button.rounded-full,
-html:not([data-rounded-style="true"]) .play-pause-button,
-html:not([data-rounded-style="true"]) button.play-pause-button,
-html:not([data-rounded-style="true"]) .play-pause-button[class*="w-24"],
-html:not([data-rounded-style="true"]) button.play-pause-button[class*="w-24"],
-html:not([data-rounded-style="true"]) .play-pause-button[class*="w-"],
-html:not([data-rounded-style="true"]) button[class*="play-pause-button"][class*="w-"],
-html:not([data-rounded-style="true"]) .play-pause-button.rounded-full,
-html:not([data-rounded-style="true"]) button.play-pause-button.rounded-full {
-  border-radius: 50% !important;
 }
 
 /* Vnitřní pozadí tlačítka - také kulaté */
@@ -479,7 +415,7 @@ html [data-framer-name] button.play-pause-button {
   aspect-ratio: 1 / 1 !important;
 }
 
-/* Zajistit, aby glass-pill a další specifické UI prvky byly VŽDY plně zaoblené do tvaru pilulky */
+/* Zajistit, aby glass-pill a další specifické UI prvky byly zaoblené podle aktuálního tématu */
 html .glass-pill,
 html button.glass-pill,
 html [class*="glass-pill"],
@@ -491,22 +427,26 @@ html [data-rounded-style="true"] .glass-pill,
 html [data-rounded-style="true"] button.glass-pill,
 html:not([data-rounded-style="true"]) .glass-pill,
 html:not([data-rounded-style="true"]) button.glass-pill {
-  border-radius: 9999px !important;
+  border-radius: var(--radius-full, 9999px) !important;
 }
 
 /* ============================================
    Glassmorphism UI System
    ============================================ */
 
+/* Glass-panel: backdrop-filter je KRÁSNÝ ale DRAHÝ na baterii (GPU compositing).
+   Na low-power zařízeních (Android webview mid-range) degradujeme na méně náročné. */
 .glass-panel {
   background-color: rgba(255, 255, 255, 0.1);
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
   border: 1px solid rgba(255, 255, 255, 0.2);
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
-  border-radius: 32px;
+  border-radius: var(--radius-card, 32px);
   outline: none;
 }
+
+/* Degrade backdrop-filter na slabých zařízeních — viz blok "GPU degrade" na konci souboru. */
 
 .glass-panel-inner {
   background-color: rgba(255, 255, 255, 0.1);
@@ -514,20 +454,20 @@ html:not([data-rounded-style="true"]) button.glass-pill {
   -webkit-backdrop-filter: blur(16px);
   border: 1px solid rgba(255, 255, 255, 0.2);
   box-shadow: 0 4px 16px rgba(0, 0, 0, 0.05);
-  border-radius: 16px;
+  border-radius: var(--radius-inner, 16px);
   outline: none;
 }
 
 body.theme-dark .glass-panel {
-  background-color: rgba(0, 0, 0, 0.2);
-  border: 1px solid rgba(255, 255, 255, 0.15);
-  box-shadow: 0 16px 64px rgba(0, 0, 0, 0.5);
+  background-color: rgba(255, 255, 255, 0.07);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  box-shadow: 0 12px 48px rgba(0, 0, 0, 0.4);
 }
 
 body.theme-dark .glass-panel-inner {
-  background-color: rgba(0, 0, 0, 0.2);
-  border: 1px solid rgba(255, 255, 255, 0.15);
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+  background-color: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: 0 6px 24px rgba(0, 0, 0, 0.25);
 }
 
 .glass-button {
@@ -537,7 +477,7 @@ body.theme-dark .glass-panel-inner {
   border: 1px solid rgba(255, 255, 255, 0.3);
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  border-radius: 8px; /* Standardize button rounding to 8px */
+  border-radius: var(--radius-button, 8px);
   outline: none;
 }
 
@@ -547,7 +487,7 @@ body.theme-dark .glass-panel-inner {
   -webkit-backdrop-filter: blur(24px);
   border: 1px solid rgba(255, 255, 255, 0.3);
   box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
-  border-radius: 9999px !important;
+  border-radius: var(--radius-full, 9999px) !important;
   outline: none;
 }
 
@@ -565,15 +505,15 @@ body.theme-dark .glass-panel-inner {
 }
 
 body.theme-dark .glass-button {
-  background-color: rgba(0, 0, 0, 0.2);
-  border: 1px solid rgba(255, 255, 255, 0.2);
+  background-color: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.15);
 }
 body.theme-dark .glass-button:hover {
-  background-color: rgba(0, 0, 0, 0.3);
+  background-color: rgba(255, 255, 255, 0.15);
 }
 
 body.theme-dark .glass-pill {
-  background-color: rgba(0, 0, 0, 0.2);
+  background-color: rgba(255, 255, 255, 0.08);
   border: 1px solid rgba(255, 255, 255, 0.15);
 }
 
@@ -583,14 +523,14 @@ body.theme-dark .glass-pill {
   -webkit-backdrop-filter: blur(32px);
   border: 1px solid rgba(255, 255, 255, 0.25);
   box-shadow: 0 16px 64px rgba(0, 0, 0, 0.2);
-  border-radius: 32px;
+  border-radius: var(--radius-card, 32px);
   outline: none;
 }
 
 body.theme-dark .glass-modal {
-  background-color: rgba(25, 25, 25, 0.45);
-  border: 1px solid rgba(255, 255, 255, 0.15);
-  box-shadow: 0 16px 64px rgba(0, 0, 0, 0.5);
+  background-color: rgba(20, 20, 20, 0.55);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  box-shadow: 0 24px 72px rgba(0, 0, 0, 0.6);
 }
 
 .glass-input {
@@ -600,7 +540,7 @@ body.theme-dark .glass-modal {
   border: 1px solid rgba(255, 255, 255, 0.3);
   box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.05);
   transition: all 0.3s ease;
-  border-radius: 8px;
+  border-radius: var(--radius-inner, 8px);
   outline: none;
 }
 .glass-input:focus {
@@ -615,5 +555,68 @@ body.theme-dark .glass-input {
 body.theme-dark .glass-input:focus {
   border-color: rgba(255, 255, 255, 0.4);
   box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.2), 0 0 0 2px rgba(255, 255, 255, 0.1);
+}
+
+/* ============================================
+   GPU degrade — backdrop-filter
+   ============================================ */
+
+/* backdrop-filter je nejdražší GPU operace v aplikaci (blur celé vrstvy pod
+   elementem při každém composite). Vypínáme ho ve dvou případech:
+     1. html.low-gpu  — zařízení hlásí < 4 GB RAM (nastavuje deviceTier.js)
+     2. prefers-reduced-motion — systémové nastavení uživatele
+
+   POZOR na specificitu: ThemeContext injektuje za běhu do <head> pravidla
+   pro .bg-white* s !important. Ta jsou v dokumentu později, takže při stejné
+   specificitě by vyhrála. Prefix `html` (0,2,1 vs 0,1,0) je proto nutný. */
+
+html.low-gpu :is(
+  .glass-panel,
+  .glass-panel-inner,
+  .glass-button,
+  .glass-pill,
+  .glass-modal,
+  .glass-input,
+  .bg-white,
+  .bg-white\/95,
+  .bg-white\/90,
+  .bg-white\/80,
+  .bg-white\/70,
+  .bg-white\/60,
+  .bg-white\/50,
+  .bg-white\/40,
+  .bg-white\/30,
+  .bg-white\/20,
+  .bg-white\/10,
+  .bg-white\/5
+) {
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html :is(
+    .glass-panel,
+    .glass-panel-inner,
+    .glass-button,
+    .glass-pill,
+    .glass-modal,
+    .glass-input,
+    .bg-white,
+    .bg-white\/95,
+    .bg-white\/90,
+    .bg-white\/80,
+    .bg-white\/70,
+    .bg-white\/60,
+    .bg-white\/50,
+    .bg-white\/40,
+    .bg-white\/30,
+    .bg-white\/20,
+    .bg-white\/10,
+    .bg-white\/5
+  ) {
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+  }
 }
 

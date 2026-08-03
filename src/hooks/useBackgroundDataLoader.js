@@ -6,6 +6,8 @@ import { getService } from '@services/serviceRegistry';
 import { realtimeMetadataService } from '@services/realtimeMetadataService';
 import cacheServiceRefactored from '@services/cacheServiceRefactored';
 import log from '@services/logger';
+import { storage } from '@config/secure-firebase';
+import { ref as fbRef, listAll as fbListAll, getDownloadURL as fbGetDownloadURL } from 'firebase/storage';
 
 const INITIAL_STATE = {
   phase: 'idle',
@@ -150,11 +152,8 @@ export const useBackgroundDataLoader = ({ enabled = true } = {}) => {
 
         // PŘEDNAČTI NÁHLEDY POZADÍ - na pozadí, aby se uživatel nemusel čekat v nastavení
         try {
-          const { ref, listAll, getDownloadURL } = await import('firebase/storage');
-          const { storage } = await import('@config/secure-firebase');
-
-          const backgroundRef = ref(storage, 'background');
-          const backgroundResult = await listAll(backgroundRef);
+          const backgroundRef = fbRef(storage, 'background');
+          const backgroundResult = await fbListAll(backgroundRef);
 
           const imageFiles = backgroundResult.items.filter(item => {
             const name = item.name.toLowerCase();
@@ -170,7 +169,7 @@ export const useBackgroundDataLoader = ({ enabled = true } = {}) => {
               // Zkontroluj cache pro plný obrázek
               let downloadURL = cacheServiceRefactored.getImageUrl(imageCacheKey);
               if (!downloadURL) {
-                downloadURL = await getDownloadURL(itemRef);
+                downloadURL = await fbGetDownloadURL(itemRef);
                 cacheServiceRefactored.setImageUrl(imageCacheKey, downloadURL);
               }
 
@@ -178,8 +177,8 @@ export const useBackgroundDataLoader = ({ enabled = true } = {}) => {
               let thumbnailURL = cacheServiceRefactored.getImageUrl(thumbnailCacheKey);
               if (!thumbnailURL) {
                 try {
-                  const thumbnailRef = ref(storage, thumbnailCacheKey);
-                  thumbnailURL = await getDownloadURL(thumbnailRef);
+                  const thumbnailRef = fbRef(storage, thumbnailCacheKey);
+                  thumbnailURL = await fbGetDownloadURL(thumbnailRef);
                   cacheServiceRefactored.setImageUrl(thumbnailCacheKey, thumbnailURL);
                 } catch {
                   // Náhled neexistuje, použij plný obrázek

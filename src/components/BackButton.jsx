@@ -6,7 +6,10 @@ import FramerButton from './FramerButton';
 const BackButton = ({ onClick, className = '' }) => {
   return (
     <motion.div
-      className={`absolute top-6 left-6 z-50 ${className}`}
+      className={`absolute left-6 z-50 ${className}`}
+      style={{
+        top: 'calc(1.5rem + env(safe-area-inset-top, 0px))'
+      }}
       initial={{ opacity: 0, x: -20 }}
       animate={{ opacity: 1, x: 0 }}
       transition={{ duration: 0.5, delay: 0.2 }}

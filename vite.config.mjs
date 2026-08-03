@@ -2,6 +2,7 @@ import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 import svgr from 'vite-plugin-svgr'
 import path from 'path'
+import fs from 'fs'
 import { fileURLToPath, URL } from 'node:url'
 import { VitePWA } from 'vite-plugin-pwa'
 
@@ -15,6 +16,7 @@ export default defineConfig({
     'import.meta.env.VITE_FIREBASE_STORAGE_BUCKET': '"meditations-audio.firebasestorage.app"',
     'import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID': '"312837067375"',
     'import.meta.env.VITE_FIREBASE_APP_ID': '"1:312837067375:web:f80339384a77ef47f1f39a"',
+    '__GOOGLE_SERVICES_JSON_PRESENT__': fs.existsSync(path.resolve('android/app/google-services.json')),
   },
   plugins: [
     react(),
@@ -200,58 +202,34 @@ export default defineConfig({
       },
       output: {
         manualChunks: (id) => {
-          // React a React DOM
-          if (id.includes('react') || id.includes('react-dom')) {
-            return 'react';
-          }
+            // Pozn.: src/* (components/features/services/hooks) schválně NESLAZUJEME do
+            // sdílených chunků — rozbilo by to lazy() code-splitting. Necháváme na
+            // automatickém Rollup chunkování podle skutečných statických hran.
 
-          // Framer Motion
-          if (id.includes('framer-motion')) {
-            return 'framer';
-          }
+            // React a React DOM (pouze node_modules, ne shody v cestách src)
+            if (id.includes('node_modules/react/') || id.includes('node_modules/react-dom/') || id.includes('node_modules/scheduler/')) {
+              return 'react';
+            }
 
-          // Firebase
-          if (id.includes('firebase')) {
-            return 'firebase';
-          }
+            // Framer Motion
+            if (id.includes('node_modules/framer-motion/')) {
+              return 'framer';
+            }
 
-          // Lucide React (ikony)
-          if (id.includes('lucide-react')) {
-            return 'icons';
-          }
+            // Firebase
+            if (id.includes('node_modules/firebase/') || id.includes('node_modules/@firebase/')) {
+              return 'firebase';
+            }
 
-          // Komponenty
-          if (id.includes('/src/components/')) {
-            return 'components';
-          }
+            // Lucide React (ikony)
+            if (id.includes('node_modules/lucide-react/')) {
+              return 'icons';
+            }
 
-          // Features - rozdělit na samostatné chunky pro lepší izolaci
-          if (id.includes('/src/features/audio/')) {
-            return 'features-audio';
-          }
-
-          if (id.includes('/src/features/meditation/')) {
-            return 'features-meditation';
-          }
-
-          if (id.includes('/src/features/navigation/')) {
-            return 'features-navigation';
-          }
-
-          // Services
-          if (id.includes('/src/services/')) {
-            return 'services';
-          }
-
-          // Hooks
-          if (id.includes('/src/hooks/')) {
-            return 'hooks';
-          }
-
-          // Node modules (ostatní)
-          if (id.includes('node_modules')) {
-            return 'vendor';
-          }
+            // Node modules (ostatní)
+            if (id.includes('node_modules')) {
+              return 'vendor';
+            }
         },
         chunkFileNames: (chunkInfo) => {
           const facadeModuleId = chunkInfo.facadeModuleId ? chunkInfo.facadeModuleId.split('/').pop().replace('.jsx', '').replace('.js', '') : 'chunk';

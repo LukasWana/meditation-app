@@ -1,6 +1,6 @@
 import React from 'react';
 import { motion } from 'framer-motion';
-import { FramerSection } from '@components';
+import FramerSection from '@components/FramerSection';
 import { useTheme } from '@contexts/ThemeContext';
 
 /**

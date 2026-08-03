@@ -1,8 +1,9 @@
 import { useEffect, useRef, useState, useCallback } from 'react';
 import { realtimeMetadataService } from '@services/realtimeMetadataService';
-import { ref, getDownloadURL } from 'firebase/storage';
 import { storage } from '@config/secure-firebase';
 import { phaseAtTime } from '@utils/breathPhase';
+import { useWakeLock } from '@hooks/useWakeLock';
+import { onVisibilityChange } from '@services/visibilityManager';
 
 /**
  * Hook pro přesné přehrávání zvuků dýchání pomocí Web Audio API
@@ -45,6 +46,10 @@ export const useBreathAudioEngine = (
   const scheduledUntilRef = useRef(0);
   const activeSourcesRef = useRef([]);
 
+  // Scheduler polling interval (ms). S lookahead 2.0s stačí 250ms (8× headroom).
+  // 50ms interval = 20 wakeups/s → 250ms = 4 wakeups/s, výrazná úspora baterie.
+  const SCHEDULER_POLL_MS = 250;
+
   // Suspend/resume state
   const pausedAtRef = useRef(null);
   const pausedElapsedRef = useRef(0);
@@ -69,6 +74,10 @@ export const useBreathAudioEngine = (
   const [inSoundUrl, setInSoundUrl] = useState(null);
   const [outSoundUrl, setOutSoundUrl] = useState(null);
   const [clickSoundUrl, setClickSoundUrl] = useState(null);
+
+  // Wake Lock - zabraňuje uspání obrazovky během meditace
+  // Používá se `active` parametr - hook sám řeší request/release/re-acquire
+  useWakeLock(isPlaying);
 
   // Inicializace AudioContext
   const initializeAudioContext = useCallback(() => {
@@ -168,6 +177,12 @@ export const useBreathAudioEngine = (
         return;
       }
 
+      // Pro zvuky z dýchání (které jsou přibaleny lokálně) rovnou použijeme lokální URL
+      if (soundId.startsWith('dychanie/')) {
+        setUrl('/' + soundId);
+        return;
+      }
+
       try {
         const metadata = await realtimeMetadataService.getFileMetadata(soundId);
         if (metadata && (metadata.downloadURL || metadata.audioSrc)) {
@@ -175,6 +190,7 @@ export const useBreathAudioEngine = (
           return;
         }
 
+        const { ref, getDownloadURL } = await import('firebase/storage');
         const audioRef = ref(storage, soundId);
         const url = await getDownloadURL(audioRef);
         setUrl(url);
@@ -621,10 +637,10 @@ export const useBreathAudioEngine = (
         clearInterval(schedulerIntervalRef.current);
       }
 
-      // Spusť scheduler (každých 50ms)
+      // Spusť scheduler (SCHEDULER_POLL_MS — 250ms stačí díky 2s lookahead)
       schedulerIntervalRef.current = setInterval(() => {
         scheduler();
-      }, 50);
+      }, SCHEDULER_POLL_MS);
 
       // Okamžitě naplánuj první zvuky
       scheduler();
@@ -680,8 +696,7 @@ export const useBreathAudioEngine = (
 
       schedulerIntervalRef.current = setInterval(() => {
         scheduler();
-      }, 50);
-
+      }, SCHEDULER_POLL_MS);
       scheduler();
     };
 
@@ -696,30 +711,47 @@ export const useBreathAudioEngine = (
   }, [isPlaying, breathInSound, breathOutSound, buffersReady, initializeAudioContext, scheduler]);
 
   // Handling suspend/resume a visibility change
+  // Handling suspend/resume a visibility change - šetří baterii na pozadí
+  // Používá centrální visibilityManager (deduplikace addEventListener)
   useEffect(() => {
-    const handleVisibilityChange = () => {
+    const handleVisibilityChange = (isHidden) => {
       const audioContext = audioContextRef.current;
       if (!audioContext) return;
 
-      if (document.hidden) {
-        // Appka jde na pozadí
-        if (audioContext.state === 'suspended') {
-          isSuspendedRef.current = true;
-          if (startAtAudioTimeRef.current) {
-            pausedElapsedRef.current = audioContext.currentTime - startAtAudioTimeRef.current;
-            pausedAtRef.current = audioContext.currentTime;
-          }
+      if (isHidden) {
+        // Appka jde na pozadí: zastav interval scheduleru a suspenduj AudioContext pro 0% spotřebu CPU
+        if (schedulerIntervalRef.current) {
+          clearInterval(schedulerIntervalRef.current);
+          schedulerIntervalRef.current = null;
+        }
+
+        if (audioContext.state === 'running') {
+          audioContext.suspend().catch(() => {});
+        }
+
+        isSuspendedRef.current = true;
+        if (startAtAudioTimeRef.current) {
+          pausedElapsedRef.current = audioContext.currentTime - startAtAudioTimeRef.current;
+          pausedAtRef.current = audioContext.currentTime;
         }
       } else {
-        // Appka se vrací do popředí
-        if (audioContext.state === 'suspended' && isPlaying) {
+        // Appka se vrací do popředí: obnov AudioContext a scheduler pouze pokud isPlaying
+        if (isPlaying) {
           audioContext.resume().then(() => {
             console.log('AudioContext resumed after visibility change');
             isSuspendedRef.current = false;
-            // Resync start time
+
             if (pausedElapsedRef.current > 0 && startAtAudioTimeRef.current) {
               startAtAudioTimeRef.current = audioContext.currentTime - pausedElapsedRef.current;
               pausedElapsedRef.current = 0;
+            }
+
+            // Obnov scheduler interval po návratu z pozadí
+            if (!schedulerIntervalRef.current) {
+              schedulerIntervalRef.current = setInterval(() => {
+                scheduler();
+              }, SCHEDULER_POLL_MS);
+              scheduler();
             }
           }).catch(err => {
             console.error('Failed to resume AudioContext after visibility change:', err);
@@ -740,7 +772,6 @@ export const useBreathAudioEngine = (
         }
       } else if (audioContext.state === 'running' && isSuspendedRef.current && isPlaying) {
         isSuspendedRef.current = false;
-        // Resync
         if (pausedElapsedRef.current > 0 && startAtAudioTimeRef.current) {
           startAtAudioTimeRef.current = audioContext.currentTime - pausedElapsedRef.current;
           pausedElapsedRef.current = 0;
@@ -748,19 +779,19 @@ export const useBreathAudioEngine = (
       }
     };
 
-    document.addEventListener('visibilitychange', handleVisibilityChange);
+    const unsubscribeVisibility = onVisibilityChange(handleVisibilityChange);
     const audioContext = audioContextRef.current;
     if (audioContext) {
       audioContext.addEventListener('statechange', handleStateChange);
     }
 
     return () => {
-      document.removeEventListener('visibilitychange', handleVisibilityChange);
+      unsubscribeVisibility();
       if (audioContext) {
         audioContext.removeEventListener('statechange', handleStateChange);
       }
     };
-  }, [isPlaying]);
+  }, [isPlaying, scheduler]);
 
   // Vracíme aktuální fázi pro UI
   const getCurrentPhase = useCallback(() => {

@@ -193,13 +193,13 @@ export const useAudioPlayer = (audioUrl, albumTracks = null, currentTrackIndex =
     audio.currentTime = 0;
     audio.volume = 1; // Reset volume na normální hodnotu
 
-    // Vyčisti všechny event listeners před reloadem
-    audio.removeEventListener('timeupdate', () => { });
-    audio.removeEventListener('loadedmetadata', () => { });
-    audio.removeEventListener('loadeddata', () => { });
-    audio.removeEventListener('ended', () => { });
-    audio.removeEventListener('error', () => { });
-    audio.removeEventListener('canplay', () => { });
+    // Vyčisti všechny event handlers před reloadem
+    audio.ontimeupdate = null;
+    audio.onloadedmetadata = null;
+    audio.onloadeddata = null;
+    audio.onended = null;
+    audio.onerror = null;
+    audio.oncanplay = null;
 
     audio.load(); // Force reload of audio element
 

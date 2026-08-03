@@ -1,7 +1,7 @@
 import React from 'react';
 import { motion } from 'framer-motion';
-import { ArrowRewIcon, ArrowPrewIcon } from '@components';
-
+import ArrowRewIcon from '@components/ArrowRewIcon';
+import ArrowPrewIcon from '@components/ArrowPrewIcon';
 const SkipButton = ({
   direction,
   onClick,

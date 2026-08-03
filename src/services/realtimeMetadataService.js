@@ -14,6 +14,7 @@ import log from './logger';
 class RealtimeMetadataService {
   constructor() {
     this.listeners = new Map();
+    this.nextListenerId = 0;
   }
 
   /**
@@ -159,11 +160,17 @@ class RealtimeMetadataService {
         log.error('realtimeMetadataService.watchMetadata error:', error);
       });
 
+      // Klíč musí být unikátní per volání — pevný klíč by při druhém watchMetadata()
+      // přepsal záznam prvního a jeho listener by už nešel odhlásit přes
+      // stopAllListeners() (visel by až do reloadu stránky).
+      const listenerKey = `audio-metadata:${this.nextListenerId++}`;
+
       const unsubscribe = () => {
         off(metaRef, 'value', listener);
+        this.listeners.delete(listenerKey);
       };
 
-      this.listeners.set('audio-metadata', unsubscribe);
+      this.listeners.set(listenerKey, unsubscribe);
       return unsubscribe;
     } catch (error) {
       log.error('realtimeMetadataService.watchMetadata failed:', error);

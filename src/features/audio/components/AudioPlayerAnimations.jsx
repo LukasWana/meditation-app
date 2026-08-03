@@ -34,6 +34,8 @@ export const AudioPlayerAnimations = ({
       <motion.div
         className="w-full h-full sm:w-[95vw] sm:max-w-4xl sm:h-[90vh] sm:max-h-[800px] sm:rounded-[2rem] flex flex-col items-center justify-center relative overflow-hidden glass-modal shadow-2xl border-0 sm:border border-white/20"
         style={{
+          paddingTop: 'calc(1.5rem + env(safe-area-inset-top, 0px))',
+          paddingBottom: 'calc(1.5rem + env(safe-area-inset-bottom, 0px))',
           // Pokud má album vlastní obrázek, použij pozadí z tématu pouze jako fallback
           // Jinak použij pozadí z tématu (obrázek nebo barvu)
           ...(albumCover ? {} : (backgroundStyle?.backgroundImage ? {

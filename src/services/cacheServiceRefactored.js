@@ -4,6 +4,9 @@ import { AudioCache, MetadataCache, FirebaseCache, ImageCache } from './cache/in
 import { fastMetadataService } from './fastMetadataService.js';
 import log from './logger.js';
 import { parseAudioFileName } from '@utils/hudbaParser';
+import { onVisibilityChange, isPageHidden } from './visibilityManager.js';
+import { storage } from '@config/secure-firebase';
+import { ref as fbRef, getDownloadURL as fbGetDownloadURL } from 'firebase/storage';
 
 class CacheServiceRefactored {
   constructor() {
@@ -17,16 +20,41 @@ class CacheServiceRefactored {
     this.preloadQueue = new Set();
     this.preloadPromises = new Map();
 
-    // Automatický cleanup každých 5 minut
-    this.cleanupInterval = setInterval(() => {
-      this.cleanup();
-    }, 5 * 60 * 1000);
+    this._isVisible = !isPageHidden();
+    this._scheduleCleanup();
 
-    // Cleanup při ukončení aplikace
     if (typeof window !== 'undefined') {
       window.addEventListener('beforeunload', () => {
         this.destroy();
       });
+    }
+    // Použití centrálního visibilityManager (deduplikace listenerů)
+    this._unsubscribeVisibility = onVisibilityChange((hidden) => {
+      this._isVisible = !hidden;
+      this._scheduleCleanup();
+    });
+  }
+
+  _scheduleCleanup() {
+    if (this.cleanupTimeout) {
+      clearTimeout(this.cleanupTimeout);
+      this.cleanupTimeout = null;
+    }
+
+    if (typeof window === 'undefined') return;
+
+    const delay = this._isVisible ? (5 * 60 * 1000) : (15 * 60 * 1000);
+
+    if (typeof requestIdleCallback !== 'undefined') {
+      this.cleanupTimeout = setTimeout(() => {
+        requestIdleCallback(() => this.cleanup(), { timeout: 5000 });
+        this._scheduleCleanup();
+      }, delay);
+    } else {
+      this.cleanupTimeout = setTimeout(() => {
+        this.cleanup();
+        this._scheduleCleanup();
+      }, delay + 2000);
     }
   }
 
@@ -354,8 +382,7 @@ class CacheServiceRefactored {
       log.firebase('🎵 Preloading hudba data from Firebase Storage...');
 
       // Import Firebase Storage dynamicky
-      const { ref, getDownloadURL } = await import('firebase/storage');
-      const { storage } = await import('@config/secure-firebase');
+      // (nyní statický import nahoře — storage + ref/getDownloadURL)
 
       // Místo root složky, načti přímo meditacie/ a hudba/ složky
       log.firebase('📂 Listing Firebase Storage folders...');
@@ -406,8 +433,8 @@ class CacheServiceRefactored {
       // Načti skutečné URL pro každý hudební soubor
       for (const fileName of hudbaFiles) {
         try {
-          const fileRef = ref(storage, fileName);
-          const downloadURL = await getDownloadURL(fileRef);
+          const fileRef = fbRef(storage, fileName);
+          const downloadURL = await fbGetDownloadURL(fileRef);
 
           // Extrahuj pouze název souboru z cesty
           const fileNameOnly = fileName.split('/').pop();
@@ -445,8 +472,8 @@ class CacheServiceRefactored {
       // Načti skutečné URL pro meditacie soubory
       for (const fileName of meditacieFiles) {
         try {
-          const fileRef = ref(storage, fileName);
-          const downloadURL = await getDownloadURL(fileRef);
+          const fileRef = fbRef(storage, fileName);
+          const downloadURL = await fbGetDownloadURL(fileRef);
 
           // Extrahuj pouze název souboru z cesty
           const fileNameOnly = fileName.split('/').pop();
@@ -498,8 +525,8 @@ class CacheServiceRefactored {
 
         if (isCover && isHudbaFolder) {
           try {
-            const fileRef = ref(storage, item.name);
-            const downloadURL = await getDownloadURL(fileRef);
+            const fileRef = fbRef(storage, item.name);
+            const downloadURL = await fbGetDownloadURL(fileRef);
 
             // Extrahuj název alba ze složky (např. "ambient-journey/cover.jpg" -> "ambient-journey")
             const albumName = item.name.split('/')[0];
@@ -550,9 +577,13 @@ class CacheServiceRefactored {
   }
 
   destroy() {
-    if (this.cleanupInterval) {
-      clearInterval(this.cleanupInterval);
-      this.cleanupInterval = null;
+    if (this.cleanupTimeout) {
+      clearTimeout(this.cleanupTimeout);
+      this.cleanupTimeout = null;
+    }
+    if (this._unsubscribeVisibility) {
+      this._unsubscribeVisibility();
+      this._unsubscribeVisibility = null;
     }
     this.clear();
   }

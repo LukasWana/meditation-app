@@ -1,6 +1,7 @@
 import React, { useState, Suspense, lazy } from 'react';
 import { Music2, Plus, Minus } from 'lucide-react';
-import { FramerPageTransition, BackButton } from '@components';
+import FramerPageTransition from '@components/FramerPageTransition';
+import BackButton from '@components/BackButton';
 import { useLanguage } from '@contexts/LanguageContext';
 import { useTheme } from '@contexts/ThemeContext';
 import { useBreathStore } from '@stores/breathStore';

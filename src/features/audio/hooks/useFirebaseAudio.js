@@ -1,5 +1,4 @@
 import { useState, useEffect } from 'react';
-import { ref, getDownloadURL } from 'firebase/storage';
 import { storage } from '@config/secure-firebase';
 import cacheService from '@services/cacheServiceRefactored';
 import offlineCacheService from '@services/offlineCacheService';
@@ -42,53 +41,81 @@ export const useFirebaseAudio = (audioFileName) => {
         // Inicializuj enhanced offline cache service
         await offlineCacheService.initialize();
 
-        // Zkontroluj offline cache PRVNÍ - šetří mobilní data
-        const offlineUrl = await offlineCacheService.getFile(audioFileName);
-        if (offlineUrl) {
-          console.log('🔗 Using offline URL for:', audioFileName, '(saving mobile data)');
-          setAudioUrl(offlineUrl);
+        // 1. Nejprve zkusíme získat originální download URL ze Storage (pokud jsme online)
+        let originalUrl = null;
+        let fetchFailed = false;
+
+        try {
+          const { ref, getDownloadURL } = await import('firebase/storage');
+          const audioRef = ref(storage, audioFileName);
+          console.log('🔗 Fetching download URL for:', audioFileName);
+          originalUrl = await getDownloadURL(audioRef);
+          console.log('🔗 Download URL obtained:', originalUrl);
+        } catch (storageErr) {
+          console.warn('⚠️ Failed to fetch download URL from storage (possibly offline):', storageErr.message);
+          fetchFailed = true;
+        }
+
+        // 2. Pokud se podařilo získat URL, zkontrolujeme cache a použijeme lokální Blob URL pro bezchybné přehrávání
+        if (originalUrl && originalUrl.startsWith('http')) {
+          const cachedPlayableUrl = await offlineCacheService.getAudioUrl(audioFileName, originalUrl);
+          
+          if (cachedPlayableUrl && cachedPlayableUrl.startsWith('blob:')) {
+            console.log('🔗 Using offline cached blob URL for:', audioFileName);
+            setAudioUrl(cachedPlayableUrl);
+            setCurrentFileName(audioFileName);
+            setDataSource('cache');
+            setLoading(false);
+            return;
+          }
+
+          // Zkontroluj druhou cache (in-memory)
+          const cachedUrl = cacheService.getAudioUrl(audioFileName);
+          if (cachedUrl) {
+            console.log('🔗 Using cached URL for:', audioFileName);
+            setAudioUrl(cachedUrl);
+            setCurrentFileName(audioFileName);
+            setDataSource('cache');
+            setLoading(false);
+            return;
+          }
+
+          // Ulož originální URL do cache a hraj online
+          cacheService.setAudioUrl(audioFileName, originalUrl);
+          setAudioUrl(originalUrl);
           setCurrentFileName(audioFileName);
-          setDataSource('cache');
-          setLoading(false);
+          setDataSource('internet');
+          setFallbackUsed(false);
+
+          // Spusť preloading na pozadí
+          cacheService.preloadAudio(originalUrl, audioFileName).catch(err => {
+            console.warn('Audio preload failed:', err);
+          });
+          
           return;
         }
 
-        // Zkontroluj cache druhé
-        const cachedUrl = cacheService.getAudioUrl(audioFileName);
-        if (cachedUrl) {
-          console.log('🔗 Using cached URL for:', audioFileName);
-          setAudioUrl(cachedUrl);
-          setCurrentFileName(audioFileName);
-          setDataSource('cache');
-          setLoading(false);
-          return;
+        // 3. Pokud jsme offline nebo Storage selhal, zkusíme vytvořit Blob URL přímo z offline cache
+        try {
+          const cachedResponse = await offlineCacheService.getFile(audioFileName);
+          if (cachedResponse && cachedResponse.type !== 'opaque') {
+            const blob = await cachedResponse.blob();
+            const blobUrl = URL.createObjectURL(blob);
+            console.log('🔗 Online fetch failed, playing from offline cached blob URL:', audioFileName);
+            setAudioUrl(blobUrl);
+            setCurrentFileName(audioFileName);
+            setDataSource('cache');
+            setLoading(false);
+            return;
+          }
+        } catch (cacheErr) {
+          console.warn('⚠️ Offline cache extraction failed:', cacheErr.message);
         }
 
-        // Vytvoření reference k souboru v Firebase Storage
-        const audioRef = ref(storage, audioFileName);
-
-        // Získání download URL - Service Worker se postará o cache
-        console.log('🔗 Fetching download URL for:', audioFileName);
-        const url = await getDownloadURL(audioRef);
-        console.log('🔗 Download URL obtained:', url);
-
-        // Ověř, že URL je platné
-        if (!url || !url.startsWith('http')) {
-          throw new Error('Invalid download URL received');
+        // Pokud vše ostatní selhalo a fetch ze storage neprošel, vyhodíme chybu
+        if (fetchFailed) {
+          throw new Error('Nepodařilo se připojit k serveru a soubor není uložen v offline paměti.');
         }
-
-        // Ulož do cache
-        cacheService.setAudioUrl(audioFileName, url);
-
-        setAudioUrl(url);
-        setCurrentFileName(audioFileName);
-        setDataSource('internet');
-        setFallbackUsed(false); // Reset fallback flag při úspěchu
-
-        // Spusť metadata preloading pro rychlejší přístup příště
-        cacheService.preloadAudio(url, audioFileName).catch(err => {
-          console.warn('Audio preload failed:', err);
-        });
 
       } catch (err) {
         console.error('Chyba při načítání audio URL:', err);

@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import errorHandler from '@utils/error-handler';
 import cacheServiceRefactored from '@services/cacheServiceRefactored';
+import { onVisibilityChange } from '@services/visibilityManager';
 import log from '@services/logger';
 
 /**
@@ -18,6 +19,8 @@ const MonitoringDashboard = ({ isVisible = false, onClose }) => {
   useEffect(() => {
     if (!isVisible) return;
 
+    let intervalId = null;
+
     const updateStats = () => {
       setStats({
         errors: errorHandler.getStats(),
@@ -26,13 +29,33 @@ const MonitoringDashboard = ({ isVisible = false, onClose }) => {
       });
     };
 
-    // Initial update
-    updateStats();
+    const startPolling = () => {
+      updateStats();
+      intervalId = setInterval(updateStats, 10000);
+    };
 
-    // Update every 5 seconds
-    const interval = setInterval(updateStats, 5000);
+    const stopPolling = () => {
+      if (intervalId) {
+        clearInterval(intervalId);
+        intervalId = null;
+      }
+    };
 
-    return () => clearInterval(interval);
+    const handleVisibilityChange = (hidden) => {
+      if (hidden) {
+        stopPolling();
+      } else {
+        startPolling();
+      }
+    };
+
+    startPolling();
+    const unsubscribeVisibility = onVisibilityChange(handleVisibilityChange);
+
+    return () => {
+      stopPolling();
+      unsubscribeVisibility();
+    };
   }, [isVisible]);
 
   const getPerformanceStats = () => {

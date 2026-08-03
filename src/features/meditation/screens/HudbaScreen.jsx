@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { AnimatePresence } from 'framer-motion';
-import { FramerSection, FramerPageTransition, BackButton } from '@components';
+import FramerSection from '@components/FramerSection';
+import FramerPageTransition from '@components/FramerPageTransition';
+import BackButton from '@components/BackButton';
 import { AudioPlayer } from '@features/audio';
 import { AlbumGrid } from '../components';
 import { useHudbaScreenData } from '../hooks';
@@ -112,8 +114,7 @@ const HudbaScreen = ({
   return (
     <FramerPageTransition screenKey="hudba">
       <div
-        className={`min-h-screen w-full max-w-full flex flex-col items-center justify-start p-2 sm:p-8 pb-20 overflow-x-hidden relative ${activeAudio ? 'pointer-events-none' : ''
-          }`}
+        className="min-h-screen w-full max-w-full flex flex-col items-center justify-start p-2 sm:p-8 pb-20 overflow-x-hidden relative"
         style={{ backgroundColor: getScreenBackgroundColor() }}
         onTouchStart={activeAudio ? undefined : onTouchStart}
         onTouchMove={activeAudio ? undefined : onTouchMove}

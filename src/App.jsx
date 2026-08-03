@@ -1,4 +1,4 @@
-import React, { useState, Suspense, useEffect } from 'react';
+import React, { useState, Suspense, useEffect, lazy } from 'react';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { PageManager } from '@features/navigation';
@@ -11,10 +11,12 @@ import { UIConfigProvider } from '@contexts/UIConfigContext';
 import { ThemeProvider, useTheme } from '@contexts/ThemeContext';
 import { AuthProvider } from '@contexts/AuthContext';
 import { useAudioPlayerStore } from '@stores/audioPlayerStore';
-import MonitoringDashboard from '@components/MonitoringDashboard';
 import OfflineIndicator from '@components/OfflineIndicator';
 import AdminGuard from '@components/AdminGuard';
 import ServiceWorkerManager from '@components/ServiceWorkerManager';
+import { initRtdbConnectionManager } from '@services/rtdbConnectionManager';
+
+const MonitoringDashboard = lazy(() => import('@components/MonitoringDashboard'));
 
 import ErrorBoundary from '@components/ErrorBoundary';
 
@@ -95,6 +97,12 @@ function MeditationApp() {
 
   // Timer logika
   useTimer();
+
+  // Uspávání RTDB WebSocketu když je aplikace na pozadí
+  useEffect(() => {
+    const stop = initRtdbConnectionManager();
+    return stop;
+  }, []);
 
 
   // Development-only debug utilities

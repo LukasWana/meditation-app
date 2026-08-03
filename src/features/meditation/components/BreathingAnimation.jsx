@@ -1,5 +1,6 @@
-import React, { useRef, useEffect } from 'react';
+import React from 'react';
 import { motion } from 'framer-motion';
+import { usePageVisible } from '@hooks/usePageVisible';
 
 /**
  * Komponenta pro animaci dýchání - bílý animovaný kruh
@@ -15,35 +16,17 @@ const BreathingAnimation = ({
   breathInDuration,
   breathOutDuration
 }) => {
-  const circleRef = useRef(null);
-
-  // Vynutit, aby kruh byl vždy kulatý - nastavit okamžitě a při každé změně
-  useEffect(() => {
-    if (circleRef.current) {
-      circleRef.current.style.setProperty('border-radius', '50%', 'important');
-    }
-  }, [breathPhase, isBreathing]);
-
-  // Nastavit border-radius také při mount a při každém renderu
-  const setBorderRadius = (element) => {
-    if (element) {
-      element.style.setProperty('border-radius', '50%', 'important');
-    }
-  };
+  const isPageVisible = usePageVisible();
+  const shouldAnimate = isBreathing && isPageVisible;
 
   if (!isBreathing) return null;
 
   return (
     <div className="absolute inset-0 flex items-center justify-center pointer-events-none" style={{ zIndex: 1, overflow: 'visible' }}>
-      {/* Animace s maskou - bílý kruh uprostřed, černý okolo, vycentrovaná na tlačítko - pod play tlačítkem */}
+      {/* Animace s maskou - bílý kruh uprostřed, vycentrovaná na tlačítko */}
       <motion.div
-        ref={(el) => {
-          circleRef.current = el;
-          setBorderRadius(el);
-        }}
         className="rounded-full breath-animation-circle"
         style={{
-          // Velikost play tlačítka jako základní velikost
           width: '18vw',
           height: '18vw',
           maxWidth: '120px',
@@ -57,41 +40,32 @@ const BreathingAnimation = ({
           overflow: 'visible',
           zIndex: 1,
           position: 'absolute',
-          pointerEvents: 'none'
+          pointerEvents: 'none',
+          willChange: 'transform, opacity'
         }}
         initial={{
-          scale: 1.0,  // Začínáme ve velikosti play tlačítka (scale 1.0)
+          scale: 1.0,
           opacity: 0.6
         }}
-        animate={isBreathing ? {
+        animate={shouldAnimate ? {
           scale: breathPhase === 'in'
-            ? [1.0, 2.5]  // Nádech - zvětšování z velikosti play tlačítka (1.0) až na 2.5x (45vw / 18vw ≈ 2.5)
+            ? [1.0, 2.5]
             : breathPhase === 'out'
-            ? [2.5, 1.0]  // Výdech - zmenšování z 2.5x zpět na velikost play tlačítka (1.0)
-            : 1.0,  // Výchozí stav je velikost play tlačítka
+            ? [2.5, 1.0]
+            : 1.0,
           opacity: [0.8, 1, 0.8]
         } : {
           scale: 1.0,
           opacity: 0.8
         }}
-        transition={isBreathing ? {
+        transition={shouldAnimate ? {
           duration: breathPhase === 'in' ? breathInDuration : breathOutDuration,
-          delay: breathPhase === 'out' ? 0.2 : 0,  // Pozdržení výdechu, aby počkal na zvuk
+          delay: breathPhase === 'out' ? 0.2 : 0,
           ease: "easeInOut",
           repeat: Infinity,
           repeatType: "reverse"
         } : {
-          duration: 0.5
-        }}
-        onAnimationStart={() => {
-          if (circleRef.current) {
-            circleRef.current.style.setProperty('border-radius', '50%', 'important');
-          }
-        }}
-        onUpdate={() => {
-          if (circleRef.current) {
-            circleRef.current.style.setProperty('border-radius', '50%', 'important');
-          }
+          duration: 0.3
         }}
       />
     </div>
@@ -99,4 +73,5 @@ const BreathingAnimation = ({
 };
 
 export default BreathingAnimation;
+
 

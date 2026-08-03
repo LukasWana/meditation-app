@@ -1,7 +1,9 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { motion } from 'framer-motion';
 import { ArrowDown, ArrowUp, MousePointerClick, CheckCircle, Play, Pause, Clock } from 'lucide-react';
-import { FramerPageTransition, BackButton, FramerSection } from '@components';
+import FramerPageTransition from '@components/FramerPageTransition';
+import BackButton from '@components/BackButton';
+import FramerSection from '@components/FramerSection';
 import { useLanguage } from '@contexts/LanguageContext';
 import { useTheme } from '@contexts/ThemeContext';
 import { realtimeMetadataService } from '@services/realtimeMetadataService';

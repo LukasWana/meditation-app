@@ -13,7 +13,6 @@ export { useAutoplay } from './useAutoplay';
 export { useAudioPlayerLogic } from './useAudioPlayerLogic';
 export { useAudioPlayback } from './useAudioPlayback';
 export { useAudioContextManager } from './useAudioContextManager';
-export { useRealtimeMetadata } from './useRealtimeMetadata';
 export { useUnifiedMetadata } from './useUnifiedMetadata';
 export { useOfflineCache } from './useOfflineCache';
 export { useOfflineStatus } from './useOfflineStatus';

@@ -440,6 +440,18 @@ const ThemeSelector = () => {
   
   const glassClass = 'glass-panel';
 
+  const tabActiveStyle = isDarkMode 
+    ? { backgroundColor: 'rgba(255, 255, 255, 0.15)', color: 'rgba(255, 255, 255, 0.95)', boxShadow: '0 2px 8px rgba(0, 0, 0, 0.2)' }
+    : { backgroundColor: 'rgba(255, 255, 255, 0.8)', color: 'rgba(0, 0, 0, 0.9)', boxShadow: '0 2px 8px rgba(0, 0, 0, 0.08)' };
+
+  const tabInactiveStyle = isDarkMode
+    ? { color: 'rgba(255, 255, 255, 0.55)', backgroundColor: 'transparent' }
+    : { color: 'rgba(0, 0, 0, 0.55)', backgroundColor: 'transparent' };
+
+  const tabHoverStyle = isDarkMode
+    ? { backgroundColor: 'rgba(255, 255, 255, 0.08)', color: 'rgba(255, 255, 255, 0.8)' }
+    : { backgroundColor: 'rgba(0, 0, 0, 0.04)', color: 'rgba(0, 0, 0, 0.75)' };
+
   return (
     <FramerSection
       animationType="slideInUp"
@@ -463,7 +475,7 @@ const ThemeSelector = () => {
               <motion.button
                 key={theme.id}
                 onClick={() => handleThemeChange(theme.id)}
-                className={`w-full p-4 mb-3 rounded-2xl transition-all duration-300 flex items-center justify-between ${
+                className={`w-full p-4 mb-3 rounded-theme-inner transition-all duration-300 flex items-center justify-between ${
                   isActive 
                     ? 'glass-button shadow-lg scale-[1.02]' 
                     : 'hover:opacity-80'
@@ -473,7 +485,7 @@ const ThemeSelector = () => {
                 <div className="flex items-center gap-4">
                   {/* Barevný náhled */}
                   <div
-                    className="w-14 h-14 rounded-xl shadow-md"
+                    className="w-14 h-14 rounded-theme-inner shadow-md"
                     style={{
                       background: `linear-gradient(135deg, ${theme.colors.primary} 0%, ${theme.colors.background || theme.colors.primary} 100%)`,
                     }}
@@ -497,7 +509,7 @@ const ThemeSelector = () => {
                   </div>
                   {isActive && (
                     <div
-                      className="w-8 h-8 rounded-full flex items-center justify-center shadow-sm"
+                      className="w-8 h-8 rounded-theme-full flex items-center justify-center shadow-sm"
                       style={{ backgroundColor: checkmarkBgColor }}
                     >
                       <svg
@@ -533,12 +545,15 @@ const ThemeSelector = () => {
             </h4>
 
             {/* Přepínač mezi fotkou a barvou */}
-            <div className="flex gap-2 mb-4 p-1 rounded-full glass-panel border-white/20">
+            <div 
+              className="flex gap-2 mb-4 p-1 rounded-theme-full glass-panel"
+              style={{ borderColor: borderColor }}
+            >
               <motion.button
                 onClick={() => setBackgroundType('image')}
-                className={`flex-1 px-4 py-2 rounded-full text-sm font-medium transition-all duration-300 flex items-center justify-center gap-2 ${
-                  backgroundType === 'image' ? 'bg-white/30 shadow-md' : 'hover:bg-white/10 text-white/70'
-                }`}
+                className="flex-1 px-4 py-2 rounded-theme-full text-sm font-medium transition-all duration-300 flex items-center justify-center gap-2"
+                style={backgroundType === 'image' ? tabActiveStyle : tabInactiveStyle}
+                whileHover={backgroundType === 'image' ? {} : tabHoverStyle}
                 whileTap={{ scale: 0.98 }}
               >
                 <ImageIcon className="w-4 h-4" />
@@ -546,9 +561,9 @@ const ThemeSelector = () => {
               </motion.button>
               <motion.button
                 onClick={() => setBackgroundType('color')}
-                className={`flex-1 px-4 py-2 rounded-full text-sm font-medium transition-all duration-300 flex items-center justify-center gap-2 ${
-                  backgroundType === 'color' ? 'bg-white/30 shadow-md' : 'hover:bg-white/10 text-white/70'
-                }`}
+                className="flex-1 px-4 py-2 rounded-theme-full text-sm font-medium transition-all duration-300 flex items-center justify-center gap-2"
+                style={backgroundType === 'color' ? tabActiveStyle : tabInactiveStyle}
+                whileHover={backgroundType === 'color' ? {} : tabHoverStyle}
                 whileTap={{ scale: 0.98 }}
               >
                 <Palette className="w-4 h-4" />
@@ -560,7 +575,7 @@ const ThemeSelector = () => {
               <div className="relative">
                 {backgroundType === 'image' && (
                   <div
-                    className="relative w-full h-32 rounded-lg overflow-hidden glass-panel"
+                    className="relative w-full h-32 rounded-theme-inner overflow-hidden glass-panel"
                   >
                     <img
                       src={typeof customBackground === 'string' && customBackground.startsWith('{')
@@ -601,7 +616,7 @@ const ThemeSelector = () => {
                     <motion.button
                       key={index}
                       onClick={() => handleColorSelect(color.value)}
-                      className="relative w-full aspect-square rounded-lg overflow-hidden transition-transform glass-panel hover:opacity-90"
+                      className="relative w-full aspect-square rounded-theme-inner overflow-hidden transition-transform glass-panel hover:opacity-90"
                       style={{
                         backgroundColor: color.value
                       }}
@@ -625,7 +640,7 @@ const ThemeSelector = () => {
                     <input
                       type="color"
                       onChange={handleCustomColorSelect}
-                      className="w-16 h-16 rounded-lg cursor-pointer glass-panel"
+                      className="w-16 h-16 rounded-theme-inner cursor-pointer glass-panel"
                       disabled={isProcessing}
                     />
                     <span className="text-xs" style={{ color: textSecondaryColor }}>
@@ -683,7 +698,7 @@ const ThemeSelector = () => {
                   )}
                   {firebaseBackgroundsError && (
                     <div
-                      className="mb-3 p-2 rounded-lg text-xs glass-panel"
+                      className="mb-3 p-2 rounded-theme-inner text-xs glass-panel"
                       style={{ color: isDarkMode ? 'rgba(254, 202, 202, 1)' : 'rgba(185, 28, 28, 1)' }}
                     >
                       {firebaseBackgroundsError}
@@ -705,7 +720,7 @@ const ThemeSelector = () => {
                         <motion.button
                           key={index}
                           onClick={() => handleDefaultImageSelect(bg.downloadURL)}
-                          className="relative w-full aspect-square rounded-lg overflow-hidden glass-panel transition-transform hover:opacity-90"
+                          className="relative w-full aspect-square rounded-theme-inner overflow-hidden glass-panel transition-transform hover:opacity-90"
                           whileHover={{ scale: 1.05 }}
                           whileTap={{ scale: 0.95 }}
                           disabled={isProcessing}
@@ -726,7 +741,7 @@ const ThemeSelector = () => {
 
             {error && (
               <div
-                className="mt-3 p-3 rounded-lg text-sm glass-panel"
+                className="mt-3 p-3 rounded-theme-inner text-sm glass-panel"
                 style={{ color: isDarkMode ? 'rgba(254, 202, 202, 1)' : 'rgba(185, 28, 28, 1)' }}
               >
                 {error}

@@ -1,6 +1,6 @@
 import React from 'react';
-import { FramerButton, FramerSection } from '@components';
-
+import FramerButton from '@components/FramerButton';
+import FramerSection from '@components/FramerSection';
 export const AlbumCard = ({
   item,
   idx,

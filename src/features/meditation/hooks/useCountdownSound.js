@@ -1,4 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
+import { storage } from '@config/secure-firebase';
+import { ref as fbRef, getDownloadURL as fbGetDownloadURL } from 'firebase/storage';
 
 /**
  * Hook pro načítání a přehrávání countdown zvuku během přípravy
@@ -21,10 +23,15 @@ export const useCountdownSound = (breathCountdownSound, isPreparing) => {
     }
 
     const loadCountdownSoundUrl = async () => {
+      if (breathCountdownSound.startsWith('dychanie/')) {
+        const url = '/' + breathCountdownSound;
+        setCountdownSoundUrl(url);
+        countdownSoundUrlRef.current = url;
+        return;
+      }
+
       try {
         const { realtimeMetadataService } = await import('@services/realtimeMetadataService');
-        const { ref, getDownloadURL } = await import('firebase/storage');
-        const { storage } = await import('@config/secure-firebase');
 
         const metadata = await realtimeMetadataService.getFileMetadata(breathCountdownSound);
         if (metadata && (metadata.downloadURL || metadata.audioSrc)) {
@@ -34,8 +41,8 @@ export const useCountdownSound = (breathCountdownSound, isPreparing) => {
         } else {
           // Pokud není v metadata, zkus načíst přímo z Firebase Storage
           try {
-            const audioRef = ref(storage, breathCountdownSound);
-            const url = await getDownloadURL(audioRef);
+            const audioRef = fbRef(storage, breathCountdownSound);
+            const url = await fbGetDownloadURL(audioRef);
             setCountdownSoundUrl(url);
             countdownSoundUrlRef.current = url;
           } catch (storageError) {
@@ -167,6 +174,22 @@ export const useCountdownSound = (breathCountdownSound, isPreparing) => {
       }
     }
   }, [isPreparing]);
+
+  // Cleanup při odmountování — když komponenta zmizí uprostřed přípravy,
+  // efekt výše se už nespustí a audio element by zůstal viset
+  useEffect(() => {
+    return () => {
+      const audio = countdownSoundRef.current;
+      if (audio) {
+        if (audio._fadeOutTimeout) {
+          clearTimeout(audio._fadeOutTimeout);
+        }
+        audio.pause();
+        audio.src = '';
+        countdownSoundRef.current = null;
+      }
+    };
+  }, []);
 
   // Vrať funkci pro přehrání zvuku (pro použití v usePreparationTimer)
   return playCountdownSound;

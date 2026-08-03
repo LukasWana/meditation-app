@@ -30,7 +30,7 @@ const LanguageSwitcher = ({ className = "" }) => {
       >
         <motion.button
           onClick={() => handleLanguageChange('SK')}
-          className={`w-9 h-9 transition-colors duration-200 flex items-center justify-center ${language === 'SK' ? 'glass-button !rounded-full' : 'hover:opacity-80 rounded-full'}`}
+          className={`w-9 h-9 transition-colors duration-200 flex items-center justify-center ${language === 'SK' ? 'glass-button !rounded-theme-full' : 'hover:opacity-80 rounded-theme-full'}`}
           whileHover={{ opacity: 1 }}
           transition={{ type: "spring", stiffness: 300, damping: 20 }}
         >
@@ -38,7 +38,7 @@ const LanguageSwitcher = ({ className = "" }) => {
         </motion.button>
         <motion.button
           onClick={() => handleLanguageChange('CZ')}
-          className={`w-9 h-9 transition-colors duration-200 flex items-center justify-center ${language === 'CZ' ? 'glass-button !rounded-full' : 'hover:opacity-80 rounded-full'}`}
+          className={`w-9 h-9 transition-colors duration-200 flex items-center justify-center ${language === 'CZ' ? 'glass-button !rounded-theme-full' : 'hover:opacity-80 rounded-theme-full'}`}
           whileHover={{ opacity: 1 }}
           transition={{ type: "spring", stiffness: 300, damping: 20 }}
         >
@@ -46,7 +46,7 @@ const LanguageSwitcher = ({ className = "" }) => {
         </motion.button>
         <motion.button
           onClick={() => handleLanguageChange('EN')}
-          className={`w-9 h-9 transition-colors duration-200 flex items-center justify-center ${language === 'EN' ? 'glass-button !rounded-full' : 'hover:opacity-80 rounded-full'}`}
+          className={`w-9 h-9 transition-colors duration-200 flex items-center justify-center ${language === 'EN' ? 'glass-button !rounded-theme-full' : 'hover:opacity-80 rounded-theme-full'}`}
           whileHover={{ opacity: 1 }}
           transition={{ type: "spring", stiffness: 300, damping: 20 }}
         >

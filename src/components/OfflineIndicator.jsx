@@ -1,8 +1,14 @@
 import React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { WifiOff } from 'lucide-react';
+import { usePageVisible } from '@hooks/usePageVisible';
 
 const OfflineIndicator = ({ isOffline, showOfflineMessage }) => {
+  const isPageVisible = usePageVisible();
+  // Pulzovat má smysl jen jako upozornění na offline stav a jen na viditelné
+  // stránce — jinak to je nekonečná animace běžící přes celou dobu používání
+  const shouldPulse = isOffline && isPageVisible;
+
   return (
     <>
       {/* Offline zpráva - zobrazí se na 5 sekund */}
@@ -23,8 +29,8 @@ const OfflineIndicator = ({ isOffline, showOfflineMessage }) => {
       {/* Trvalý indikátor - červená/zelená tečka */}
       <div className="fixed top-4 right-4 z-50">
         <motion.div
-          animate={{ scale: [1, 1.2, 1] }}
-          transition={{ duration: 0.5, repeat: Infinity }}
+          animate={shouldPulse ? { scale: [1, 1.2, 1] } : { scale: 1 }}
+          transition={shouldPulse ? { duration: 0.5, repeat: Infinity } : { duration: 0 }}
           className={`w-3 h-3 rounded-full ${
             isOffline ? 'bg-red-500' : 'bg-green-500'
           }`}

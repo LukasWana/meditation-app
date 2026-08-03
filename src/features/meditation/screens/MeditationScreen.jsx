@@ -1,8 +1,14 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
+import cacheService from '@services/cacheServiceRefactored';
 import { AnimatePresence } from 'framer-motion';
-import { FramerButton, FramerSection, FramerPageTransition, BackButton } from '@components';
+import FramerButton from '@components/FramerButton';
+import FramerSection from '@components/FramerSection';
+import FramerPageTransition from '@components/FramerPageTransition';
+import BackButton from '@components/BackButton';
 import { useLanguage } from '@contexts/LanguageContext';
 import { useTheme } from '@contexts/ThemeContext';
+import { storage } from '@config/secure-firebase';
+import { ref as fbRef, getDownloadURL as fbGetDownloadURL } from 'firebase/storage';
 // Odstraněny skeleton loadery
 import { AudioPlayer } from '@features/audio';
 // Preloadery odstraněny - data se načítají při startu
@@ -10,6 +16,59 @@ import { useRealtimeMeditationFilter } from '@features/audio/hooks';
 
 import { useUserPrefsStore } from '@stores/userPrefsStore';
 import { useAudioPlayerStore } from '@stores/audioPlayerStore';
+
+const getAudioDuration = (audioSrc, retries = 3) => {
+  return new Promise((resolve) => {
+    const audio = new Audio();
+    let timeoutId;
+    let isResolved = false;
+
+    const cleanup = () => {
+      if (isResolved) return;
+      audio.removeEventListener('loadedmetadata', onLoadedMetadata);
+      audio.removeEventListener('error', onError);
+      if (timeoutId) clearTimeout(timeoutId);
+      audio.src = '';
+      audio.load();
+    };
+
+    const resolveOnce = (value) => {
+      if (isResolved) return;
+      isResolved = true;
+      cleanup();
+      resolve(value);
+    };
+
+    const onLoadedMetadata = () => {
+      const duration = audio.duration;
+      if (isFinite(duration) && duration > 0) {
+        resolveOnce(duration);
+      } else {
+        resolveOnce(null);
+      }
+    };
+
+    const onError = () => {
+      if (retries > 1) {
+        cleanup();
+        setTimeout(() => {
+          getAudioDuration(audioSrc, retries - 1).then(resolveOnce);
+        }, 1000 * (4 - retries));
+      } else {
+        resolveOnce(null);
+      }
+    };
+
+    audio.addEventListener('loadedmetadata', onLoadedMetadata);
+    audio.addEventListener('error', onError);
+
+    timeoutId = setTimeout(() => {
+      resolveOnce(null);
+    }, 10000);
+
+    audio.src = audioSrc;
+  });
+};
 
 const MeditationScreen = ({
   onNavigateToScreen,
@@ -23,21 +82,145 @@ const MeditationScreen = ({
   const { t, language } = useLanguage();
   const { getScreenBackgroundColor } = useTheme();
 
-  // Debug: zobraz aktuální jazyk a gender
-  console.log(`🔍 MeditationScreen - Current language: ${language}`);
-  console.log(`🔍 MeditationScreen - Current gender: ${gender}`);
-
   // Stabilizuj language hodnotu
   const normalizedLanguage = useMemo(() => language.toLowerCase(), [language]);
 
-  // Použij nový Realtime Database filtrovací systém
+  // Použij nový Realtime Database filtrovací systém - inicializováno nahoře kvůli TDZ
   const { meditationItems, isLoading, error, audioFiles } = useRealtimeMeditationFilter(gender, normalizedLanguage);
 
-  // Debug: zobraz informace o načtených datech
-  console.log(`🔍 MeditationScreen - meditationItems:`, meditationItems);
-  console.log(`🔍 MeditationScreen - isLoading:`, isLoading);
-  console.log(`🔍 MeditationScreen - error:`, error);
-  console.log(`🔍 MeditationScreen - audioFiles:`, audioFiles);
+  const [durations, setDurations] = useState(new Map());
+
+  // Funkce pro formátování délky v sekundách na MM:SS
+  const formatDuration = (seconds) => {
+    if (!seconds || seconds === 'N/A') return 'N/A';
+    if (typeof seconds === 'string' && seconds.includes(':')) {
+      return seconds;
+    }
+    if (typeof seconds === 'number' && seconds > 0) {
+      const mins = Math.floor(seconds / 60);
+      const secs = Math.floor(seconds % 60);
+      return `${mins}:${secs.toString().padStart(2, '0')}`;
+    }
+    return 'N/A';
+  };
+
+  // Statický fallback pro časy meditací, pokud selže načtení ze sítě i cache
+  const getStaticFallbackDuration = (fileName) => {
+    if (!fileName) return '12:00';
+    const lower = fileName.toLowerCase();
+    if (lower.includes('uzkost') || lower.includes('osamelost')) return '14:25';
+    if (lower.includes('strach')) return '12:40';
+    if (lower.includes('stres') || lower.includes('praca')) return '11:15';
+    if (lower.includes('spank') || lower.includes('spanok')) return '18:50';
+    if (lower.includes('depres') || lower.includes('depresia')) return '15:30';
+    if (lower.includes('relax') || lower.includes('relaxacia')) return '13:10';
+    return '12:00';
+  };
+
+  // Funkce pro získání zobrazené délky s fallbacky
+  const getDisplayDuration = (item) => {
+    const audioSrc = item.audioSrc || item.fileName;
+    if (audioSrc && durations.has(audioSrc)) {
+      return formatDuration(durations.get(audioSrc));
+    }
+    if (audioSrc) {
+      const cachedDuration = cacheService.getDuration(audioSrc);
+      if (cachedDuration && cachedDuration !== 'N/A' && cachedDuration > 0) {
+        return formatDuration(cachedDuration);
+      }
+    }
+    if (item.duration && item.duration !== 'N/A') {
+      return formatDuration(item.duration);
+    }
+    return getStaticFallbackDuration(audioSrc || item.title);
+  };
+
+  // Načti cached durations do state
+  useEffect(() => {
+    if (meditationItems && meditationItems.length > 0) {
+      const newDurations = new Map();
+      meditationItems.forEach((item) => {
+        const audioSrc = item.audioSrc || item.fileName;
+        if (audioSrc) {
+          const cachedDuration = cacheService.getDuration(audioSrc);
+          if (cachedDuration && cachedDuration !== 'N/A' && cachedDuration > 0) {
+            newDurations.set(audioSrc, cachedDuration);
+          }
+        }
+      });
+      if (newDurations.size > 0) {
+        setDurations(prev => {
+          const combined = new Map(prev);
+          newDurations.forEach((duration, audioSrc) => {
+            combined.set(audioSrc, duration);
+          });
+          return combined;
+        });
+      }
+    }
+  }, [meditationItems]);
+
+  // Načti délky na pozadí
+  useEffect(() => {
+    if (!meditationItems || meditationItems.length === 0 || isLoading) return;
+
+    let isMounted = true;
+    const loadingSet = new Set();
+
+    const loadDurations = async () => {
+      for (const item of meditationItems) {
+        if (!isMounted) break;
+        const audioSrc = item.audioSrc || item.fileName;
+
+        if (audioSrc) {
+          const hasCachedDuration = cacheService.getDuration(audioSrc) || durations.has(audioSrc);
+          const hasMetadataDuration = item.duration && item.duration !== 'N/A';
+
+          if (!hasCachedDuration && !hasMetadataDuration && !loadingSet.has(audioSrc)) {
+            loadingSet.add(audioSrc);
+            try {
+              // Získání reálné download URL z Firebase Storage, pokud je audioSrc jen relativní cesta
+              let playUrl = audioSrc;
+              if (audioSrc && !audioSrc.startsWith('http') && !audioSrc.startsWith('blob:')) {
+                try {
+                  const audioRef = fbRef(storage, audioSrc);
+                  playUrl = await fbGetDownloadURL(audioRef);
+                } catch (e) {
+                  console.warn('Failed to get Firebase download URL for duration:', e);
+                }
+              }
+
+              if (playUrl && (playUrl.startsWith('http') || playUrl.startsWith('blob:'))) {
+                const duration = await getAudioDuration(playUrl);
+                if (!isMounted) return;
+
+                if (duration && duration > 0) {
+                  cacheService.setDuration(audioSrc, duration);
+                  setDurations(prev => {
+                    if (!isMounted) return prev;
+                    const newMap = new Map(prev);
+                    newMap.set(audioSrc, duration);
+                    return newMap;
+                  });
+                }
+              }
+            } catch (error) {
+              console.warn(`Failed to load duration for ${item.title}:`, error);
+            } finally {
+              loadingSet.delete(audioSrc);
+            }
+          }
+        }
+      }
+    };
+
+    loadDurations();
+
+    return () => {
+      isMounted = false;
+      loadingSet.clear();
+    };
+  }, [meditationItems, isLoading]); // Odstraněno 'durations' pro zamezení nekonečného restartování smyčky
 
   // Preloading odstraněn - data se načítají při startu aplikace
 
@@ -110,15 +293,17 @@ const MeditationScreen = ({
   return (
     <FramerPageTransition screenKey="meditace">
       <div
-        className={`min-h-screen w-full max-w-full flex flex-col items-center justify-start p-2 sm:p-8 pb-20 overflow-x-hidden relative ${activeAudio ? 'pointer-events-none' : ''
-          }`}
+        className="min-h-screen w-full max-w-full flex flex-col items-center justify-start p-2 sm:p-8 pb-20 overflow-x-hidden relative"
         style={{ backgroundColor: getScreenBackgroundColor() }}
         onTouchStart={activeAudio ? undefined : onTouchStart}
         onTouchMove={activeAudio ? undefined : onTouchMove}
         onTouchEnd={activeAudio ? undefined : onTouchEnd}
       >
         {/* Top row with Back Button, Dropdowns and Settings */}
-        <div className="absolute top-4 left-4 right-4 flex items-center justify-between z-10 px-2">
+        <div 
+          className="absolute left-4 right-4 flex items-center justify-between z-10 px-2"
+          style={{ top: 'calc(1rem + env(safe-area-inset-top, 0px))' }}
+        >
           {/* Left - Back Button */}
           <div className="flex-shrink-0">
             <button
@@ -204,9 +389,9 @@ const MeditationScreen = ({
                           )} */}
                         </div>
                       </div>
-                      <div className="flex items-center space-x-3">
+                       <div className="flex items-center space-x-3">
                         <span className="text-2xl font-light text-gray-500">
-                          {item.duration}
+                          {getDisplayDuration(item)}
                         </span>
                       </div>
                     </div>

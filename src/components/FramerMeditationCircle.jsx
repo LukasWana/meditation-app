@@ -1,6 +1,7 @@
 import React, { useRef, useEffect, useState, useContext } from 'react';
 import { motion, useAnimation } from 'framer-motion';
 import { ThemeContext } from '@contexts/ThemeContext';
+import { usePageVisible } from '@hooks/usePageVisible';
 
 const FramerMeditationCircle = ({
   time,
@@ -13,6 +14,8 @@ const FramerMeditationCircle = ({
   const innerCircleControls = useAnimation();
   const outerCircleControls = useAnimation();
   const [progress, setProgress] = useState(0);
+  const isPageVisible = usePageVisible();
+  const shouldAnimate = isPlaying && isPageVisible;
 
   // Theme context pro barvy
   const themeContext = useContext(ThemeContext);
@@ -25,7 +28,7 @@ const FramerMeditationCircle = ({
   }, [time, totalTime]);
 
   useEffect(() => {
-    if (isPlaying) {
+    if (shouldAnimate) {
       // Pulsujúca animácia pre vnútorný kruh
       innerCircleControls.start({
         scale: [1, 1.1, 1],
@@ -47,15 +50,17 @@ const FramerMeditationCircle = ({
         }
       });
     } else {
-      // Zastavenie animácií
+      // Zastavenie animácií (isPlaying=false NEBO stránka v pozadí)
       innerCircleControls.stop();
       outerCircleControls.stop();
 
-      // Reset na pôvodnú pozíciu
-      innerCircleControls.set({ scale: 1, opacity: 0.8 });
-      outerCircleControls.set({ rotate: 0 });
+      // Reset na pôvodnú pozíciu pouze když opravdu nehrál
+      if (!isPlaying) {
+        innerCircleControls.set({ scale: 1, opacity: 0.8 });
+        outerCircleControls.set({ rotate: 0 });
+      }
     }
-  }, [isPlaying, totalTime, innerCircleControls, outerCircleControls]);
+  }, [isPlaying, shouldAnimate, totalTime, innerCircleControls, outerCircleControls]);
 
   const circumference = 2 * Math.PI * 140;
   const strokeDashoffset = circumference * (1 - progress);
@@ -106,7 +111,7 @@ const FramerMeditationCircle = ({
             <motion.span
               className="text-6xl font-light leading-tight"
               style={{ color: themeColors?.text || 'rgba(0, 0, 0, 1)' }}
-              animate={isPlaying ? {
+              animate={shouldAnimate ? {
                 scale: [1, 1.05, 1],
                 transition: {
                   duration: 2,
@@ -132,7 +137,7 @@ const FramerMeditationCircle = ({
           <motion.span
             className="text-5xl font-light"
             style={{ color: themeColors?.text || 'rgba(100, 100, 100, 1)' }}
-            animate={isPlaying ? {
+            animate={shouldAnimate ? {
               scale: [1, 1.02, 1],
               transition: {
                 duration: 2,
