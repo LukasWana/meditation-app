@@ -6,7 +6,7 @@ import { getService } from '@services/serviceRegistry';
 import { realtimeMetadataService } from '@services/realtimeMetadataService';
 import cacheServiceRefactored from '@services/cacheServiceRefactored';
 import log from '@services/logger';
-import { storage } from '@config/secure-firebase';
+import { storage, ensureFirebase } from '@config/secure-firebase';
 import { ref as fbRef, listAll as fbListAll, getDownloadURL as fbGetDownloadURL } from 'firebase/storage';
 
 const INITIAL_STATE = {
@@ -48,6 +48,7 @@ export const useBackgroundDataLoader = ({ enabled = true } = {}) => {
     };
 
     const loadDataInBackground = async () => {
+      await ensureFirebase();
       console.log('🚀 [CRITICAL DEBUG] useBackgroundDataLoader.loadDataInBackground() START');
 
       safelySetState(prev => ({

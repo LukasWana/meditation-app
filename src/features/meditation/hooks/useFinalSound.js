@@ -1,5 +1,5 @@
 import { useCallback, useRef, useEffect } from 'react';
-import { storage } from '@config/secure-firebase';
+import { storage, ensureFirebase } from '@config/secure-firebase';
 import { ref as fbRef, getDownloadURL as fbGetDownloadURL } from 'firebase/storage';
 
 /**
@@ -45,6 +45,7 @@ export const useFinalSound = (breathFinalSound, isBreathing) => {
     finalSoundPlayedRef.current = true;
 
     try {
+      await ensureFirebase();
       let url = null;
 
       if (breathFinalSound.startsWith('dychanie/')) {

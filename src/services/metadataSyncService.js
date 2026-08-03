@@ -3,7 +3,7 @@
 import { fastMetadataService } from './fastMetadataService';
 import { mp3MetadataExtractor } from './mp3MetadataExtractor';
 import { ref, listAll, getMetadata } from 'firebase/storage';
-import { storage } from '@config/secure-firebase';
+import { storage, ensureFirebase } from '@config/secure-firebase';
 import log from './logger';
 
 class MetadataSyncService {
@@ -79,6 +79,7 @@ class MetadataSyncService {
 
   async checkForStorageChanges() {
     try {
+      await ensureFirebase();
       // Načti seznam souborů z Firebase Storage
       const listRef = ref(storage, '');
       const result = await listAll(listRef);
@@ -212,6 +213,7 @@ class MetadataSyncService {
     const mp3Files = [];
 
     try {
+      await ensureFirebase();
       const listRef = ref(storage, '');
       const result = await listAll(listRef);
 
@@ -259,6 +261,7 @@ class MetadataSyncService {
 
   async saveMetadataLocally(metadataArray) {
     try {
+      await ensureFirebase();
       // Přidej Firebase Storage metadata (velikost, čas vytvoření)
       const enrichedMetadata = await Promise.all(
         metadataArray.map(async (metadata) => {

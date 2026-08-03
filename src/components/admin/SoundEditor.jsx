@@ -53,7 +53,7 @@ export const SoundEditor = ({
           {soundFiles.map((file) => (
             <motion.div
               key={file.id}
-              className={`p-4 rounded-lg border ${
+              className={`p-4 rounded-lg border cv-auto-card ${
                 isDarkMode ? 'bg-gray-700 border-gray-600' : 'bg-gray-50 border-gray-300'
               }`}
             >

@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { storage } from '@config/secure-firebase';
+import { storage, ensureFirebase } from '@config/secure-firebase';
 import cacheService from '@services/cacheServiceRefactored';
 import offlineCacheService from '@services/offlineCacheService';
 
@@ -37,6 +37,8 @@ export const useFirebaseAudio = (audioFileName) => {
       try {
         setLoading(true);
         setError(null);
+
+        await ensureFirebase();
 
         // Inicializuj enhanced offline cache service
         await offlineCacheService.initialize();

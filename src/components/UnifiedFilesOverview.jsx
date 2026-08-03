@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { ref, listAll, getDownloadURL, getMetadata } from 'firebase/storage';
-import { storage } from '../config/secure-firebase';
+import { storage, ensureFirebase } from '../config/secure-firebase';
 import { extractAudioMetadata, formatDuration, formatDurationDetailed } from '../utils/audioMetadataExtractor';
 import audioMetadataStorageService from '../services/audioMetadataStorageService';
 import log from '@services/logger';
@@ -30,6 +30,8 @@ const UnifiedFilesOverview = () => {
     try {
       setLoading(true);
       setError(null);
+
+      await ensureFirebase();
 
       log.info('🔄 Loading all files from Firebase Storage...');
 
@@ -388,7 +390,7 @@ const UnifiedFilesOverview = () => {
           <h3 className="text-lg font-semibold mb-3">📋 Všechny soubory</h3>
           <div className="space-y-2 max-h-96 overflow-y-auto">
             {allFiles.map((file, index) => (
-              <div key={index} className="bg-white p-3 rounded border text-sm">
+              <div key={index} className="bg-white p-3 rounded border text-sm cv-auto">
                 <div className="grid grid-cols-1 md:grid-cols-4 gap-2">
                   <div><strong>Název:</strong> {file.name}</div>
                   <div><strong>Kategorie:</strong> {file.category}</div>
@@ -420,7 +422,7 @@ const UnifiedFilesOverview = () => {
           <h3 className="text-lg font-semibold mb-3">🔄 Varianty souborů</h3>
           <div className="space-y-3 max-h-96 overflow-y-auto">
             {Object.entries(variants).map(([baseName, variantFiles]) => (
-              <div key={baseName} className="bg-white p-3 rounded border">
+              <div key={baseName} className="bg-white p-3 rounded border cv-auto">
                 <h4 className="font-semibold text-lg mb-2">{baseName}</h4>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2 text-sm">
                   {variantFiles.map((file, index) => (

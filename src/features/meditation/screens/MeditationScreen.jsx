@@ -7,7 +7,7 @@ import FramerPageTransition from '@components/FramerPageTransition';
 import BackButton from '@components/BackButton';
 import { useLanguage } from '@contexts/LanguageContext';
 import { useTheme } from '@contexts/ThemeContext';
-import { storage } from '@config/secure-firebase';
+import { storage, ensureFirebase } from '@config/secure-firebase';
 import { ref as fbRef, getDownloadURL as fbGetDownloadURL } from 'firebase/storage';
 // Odstraněny skeleton loadery
 import { AudioPlayer } from '@features/audio';
@@ -168,6 +168,7 @@ const MeditationScreen = ({
     const loadingSet = new Set();
 
     const loadDurations = async () => {
+      await ensureFirebase();
       for (const item of meditationItems) {
         if (!isMounted) break;
         const audioSrc = item.audioSrc || item.fileName;
@@ -371,7 +372,7 @@ const MeditationScreen = ({
                 >
                   <FramerButton
                     variant="ghost"
-                    className={`w-full p-6 text-left bg-white/50 backdrop-blur rounded-none border border-black/10 ${activeAudio ? 'pointer-events-none opacity-50' : ''
+                    className={`w-full p-6 text-left bg-white/50 backdrop-blur rounded-none border border-black/10 cv-auto-card ${activeAudio ? 'pointer-events-none opacity-50' : ''
                       }`}
                     onClick={activeAudio ? undefined : () => handleItemClick(item)}
                   // Hover preloading odstraněn

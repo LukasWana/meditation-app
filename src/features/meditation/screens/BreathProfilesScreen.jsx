@@ -462,7 +462,7 @@ const BreathProfilesScreen = ({
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: 0.3 + index * 0.05 }}
                   >
-                    <div className="glass-panel w-full p-4 flex items-center justify-between gap-4">
+                    <div className="glass-panel w-full p-4 flex items-center justify-between gap-4 cv-auto-card">
                       <div
                         onClick={() => editingProfileId !== profile.id && handleLoadProfile(profile)}
                         className="flex-1 cursor-pointer"

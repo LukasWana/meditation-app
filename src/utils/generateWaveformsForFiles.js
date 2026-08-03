@@ -5,7 +5,7 @@
 
 import { generateWaveformFromUrl } from './waveformGenerator';
 import { realtimeMetadataService } from '@services/realtimeMetadataService';
-import { database } from '@config/secure-firebase';
+import { database, ensureFirebase } from '@config/secure-firebase';
 import { ref, set } from 'firebase/database';
 
 /**
@@ -16,6 +16,7 @@ import { ref, set } from 'firebase/database';
  */
 export const generateWaveformForFile = async (fileName, samples = 150) => {
   try {
+    await ensureFirebase();
     // Načti metadata souboru
     const metadata = await realtimeMetadataService.getFileMetadata(fileName);
 
@@ -61,6 +62,7 @@ export const generateWaveformForFile = async (fileName, samples = 150) => {
  */
 export const generateWaveformsForFolder = async (folder, samples = 150, onProgress = null) => {
   try {
+    await ensureFirebase();
     // Načti všechny soubory ze složky
     const allMetadata = await realtimeMetadataService.getAllMetadata();
 

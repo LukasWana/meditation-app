@@ -1,5 +1,4 @@
-import { auth } from '../config/secure-firebase';
-import { database } from '../config/secure-firebase';
+import { auth, database, ensureFirebase } from '../config/secure-firebase';
 import { ref, get, push, update, remove } from 'firebase/database';
 import { realtimeMetadataService } from './realtimeMetadataService';
 import log from './logger';
@@ -72,6 +71,7 @@ class BreathProfilesService {
    */
   async saveProfile(profile, profileId = null, includeSoundMetadata = false) {
     try {
+      await ensureFirebase();
       const user = this.getCurrentUser();
       log.debug('💾 Saving profile:', { profileId, hasUser: !!user, profileName: profile.name });
 
@@ -226,6 +226,7 @@ class BreathProfilesService {
    */
   async getAllProfiles() {
     try {
+      await ensureFirebase();
       // Vždy načíst z localStorage jako primární zdroj (uživatelská paměť)
       const localProfiles = this.getAllProfilesFromLocalStorage();
       log.debug(`📦 Loaded ${localProfiles.length} profiles from localStorage (user memory)`);
@@ -298,6 +299,7 @@ class BreathProfilesService {
    * @returns {Promise<Object|null>} - Profil nebo null
    */
   async getProfile(profileId) {
+    await ensureFirebase();
     const user = this.getCurrentUser();
 
     if (user) {
@@ -340,6 +342,7 @@ class BreathProfilesService {
    * @returns {Promise<boolean>} - Úspěch smazání
    */
   async deleteProfile(profileId) {
+    await ensureFirebase();
     // Vždy smazat z localStorage (uživatelská paměť)
     const localDeleted = this.deleteProfileFromLocalStorage(profileId);
 

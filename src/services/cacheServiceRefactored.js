@@ -5,7 +5,7 @@ import { fastMetadataService } from './fastMetadataService.js';
 import log from './logger.js';
 import { parseAudioFileName } from '@utils/hudbaParser';
 import { onVisibilityChange, isPageHidden } from './visibilityManager.js';
-import { storage } from '@config/secure-firebase';
+import { storage, ensureFirebase } from '@config/secure-firebase';
 import { ref as fbRef, getDownloadURL as fbGetDownloadURL } from 'firebase/storage';
 
 class CacheServiceRefactored {
@@ -379,6 +379,7 @@ class CacheServiceRefactored {
 
   async preloadHudbaData() {
     try {
+      await ensureFirebase();
       log.firebase('🎵 Preloading hudba data from Firebase Storage...');
 
       // Import Firebase Storage dynamicky

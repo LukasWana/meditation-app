@@ -8,7 +8,7 @@
 
 import { fastMetadataService } from './fastMetadataService';
 import { ref, get, onValue, off } from 'firebase/database';
-import { database } from '@config/secure-firebase';
+import { database, ensureFirebase } from '@config/secure-firebase';
 import log from './logger';
 
 class RealtimeMetadataService {
@@ -36,6 +36,7 @@ class RealtimeMetadataService {
    * fastMetadataService; falls back to Realtime Database when available.
    */
   async getAllMetadata() {
+    await ensureFirebase();
     // 1. Try in-memory cache first (fast)
     if (fastMetadataService.metadata && fastMetadataService.metadata.size > 0) {
       return Object.fromEntries(fastMetadataService.metadata);
@@ -84,6 +85,7 @@ class RealtimeMetadataService {
    */
   async getFileMetadata(fileId) {
     if (!fileId) return null;
+    await ensureFirebase();
 
     // Try fastMetadataService first
     const meta = fastMetadataService.getMetadata(fileId);
@@ -145,7 +147,8 @@ class RealtimeMetadataService {
   /**
    * Watch Realtime Database for metadata changes.
    */
-  watchMetadata(callback) {
+  async watchMetadata(callback) {
+    await ensureFirebase();
     try {
       if (!database) return () => { };
       const metaRef = ref(database, 'audio-metadata');

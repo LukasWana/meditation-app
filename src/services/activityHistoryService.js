@@ -10,7 +10,7 @@ import {
   serverTimestamp,
   writeBatch
 } from 'firebase/firestore';
-import { db } from '@config/secure-firebase';
+import { db, ensureFirebase } from '@config/secure-firebase';
 import log from './logger';
 
 /**
@@ -58,6 +58,7 @@ class ActivityHistoryService {
 
       // Ulož do Firestore (pokud je uživatel přihlášen)
       if (userId && userId !== 'anonymous') {
+        await ensureFirebase();
         await this.saveToFirestore(userId, activity);
       }
 
@@ -108,6 +109,7 @@ class ActivityHistoryService {
    */
   async saveToFirestore(userId, activity) {
     try {
+      await ensureFirebase();
       const activityRef = doc(db, 'users', userId, 'activityHistory', activity.id);
       await setDoc(activityRef, {
         ...activity,
@@ -175,6 +177,7 @@ class ActivityHistoryService {
 
     try {
       // Načti z obou zdrojů
+      await ensureFirebase();
       const [localHistory, firestoreHistory] = await Promise.all([
         Promise.resolve(this.getFromLocalStorage(userId)),
         userId !== 'anonymous' ? this.getFromFirestore(userId, section, limit) : Promise.resolve([])
@@ -212,6 +215,7 @@ class ActivityHistoryService {
    */
   async getFromFirestore(userId, section = null, limit = null) {
     try {
+      await ensureFirebase();
       const historyRef = collection(db, 'users', userId, 'activityHistory');
       let q = query(historyRef, orderBy('timestamp', 'desc'));
 
@@ -321,6 +325,7 @@ class ActivityHistoryService {
    */
   async clearFromFirestore(userId, section = null) {
     try {
+      await ensureFirebase();
       const historyRef = collection(db, 'users', userId, 'activityHistory');
       let q = query(historyRef);
 
@@ -365,6 +370,7 @@ class ActivityHistoryService {
     }
 
     try {
+      await ensureFirebase();
       const localHistory = this.getFromLocalStorage(userId);
       if (localHistory.length === 0) {
         log.debug('No local history to sync');
@@ -412,6 +418,7 @@ class ActivityHistoryService {
     }
 
     try {
+      await ensureFirebase();
       const firestoreHistory = await this.getFromFirestore(userId);
       if (firestoreHistory.length === 0) {
         log.debug('No Firestore history to sync');

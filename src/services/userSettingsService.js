@@ -1,5 +1,5 @@
 import { doc, getDoc, setDoc, updateDoc, serverTimestamp } from 'firebase/firestore';
-import { db } from '@config/secure-firebase';
+import { db, ensureFirebase } from '@config/secure-firebase';
 import log from './logger';
 
 /**
@@ -16,6 +16,7 @@ class UserSettingsService {
     }
 
     try {
+      await ensureFirebase();
       const userRef = doc(db, 'users', userId);
       const userSnap = await getDoc(userRef);
 
@@ -43,6 +44,7 @@ class UserSettingsService {
     }
 
     try {
+      await ensureFirebase();
       const userRef = doc(db, 'users', userId);
       const existingDoc = await getDoc(userRef);
 
@@ -78,6 +80,7 @@ class UserSettingsService {
     if (!userId) return false;
 
     try {
+      await ensureFirebase();
       const userRef = doc(db, 'users', userId);
       await updateDoc(userRef, {
         lastLoginAt: serverTimestamp()
@@ -96,6 +99,7 @@ class UserSettingsService {
     if (!userId) return false;
 
     try {
+      await ensureFirebase();
       const userRef = doc(db, 'users', userId);
       const existingDoc = await getDoc(userRef);
 
@@ -131,6 +135,7 @@ class UserSettingsService {
     if (!userId) return false;
 
     try {
+      await ensureFirebase();
       const userRef = doc(db, 'users', userId);
       const existingDoc = await getDoc(userRef);
 
@@ -166,6 +171,7 @@ class UserSettingsService {
     if (!userId) return false;
 
     try {
+      await ensureFirebase();
       const userRef = doc(db, 'users', userId);
       const existingDoc = await getDoc(userRef);
 

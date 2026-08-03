@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
 import { ref as dbRef, set, get } from 'firebase/database';
-import { database } from '@config/secure-firebase';
+import { database, ensureFirebase } from '@config/secure-firebase';
 import { realtimeMetadataService } from '@services/realtimeMetadataService';
 
 export const useSoundEditor = (setLoading, setStatus) => {
@@ -13,6 +13,7 @@ export const useSoundEditor = (setLoading, setStatus) => {
     setLoading(true);
     setStatus('🔄 Načítám zvuky...');
     try {
+      await ensureFirebase();
       const allMetadata = await realtimeMetadataService.getAllMetadata();
 
       // Filtruj pouze soubory z dychanie složky
@@ -54,6 +55,7 @@ export const useSoundEditor = (setLoading, setStatus) => {
     setLoading(true);
     setStatus('💾 Ukládám popisek...');
     try {
+      await ensureFirebase();
       const safePath = realtimeMetadataService.sanitizePath(fileName);
       const fileRef = dbRef(database, `audio-metadata/${safePath}`);
 

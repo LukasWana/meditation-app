@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { ref, get, child } from 'firebase/database';
 import { useAuthState } from 'react-firebase-hooks/auth';
-import { realtimeDatabase, auth } from '../config/secure-firebase';
+import { realtimeDatabase, auth, ensureFirebase } from '../config/secure-firebase';
 import { extractAudioMetadata } from '../utils/audioMetadataExtractor';
 import audioMetadataStorageService from '../services/audioMetadataStorageService';
 import log from '@services/logger';
@@ -35,6 +35,7 @@ const CacheManagementPanel = () => {
     }
 
     try {
+      await ensureFirebase();
       setCacheLoading(true);
       setCacheError(null);
       log.info('🔄 Loading all cache data from Realtime Database...');
@@ -88,6 +89,8 @@ const CacheManagementPanel = () => {
       setCreatingCache(true);
       setScanningFiles(true);
       setCacheError(null);
+
+      await ensureFirebase();
 
       log.info('🔄 Starting cache creation process...');
 

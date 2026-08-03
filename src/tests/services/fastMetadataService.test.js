@@ -10,7 +10,8 @@ vi.mock('firebase/storage', () => ({
 
 // Mockování secure-firebase
 vi.mock('@config/secure-firebase', () => ({
-  storage: {}
+  storage: {},
+  ensureFirebase: vi.fn(async () => {}),
 }));
 
 // Mockování loggeru

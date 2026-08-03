@@ -12,7 +12,7 @@ import {
   equalTo,
   limitToLast
 } from 'firebase/database';
-import { database } from '@config/secure-firebase';
+import { database, ensureFirebase } from '@config/secure-firebase';
 import log from './logger';
 
 class RealtimeDatabaseService {
@@ -36,6 +36,7 @@ class RealtimeDatabaseService {
 
   async setData(path, data) {
     try {
+      await ensureFirebase();
       // Sanitizuj cestu pro Realtime Database
       const safePath = this.sanitizePath(path);
       const dataRef = ref(this.database, safePath);
@@ -53,6 +54,7 @@ class RealtimeDatabaseService {
 
   async getData(path) {
     try {
+      await ensureFirebase();
       // Sanitizuj cestu pro Realtime Database
       const safePath = this.sanitizePath(path);
       const dataRef = ref(this.database, safePath);
@@ -73,6 +75,7 @@ class RealtimeDatabaseService {
 
   async pushData(path, data) {
     try {
+      await ensureFirebase();
       // Sanitizuj cestu pro Realtime Database
       const safePath = this.sanitizePath(path);
       const dataRef = ref(this.database, safePath);
@@ -91,6 +94,7 @@ class RealtimeDatabaseService {
 
   async updateData(path, updates) {
     try {
+      await ensureFirebase();
       // Sanitizuj cestu pro Realtime Database
       const safePath = this.sanitizePath(path);
       const dataRef = ref(this.database, safePath);
@@ -108,6 +112,7 @@ class RealtimeDatabaseService {
 
   async deleteData(path) {
     try {
+      await ensureFirebase();
       // Sanitizuj cestu pro Realtime Database
       const safePath = this.sanitizePath(path);
       const dataRef = ref(this.database, safePath);
@@ -165,6 +170,7 @@ class RealtimeDatabaseService {
 
   async searchData(path, childKey, value, limit = 100) {
     try {
+      await ensureFirebase();
       const dataRef = ref(this.database, path);
       const searchQuery = query(
         dataRef,

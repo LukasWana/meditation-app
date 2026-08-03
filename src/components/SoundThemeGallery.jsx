@@ -815,7 +815,7 @@ const SoundThemeGallery = ({ isOpen, onClose, onSelectSound, selectedInSound, se
                 {currentPageFiles.map((file) => (
                   <motion.div
                     key={file.id}
-                    className="bg-white/50 backdrop-blur rounded-lg border border-black/10 p-3 /70 transition-colors flex flex-col"
+                    className="bg-white/50 backdrop-blur rounded-lg border border-black/10 p-3 /70 transition-colors flex flex-col cv-auto-card"
                   >
                     {/* Název a popisek */}
                     <div className="mb-2">

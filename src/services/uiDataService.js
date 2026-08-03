@@ -1,4 +1,4 @@
-import { realtimeDatabase as database } from '@config/secure-firebase';
+import { realtimeDatabase as database, ensureFirebase } from '@config/secure-firebase';
 import { ref, get, set, onValue, off } from 'firebase/database';
 import log from './logger';
 
@@ -18,6 +18,7 @@ class UIDataService {
   }
 
   async ensureDatabaseReady(timeout = 5000) {
+    await ensureFirebase();
     if (database) {
       return database;
     }

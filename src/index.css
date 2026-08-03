@@ -28,15 +28,6 @@ body {
   width: 100%;
   max-width: 100vw;
   height: 100dvh;
-  /* Touch optimizace */
-  -webkit-tap-highlight-color: transparent;
-  -webkit-touch-callout: none;
-  -webkit-user-select: none;
-  -moz-user-select: none;
-  -ms-user-select: none;
-  user-select: none;
-  /* Pozadí - aplikováno dynamicky z ThemeContext přes CSS proměnné */
-  background-color: var(--theme-bg-color, transparent);
 }
 
 #root {
@@ -620,3 +611,16 @@ html.low-gpu :is(
   }
 }
 
+/* ============================================
+   content-visibility: auto — skip rendering off-screen list items
+   ============================================ */
+
+.cv-auto {
+  content-visibility: auto;
+  contain-intrinsic-size: auto 80px;
+}
+
+.cv-auto-card {
+  content-visibility: auto;
+  contain-intrinsic-size: auto 120px;
+}

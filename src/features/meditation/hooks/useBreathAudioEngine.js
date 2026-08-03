@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState, useCallback } from 'react';
 import { realtimeMetadataService } from '@services/realtimeMetadataService';
-import { storage } from '@config/secure-firebase';
+import { storage, ensureFirebase } from '@config/secure-firebase';
 import { phaseAtTime } from '@utils/breathPhase';
 import { useWakeLock } from '@hooks/useWakeLock';
 import { onVisibilityChange } from '@services/visibilityManager';
@@ -172,6 +172,7 @@ export const useBreathAudioEngine = (
     scheduledUntilRef.current = 0;
 
     const loadSoundUrl = async (soundId, setUrl) => {
+      await ensureFirebase();
       if (soundId === 'none' || !soundId) {
         setUrl(null);
         return;

@@ -4,7 +4,7 @@
  */
 
 import { DEFAULT_TRANSLATIONS } from '@contexts/LanguageContext';
-import { realtimeDatabase } from '@config/secure-firebase';
+import { realtimeDatabase, ensureFirebase } from '@config/secure-firebase';
 import { ref, set } from 'firebase/database';
 import log from '@services/logger';
 
@@ -14,6 +14,7 @@ import log from '@services/logger';
  */
 export async function updateFirebaseTranslations() {
   try {
+    await ensureFirebase();
     log.info('🔄 Aktualizuji překlady v Firebase...');
 
     // Vytvoř strukturu dat pro Firebase (podobně jako getDefaultUIData v uiDataService)

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { ref, listAll, getDownloadURL, getMetadata } from 'firebase/storage';
-import { storage } from '../config/secure-firebase';
+import { storage, ensureFirebase } from '../config/secure-firebase';
 import { extractAudioMetadata, formatDuration, formatDurationDetailed } from '../utils/audioMetadataExtractor';
 import audioMetadataStorageService from '../services/audioMetadataStorageService';
 import log from '@services/logger';
@@ -25,6 +25,8 @@ const HudbaFilesViewer = () => {
     try {
       setLoading(true);
       setError(null);
+
+      await ensureFirebase();
 
       log.info('🔄 Loading hudba files from Firebase Storage...');
 

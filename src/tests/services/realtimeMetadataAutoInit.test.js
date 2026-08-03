@@ -33,7 +33,8 @@ vi.mock('firebase/database', () => ({
 
 vi.mock('@config/secure-firebase', () => ({
   storage: {},
-  database: null
+  database: null,
+  ensureFirebase: vi.fn(async () => {}),
 }));
 
 describe('realtimeMetadataService - Auto-Initialization Fix', () => {

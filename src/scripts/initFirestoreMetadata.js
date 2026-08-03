@@ -1,7 +1,7 @@
 
 
 import { collection, doc, setDoc, getDocs, query, orderBy } from 'firebase/firestore';
-import { db, storage } from '@config/secure-firebase';
+import { db, storage, ensureFirebase } from '@config/secure-firebase';
 import { ref, listAll, getDownloadURL, getMetadata } from 'firebase/storage';
 
 // Ukázková metadata pro testování
@@ -43,6 +43,7 @@ const sampleMetadata = {
 
 export const initializeFirestoreMetadata = async () => {
   try {
+    await ensureFirebase();
     console.log('🚀 Initializing Firestore metadata collection...');
 
     const collectionName = 'audio-metadata';
@@ -82,6 +83,7 @@ export const initializeFirestoreMetadata = async () => {
 
 export const loadRealMetadataToFirestore = async () => {
   try {
+    await ensureFirebase();
     console.log('🔄 Loading real metadata from Firebase Storage...');
 
     const collectionName = 'audio-metadata';

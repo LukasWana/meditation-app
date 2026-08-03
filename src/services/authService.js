@@ -7,7 +7,7 @@ import {
   onAuthStateChanged,
   getIdTokenResult
 } from 'firebase/auth';
-import { auth } from '@config/secure-firebase';
+import { auth, ensureFirebase } from '@config/secure-firebase';
 import { Capacitor } from '@capacitor/core';
 import { GoogleAuth } from '@codetrix-studio/capacitor-google-auth';
 import log from './logger';
@@ -20,6 +20,7 @@ provider.addScope('email');
 
 export async function signInWithGoogle() {
   try {
+    await ensureFirebase();
     if (Capacitor.isNativePlatform()) {
       log.info('Používám nativní Google přihlášení (Capacitor)');
       
@@ -72,6 +73,7 @@ export async function signInWithGoogle() {
 }
 
 export async function signOutUser() {
+  await ensureFirebase();
   return signOut(auth);
 }
 
@@ -80,7 +82,8 @@ export async function fetchTokenResult(user) {
   return getIdTokenResult(user, true);
 }
 
-export function subscribeToAuth(onChange) {
+export async function subscribeToAuth(onChange) {
+  await ensureFirebase();
   return onAuthStateChanged(auth, async (user) => {
     if (!user) {
       onChange({ user: null, isAdmin: false, tokenResult: null });

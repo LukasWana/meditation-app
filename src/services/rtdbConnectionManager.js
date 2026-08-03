@@ -12,7 +12,7 @@
  */
 
 import { goOffline, goOnline } from 'firebase/database';
-import { database } from '@config/secure-firebase';
+import { database, ensureFirebase } from '@config/secure-firebase';
 import { onVisibilityChange, isPageHidden } from './visibilityManager';
 import log from './logger';
 
@@ -73,7 +73,8 @@ function handleVisibility(hidden) {
  * Spustí správu spojení. Vrací cleanup funkci.
  * Opakované volání je bezpečné — druhé a další volání nic nedělá.
  */
-export function initRtdbConnectionManager() {
+export async function initRtdbConnectionManager() {
+  await ensureFirebase();
   if (unsubscribeVisibility) {
     return stopRtdbConnectionManager;
   }

@@ -1,6 +1,6 @@
 
 import { ref, listAll, getDownloadURL } from 'firebase/storage';
-import { storage } from '@config/secure-firebase';
+import { storage, ensureFirebase } from '@config/secure-firebase';
 import log from './logger';
 import { parseAudioFileName } from '@utils/hudbaParser';
 import { LOCAL_BREATHING_FILES } from '@config/localBreathingFiles';
@@ -78,6 +78,7 @@ class FastMetadataService {
   }
 
   async getAllMetadata() {
+    await ensureFirebase();
     console.log('🚀 [CRITICAL DEBUG] fastMetadataService.getAllMetadata() CALLED', {
       isLoading: this.isLoading,
       isInitialized: this.isInitialized,
@@ -573,6 +574,7 @@ class FastMetadataService {
   }
 
   async _getDownloadURLWithRetry(file, retries = 3) {
+    await ensureFirebase();
     const fileName = file.name;
 
     for (let attempt = 0; attempt <= retries; attempt++) {
@@ -1042,6 +1044,7 @@ class FastMetadataService {
    */
   async loadCoverImagesFromStorage() {
     try {
+      await ensureFirebase();
       log.info('🖼️ Loading cover images from Firebase Storage...');
 
       // Najdi všechna alba v metadata (soubory v podsložkách hudba/)

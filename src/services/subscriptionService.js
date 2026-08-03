@@ -1,5 +1,5 @@
 import { doc, getDoc } from 'firebase/firestore';
-import { db } from '@config/secure-firebase';
+import { db, ensureFirebase } from '@config/secure-firebase';
 import log from './logger';
 
 /**
@@ -15,6 +15,7 @@ class SubscriptionService {
     }
 
     try {
+      await ensureFirebase();
       // 1. Zkus z custom claims (rychlejší)
       if (tokenResult?.claims?.subscription) {
         return {

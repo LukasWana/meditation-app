@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { ref, listAll, getDownloadURL, getMetadata } from 'firebase/storage';
-import { storage } from '../config/secure-firebase';
+import { storage, ensureFirebase } from '../config/secure-firebase';
 import { extractAudioMetadata, formatDuration, formatDurationDetailed } from '../utils/audioMetadataExtractor';
 import audioMetadataStorageService from '../services/audioMetadataStorageService';
 import log from '@services/logger';
@@ -28,6 +28,8 @@ const SlovaFilesViewer = () => {
     try {
       setLoading(true);
       setError(null);
+
+      await ensureFirebase();
 
       log.info('🔄 Loading meditacie files from Firebase Storage...');
 
@@ -231,7 +233,7 @@ const SlovaFilesViewer = () => {
       ) : (
         <div className="space-y-3 max-h-60 overflow-y-auto">
           {files.map((file, index) => (
-            <div key={index} className="bg-gray-50 p-3 rounded border">
+            <div key={index} className="bg-gray-50 p-3 rounded border cv-auto">
               <div className="grid grid-cols-1 md:grid-cols-4 gap-2 text-sm">
                 <div>
                   <strong>Název:</strong> {file.name}

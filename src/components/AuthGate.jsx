@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { auth } from '../config/secure-firebase';
+import { auth, ensureFirebase } from '../config/secure-firebase';
 import { signInWithEmailAndPassword, onAuthStateChanged } from 'firebase/auth';
 import { testFirebaseAuth } from '../scripts/testFirebaseAuth';
 import { validateEmail, validatePassword } from '../utils/validation';
@@ -15,18 +15,30 @@ const AuthGate = ({ children, onAuthenticated }) => {
   const [authTestResult, setAuthTestResult] = useState(null);
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (user) => {
-      if (user) {
-        setIsAuthenticated(true);
-        setIsLoading(false);
-        onAuthenticated?.(user);
-      } else {
-        setIsAuthenticated(false);
-        setIsLoading(false);
-      }
-    });
+    let subscribed = true;
 
-    return () => unsubscribe();
+    const init = async () => {
+      await ensureFirebase();
+      if (!subscribed) return;
+      const unsubscribe = onAuthStateChanged(auth, (user) => {
+        if (user) {
+          setIsAuthenticated(true);
+          setIsLoading(false);
+          onAuthenticated?.(user);
+        } else {
+          setIsAuthenticated(false);
+          setIsLoading(false);
+        }
+      });
+
+      return () => unsubscribe();
+    };
+
+    init();
+
+    return () => {
+      subscribed = false;
+    };
   }, [onAuthenticated]);
 
   const testAuth = async () => {
@@ -41,6 +53,8 @@ const AuthGate = ({ children, onAuthenticated }) => {
     setError('');
 
     try {
+      await ensureFirebase();
+
       // Validace vstupů
       if (!validateEmail(email)) {
         setError('Neplatný formát email adresy');

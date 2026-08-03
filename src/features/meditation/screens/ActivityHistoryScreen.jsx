@@ -276,7 +276,7 @@ const ActivityHistoryScreen = ({
                     delay={0.3 + index * 0.05}
                   >
                     <div
-                      className="glass-panel w-full p-4"
+                      className="glass-panel w-full p-4 cv-auto-card"
                     >
                       {/* Sekce a popis */}
                       <div className="flex items-start justify-between mb-2">

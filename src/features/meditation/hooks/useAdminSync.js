@@ -1,7 +1,7 @@
 import { ref as dbRef, set } from 'firebase/database';
 import { collection, query, orderBy, getDocs } from 'firebase/firestore';
 import { ref, listAll, getDownloadURL, getMetadata } from 'firebase/storage';
-import { database, storage, auth, db } from '@config/secure-firebase';
+import { database, storage, auth, db, ensureFirebase } from '@config/secure-firebase';
 import { extractAudioMetadata } from '@utils/audioMetadataExtractor';
 import { generateWaveformViaFunction } from '@utils/generateWaveformViaFunction';
 import { extractDisplayName, extractSubFolder, extractGender, extractTopic, extractType, estimateDurationFromSize, formatDuration, formatDurationDetailed } from '@utils/adminHelpers';
@@ -9,6 +9,7 @@ import { extractDisplayName, extractSubFolder, extractGender, extractTopic, extr
 export const useAdminSync = (setLoading, setStatus) => {
   const checkStatus = async () => {
     try {
+      await ensureFirebase();
       // Zkontroluj Firestore
       const metadataCollection = collection(db, 'audio-metadata');
       const q = query(metadataCollection, orderBy('fileName'));
@@ -60,6 +61,7 @@ export const useAdminSync = (setLoading, setStatus) => {
     setStatus('🔄 Synchronizuji...');
 
     try {
+      await ensureFirebase();
       if (!auth.currentUser) {
         setStatus('❌ Přihlaste se admin účtem.');
         setLoading(false);
@@ -173,6 +175,7 @@ export const useAdminSync = (setLoading, setStatus) => {
     setStatus('🔄 Spouštím kompletní synchronizaci...');
 
     try {
+      await ensureFirebase();
       if (!auth.currentUser) {
         setStatus('❌ Přihlaste se admin účtem.');
         setLoading(false);
@@ -458,6 +461,8 @@ export const useAdminSync = (setLoading, setStatus) => {
     const allFiles = [];
     console.log('🔍 Skenuji Firebase Storage (pouze listAll)...');
 
+    await ensureFirebase();
+
     // Vymaž všechny cache v prohlížeči
     try {
       if ('caches' in window) {
@@ -737,6 +742,7 @@ export const useAdminSync = (setLoading, setStatus) => {
     setStatus('🔄 Stahuji MP3 soubory...');
 
     try {
+      await ensureFirebase();
       // Získej seznam všech audio souborů ze Storage
       const storageRef = ref(storage);
       const result = await listAll(storageRef);

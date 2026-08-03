@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { app, realtimeDatabase as database } from '@config/secure-firebase';
+import { app, realtimeDatabase as database, ensureFirebase } from '@config/secure-firebase';
 import { useBackgroundDataLoader } from './useBackgroundDataLoader';
 
 const wait = (ms) => new Promise(resolve => setTimeout(resolve, ms));
@@ -35,10 +35,11 @@ export const useAppInitialization = () => {
     console.log('🚀 [CRITICAL] useAppInitialization useEffect() FIRED');
     let cancelled = false;
 
-    const ensureFirebase = async () => {
+    const ensureFirebaseReady = async () => {
       console.log('🔍 [DEBUG] ensureFirebase() called');
       try {
         console.log('⏳ [DEBUG] Waiting for Firebase to be ready...');
+        await ensureFirebase();
         await waitForFirebaseReady();
         console.log('✅ [DEBUG] Firebase is ready!');
         if (!cancelled) {
@@ -57,8 +58,8 @@ export const useAppInitialization = () => {
       }
     };
 
-    console.log('📞 [DEBUG] Calling ensureFirebase()...');
-    ensureFirebase();
+    console.log('📞 [DEBUG] Calling ensureFirebaseReady()...');
+    ensureFirebaseReady();
 
     return () => {
       console.log('🧹 [DEBUG] useAppInitialization cleanup - cancelling');

@@ -7,7 +7,7 @@ import { getThemeName } from '@data/themes';
 import FramerSection from '@components/FramerSection';
 import { ImageIcon, X, Palette } from 'lucide-react';
 import { ref, listAll, getDownloadURL } from 'firebase/storage';
-import { storage } from '@config/secure-firebase';
+import { storage, ensureFirebase } from '@config/secure-firebase';
 import log from '@services/logger';
 import cacheService from '@services/cacheServiceRefactored';
 import ProgressBarColorPicker from '@components/ProgressBarColorPicker';
@@ -85,6 +85,7 @@ const ThemeSelector = () => {
   // Funkce pro načtení náhledu pro pozadí s cachováním
   const loadThumbnailForBackground = useCallback(async (imageName) => {
     try {
+      await ensureFirebase();
       const cacheKey = `background/thumbnails/${imageName}`;
 
       // Zkontroluj cache PRVNÍ
@@ -116,6 +117,7 @@ const ThemeSelector = () => {
   // Funkce pro načtení pozadí z Firebase Storage
   const loadFirebaseBackgrounds = useCallback(async () => {
     try {
+      await ensureFirebase();
       setFirebaseBackgroundsLoading(true);
       setFirebaseBackgroundsError(null);
 

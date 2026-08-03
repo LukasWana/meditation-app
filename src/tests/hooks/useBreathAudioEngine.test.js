@@ -63,6 +63,7 @@ const createMockAudioContext = (initialTime = 10) => {
 vi.mock('@config/secure-firebase', () => ({
   storage: {}, auth: {}, db: {}, app: {}, database: {},
   realtimeDatabase: {}, appCheck: null,
+  ensureFirebase: vi.fn(async () => {}),
   withFirebaseErrorHandling: vi.fn(async (op) => op()),
   firebaseUtils: { getDocument: vi.fn(), setDocument: vi.fn(), getFile: vi.fn() },
   default: {},
