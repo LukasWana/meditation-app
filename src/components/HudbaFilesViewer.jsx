@@ -4,6 +4,7 @@ import { storage, ensureFirebase } from '../config/secure-firebase';
 import { extractAudioMetadata, formatDuration, formatDurationDetailed } from '../utils/audioMetadataExtractor';
 import audioMetadataStorageService from '../services/audioMetadataStorageService';
 import log from '@services/logger';
+import { Heading } from '@components/ui/Heading';
 
 /**
  * Hudba Files Viewer Component
@@ -249,7 +250,7 @@ const HudbaFilesViewer = () => {
 
   const renderFileList = (files, title, _folder) => (
     <div className="border rounded-lg p-4 mb-4">
-      <h3 className="text-lg font-semibold mb-3 flex items-center">
+      <Heading level={3} className="flex items-center">
         📁 {title}
         <span className="ml-2 text-sm bg-blue-100 text-blue-800 px-2 py-1 rounded">
           {files.length} souborů
@@ -264,7 +265,7 @@ const HudbaFilesViewer = () => {
             {formatDuration(files.reduce((sum, file) => sum + (file.duration || 0), 0))}
           </span>
         )}
-      </h3>
+      </Heading>
 
       {files.length === 0 ? (
         <p className="text-gray-500 italic">Žádné soubory v této složce</p>
@@ -327,9 +328,9 @@ const HudbaFilesViewer = () => {
     <div className="space-y-6">
       {/* Header */}
       <div className="bg-purple-50 p-4 rounded-lg">
-        <h2 className="text-xl font-semibold text-purple-900 mb-2">
+        <Heading level={2} visual={2} className="font-semibold text-purple-900">
           🎵 Hudba Files Viewer
-        </h2>
+        </Heading>
         <p className="text-purple-700">
           Detailní přehled všech hudebních souborů
         </p>
@@ -337,7 +338,7 @@ const HudbaFilesViewer = () => {
 
       {/* Summary */}
       <div className="bg-green-50 p-4 rounded-lg">
-        <h3 className="text-lg font-semibold text-green-900 mb-2">📊 Celkové statistiky</h3>
+        <Heading level={3} className="font-semibold text-green-900">📊 Celkové statistiky</Heading>
         <div className="grid grid-cols-3 gap-4 text-sm">
           <div>
             <strong>Celkem souborů:</strong> {files.totalFiles}

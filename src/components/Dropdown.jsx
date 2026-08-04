@@ -77,7 +77,6 @@ const Dropdown = ({
               style={{
                 width: '100%',
                 padding: '12px 16px',
-                fontSize: '14px',
                 fontWeight: '500',
                 backgroundColor: value === option.value ? '#f3f4f6' : 'transparent',
                 color: value === option.value ? '#111827' : '#374151',

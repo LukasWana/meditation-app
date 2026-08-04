@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import meditatebodySvg from '../../../assets/flags/meditatebody.svg';
 import { useTheme } from '@contexts/ThemeContext';
 import { useThemeColors } from '@hooks';
+import { Heading } from '@components/ui/Heading';
 import { usePageVisible } from '@hooks/usePageVisible';
 
 // Letter-by-letter reveal variants
@@ -277,12 +278,13 @@ const IntroScreen = ({ onIntroComplete }) => {
                   </motion.div>
 
                   {/* Text "Meditácia" - letter-by-letter reveal */}
-                  <motion.h1
-                    className="text-6xl font-light tracking-normal flex"
-                    style={{ color: displayTextColor, fontSize: '3.2rem', perspective: 400 }}
+                  <Heading
+                    level={1}
+                    visual="display"
+                    className="tracking-normal flex"
+                    style={{ color: displayTextColor, perspective: 400 }}
                     variants={letterContainer}
                     initial="hidden"
-                    animate="visible"
                   >
                     {textLetters.map((char, index) => (
                       <motion.span
@@ -297,7 +299,7 @@ const IntroScreen = ({ onIntroComplete }) => {
                         {char}
                       </motion.span>
                     ))}
-                  </motion.h1>
+                  </Heading>
 
                   {/* Subtitle fade-in po textu */}
                   <motion.p

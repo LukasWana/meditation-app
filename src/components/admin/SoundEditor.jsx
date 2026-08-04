@@ -2,6 +2,7 @@ import React from 'react';
 import { motion } from 'framer-motion';
 import { Edit, Save, RefreshCw, FileAudio, Play, Pause } from 'lucide-react';
 import Waveform from '@components/Waveform';
+import { Heading } from '@components/ui/Heading';
 
 export const SoundEditor = ({
   soundFiles,
@@ -26,10 +27,10 @@ export const SoundEditor = ({
       className={`p-6 rounded-lg border mt-6 ${cardClasses}`}
     >
       <div className="flex justify-between items-center mb-4">
-        <h3 className="text-xl font-semibold flex items-center">
+        <Heading level={3} visual={2} className="font-semibold flex items-center">
           <Edit className="mr-2 text-indigo-500" size={24} />
           Editace popisků zvuků
-        </h3>
+        </Heading>
         <button
           onClick={loadSoundFiles}
           disabled={loading}

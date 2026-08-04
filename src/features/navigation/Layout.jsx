@@ -172,7 +172,7 @@ const Layout = ({
         <div className="fixed top-16 right-16 w-80 bg-white/95 backdrop-blur-sm border border-gray-200 rounded-lg shadow-xl z-50">
           <div className="py-4">
             <div className="px-6 py-3">
-              <h3 className="text-lg font-medium text-gray-800 mb-4">Účet</h3>
+              <h3 className="font-medium text-gray-800">Účet</h3>
 
               <button className="w-full text-left px-4 py-4 text-lg hover:bg-gray-100 rounded-lg transition-colors duration-200 mb-2 text-gray-700">
                 Nastavení

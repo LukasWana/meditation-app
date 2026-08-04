@@ -4,6 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { X, Music2 } from 'lucide-react';
 import { useLanguage } from '@contexts/LanguageContext';
 import { useTheme } from '@contexts/ThemeContext';
+import { Heading } from '@components/ui/Heading';
 
 // Lazy loading WheelPicker komponent pro lepší performance
 const WheelPicker = lazy(() => import('@components/WheelPicker').then(m => ({ default: m.default })));
@@ -62,9 +63,9 @@ export const WheelPickerModal = ({ isOpen, onClose, value, onChange, min, max, s
             {/* Header */}
             <div className="flex items-center justify-between mb-6 flex-shrink-0 w-full text-white">
               {title && (
-                <h2 className="text-2xl font-light">
+                <Heading level={2}>
                   {typeof title === 'string' ? title : t(title)}
-                </h2>
+                </Heading>
               )}
               <button
                 onClick={onClose}
@@ -216,9 +217,9 @@ export const DualWheelPickerModal = ({
             {/* Header */}
             <div className="flex items-center justify-between mb-6 flex-shrink-0 text-white">
               {title && (
-                <h2 className="text-2xl font-light">
+                <Heading level={2}>
                   {typeof title === 'string' ? title : t(title)}
-                </h2>
+                </Heading>
               )}
               <button
                 onClick={onClose}

@@ -2,6 +2,7 @@ import React from 'react';
 import { motion } from 'framer-motion';
 import { RefreshCw, Database, BarChart3 } from 'lucide-react';
 import uiDataService from '@services/uiDataService';
+import { Heading } from '@components/ui/Heading';
 
 export const QuickActions = ({
   checkStatus,
@@ -23,7 +24,7 @@ export const QuickActions = ({
       transition={{ delay: 0.3 }}
       className={`p-6 rounded-lg border mt-6 ${cardClasses}`}
     >
-      <h3 className="text-xl font-semibold mb-4">Rychlé akce</h3>
+      <Heading level={3} visual={2} className="font-semibold">Rychlé akce</Heading>
       <div className="flex flex-wrap gap-3">
         <button
           onClick={checkStatus}

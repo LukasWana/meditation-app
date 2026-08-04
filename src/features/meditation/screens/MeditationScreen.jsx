@@ -5,6 +5,7 @@ import FramerButton from '@components/FramerButton';
 import FramerSection from '@components/FramerSection';
 import FramerPageTransition from '@components/FramerPageTransition';
 import BackButton from '@components/BackButton';
+import { Heading } from '@components/ui/Heading';
 import { useLanguage } from '@contexts/LanguageContext';
 import { useTheme } from '@contexts/ThemeContext';
 import { storage, ensureFirebase } from '@config/secure-firebase';
@@ -327,9 +328,9 @@ const MeditationScreen = ({
             delay={0.1}
           >
             <div style={{ height: '3.5rem', display: 'flex', flexDirection: 'column', justifyContent: 'flex-start', alignItems: 'center', marginBottom: '0.5rem' }}>
-              <h1 className="text-4xl font-light" style={{ minHeight: '2.5rem', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <Heading level={1}>
                 {t('slova')}
-              </h1>
+              </Heading>
             </div>
             <p className="text-xl text-center text-gray-700 mb-8">
               {t('mluvene')}
@@ -380,9 +381,9 @@ const MeditationScreen = ({
                     <div className="flex items-center justify-between">
                       <div className="flex items-center space-x-3">
                         <div>
-                          <h3 className="text-2xl font-light">
+                          <Heading level={3} visual={2}>
                             {item.title}
-                          </h3>
+                          </Heading>
                           {/* {item.voiceInfo && (
                             <p className="text-sm text-gray-500 mt-1">
                               {item.voiceInfo}

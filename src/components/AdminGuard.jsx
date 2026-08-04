@@ -1,5 +1,6 @@
 import React from 'react';
 import { useAuth } from '@contexts/AuthContext';
+import { Heading } from '@components/ui/Heading';
 
 export const AdminGuard = ({ children }) => {
   const { user, isAdmin, isLoading, signInWithGoogle, signOut, error } = useAuth();
@@ -15,7 +16,7 @@ export const AdminGuard = ({ children }) => {
   if (!user) {
     return (
       <div className="flex flex-col items-center justify-center min-h-screen gap-4 text-center px-4">
-        <h1 className="text-2xl font-semibold">Přihlášení vyžadováno</h1>
+        <Heading level={1} visual={2} className="font-semibold">Přihlášení vyžadováno</Heading>
         <p>Pro přístup do administrace se přihlaste přes Google.</p>
         <button
           onClick={signInWithGoogle}
@@ -31,7 +32,7 @@ export const AdminGuard = ({ children }) => {
   if (!isAdmin) {
     return (
       <div className="flex flex-col items-center justify-center min-h-screen gap-4 text-center px-4">
-        <h1 className="text-2xl font-semibold">Nemáte oprávnění</h1>
+        <Heading level={1} visual={2} className="font-semibold">Nemáte oprávnění</Heading>
         <p>Účet nemá admin oprávnění. Přihlaste se admin účtem.</p>
         <div className="flex gap-3">
           <button

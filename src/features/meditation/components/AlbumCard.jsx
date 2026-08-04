@@ -1,6 +1,7 @@
 import React from 'react';
 import FramerButton from '@components/FramerButton';
 import FramerSection from '@components/FramerSection';
+import { Heading } from '@components/ui/Heading';
 export const AlbumCard = ({
   item,
   idx,
@@ -54,9 +55,9 @@ export const AlbumCard = ({
               </div>
             )}
             <div className="flex-1">
-              <h3 className="text-2xl font-light">
+              <Heading level={3} visual={2}>
                 {item.title}
-              </h3>
+              </Heading>
               {item.type === 'album' && (
                 <p className="text-sm text-gray-500 mt-1">
                   Album • {item.tracks.length} skladieb

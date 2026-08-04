@@ -4,6 +4,7 @@ import { ThemeContext } from '@contexts/ThemeContext';
 import { useLanguage } from '@contexts/LanguageContext';
 import FramerSection from '@components/FramerSection';
 import { Moon, Sun } from 'lucide-react';
+import { Heading } from '@components/ui/Heading';
 
 const ColorModeSelector = () => {
   const { t } = useLanguage();
@@ -39,9 +40,9 @@ const ColorModeSelector = () => {
         className="glass-panel w-full p-6"
         style={{ color: textColor }}
       >
-        <h3 className="text-2xl font-light mb-4" style={{ color: textColor }}>
+        <Heading level={3} visual={2} style={{ color: textColor }}>
           {t('barevnyRezim') || 'Barevný režim'}
-        </h3>
+        </Heading>
         <div className="space-y-3">
           {modes.map((mode) => {
             const Icon = mode.icon;

@@ -1,5 +1,6 @@
 import React from 'react';
 import { motion } from 'framer-motion';
+import { Heading } from '@components/ui/Heading';
 
 function ErrorBoundaryContent({ hasError, error, errorInfo, onRetry }) {
   if (!hasError) return null;
@@ -31,9 +32,9 @@ function ErrorBoundaryContent({ hasError, error, errorInfo, onRetry }) {
           ⚠️
         </motion.div>
 
-        <h1 className="text-2xl font-bold mb-4" style={{ color: textColor }}>
+        <Heading level={1} visual={2} className="font-bold" style={{ color: textColor }}>
           Oops! Něco se pokazilo
-        </h1>
+        </Heading>
 
         <p className="mb-6" style={{ color: textSecondaryColor }}>
           Aplikace narazila na neočekávanou chybu. Zkus to prosím znovu.

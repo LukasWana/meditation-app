@@ -6,6 +6,7 @@ import { useTheme } from '@contexts/ThemeContext';
 import { realtimeMetadataService } from '@services/realtimeMetadataService';
 import Waveform from './Waveform';
 import log from '@services/logger';
+import { Heading } from '@components/ui/Heading';
 
 const SoundThemeGallery = ({ isOpen, onClose, onSelectSound, selectedInSound, selectedOutSound, selectedClickSound, selectedFinalSound, selectedCountdownSound }) => {
   // Fallback pro undefined hodnoty
@@ -505,9 +506,9 @@ const SoundThemeGallery = ({ isOpen, onClose, onSelectSound, selectedInSound, se
           >
             {/* Header */}
             <div className="flex items-center justify-between mb-4">
-              <h2 className="text-2xl font-light">
+              <Heading level={2}>
                 {t('vyberteZvuky')}
-              </h2>
+              </Heading>
               <button
                 onClick={onClose}
                 className="p-2 hover:bg-black/10 rounded-full transition-colors"

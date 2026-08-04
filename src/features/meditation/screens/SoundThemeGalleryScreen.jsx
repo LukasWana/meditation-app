@@ -3,6 +3,7 @@ import { motion } from 'framer-motion';
 import { ArrowDown, ArrowUp, MousePointerClick, CheckCircle, Play, Pause, Clock } from 'lucide-react';
 import FramerPageTransition from '@components/FramerPageTransition';
 import BackButton from '@components/BackButton';
+import { Heading } from '@components/ui/Heading';
 import FramerSection from '@components/FramerSection';
 import { useLanguage } from '@contexts/LanguageContext';
 import { useTheme } from '@contexts/ThemeContext';
@@ -436,9 +437,9 @@ const SoundThemeGalleryScreen = ({
             delay={0.1}
           >
             <div style={{ height: '3.5rem', display: 'flex', flexDirection: 'column', justifyContent: 'flex-start', alignItems: 'center', marginBottom: '0.5rem' }}>
-              <h1 className="text-4xl font-light" style={{ minHeight: '2.5rem', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <Heading level={1}>
                 {t('vyberteZvuky')}
-              </h1>
+              </Heading>
             </div>
           </FramerSection>
 
@@ -453,7 +454,7 @@ const SoundThemeGalleryScreen = ({
                 >
                   <div className="text-4xl flex-shrink-0">{theme.icon}</div>
                   <div className="flex flex-col items-start text-left flex-1">
-                    <h3 className="font-bold text-lg mb-0.5">{theme.name}</h3>
+                    <Heading level={3} className="font-bold mb-0.5">{theme.name}</Heading>
                     <p className="text-sm opacity-90 leading-snug">{theme.description}</p>
                   </div>
                 </button>
@@ -465,7 +466,7 @@ const SoundThemeGalleryScreen = ({
               >
                 <div className="text-3xl flex-shrink-0">🎛️</div>
                 <div className="flex flex-col items-start text-left flex-1">
-                  <h3 className="font-bold text-lg mb-0.5">Moje vlastní (Pokročilé)</h3>
+                    <Heading level={3} className="font-bold mb-0.5">Moje vlastní (Pokročilé)</Heading>
                   <p className="text-sm opacity-80 text-gray-600 leading-snug">Složit si zvuky z jednotlivých souborů přesně podle sebe</p>
                 </div>
               </button>

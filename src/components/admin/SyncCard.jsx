@@ -1,6 +1,7 @@
 import React from 'react';
 import { motion } from 'framer-motion';
 import { RefreshCw } from 'lucide-react';
+import { Heading } from '@components/ui/Heading';
 
 export const SyncCard = ({
   title,
@@ -39,10 +40,10 @@ export const SyncCard = ({
       transition={{ delay }}
       className={`p-6 rounded-lg border ${cardClasses}`}
     >
-      <h3 className="text-xl font-semibold mb-4 flex items-center">
+      <Heading level={3} visual={2} className="font-semibold flex items-center">
         <Icon className={`mr-2 ${textColorMap[color]}`} size={24} />
         {title}
-      </h3>
+      </Heading>
       <p className="text-gray-500 mb-4">{description}</p>
       <button
         onClick={onClick}

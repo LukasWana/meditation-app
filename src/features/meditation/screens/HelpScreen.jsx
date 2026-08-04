@@ -3,6 +3,7 @@ import FramerButton from '@components/FramerButton';
 import FramerSection from '@components/FramerSection';
 import FramerPageTransition from '@components/FramerPageTransition';
 import BackButton from '@components/BackButton';
+import { Heading } from '@components/ui/Heading';
 import { useTheme } from '@contexts/ThemeContext';
 
 const HelpScreen = ({
@@ -31,9 +32,9 @@ const HelpScreen = ({
               animationType="fadeIn"
               delay={0.1}
             >
-              <h1 className="text-6xl font-light text-center">
+              <Heading level={1} visual="display" className="text-center">
                 první pomoc
-              </h1>
+              </Heading>
             </FramerSection>
 
             <div className="space-y-6">
@@ -47,9 +48,9 @@ const HelpScreen = ({
                   className="w-full p-2 sm:p-8 text-left"
                 >
                   <div>
-                    <h3 className="text-3xl font-light mb-2">
+                    <Heading level={3} visual={1} className="mb-2">
                       dýchanie
-                    </h3>
+                    </Heading>
                     <p className="text-gray-500">
                       upokojujúce dýchacie cvičenie
                     </p>
@@ -66,9 +67,9 @@ const HelpScreen = ({
                   className="w-full p-2 sm:p-8 text-left"
                 >
                   <div>
-                    <h3 className="text-3xl font-light mb-2">
+                    <Heading level={3} visual={1} className="mb-2">
                       ukotvenie
-                    </h3>
+                    </Heading>
                     <p className="text-gray-500">
                       5-4-3-2-1 technika
                     </p>
@@ -85,9 +86,9 @@ const HelpScreen = ({
                   className="w-full p-2 sm:p-8 text-left"
                 >
                   <div>
-                    <h3 className="text-3xl font-light mb-2">
+                    <Heading level={3} visual={1} className="mb-2">
                       ticho
-                    </h3>
+                    </Heading>
                     <p className="text-gray-500">
                       5 minút kľudu
                     </p>
