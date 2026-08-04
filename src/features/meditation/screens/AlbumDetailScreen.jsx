@@ -30,7 +30,7 @@ const AlbumDetailScreen = ({
         transition={{ duration: 0.3 }}
       >
         <div className="text-center">
-          <Heading level={1} visual={2}>
+          <Heading level={1}>
             Album nenalezeno
           </Heading>
           <button
@@ -117,11 +117,10 @@ const AlbumDetailScreen = ({
 
         {/* Album info */}
         <div className="flex-1 flex flex-col items-center justify-start p-2 sm:p-8 pb-20">
-        <motion.div
-          className="text-center mb-8"
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 0.1, duration: 0.2, ease: "easeInOut" }}
+        <FramerSection
+          className="text-center mb-6"
+          animationType="fadeIn"
+          delay={0.1}
         >
           {/* Album cover */}
           {album.coverImage && (
@@ -150,15 +149,17 @@ const AlbumDetailScreen = ({
           )}
 
           {/* Album title */}
-          <Heading level={1} visual="display">
-            {album.title}
-          </Heading>
+          <div style={{ height: '3.5rem', display: 'flex', flexDirection: 'column', justifyContent: 'flex-start', alignItems: 'center', marginBottom: '0.5rem' }}>
+            <Heading level={1}>
+              {album.title}
+            </Heading>
+          </div>
 
           {/* Track count */}
           <p className="text-lg sm:text-xl text-gray-700">
             {album.tracks.length} skladeb
           </p>
-        </motion.div>
+        </FramerSection>
 
         {/* Track list */}
         <div className="w-full max-w-2xl space-y-3">

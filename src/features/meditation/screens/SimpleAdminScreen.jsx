@@ -46,7 +46,7 @@ const SimpleAdminScreen = () => {
       {/* Header */}
       <div className={`p-6 border-b ${isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'}`}>
         <div className="flex justify-between items-center">
-          <Heading level={1} visual={2} className="font-bold">Zjednodušený Admin Panel</Heading>
+          <Heading level={1}>Zjednodušený Admin Panel</Heading>
           <button
             onClick={() => setIsDarkMode(!isDarkMode)}
             className={`p-2 rounded-lg transition-colors ${

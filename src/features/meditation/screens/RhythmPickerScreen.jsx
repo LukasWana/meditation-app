@@ -1,6 +1,7 @@
 import React, { useState, Suspense, lazy } from 'react';
 import { Music2, Plus, Minus } from 'lucide-react';
 import FramerPageTransition from '@components/FramerPageTransition';
+import FramerSection from '@components/FramerSection';
 import BackButton from '@components/BackButton';
 import { Heading } from '@components/ui/Heading';
 import { useLanguage } from '@contexts/LanguageContext';
@@ -85,9 +86,17 @@ const RhythmPickerScreen = ({
         <div className="max-w-md w-full flex flex-col items-center justify-center min-h-[calc(100vh-4rem)] py-8">
           {/* Středový blok: nadpis + wheel (vertikálně doprostřed) */}
           <div className="flex flex-col items-center justify-center flex-1 w-full">
-            <Heading level={2} className="mb-6 text-center" style={{ color: displayTextColor }}>
-              {t('rytmus') || 'rytmus'}
-            </Heading>
+            <FramerSection
+              className="text-center mb-6"
+              animationType="fadeIn"
+              delay={0.1}
+            >
+              <div style={{ height: '3.5rem', display: 'flex', flexDirection: 'column', justifyContent: 'flex-start', alignItems: 'center', marginBottom: '0.5rem' }}>
+                <Heading level={1}>
+                  {t('rytmus') || 'rytmus'}
+                </Heading>
+              </div>
+            </FramerSection>
 
             <Suspense fallback={
               <div className="flex items-center justify-center w-full max-w-md h-64">

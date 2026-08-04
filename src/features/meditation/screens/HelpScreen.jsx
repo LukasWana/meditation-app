@@ -28,13 +28,15 @@ const HelpScreen = ({
         <div className="flex-1 flex items-center justify-center p-2 sm:p-8">
           <div className="max-w-md w-full mt-16">
             <FramerSection
-              className="mb-16"
+              className="text-center mb-6"
               animationType="fadeIn"
               delay={0.1}
             >
-              <Heading level={1} visual="display" className="text-center">
-                první pomoc
-              </Heading>
+              <div style={{ height: '3.5rem', display: 'flex', flexDirection: 'column', justifyContent: 'flex-start', alignItems: 'center', marginBottom: '0.5rem' }}>
+                <Heading level={1}>
+                  první pomoc
+                </Heading>
+              </div>
             </FramerSection>
 
             <div className="space-y-6">
@@ -48,7 +50,7 @@ const HelpScreen = ({
                   className="w-full p-2 sm:p-8 text-left"
                 >
                   <div>
-                    <Heading level={3} visual={1} className="mb-2">
+                    <Heading level={3} className="mb-2">
                       dýchanie
                     </Heading>
                     <p className="text-gray-500">
@@ -67,7 +69,7 @@ const HelpScreen = ({
                   className="w-full p-2 sm:p-8 text-left"
                 >
                   <div>
-                    <Heading level={3} visual={1} className="mb-2">
+                    <Heading level={3} className="mb-2">
                       ukotvenie
                     </Heading>
                     <p className="text-gray-500">
@@ -86,7 +88,7 @@ const HelpScreen = ({
                   className="w-full p-2 sm:p-8 text-left"
                 >
                   <div>
-                    <Heading level={3} visual={1} className="mb-2">
+                    <Heading level={3} className="mb-2">
                       ticho
                     </Heading>
                     <p className="text-gray-500">
