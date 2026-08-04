@@ -2,10 +2,9 @@
  * Hook pro legacy playback funkce
  * Obsahuje playAudio a související logiku
  */
-import { useRef } from 'react';
 import log from '@services/logger';
 
-export const useLegacyPlayback = (audioRef, audioUrl, audioState, setAudioState, setPlaybackState) => {
+export const useLegacyPlayback = (audioRef, audioUrl, _audioState, _setAudioState, _setPlaybackState) => {
   /**
    * Centrální funkce pro audio playback - používá se ve všech funkcích
    * @param {string} context - Kontext pro logování

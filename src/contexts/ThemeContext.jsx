@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect, useMemo, useCallback } from 'react';
+import React, { createContext, useContext, useState, useEffect, useMemo } from 'react';
 import { THEMES, DEFAULT_THEME_ID, getThemeById } from '@data/themes';
 import cacheService from '@services/cacheServiceRefactored';
 import { StatusBar, Style } from '@capacitor/status-bar';
@@ -42,12 +42,12 @@ export const ThemeProvider = ({ children }) => {
   });
 
   // Helper funkce pro získání klíče localStorage pro pozadí (globální – nezávislé na tématu)
-  const getBackgroundStorageKey = useCallback(() => {
+  const getBackgroundStorageKey = () => {
     return 'meditation-app-custom-background';
-  }, []);
+  };
 
   // Helper funkce pro načtení pozadí
-  const loadBackground = useCallback(() => {
+  const loadBackground = () => {
     try {
       const key = getBackgroundStorageKey();
       const saved = localStorage.getItem(key);
@@ -56,7 +56,7 @@ export const ThemeProvider = ({ children }) => {
       console.warn('Failed to load custom background from localStorage:', error);
       return null;
     }
-  }, [getBackgroundStorageKey]);
+  };
 
   const [customBackground, setCustomBackground] = useState(() => {
     return loadBackground();
@@ -111,7 +111,7 @@ export const ThemeProvider = ({ children }) => {
   }, [customBackground, baseTheme, themeId]);
 
   // Získat data z customBackground
-  const getBackgroundData = useCallback(() => {
+  const getBackgroundData = () => {
     if (!customBackground) return null;
 
     try {
@@ -121,7 +121,7 @@ export const ThemeProvider = ({ children }) => {
       // Pokud to není JSON, použít jako URL (starý formát)
       return { url: customBackground };
     }
-  }, [customBackground]);
+  };
 
   // State pro sledování, zda je to první načtení (pro fade-in animaci)
   const [isFirstLoad, setIsFirstLoad] = useState(true);
@@ -133,21 +133,21 @@ export const ThemeProvider = ({ children }) => {
   const [loadedBackgroundUrl, setLoadedBackgroundUrl] = useState(null);
 
   // Získat zamýšlené URL (pro logiku tématu)
-  const getTargetBackgroundImageUrl = useCallback(() => {
+  const getTargetBackgroundImageUrl = () => {
     const data = getBackgroundData();
     if (!data || data.backgroundColor) return null;
     if (data?.url) return data.url;
     if (data?.downloadURL) return data.downloadURL;
     if (data?.firebasePath && (data.firebasePath.startsWith('http://') || data.firebasePath.startsWith('https://'))) return data.firebasePath;
     return null;
-  }, [getBackgroundData]);
+  };
 
-  const getBackgroundImageUrl = useCallback(() => {
+  const getBackgroundImageUrl = () => {
     return loadedBackgroundUrl;
-  }, [loadedBackgroundUrl]);
+  };
 
   // Získat barvu progress baru (uloženou nebo extrahovanou)
-  const getProgressBarColor = useCallback(() => {
+  const getProgressBarColor = () => {
     // Pokud máme uloženou barvu, použij ji
     if (progressBarColor) {
       return progressBarColor;
@@ -163,17 +163,17 @@ export const ThemeProvider = ({ children }) => {
     // Fallback barva
     const themeColors = getCurrentThemeColors();
     return themeColors?.primary || themeColors?.text || 'rgba(0, 0, 0, 1)';
-  }, [progressBarColor, getBackgroundData, getCurrentThemeColors]);
+  };
 
   // Nastavit barvu progress baru
-  const setProgressBarColorCustom = useCallback((color) => {
+  const setProgressBarColorCustom = (color) => {
     setProgressBarColor(color);
     try {
       localStorage.setItem('meditation-app-progress-bar-color', color);
     } catch (error) {
       console.warn('Failed to save progress bar color to localStorage:', error);
     }
-  }, []);
+  };
 
   // Načíst uloženou barvu progress baru při startu
   useEffect(() => {
@@ -188,19 +188,19 @@ export const ThemeProvider = ({ children }) => {
   }, []);
 
   // Získat barvu pozadí z customBackground
-  const getBackgroundColor = useCallback(() => {
+  const getBackgroundColor = () => {
     const data = getBackgroundData();
     return data?.backgroundColor || null;
-  }, [getBackgroundData]);
+  };
 
   // Získat extrahované barvy z customBackground
-  const getExtractedColors = useCallback(() => {
+  const getExtractedColors = () => {
     const data = getBackgroundData();
     return data?.colors || null;
-  }, [getBackgroundData]);
+  };
 
   // Helper funkce pro úpravu barvy pro dark mode (ztmaví barvu)
-  const adjustColorForDarkMode = useCallback((color) => {
+  const adjustColorForDarkMode = (color) => {
     // Pokud je barva v rgba/rgb formátu, ztmavit ji
     const rgbaMatch = color.match(/rgba?\((\d+),\s*(\d+),\s*(\d+)(?:,\s*([\d.]+))?\)/);
     if (rgbaMatch) {
@@ -212,10 +212,10 @@ export const ThemeProvider = ({ children }) => {
     }
     // Fallback pro jiné formáty
     return 'rgba(30, 30, 30, 1)';
-  }, []);
+  };
 
   // Helper funkce pro úpravu barvy pro light mode (zesvětlí barvu, ale zachová odstín)
-  const adjustColorForLightMode = useCallback((color) => {
+  const adjustColorForLightMode = (color) => {
     // Pokud je barva v rgba/rgb formátu, zesvětlit ji, ale zachovat odstín
     const rgbaMatch = color.match(/rgba?\((\d+),\s*(\d+),\s*(\d+)(?:,\s*([\d.]+))?\)/);
     if (rgbaMatch) {
@@ -229,10 +229,10 @@ export const ThemeProvider = ({ children }) => {
     }
     // Fallback pro jiné formáty - použít světlou béžovou
     return 'rgba(244, 221, 196, 1)';
-  }, []);
+  };
 
   // Získat aktuální barvy tématu (buď z fotky, nebo defaultní)
-  const getCurrentThemeColors = useCallback(() => {
+  const getCurrentThemeColors = () => {
     const targetBackgroundUrl = getTargetBackgroundImageUrl();
     const customBackgroundColor = getBackgroundColor();
     const hasImage = !!targetBackgroundUrl && baseTheme?.allowsCustomBackground;
@@ -285,7 +285,7 @@ export const ThemeProvider = ({ children }) => {
       };
     }
     return colors;
-  }, [getTargetBackgroundImageUrl, getBackgroundColor, baseTheme, getExtractedColors, colorMode]);
+  };
 
   // Dynamické barvy (buď z fotky, nebo defaultní) - přepočítá se při změně colorMode
   // Použít useMemo pro optimalizaci - přepočítá se při změně colorMode, themeId, customBackground nebo baseTheme
@@ -309,7 +309,7 @@ export const ThemeProvider = ({ children }) => {
   }, [baseTheme, themeColors, customBackground]);
 
   // Získat styl pro pozadí
-  const getBackgroundStyle = useCallback(() => {
+  const getBackgroundStyle = () => {
     const backgroundUrl = getBackgroundImageUrl();
     const customBackgroundColor = getBackgroundColor();
     const themeColors = getCurrentThemeColors();
@@ -380,11 +380,11 @@ export const ThemeProvider = ({ children }) => {
     }
 
     return baseStyle;
-  }, [getBackgroundImageUrl, getBackgroundColor, getCurrentThemeColors, colorMode, baseTheme, currentTheme]);
+  };
 
   // Získat backgroundColor pro obrazovky - transparent když je obrázek
   // Vrací rgba(0,0,0,0) místo 'transparent' pro kompatibilitu s Framer Motion animacemi
-  const getScreenBackgroundColor = useCallback(() => {
+  const getScreenBackgroundColor = () => {
     const customBackgroundColor = getBackgroundColor();
     const targetBackgroundUrl = getTargetBackgroundImageUrl();
     const hasImage = !!targetBackgroundUrl && baseTheme?.allowsCustomBackground;
@@ -402,7 +402,7 @@ export const ThemeProvider = ({ children }) => {
 
     // Použít barvy z fotky pokud jsou, jinak defaultní
     return themeColors?.background || currentTheme?.colors?.background || '#f4ddc4';
-  }, [getBackgroundColor, getTargetBackgroundImageUrl, baseTheme, getCurrentThemeColors, colorMode, currentTheme]);
+  };
 
   // Aplikovat pozadí, barvy a fontFamily na body, root a #root element
   useEffect(() => {
@@ -469,7 +469,7 @@ export const ThemeProvider = ({ children }) => {
 
       // Přidat CSS třídu pro tmavé pozadí, která přepíše Tailwind text-gray-* třídy a bg-white/* třídy
       const isDarkText = themeColors.text.includes('255, 255, 255') || themeColors.text === '#ffffff' || themeColors.text === 'white';
-      const isLightText = themeColors.text.includes('0, 0, 0') || themeColors.text === '#000000' || themeColors.text === 'black';
+      const _isLightText = themeColors.text.includes('0, 0, 0') || themeColors.text === '#000000' || themeColors.text === 'black';
 
       // Aplikovat CSS POUZE pro tmavé pozadí (dark mode)
       if (isDarkText) {
@@ -482,7 +482,7 @@ export const ThemeProvider = ({ children }) => {
         }
 
         // Získat barvu karty
-        const cardColor = themeColors.card || 'rgba(0, 0, 0, 0.4)';
+        const _cardColor = themeColors.card || 'rgba(0, 0, 0, 0.4)';
 
         // CSS pro tmavé pozadí (bílý text)
         styleElement.textContent = `
@@ -805,34 +805,34 @@ export const ThemeProvider = ({ children }) => {
   }, [colorMode]);
 
   // Funkce pro změnu color mode
-  const changeColorMode = useCallback((mode) => {
+  const changeColorMode = (mode) => {
     if (mode === 'dark' || mode === 'light') {
       setColorMode(mode);
     }
-  }, []);
+  };
 
   // Funkce pro změnu tématu
-  const changeTheme = useCallback((newThemeId) => {
+  const changeTheme = (newThemeId) => {
     const theme = getThemeById(newThemeId);
     if (theme) {
       // Změnit téma – pozadí zůstává beze změny (je globální).
       // Všechna témata mají allowsCustomBackground=true.
       setThemeId(newThemeId);
     }
-  }, []);
+  };
 
   // Funkce pro nastavení custom pozadí
-  const setCustomBackgroundImage = useCallback((imageUrl) => {
+  const setCustomBackgroundImage = (imageUrl) => {
     // Ověřit, zda aktuální téma podporuje custom pozadí
     if (baseTheme?.allowsCustomBackground) {
       setCustomBackground(imageUrl);
     } else {
       console.warn('Current theme does not support custom background');
     }
-  }, [baseTheme]);
+  };
 
   // Funkce pro odstranění custom pozadí (pro aktuální téma)
-  const removeCustomBackground = useCallback(() => {
+  const removeCustomBackground = () => {
     try {
       const key = getBackgroundStorageKey();
       localStorage.removeItem(key);
@@ -840,7 +840,7 @@ export const ThemeProvider = ({ children }) => {
       console.warn('Failed to remove custom background from localStorage:', error);
     }
     setCustomBackground(null);
-  }, [getBackgroundStorageKey]);
+  };
 
   const value = useMemo(() => ({
     themes: THEMES,
@@ -861,11 +861,8 @@ export const ThemeProvider = ({ children }) => {
     progressBarColor,
     setProgressBarColor: setProgressBarColorCustom,
     getProgressBarColor
-  }), [currentTheme, themeId, changeTheme, customBackground, setCustomBackgroundImage,
-      removeCustomBackground, getBackgroundStyle, getScreenBackgroundColor,
-      getCurrentThemeColors, getBackgroundImageUrl, getBackgroundColor, baseTheme,
-      colorMode, changeColorMode, progressBarColor, setProgressBarColorCustom,
-      getProgressBarColor]);
+  }), [currentTheme, themeId, customBackground, baseTheme, colorMode, progressBarColor,
+      loadedBackgroundUrl, isFirstLoad]);
 
   return (
     <ThemeContext.Provider value={value}>

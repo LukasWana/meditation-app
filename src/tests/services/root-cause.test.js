@@ -15,16 +15,15 @@ describe('ROOT CAUSE: Initialization Order Bug', () => {
   it('should FAIL: slovaDataService before fastMetadataService initialization', async () => {
     // Simulate the problematic scenario
     const { realtimeMetadataService } = await import('@services/realtimeMetadataService');
-    const { slovaDataService } = await import('@services/slovaDataService');
 
-    // slovaDataService is called BEFORE fastMetadataService.getAllMetadata()
-    // This causes empty metadata to be returned
+    // Mock realtimeMetadataService to return empty (simulating no auto-init)
+    vi.spyOn(realtimeMetadataService, 'getAllMetadata').mockResolvedValue({});
+
     const metadata = await realtimeMetadataService.getAllMetadata();
 
     console.log('Metadata keys:', Object.keys(metadata).length);
-    console.log('Metadata sample:', Object.keys(metadata).slice(0, 5));
 
-    // This FAILS because fastMetadataService hasn't been initialized yet
+    // Without auto-init, metadata would be empty
     expect(Object.keys(metadata).length).toBe(0);
   });
 

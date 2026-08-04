@@ -31,7 +31,7 @@ const DurationPickerScreen = ({
   // Všechny texty by měly být bílé v dark mode, černé v light mode
   const displayTextColor = isDarkMode ? '#ffffff' : '#000000';
   const borderColor = themeColors?.border || 'rgba(0, 0, 0, 0.1)';
-  const cardColor = themeColors?.card || 'rgba(255, 255, 255, 0.7)';
+  const _cardColor = themeColors?.card || 'rgba(255, 255, 255, 0.7)';
 
   const handleConfirm = () => {
     setBreathDuration(tempValue); // Sets both breathDuration and breathTime

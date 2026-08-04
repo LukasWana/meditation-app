@@ -86,6 +86,7 @@ class SlovaDataService {
 
       if (!allMetadata || Object.keys(allMetadata).length === 0) {
         log.warn('No metadata in cache for slova processing');
+        this.isInitialized = true;
         return;
       }
 

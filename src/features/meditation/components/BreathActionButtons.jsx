@@ -37,10 +37,10 @@ const BreathActionButtons = ({
   // Speciální barvy pro tlačítko "pokračovat po skončení"
   // Pozor: v ThemeContext je globální override `[style*="background-color"] { color: ... !important; }`,
   // takže tady nepoužíváme inline `backgroundColor`, aby se nám nepřebila barva ikonky.
-  const continueBg = continueAfterEnd
+  const _continueBg = continueAfterEnd
     ? (isDarkMode ? '#ffffff' : '#000000')
     : (isDarkMode ? '#000000' : '#ffffff');
-  const continueFg = continueAfterEnd
+  const _continueFg = continueAfterEnd
     ? (isDarkMode ? '#000000' : '#ffffff')
     : (isDarkMode ? '#ffffff' : '#000000');
 

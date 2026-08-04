@@ -15,7 +15,7 @@ const ProgressBarColorPicker = ({ extractedColors, onColorSelect, currentColor }
   const isDarkMode = colorMode === 'dark';
   const textColor = themeColors.text || (isDarkMode ? 'rgba(255, 255, 255, 1)' : 'rgba(0, 0, 0, 1)');
   const textSecondaryColor = themeColors.textSecondary || (isDarkMode ? 'rgba(180, 180, 180, 1)' : 'rgba(100, 100, 100, 1)');
-  const borderColor = isDarkMode ? 'rgba(255, 255, 255, 0.2)' : 'rgba(0, 0, 0, 0.1)';
+  const _borderColor = isDarkMode ? 'rgba(255, 255, 255, 0.2)' : 'rgba(0, 0, 0, 0.1)';
 
   // Pokud nejsou extrahované barvy, neukazujeme picker
   if (!extractedColors || extractedColors.length === 0) {

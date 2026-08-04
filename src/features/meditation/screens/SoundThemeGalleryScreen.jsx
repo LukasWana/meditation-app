@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { ArrowDown, ArrowUp, MousePointerClick, CheckCircle, Play, Pause, Clock } from 'lucide-react';
 import FramerPageTransition from '@components/FramerPageTransition';

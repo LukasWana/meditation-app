@@ -16,7 +16,7 @@ export const WheelPickerModal = ({ isOpen, onClose, value, onChange, min, max, s
   const [tempValue, setTempValue] = React.useState(value);
 
   // Získat barvu pozadí z tématu
-  const backgroundColor = getScreenBackgroundColor() || currentTheme?.colors?.background || '#f4ddc4';
+  const _backgroundColor = getScreenBackgroundColor() || currentTheme?.colors?.background || '#f4ddc4';
 
   React.useEffect(() => {
     if (isOpen) {
@@ -161,7 +161,7 @@ export const DualWheelPickerModal = ({
   const [tempRightValue, setTempRightValue] = React.useState(rightValue);
 
   // Získat barvu pozadí z tématu
-  const backgroundColor = getScreenBackgroundColor() || currentTheme?.colors?.background || '#f4ddc4';
+  const _backgroundColor = getScreenBackgroundColor() || currentTheme?.colors?.background || '#f4ddc4';
 
   React.useEffect(() => {
     if (isOpen) {

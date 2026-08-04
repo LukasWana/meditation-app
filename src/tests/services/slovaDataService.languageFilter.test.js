@@ -26,46 +26,52 @@ describe('slovaDataService - Language Filtering Bug', () => {
 
   const testFiles = [
     {
-      fileName: 'SK/uzkost-zen',
+      fileName: 'SK/uzkost-zen.mp3',
       folder: 'meditacie',
       language: 'SK',
       gender: 'female',
-      topic: 'Úzkosť'
+      topic: 'Úzkosť',
+      parsed: { gender: 'female', topic: 'Úzkosť', title: 'Úzkosť' }
     },
     {
-      fileName: 'SK/strach-muz',
+      fileName: 'SK/strach-muz.mp3',
       folder: 'meditacie',
       language: 'SK',
       gender: 'male',
-      topic: 'Strach'
+      topic: 'Strach',
+      parsed: { gender: 'male', topic: 'Strach', title: 'Strach' }
     },
     {
-      fileName: 'CZ/strach-muz',
+      fileName: 'CZ/strach-muz.mp3',
       folder: 'meditacie',
       language: 'CZ',
       gender: 'male',
-      topic: 'Strach'
+      topic: 'Strach',
+      parsed: { gender: 'male', topic: 'Strach', title: 'Strach' }
     },
     {
-      fileName: 'CZ/uzkost-zen',
+      fileName: 'CZ/uzkost-zen.mp3',
       folder: 'meditacie',
       language: 'CZ',
       gender: 'female',
-      topic: 'Úzkosť'
+      topic: 'Úzkosť',
+      parsed: { gender: 'female', topic: 'Úzkosť', title: 'Úzkosť' }
     },
     {
-      fileName: 'EN/stress-woman',
+      fileName: 'EN/stress-woman.mp3',
       folder: 'meditacie',
       language: 'EN',
       gender: 'female',
-      topic: 'Stress'
+      topic: 'Stress',
+      parsed: { gender: 'female', topic: 'Stress', title: 'Stress' }
     },
     {
-      fileName: 'EN/anxiety-man',
+      fileName: 'EN/anxiety-man.mp3',
       folder: 'meditacie',
       language: 'EN',
       gender: 'male',
-      topic: 'Anxiety'
+      topic: 'Anxiety',
+      parsed: { gender: 'male', topic: 'Anxiety', title: 'Anxiety' }
     }
   ];
 

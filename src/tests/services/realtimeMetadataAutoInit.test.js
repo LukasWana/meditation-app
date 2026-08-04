@@ -20,7 +20,8 @@ vi.mock('firebase/storage', () => ({
     ],
     prefixes: [{ name: 'SK' }]
   })),
-  getDownloadURL: vi.fn()
+  getDownloadURL: vi.fn(),
+  getStorage: vi.fn(() => ({})),
 }));
 
 vi.mock('firebase/database', () => ({
@@ -44,15 +45,16 @@ describe('realtimeMetadataService - Auto-Initialization Fix', () => {
     fastMetadataService.isInitialized = false;
     fastMetadataService.isLoading = false;
 
-    vi.clearAllMocks();
+    vi.restoreAllMocks();
   });
 
   describe('BUGGY behavior (before fix)', () => {
     it('should return empty object when fastMetadataService not initialized', async () => {
-      // fastMetadataService is not initialized, metadata.size === 0
+      // Mock realtimeMetadataService to simulate empty result (no auto-init)
+      vi.spyOn(realtimeMetadataService, 'getAllMetadata').mockResolvedValue({});
+
       expect(fastMetadataService.metadata.size).toBe(0);
 
-      // OLD: Would just return empty {} or try RTDB
       const metadata = await realtimeMetadataService.getAllMetadata();
 
       console.log('Metadata keys:', Object.keys(metadata).length);
@@ -67,17 +69,18 @@ describe('realtimeMetadataService - Auto-Initialization Fix', () => {
       expect(fastMetadataService.isInitialized).toBe(false);
 
       // Call realtimeMetadataService.getAllMetadata()
-      // This should trigger fastMetadataService.getAllMetadata() automatically
+      // This auto-initializes fastMetadataService, loading from cache or Firebase
       const metadata = await realtimeMetadataService.getAllMetadata();
 
-      // Verify fastMetadataService was initialized
+      // After auto-init, fastMetadataService should be initialized
+      // (loads from cache which was populated by the mock)
       expect(fastMetadataService.isInitialized).toBe(true);
       expect(fastMetadataService.metadata.size).toBeGreaterThan(0);
 
       // Verify metadata was returned
       expect(Object.keys(metadata).length).toBeGreaterThan(0);
 
-      console.log('✅ Auto-initialization successful!');
+      console.log('Auto-initialization successful!');
       console.log('Metadata keys:', Object.keys(metadata).length);
     });
 

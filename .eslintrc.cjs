@@ -57,6 +57,9 @@ module.exports = {
   plugins: [
     'react'
   ],
+  globals: {
+    '__GOOGLE_SERVICES_JSON_PRESENT__': 'readonly'
+  },
   rules: {
     'react/react-in-jsx-scope': 'off',
     'react/prop-types': 'off',
@@ -74,15 +77,18 @@ module.exports = {
   },
   overrides: [
     {
-      files: ['**/*.test.js', '**/*.test.jsx', 'src/tests/**/*.js'],
+      files: ['**/*.test.js', '**/*.test.jsx', 'src/tests/**/*.js', 'src/__tests__/**/*.js'],
       globals: {
         describe: 'readonly',
         it: 'readonly',
         expect: 'readonly',
         beforeEach: 'readonly',
         afterEach: 'readonly',
+        beforeAll: 'readonly',
+        afterAll: 'readonly',
         vi: 'readonly',
-        test: 'readonly'
+        test: 'readonly',
+        jest: 'readonly'
       }
     }
   ]

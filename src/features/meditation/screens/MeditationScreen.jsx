@@ -86,7 +86,7 @@ const MeditationScreen = ({
   const normalizedLanguage = useMemo(() => language.toLowerCase(), [language]);
 
   // Použij nový Realtime Database filtrovací systém - inicializováno nahoře kvůli TDZ
-  const { meditationItems, isLoading, error, audioFiles } = useRealtimeMeditationFilter(gender, normalizedLanguage);
+  const { meditationItems, isLoading, error } = useRealtimeMeditationFilter(gender, normalizedLanguage);
 
   const [durations, setDurations] = useState(new Map());
 

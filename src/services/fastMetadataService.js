@@ -96,6 +96,7 @@ class FastMetadataService {
     console.log('🔍 [DEBUG] Trying to load from cache...');
     if (this.loadFromCache()) {
       this.isLoading = false;
+      this.isInitialized = true;
       console.log('✅ [DEBUG] Loaded from cache, metadata size:', this.metadata.size);
       log.success('✅ Loaded metadata from cache');
       return this.metadata;
@@ -340,6 +341,7 @@ class FastMetadataService {
 
       log.success(`✅ Fast metadata loading completed: ${this.metadata.size} files processed`);
 
+      this.isInitialized = true;
       return this.metadata;
 
     } catch (error) {

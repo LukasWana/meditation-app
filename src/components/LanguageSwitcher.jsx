@@ -11,10 +11,10 @@ const LanguageSwitcher = ({ className = "" }) => {
   const themeContext = useContext(ThemeContext);
   const colorMode = themeContext?.colorMode || 'light';
   const isDarkMode = colorMode === 'dark';
-  const borderColor = isDarkMode ? 'rgba(255, 255, 255, 0.2)' : 'rgba(0, 0, 0, 0.1)';
-  const bgColor = isDarkMode ? 'rgba(255, 255, 255, 0.1)' : 'rgba(255, 255, 255, 0.9)';
-  const activeBgColor = isDarkMode ? 'rgba(255, 255, 255, 1)' : 'rgba(0, 0, 0, 1)';
-  const hoverBgColor = isDarkMode ? 'rgba(255, 255, 255, 0.2)' : 'rgba(0, 0, 0, 0.05)';
+  const _borderColor = isDarkMode ? 'rgba(255, 255, 255, 0.2)' : 'rgba(0, 0, 0, 0.1)';
+  const _bgColor = isDarkMode ? 'rgba(255, 255, 255, 0.1)' : 'rgba(255, 255, 255, 0.9)';
+  const _activeBgColor = isDarkMode ? 'rgba(255, 255, 255, 1)' : 'rgba(0, 0, 0, 1)';
+  const _hoverBgColor = isDarkMode ? 'rgba(255, 255, 255, 0.2)' : 'rgba(0, 0, 0, 0.05)';
 
   const handleLanguageChange = (newLanguage) => {
     changeLanguage(newLanguage);

@@ -12,7 +12,7 @@ const AudioPermissionOverlay = ({
   const { currentTheme, getScreenBackgroundColor } = useTheme();
 
   // Získat barvu pozadí z tématu
-  const backgroundColor = getScreenBackgroundColor() || currentTheme?.colors?.background || '#f4ddc4';
+  const _backgroundColor = getScreenBackgroundColor() || currentTheme?.colors?.background || '#f4ddc4';
 
   if (!isVisible) return null;
 
