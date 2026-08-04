@@ -2,6 +2,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { LogOut, LogIn, Cloud, CloudOff, Loader } from 'lucide-react';
 import { useAuth } from '@contexts/AuthContext';
+import { Z_INDEX_CLASSES } from '@/constants/zIndex';
 
 const UserProfile = () => {
   const { user, isLoading, signInWithGoogle, signOut, syncLocalToCloud, syncCloudToLocal } = useAuth();
@@ -201,7 +202,7 @@ const UserProfile = () => {
         <>
           {/* Backdrop pro zavření menu */}
           <div
-            className="fixed inset-0 z-[9998]"
+            className={`fixed inset-0 ${Z_INDEX_CLASSES.MAX}`}
             onMouseDown={(e) => {
               // Zkontroluj, jestli kliknutí nebylo na tlačítko nebo v menu
               if (e.target.closest('button') || e.target.closest('.fixed.w-64')) {
@@ -221,7 +222,7 @@ const UserProfile = () => {
             style={{ backgroundColor: 'transparent', pointerEvents: 'auto' }}
           />
           <div
-            className="fixed w-64 bg-white rounded-lg shadow-xl border border-gray-200 py-2 z-[9999]"
+            className={`fixed w-64 bg-white rounded-lg shadow-xl border border-gray-200 py-2 ${Z_INDEX_CLASSES.MAX}`}
             style={{
               top: `${menuPosition.top}px`,
               right: `${menuPosition.right}px`,
