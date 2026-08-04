@@ -1,5 +1,6 @@
 import React, { useMemo, useRef, useEffect } from 'react';
 import { useAudioPlayer, useAudioPlayerLogic } from './hooks';
+import { useBackgroundAudio } from './hooks/useBackgroundAudio';
 import {
   AudioControls,
   CloseButton,
@@ -238,6 +239,14 @@ const AudioPlayer = ({
       gender: currentGender
     },
     getDescription: getAudioDescription
+  });
+
+  useBackgroundAudio({
+    isPlaying,
+    title: actualTitle,
+    artist: albumName || 'Meditation App',
+    duration: duration || 0,
+    artworkUrl: albumCover,
   });
 
   return (
