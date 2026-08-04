@@ -7,12 +7,11 @@ const FramerButton = ({
   className = '',
   variant = 'primary',
   disabled = false,
-  animationType: _animationType, // FramerMotion specific props - ne předávat do DOM
+  animationType: _animationType,
   delay: _delay,
   ...props
 }) => {
   const getVariantClasses = () => {
-    // Všechny tlačítka používají glassmorphism styl pro sjednocení designu bez tvrdých outlineů
     switch (variant) {
       case 'primary':
         return 'glass-button font-medium';
@@ -27,9 +26,8 @@ const FramerButton = ({
     }
   };
 
-  // Filtrovat props, které by neměly být předány do DOM
   const {
-    key: _key, // key by neměl být předán jako prop
+    key: _key,
     ...domProps
   } = props;
 
@@ -47,7 +45,6 @@ const FramerButton = ({
       `}
       disabled={disabled}
       onClick={onClick}
-      // Hover efekty odstraněny - žádné animace při hover
       {...domProps}
     >
       {children}
