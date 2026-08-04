@@ -1,7 +1,7 @@
 import React, { useCallback, useMemo, Suspense } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import Layout from './Layout';
-import { getTransitionVariants, getTransitionConfig } from '@config/animations';
+import { getTransitionVariants, getTransitionConfig } from '@config/motion';
 import {
   IntroScreen,
   HomeScreen,

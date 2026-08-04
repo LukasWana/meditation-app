@@ -16,11 +16,20 @@ android {
             ignoreAssetsPattern = '!.svn:!.git:!.ds_store:!*.scc:.*:!CVS:!thumbs.db:!picasa.ini:!*~'
         }
     }
+    signingConfigs {
+        release {
+            storeFile file(project.findProperty('MEDITATION_STORE_FILE') ?: '../debug.keystore')
+            storePassword project.findProperty('MEDITATION_STORE_PASSWORD') ?: 'android'
+            keyAlias project.findProperty('MEDITATION_KEY_ALIAS') ?: 'androiddebugkey'
+            keyPassword project.findProperty('MEDITATION_KEY_PASSWORD') ?: 'android'
+        }
+    }
     buildTypes {
         release {
             minifyEnabled true
             shrinkResources true
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+            signingConfig signingConfigs.release
         }
     }
 }

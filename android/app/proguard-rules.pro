@@ -44,7 +44,7 @@
 
 # === React / Vite ===
 # Keep JS bundle from being optimized away
--keepassets assets/**
+-keep class assets.** { *; }
 
 # Keep model classes used in JSON serialization
 -keepclassmembers class * {
