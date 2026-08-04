@@ -4,8 +4,8 @@ import { Heading } from '@components/ui/Heading';
 const AudioPlayerHeader = ({ title, duration, formatTime }) => {
   return (
     <div className="absolute top-[4vw] sm:top-8 left-1/2 transform -translate-x-1/2 w-full max-w-[480px] px-4">
-      <div className="flex flex-col items-center justify-center">
-        <Heading level={2} visual={2} className="text-center">
+      <div className="flex flex-col items-center justify-center text-center">
+        <Heading level={2} visual={2}>
           {title}
         </Heading>
         {duration && duration > 0 && (

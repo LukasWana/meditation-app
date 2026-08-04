@@ -327,7 +327,6 @@ const SettingsScreen = ({
                 <Heading
                   level={3}
                   visual={2}
-                  style={{ color: themeColors?.text || (colorMode === 'dark' ? 'rgba(255, 255, 255, 1)' : 'rgba(0, 0, 0, 1)') }}
                 >
                   {t('selectLanguage')}
                 </Heading>
@@ -387,7 +386,6 @@ const SettingsScreen = ({
                 <Heading
                   level={3}
                   visual={2}
-                  style={{ color: themeColors?.text || (colorMode === 'dark' ? 'rgba(255, 255, 255, 1)' : 'rgba(0, 0, 0, 1)') }}
                 >
                   {t('sdileniNastaveni')}
                 </Heading>
@@ -496,7 +494,6 @@ const SettingsScreen = ({
                 <Heading
                   level={3}
                   visual={2}
-                  style={{ color: themeColors?.text || (colorMode === 'dark' ? 'rgba(255, 255, 255, 1)' : 'rgba(0, 0, 0, 1)') }}
                 >
                   {t('pohlavie')}
                 </Heading>
@@ -556,7 +553,6 @@ const SettingsScreen = ({
                 <Heading
                   level={3}
                   visual={2}
-                  style={{ color: themeColors?.text || (colorMode === 'dark' ? 'rgba(255, 255, 255, 1)' : 'rgba(0, 0, 0, 1)') }}
                 >
                   {t('historieAktivity')}
                 </Heading>
@@ -594,7 +590,6 @@ const SettingsScreen = ({
                 <Heading
                   level={3}
                   visual={2}
-                  style={{ color: themeColors?.text || (colorMode === 'dark' ? 'rgba(255, 255, 255, 1)' : 'rgba(0, 0, 0, 1)') }}
                 >
                   {t('informacie')}
                 </Heading>

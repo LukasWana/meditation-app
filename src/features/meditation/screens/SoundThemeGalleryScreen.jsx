@@ -454,7 +454,7 @@ const SoundThemeGalleryScreen = ({
                 >
                   <div className="text-4xl flex-shrink-0">{theme.icon}</div>
                   <div className="flex flex-col items-start text-left flex-1">
-                    <Heading level={3} className="font-bold mb-0.5">{theme.name}</Heading>
+                    <Heading level={3} className="mb-0.5">{theme.name}</Heading>
                     <p className="text-sm opacity-90 leading-snug">{theme.description}</p>
                   </div>
                 </button>
@@ -466,7 +466,7 @@ const SoundThemeGalleryScreen = ({
               >
                 <div className="text-3xl flex-shrink-0">🎛️</div>
                 <div className="flex flex-col items-start text-left flex-1">
-                    <Heading level={3} className="font-bold mb-0.5">Moje vlastní (Pokročilé)</Heading>
+                    <Heading level={3} className="mb-0.5">Moje vlastní (Pokročilé)</Heading>
                   <p className="text-sm opacity-80 text-gray-600 leading-snug">Složit si zvuky z jednotlivých souborů přesně podle sebe</p>
                 </div>
               </button>
