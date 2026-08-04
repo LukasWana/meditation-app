@@ -452,20 +452,13 @@ export const ThemeProvider = ({ children }) => {
       });
     }
 
-    // Nastavit také přímo s !important pro zajištění, že se aplikuje
-    body.style.setProperty('font-family', fontFamily, 'important');
-    root.style.setProperty('font-family', fontFamily, 'important');
-    if (appRoot) {
-      appRoot.style.setProperty('font-family', fontFamily, 'important');
-    }
+    // Nastavit font-family a barvu textu přes CSS proměnné
+    // (dědičnost z @layer base v index.css zajistí propagaci bez !important)
+    root.style.setProperty('--theme-font-family', fontFamily);
 
     // Nastavit barvu textu globálně (pro tmavé fotky bílý text, pro světlé černý)
     if (themeColors?.text) {
-      body.style.setProperty('color', themeColors.text, 'important');
-      root.style.setProperty('color', themeColors.text, 'important');
-      if (appRoot) {
-        appRoot.style.setProperty('color', themeColors.text, 'important');
-      }
+      root.style.setProperty('--theme-text-color', themeColors.text);
 
       // Přidat CSS třídu pro tmavé pozadí, která přepíše Tailwind text-gray-* třídy a bg-white/* třídy
       const isDarkText = themeColors.text.includes('255, 255, 255') || themeColors.text === '#ffffff' || themeColors.text === 'white';

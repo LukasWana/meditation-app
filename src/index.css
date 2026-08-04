@@ -108,6 +108,21 @@ body {
 }
 
 /* ============================================
+   Base layer — font a barva textu z ThemeContextu
+   přes CSS proměnné, bez !important.
+   ============================================ */
+@layer base {
+  html {
+    color: var(--theme-text-color, inherit);
+    font-family: var(--theme-font-family, inherit);
+  }
+  body, #root {
+    color: inherit;
+    font-family: inherit;
+  }
+}
+
+/* ============================================
    Content Container - max-width pro obsah
    ============================================ */
 
