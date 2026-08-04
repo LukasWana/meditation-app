@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useTheme } from '@contexts/ThemeContext';
 import { Heading } from '@components/ui/Heading';
+import { Z_INDEX_CLASSES } from '@/constants/zIndex';
 
 const AudioPermissionOverlay = ({
   isVisible,
@@ -23,7 +24,7 @@ const AudioPermissionOverlay = ({
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
-        className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-[100]"
+        className={`fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center ${Z_INDEX_CLASSES.OVERLAY}`}
         onClick={onClose}
       >
         <motion.div

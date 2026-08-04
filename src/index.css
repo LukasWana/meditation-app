@@ -193,28 +193,6 @@ body {
 
 /* Pozadí zůstává na celou šířku díky aplikaci na body/#root */
 
-/* Animované tlačidlá */
-.animated-button {
-  position: relative;
-  overflow: hidden;
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-.animated-button:active {
-  transform: scale(0.98);
-}
-
-/* Smooth transitions */
-.screen-container {
-  transition: opacity 0.4s ease-in-out;
-}
-
-/* Touch feedback */
-.touch-feedback:active {
-  transform: scale(0.98);
-  opacity: 0.8;
-}
-
 /* Android Chrome viewport fixes */
 @supports (height: 100dvh) {
   .min-h-screen {
@@ -278,7 +256,7 @@ body {
 }
 
 /* Prevent text selection on buttons */
-button, .no-select {
+button {
   -webkit-user-select: none;
   -moz-user-select: none;
   -ms-user-select: none;
