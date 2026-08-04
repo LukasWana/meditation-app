@@ -7,6 +7,7 @@ import {
   AlertCircle,
   XCircle
 } from 'lucide-react';
+import { Heading } from '@components/ui/Heading';
 
 const DataStorageCharts = () => {
   const [storageData, setStorageData] = useState(null);
@@ -175,7 +176,7 @@ const DataStorageCharts = () => {
       <div className="flex items-center justify-between">
         <div className="flex items-center space-x-3">
           <BarChart3 className="w-6 h-6 text-blue-500" />
-          <h2 className="text-2xl font-bold text-gray-800">Analýza úložišť dat</h2>
+          <Heading level={2} className="font-bold text-gray-800">Analýza úložišť dat</Heading>
         </div>
         <button
           onClick={loadStorageData}
@@ -196,7 +197,7 @@ const DataStorageCharts = () => {
             className="bg-white rounded-lg p-4 shadow-sm border"
           >
             <div className="flex items-center justify-between mb-2">
-              <h3 className="font-semibold text-gray-700 capitalize">{key}</h3>
+              <Heading level={3} className="font-semibold text-gray-700 capitalize">{key}</Heading>
               {getStatusIcon(value.status)}
             </div>
             <div className="text-sm text-gray-600">
@@ -216,10 +217,10 @@ const DataStorageCharts = () => {
           animate={{ opacity: 1, y: 0 }}
           className="bg-white rounded-lg p-6 shadow-sm border"
         >
-          <h3 className="text-lg font-semibold mb-4 flex items-center">
+          <Heading level={3} className="font-semibold mb-4 flex items-center">
             <BarChart3 className="w-5 h-5 mr-2" />
             Počet souborů podle úložiště
-          </h3>
+          </Heading>
           <div className="space-y-3">
             {barData.map((item, index) => (
               <div key={index} className="flex items-center">
@@ -245,10 +246,10 @@ const DataStorageCharts = () => {
           animate={{ opacity: 1, y: 0 }}
           className="bg-white rounded-lg p-6 shadow-sm border"
         >
-          <h3 className="text-lg font-semibold mb-4 flex items-center">
+          <Heading level={3} className="font-semibold mb-4 flex items-center">
             <BarChart3 className="w-5 h-5 mr-2" />
             Rozložení dat
-          </h3>
+          </Heading>
           <div className="space-y-3">
             {pieData.map((item, index) => (
               <div key={index} className="flex items-center">
@@ -273,10 +274,10 @@ const DataStorageCharts = () => {
           animate={{ opacity: 1, y: 0 }}
           className="bg-white rounded-lg p-6 shadow-sm border"
         >
-          <h3 className="text-lg font-semibold mb-4 flex items-center">
+          <Heading level={3} className="font-semibold mb-4 flex items-center">
             <BarChart3 className="w-5 h-5 mr-2" />
             Velikost dat (KB)
-          </h3>
+          </Heading>
           <div className="space-y-3">
             {barData.map((item, index) => (
               <div key={index} className="flex items-center">
@@ -302,10 +303,10 @@ const DataStorageCharts = () => {
           animate={{ opacity: 1, y: 0 }}
           className="bg-white rounded-lg p-6 shadow-sm border"
         >
-          <h3 className="text-lg font-semibold mb-4 flex items-center">
+          <Heading level={3} className="font-semibold mb-4 flex items-center">
             <CheckCircle className="w-5 h-5 mr-2" />
             Status úložišť
-          </h3>
+          </Heading>
           <div className="space-y-3">
             {statusData.map((item, index) => (
               <div key={index} className="flex items-center">

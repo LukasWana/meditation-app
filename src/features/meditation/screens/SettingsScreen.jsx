@@ -4,6 +4,7 @@ import FramerButton from '@components/FramerButton';
 import FramerSection from '@components/FramerSection';
 import FramerPageTransition from '@components/FramerPageTransition';
 import BackButton from '@components/BackButton';
+import { Heading } from '@components/ui/Heading';
 import LanguageSwitcher from '@components/LanguageSwitcher';
 import { useLanguage } from '@contexts/LanguageContext';
 import { useTheme } from '@contexts/ThemeContext';
@@ -307,9 +308,9 @@ const SettingsScreen = ({
             delay={0.1}
           >
             <div style={{ height: '3.5rem', display: 'flex', flexDirection: 'column', justifyContent: 'flex-start', alignItems: 'center', marginBottom: '0.5rem' }}>
-              <h1 className="text-4xl font-light" style={{ minHeight: '2.5rem', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <Heading level={1}>
                 {t('nastavenie')}
-              </h1>
+              </Heading>
             </div>
           </FramerSection>
 
@@ -323,12 +324,13 @@ const SettingsScreen = ({
                 className="glass-panel w-full p-6"
                 style={{ color: themeColors?.text || (colorMode === 'dark' ? 'rgba(255, 255, 255, 1)' : 'rgba(0, 0, 0, 1)') }}
               >
-                <h3
-                  className="text-2xl font-light mb-4"
+                <Heading
+                  level={3}
+                  visual={2}
                   style={{ color: themeColors?.text || (colorMode === 'dark' ? 'rgba(255, 255, 255, 1)' : 'rgba(0, 0, 0, 1)') }}
                 >
                   {t('selectLanguage')}
-                </h3>
+                </Heading>
                 <LanguageSwitcher />
               </div>
             </FramerSection>
@@ -382,12 +384,13 @@ const SettingsScreen = ({
                 className="glass-panel w-full p-6 space-y-3"
                 style={{ color: themeColors?.text || (colorMode === 'dark' ? 'rgba(255, 255, 255, 1)' : 'rgba(0, 0, 0, 1)') }}
               >
-                <h3
-                  className="text-2xl font-light"
+                <Heading
+                  level={3}
+                  visual={2}
                   style={{ color: themeColors?.text || (colorMode === 'dark' ? 'rgba(255, 255, 255, 1)' : 'rgba(0, 0, 0, 1)') }}
                 >
                   {t('sdileniNastaveni')}
-                </h3>
+                </Heading>
 
                 {shareError && (
                   <div className="text-sm text-red-500">
@@ -490,12 +493,13 @@ const SettingsScreen = ({
                 className="glass-panel w-full p-6"
                 style={{ color: themeColors?.text || (colorMode === 'dark' ? 'rgba(255, 255, 255, 1)' : 'rgba(0, 0, 0, 1)') }}
               >
-                <h3
-                  className="text-2xl font-light mb-4"
+                <Heading
+                  level={3}
+                  visual={2}
                   style={{ color: themeColors?.text || (colorMode === 'dark' ? 'rgba(255, 255, 255, 1)' : 'rgba(0, 0, 0, 1)') }}
                 >
                   {t('pohlavie')}
-                </h3>
+                </Heading>
                 <motion.div
                   className="inline-flex items-center gap-2 glass-panel p-1"
                   style={{ borderRadius: '9999px' }}
@@ -549,12 +553,13 @@ const SettingsScreen = ({
                 className="glass-panel w-full p-6"
                 style={{ color: themeColors?.text || (colorMode === 'dark' ? 'rgba(255, 255, 255, 1)' : 'rgba(0, 0, 0, 1)') }}
               >
-                <h3
-                  className="text-2xl font-light mb-4"
+                <Heading
+                  level={3}
+                  visual={2}
                   style={{ color: themeColors?.text || (colorMode === 'dark' ? 'rgba(255, 255, 255, 1)' : 'rgba(0, 0, 0, 1)') }}
                 >
                   {t('historieAktivity')}
-                </h3>
+                </Heading>
                 <FramerButton
                   onClick={() => onNavigateToScreen('activity-history')}
                   variant="ghost"
@@ -586,12 +591,13 @@ const SettingsScreen = ({
                 className="glass-panel w-full p-6"
                 style={{ color: themeColors?.text || (colorMode === 'dark' ? 'rgba(255, 255, 255, 1)' : 'rgba(0, 0, 0, 1)') }}
               >
-                <h3
-                  className="text-2xl font-light mb-4"
+                <Heading
+                  level={3}
+                  visual={2}
                   style={{ color: themeColors?.text || (colorMode === 'dark' ? 'rgba(255, 255, 255, 1)' : 'rgba(0, 0, 0, 1)') }}
                 >
                   {t('informacie')}
-                </h3>
+                </Heading>
                 <p
                   className="text-lg leading-relaxed whitespace-pre-line"
                   style={{ color: themeColors?.textSecondary || (colorMode === 'dark' ? 'rgba(180, 180, 180, 1)' : 'rgba(100, 100, 100, 1)') }}

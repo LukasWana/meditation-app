@@ -4,6 +4,7 @@ import { storage, ensureFirebase } from '../config/secure-firebase';
 import { extractAudioMetadata, formatDuration, formatDurationDetailed } from '../utils/audioMetadataExtractor';
 import audioMetadataStorageService from '../services/audioMetadataStorageService';
 import log from '@services/logger';
+import { Heading } from '@components/ui/Heading';
 
 /**
  * Unified Files Overview Component
@@ -349,7 +350,7 @@ const UnifiedFilesOverview = () => {
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
       {/* Meditacie Summary */}
       <div className="bg-blue-50 p-4 rounded-lg">
-        <h3 className="text-lg font-semibold text-blue-900 mb-3">🗣️ Meditacie</h3>
+        <Heading level={3} className="font-semibold text-blue-900">🗣️ Meditacie</Heading>
         <div className="space-y-2 text-sm">
           <div><strong>Celkem souborů:</strong> {files.slova.length + files.slovaCZ.length + files.slovaSK.length + files.slovaEN.length}</div>
           <div><strong>Hlavní složka:</strong> {files.slova.length}</div>
@@ -362,7 +363,7 @@ const UnifiedFilesOverview = () => {
 
       {/* Hudba Summary */}
       <div className="bg-purple-50 p-4 rounded-lg">
-        <h3 className="text-lg font-semibold text-purple-900 mb-3">🎵 Hudba</h3>
+        <Heading level={3} className="font-semibold text-purple-900">🎵 Hudba</Heading>
         <div className="space-y-2 text-sm">
           <div><strong>Celkem souborů:</strong> {files.hudba.length}</div>
           <div><strong>Celková velikost:</strong> {formatBytes(files.hudba.reduce((sum, file) => sum + (file.size || 0), 0))}</div>
@@ -371,7 +372,7 @@ const UnifiedFilesOverview = () => {
 
       {/* Celkové statistiky */}
       <div className="bg-green-50 p-4 rounded-lg">
-        <h3 className="text-lg font-semibold text-green-900 mb-3">📊 Celkem</h3>
+        <Heading level={3} className="font-semibold text-green-900">📊 Celkem</Heading>
         <div className="space-y-2 text-sm">
           <div><strong>Celkem souborů:</strong> {files.totalFiles}</div>
           <div><strong>Celková velikost:</strong> {formatBytes(files.totalSize)}</div>
@@ -387,7 +388,7 @@ const UnifiedFilesOverview = () => {
     return (
       <div className="space-y-4">
         <div className="bg-gray-50 p-4 rounded-lg">
-          <h3 className="text-lg font-semibold mb-3">📋 Všechny soubory</h3>
+          <Heading level={3} className="font-semibold">📋 Všechny soubory</Heading>
           <div className="space-y-2 max-h-96 overflow-y-auto">
             {allFiles.map((file, index) => (
               <div key={index} className="bg-white p-3 rounded border text-sm cv-auto">
@@ -419,11 +420,11 @@ const UnifiedFilesOverview = () => {
     return (
       <div className="space-y-4">
         <div className="bg-gray-50 p-4 rounded-lg">
-          <h3 className="text-lg font-semibold mb-3">🔄 Varianty souborů</h3>
+          <Heading level={3} className="font-semibold">🔄 Varianty souborů</Heading>
           <div className="space-y-3 max-h-96 overflow-y-auto">
             {Object.entries(variants).map(([baseName, variantFiles]) => (
               <div key={baseName} className="bg-white p-3 rounded border cv-auto">
-                <h4 className="font-semibold text-lg mb-2">{baseName}</h4>
+                <Heading level={4} className="font-semibold">{baseName}</Heading>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2 text-sm">
                   {variantFiles.map((file, index) => (
                     <div key={index} className="bg-gray-50 p-2 rounded">
@@ -450,9 +451,9 @@ const UnifiedFilesOverview = () => {
     <div className="space-y-6">
       {/* Header */}
       <div className="bg-gradient-to-r from-blue-50 to-purple-50 p-6 rounded-lg">
-        <h2 className="text-2xl font-semibold text-gray-900 mb-2">
+        <Heading level={2} className="font-semibold text-gray-900">
           📁 Unified Files Overview
-        </h2>
+        </Heading>
         <p className="text-gray-700">
           Kompletní přehled všech souborů v aplikaci - meditacie a hudba
         </p>

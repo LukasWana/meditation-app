@@ -3,6 +3,7 @@ import { motion } from 'framer-motion';
 import FramerSection from '@components/FramerSection';
 import FramerButton from '@components/FramerButton';
 import BackButton from '@components/BackButton';
+import { Heading } from '@components/ui/Heading';
 import { AudioPlayer } from '@features/audio';
 import { useTheme } from '@contexts/ThemeContext';
 
@@ -29,9 +30,9 @@ const AlbumDetailScreen = ({
         transition={{ duration: 0.3 }}
       >
         <div className="text-center">
-          <h1 className="text-2xl font-light mb-4">
+          <Heading level={1} visual={2}>
             Album nenalezeno
-          </h1>
+          </Heading>
           <button
             onClick={() => onNavigateToScreen('hudba')}
             className="px-6 py-3 bg-white/50 backdrop-blur rounded-lg border border-black/10 hover:bg-white/70 transition-colors"
@@ -149,9 +150,9 @@ const AlbumDetailScreen = ({
           )}
 
           {/* Album title */}
-          <h1 className="text-4xl sm:text-6xl font-light mb-4">
+          <Heading level={1} visual="display">
             {album.title}
-          </h1>
+          </Heading>
 
           {/* Track count */}
           <p className="text-lg sm:text-xl text-gray-700">
@@ -181,9 +182,9 @@ const AlbumDetailScreen = ({
 
                     {/* Track info */}
                     <div className="flex-1 min-w-0">
-                      <h3 className="text-lg sm:text-2xl font-light truncate">
+                      <Heading level={3} visual={2} className="truncate">
                         {track.trackName}
-                      </h3>
+                      </Heading>
                     </div>
                   </div>
 

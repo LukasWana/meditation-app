@@ -11,6 +11,7 @@ import { useSoundEditor } from '../hooks/useSoundEditor';
 import { SyncCard } from '@components/admin/SyncCard';
 import { SoundEditor } from '@components/admin/SoundEditor';
 import { QuickActions } from '@components/admin/QuickActions';
+import { Heading } from '@components/ui/Heading';
 
 const SimpleAdminScreen = () => {
   const [loading, setLoading] = useState(false);
@@ -45,7 +46,7 @@ const SimpleAdminScreen = () => {
       {/* Header */}
       <div className={`p-6 border-b ${isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'}`}>
         <div className="flex justify-between items-center">
-          <h1 className="text-2xl font-bold">Zjednodušený Admin Panel</h1>
+          <Heading level={1} visual={2} className="font-bold">Zjednodušený Admin Panel</Heading>
           <button
             onClick={() => setIsDarkMode(!isDarkMode)}
             className={`p-2 rounded-lg transition-colors ${

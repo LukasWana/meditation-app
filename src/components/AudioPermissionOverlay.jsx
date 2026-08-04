@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useTheme } from '@contexts/ThemeContext';
+import { Heading } from '@components/ui/Heading';
 
 const AudioPermissionOverlay = ({
   isVisible,
@@ -52,11 +53,9 @@ const AudioPermissionOverlay = ({
           </div>
 
           {/* Title */}
-          <h2
-            className="text-3xl font-light text-black mb-4"
-          >
+          <Heading level={2} visual={1} className="text-black">
             Povolení zvuku
-          </h2>
+          </Heading>
 
           {/* Description */}
           <p className="text-gray-700 mb-8 leading-relaxed text-lg">

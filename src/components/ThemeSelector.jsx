@@ -11,6 +11,7 @@ import { storage, ensureFirebase } from '@config/secure-firebase';
 import log from '@services/logger';
 import cacheService from '@services/cacheServiceRefactored';
 import ProgressBarColorPicker from '@components/ProgressBarColorPicker';
+import { Heading } from '@components/ui/Heading';
 
 const ThemeSelector = () => {
   const { t, language } = useLanguage();
@@ -463,9 +464,9 @@ const ThemeSelector = () => {
         className={`w-full p-6 sm:p-8 mb-6 ${glassClass}`}
         style={{ color: textColor }}
       >
-        <h3 className="text-2xl font-light mb-4" style={{ color: textColor }}>
+        <Heading level={3} visual={2} style={{ color: textColor }}>
           {t('vzhledAplikace')}
-        </h3>
+        </Heading>
 
         {/* Výběr tématu */}
         <div className="space-y-3 mb-6">
@@ -539,12 +540,12 @@ const ThemeSelector = () => {
             className="border-t pt-4 mt-4"
             style={{ borderColor: borderColor }}
           >
-            <h4
-              className="text-lg font-light mb-3"
+            <Heading
+              level={4}
               style={{ color: textColor }}
             >
               {t('vlastniPozadi')}
-            </h4>
+            </Heading>
 
             {/* Přepínač mezi fotkou a barvou */}
             <div 

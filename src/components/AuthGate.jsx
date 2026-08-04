@@ -4,6 +4,7 @@ import { signInWithEmailAndPassword, onAuthStateChanged } from 'firebase/auth';
 import { testFirebaseAuth } from '../scripts/testFirebaseAuth';
 import { validateEmail, validatePassword } from '../utils/validation';
 import errorHandler from '../utils/error-handler';
+import { Heading } from '@components/ui/Heading';
 
 const AuthGate = ({ children, onAuthenticated }) => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -142,9 +143,9 @@ const AuthGate = ({ children, onAuthenticated }) => {
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
             </svg>
           </div>
-          <h2 className="mt-6 text-center text-3xl font-extrabold text-white">
+          <Heading level={2} visual={1} className="mt-6 text-center font-extrabold text-white">
             🔐 Admin přístup
-          </h2>
+          </Heading>
           <p className="mt-2 text-center text-sm text-white/80">
             Správa databází vyžaduje přihlášení
           </p>
@@ -195,9 +196,9 @@ const AuthGate = ({ children, onAuthenticated }) => {
                   </svg>
                 </div>
                 <div className="ml-3">
-                  <h3 className="text-sm font-medium text-red-200">
+                  <Heading level={3} className="font-medium text-red-200">
                     Chyba přihlášení
-                  </h3>
+                  </Heading>
                   <div className="mt-2 text-sm text-red-100">
                     <p>{error}</p>
                   </div>

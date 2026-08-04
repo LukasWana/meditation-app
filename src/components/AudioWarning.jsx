@@ -1,5 +1,6 @@
 import React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { Heading } from '@components/ui/Heading';
 
 const AudioWarning = ({ isVisible, onClose, onActivateAudio }) => {
   if (!isVisible) return null;
@@ -22,9 +23,9 @@ const AudioWarning = ({ isVisible, onClose, onActivateAudio }) => {
 
           {/* Content */}
           <div className="flex-1">
-            <h3 className="text-sm font-medium text-blue-800 mb-1">
+            <Heading level={3} className="font-medium text-blue-800">
               Aktivace zvuku
-            </h3>
+            </Heading>
             <p className="text-sm text-blue-700 mb-3">
               Pro spuštění zvuku je potřeba nejprve aktivovat audio systém.
               Klikněte na tlačítko níže.

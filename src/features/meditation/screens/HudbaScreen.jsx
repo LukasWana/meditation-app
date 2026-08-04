@@ -3,6 +3,7 @@ import { AnimatePresence } from 'framer-motion';
 import FramerSection from '@components/FramerSection';
 import FramerPageTransition from '@components/FramerPageTransition';
 import BackButton from '@components/BackButton';
+import { Heading } from '@components/ui/Heading';
 import { AudioPlayer } from '@features/audio';
 import { AlbumGrid } from '../components';
 import { useHudbaScreenData } from '../hooks';
@@ -132,9 +133,9 @@ const HudbaScreen = ({
             delay={0.1}
           >
             <div style={{ height: '3.5rem', display: 'flex', flexDirection: 'column', justifyContent: 'flex-start', alignItems: 'center', marginBottom: '0.5rem' }}>
-              <h1 className="text-4xl font-light" style={{ minHeight: '2.5rem', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <Heading level={1}>
                 {t('hudba')}
-              </h1>
+              </Heading>
             </div>
 
             {/* Loading indikátory - Hidden */}

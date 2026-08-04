@@ -3,6 +3,7 @@ import errorHandler from '@utils/error-handler';
 import cacheServiceRefactored from '@services/cacheServiceRefactored';
 import { onVisibilityChange } from '@services/visibilityManager';
 import log from '@services/logger';
+import { Heading } from '@components/ui/Heading';
 
 /**
  * Monitoring Dashboard Component
@@ -153,7 +154,7 @@ const MonitoringDashboard = ({ isVisible = false, onClose }) => {
             {/* Error Statistics */}
             {stats.errors && (
               <div className="bg-red-50 rounded-lg p-3">
-                <h3 className="font-semibold text-red-800 mb-2">🚨 Error Statistics</h3>
+                <Heading level={3} className="font-semibold text-red-800">🚨 Error Statistics</Heading>
                 <div className="space-y-1 text-sm">
                   <div className="flex justify-between">
                     <span>Total Errors:</span>
@@ -183,7 +184,7 @@ const MonitoringDashboard = ({ isVisible = false, onClose }) => {
             {/* Cache Statistics */}
             {stats.cache && (
               <div className="bg-blue-50 rounded-lg p-3">
-                <h3 className="font-semibold text-blue-800 mb-2">💾 Cache Statistics</h3>
+                <Heading level={3} className="font-semibold text-blue-800">💾 Cache Statistics</Heading>
                 <div className="space-y-1 text-sm">
                   <div className="flex justify-between">
                     <span>Total Size:</span>
@@ -208,7 +209,7 @@ const MonitoringDashboard = ({ isVisible = false, onClose }) => {
             {/* Performance Statistics */}
             {stats.performance && (
               <div className="bg-green-50 rounded-lg p-3">
-                <h3 className="font-semibold text-green-800 mb-2">⚡ Performance</h3>
+                <Heading level={3} className="font-semibold text-green-800">⚡ Performance</Heading>
                 <div className="space-y-1 text-sm">
                   {stats.performance.memory && (
                     <div>

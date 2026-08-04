@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import securityMonitor from '../services/securityMonitor';
+import securityMonitor from '../services/securityMonitor';
+import { Heading } from '@components/ui/Heading';
 const SecurityDashboard = () => {
   const [stats, setStats] = useState(null);
   const [isVisible, setIsVisible] = useState(false);
@@ -56,7 +57,7 @@ const SecurityDashboard = () => {
   return (
     <div className="fixed bottom-4 right-4 bg-white border border-gray-300 rounded-lg shadow-xl p-4 w-80 max-h-96 overflow-y-auto z-50">
       <div className="flex justify-between items-center mb-4">
-        <h3 className="text-lg font-bold text-gray-800">🔒 Security Dashboard</h3>
+        <Heading level={3} className="font-bold text-gray-800">🔒 Security Dashboard</Heading>
         <button
           onClick={() => setIsVisible(false)}
           className="text-gray-500 hover:text-gray-700"
@@ -69,13 +70,13 @@ const SecurityDashboard = () => {
         <div className="space-y-3">
           {/* Celkové statistiky */}
           <div className="bg-gray-50 p-3 rounded">
-            <h4 className="font-semibold text-gray-700 mb-2">📊 Posledních 24 hodin</h4>
+            <Heading level={4} className="font-semibold text-gray-700">📊 Posledních 24 hodin</Heading>
             <div className="text-2xl font-bold text-blue-600">{stats.total} událostí</div>
           </div>
 
           {/* Rozdělení podle závažnosti */}
           <div>
-            <h4 className="font-semibold text-gray-700 mb-2">⚠️ Podle závažnosti</h4>
+            <Heading level={4} className="font-semibold text-gray-700">⚠️ Podle závažnosti</Heading>
             <div className="space-y-1">
               {Object.entries(stats.bySeverity).map(([severity, count]) => (
                 <div key={severity} className="flex justify-between items-center">
@@ -91,7 +92,7 @@ const SecurityDashboard = () => {
           {/* Top události */}
           {Object.keys(stats.byEvent).length > 0 && (
             <div>
-              <h4 className="font-semibold text-gray-700 mb-2">🔥 Nejčastější události</h4>
+              <Heading level={4} className="font-semibold text-gray-700">🔥 Nejčastější události</Heading>
               <div className="space-y-1">
                 {Object.entries(stats.byEvent)
                   .sort(([,a], [,b]) => b - a)
