@@ -9,8 +9,8 @@ if git diff --cached --name-only | grep -q "^\.env$"; then
   exit 1
 fi
 
-# Kontrola na Firebase API klíče v kódu
-if git diff --cached -U0 | grep -E "AIza[0-9A-Za-z_-]{35}"; then
+# Kontrola na Firebase API klíče v kódu (jen přidané řádky)
+if git diff --cached -U0 | grep -E "^\+.*AIza[0-9A-Za-z_-]{35}"; then
   echo "❌ CHYBA: Detekován Firebase API klíč v kódu!"
   echo "   API klíče by měly být pouze v .env souboru."
   exit 1

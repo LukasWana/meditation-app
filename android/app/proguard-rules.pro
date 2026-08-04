@@ -19,3 +19,34 @@
 # If you keep the line number information, uncomment this to
 # hide the original source file name.
 #-renamesourcefileattribute SourceFile
+
+# === Capacitor / WebView ===
+# Keep the WebView JavaScript interface and bridge
+-keepclassmembers class * {
+    @androidx.annotation.JavascriptInterface <methods>;
+}
+-keep class com.getcapacitor.** { *; }
+-keep class * extends com.getcapacitor.Plugin { *; }
+
+# Keep WebView client classes
+-keepclassmembers class * extends android.webkit.WebViewClient {
+    public *;
+}
+-keepclassmembers class * extends android.webkit.WebChromeClient {
+    public *;
+}
+
+# === Firebase ===
+-keep class com.google.firebase.** { *; }
+-keep class com.google.android.gms.** { *; }
+-dontwarn com.google.firebase.**
+-dontwarn com.google.android.gms.**
+
+# === React / Vite ===
+# Keep JS bundle from being optimized away
+-keepassets assets/**
+
+# Keep model classes used in JSON serialization
+-keepclassmembers class * {
+    @com.google.gson.annotations.SerializedName <fields>;
+}

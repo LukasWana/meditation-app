@@ -97,10 +97,9 @@ service firebase.storage {
                       request.auth.token.admin == true;
     }
 
-    // Výchozí pravidlo - zamítnout zápis, povolit čtení (protože audio soubory jsou i v rootu)
+    // Výchozí pravidlo - zamítnout vše (výslovné složky jsou povoleny výše)
     match /{document=**} {
-      allow read: if true;
-      allow write: if false;
+      allow read, write: if false;
     }
   }
 }

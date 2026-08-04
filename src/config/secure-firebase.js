@@ -1,21 +1,34 @@
 /**
- * Secure Firebase Configuration — Lazy Initialization
+ * Secure Firebase Configuration
+ * Centralizovaná a bezpečná konfigurace Firebase služeb
  *
- * Firebase SDK se načítá až na první použití přes dynamic import,
- * aby se ~200 kB gzip nepřidalo do initial bundle.
- *
- * Všechny exporty jsou `let` — začínají jako null a po `await ensureFirebase()`
- * se naplní. Importéry musí volat `await ensureFirebase()` před prvním použitím.
+ * Firebase SDK je v samostatném chunku (díky manualChunks v vite.config),
+ * ale načítá se při startu aplikace (eager init).
  */
 
-export let app = null;
-export let auth = null;
-export let db = null;
-export let storage = null;
-export let database = null;
-export let realtimeDatabase = null;
-export let appCheck = null;
+import { initializeApp } from 'firebase/app';
+import { getAuth } from 'firebase/auth';
+import { getFirestore } from 'firebase/firestore';
+import { getStorage } from 'firebase/storage';
+import { getDatabase } from 'firebase/database';
+import { initializeAppCheck, ReCaptchaV3Provider } from 'firebase/app-check';
 
+function detectNativePlatform() {
+  try {
+    const win = typeof window !== 'undefined' ? window : null;
+    if (win && win.Capacitor && typeof win.Capacitor.isNativePlatform === 'function') {
+      return win.Capacitor.isNativePlatform();
+    }
+    if (win && win.Capacitor && win.Capacitor.isNative === true) {
+      return true;
+    }
+  } catch (e) { void e; }
+  return false;
+}
+
+/**
+ * Validace Firebase konfigurace
+ */
 const validateFirebaseConfig = () => {
   const requiredKeys = [
     'VITE_FIREBASE_API_KEY',
@@ -30,7 +43,7 @@ const validateFirebaseConfig = () => {
 
   if (missingKeys.length > 0) {
     const errorMessage = `Missing Firebase configuration: ${missingKeys.join(', ')}`;
-    console.error('❌ Firebase Configuration Error:', errorMessage);
+    console.error('Firebase Configuration Error:', errorMessage);
     throw new Error(errorMessage);
   }
 
@@ -54,73 +67,68 @@ const validateFirebaseConfig = () => {
   return config;
 };
 
-const _initPromise = (async () => {
-  const [
-    firebaseAppModule,
-    firebaseAuthModule,
-    firebaseFirestoreModule,
-    firebaseStorageModule,
-    firebaseDatabaseModule,
-  ] = await Promise.all([
-    import('firebase/app'),
-    import('firebase/auth'),
-    import('firebase/firestore'),
-    import('firebase/storage'),
-    import('firebase/database'),
-  ]);
+const firebaseConfig = validateFirebaseConfig();
 
-  const config = validateFirebaseConfig();
+export const app = initializeApp(firebaseConfig);
 
-  app = firebaseAppModule.initializeApp(config);
-  auth = firebaseAuthModule.getAuth(app);
-  db = firebaseFirestoreModule.getFirestore(app);
+export const auth = getAuth(app);
 
+export const db = getFirestore(app);
+
+export let storage;
+try {
+  storage = getStorage(app);
+} catch (error) {
+  console.error('Failed to initialize Firebase Storage:', error.message);
   try {
-    storage = firebaseStorageModule.getStorage(app);
-  } catch (error) {
-    console.error('❌ Failed to initialize Firebase Storage:', error.message);
-    try {
-      storage = firebaseStorageModule.getStorage(app);
-    } catch (retryError) {
-      console.error('❌ Firebase Storage retry failed:', retryError.message);
-      storage = null;
-    }
+    storage = getStorage(app);
+  } catch (retryError) {
+    console.error('Firebase Storage retry failed:', retryError.message);
+    storage = null;
   }
+}
 
+export let database;
+try {
+  database = getDatabase(app, 'https://meditations-audio-default-rtdb.europe-west1.firebasedatabase.app');
+} catch (error) {
+  console.error('Failed to initialize Realtime Database:', error.message);
+  database = getDatabase(app);
+}
+
+export { database as realtimeDatabase };
+
+let appCheck = null;
+const isNative = detectNativePlatform();
+const recaptchaKey = import.meta.env.VITE_RECAPTCHA_SITE_KEY;
+
+if (isNative) {
+  console.warn('App Check: Play Integrity provider required for native Android. reCAPTCHA v3 is unreliable in WebView.');
+} else if (recaptchaKey) {
   try {
-    database = firebaseDatabaseModule.getDatabase(app, 'https://meditations-audio-default-rtdb.europe-west1.firebasedatabase.app');
-  } catch (error) {
-    console.error('❌ Failed to initialize Realtime Database:', error.message);
-    database = firebaseDatabaseModule.getDatabase(app);
-  }
-  realtimeDatabase = database;
-
-  if (import.meta.env.VITE_RECAPTCHA_SITE_KEY) {
-    try {
-      const { initializeAppCheck, ReCaptchaV3Provider } = firebaseAppModule;
-      appCheck = initializeAppCheck(app, {
-        provider: new ReCaptchaV3Provider(import.meta.env.VITE_RECAPTCHA_SITE_KEY),
-        isTokenAutoRefreshEnabled: true,
-      });
-    } catch (error) {
-      console.warn('⚠️ Firebase App Check initialization failed:', error.message);
+    appCheck = initializeAppCheck(app, {
+      provider: new ReCaptchaV3Provider(recaptchaKey),
+      isTokenAutoRefreshEnabled: true
+    });
+    if (import.meta.env.MODE === 'development') {
+      console.log('Firebase App Check initialized with reCAPTCHA v3');
     }
+  } catch (error) {
+    console.warn('Firebase App Check initialization failed:', error.message);
   }
+} else if (import.meta.env.MODE === 'production') {
+  console.error('CRITICAL: App Check is NOT active in production! Set VITE_RECAPTCHA_SITE_KEY in .env.production');
+}
 
-  console.log('🔥 Firebase initialized successfully (lazy)');
-  console.log('📊 Services available:', {
-    auth: !!auth,
-    firestore: !!db,
-    storage: !!storage,
-    database: !!database,
-    appCheck: !!appCheck,
-    mode: import.meta.env.MODE
-  });
+export { appCheck };
 
-  return { app, auth, db, storage, database, realtimeDatabase, appCheck };
-})();
-
-export const ensureFirebase = () => _initPromise;
+/**
+ * No-op pro zpětnou kompatibilitu s importéry, které volají ensureFirebase()
+ * Eager init znamená, že Firebase je vždy ready.
+ */
+export const ensureFirebase = async () => {
+  return { app, auth, db, storage, database, realtimeDatabase: database, appCheck };
+};
 
 export const withFirebaseErrorHandling = async (operation, fallback = null) => {
   try {
@@ -148,7 +156,6 @@ export const firebaseUtils = {
   async getDocument(collection, docId) {
     return withFirebaseErrorHandling(
       async () => {
-        await ensureFirebase();
         const { doc, getDoc } = await import('firebase/firestore');
         const docRef = doc(db, collection, docId);
         const docSnap = await getDoc(docRef);
@@ -165,7 +172,6 @@ export const firebaseUtils = {
   async setDocument(collection, docId, data) {
     return withFirebaseErrorHandling(
       async () => {
-        await ensureFirebase();
         const { doc, setDoc } = await import('firebase/firestore');
         const docRef = doc(db, collection, docId);
         await setDoc(docRef, {
@@ -181,7 +187,6 @@ export const firebaseUtils = {
   async getFile(path) {
     return withFirebaseErrorHandling(
       async () => {
-        await ensureFirebase();
         const { ref, getDownloadURL } = await import('firebase/storage');
         const fileRef = ref(storage, path);
         return await getDownloadURL(fileRef);
@@ -190,3 +195,5 @@ export const firebaseUtils = {
     );
   }
 };
+
+export default app;

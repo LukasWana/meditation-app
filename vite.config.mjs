@@ -8,14 +8,7 @@ import { VitePWA } from 'vite-plugin-pwa'
 
 // https://vitejs.dev/config/
 export default defineConfig({
-  // Explicitně nahraď Firebase environment variables pro production build
   define: {
-    'import.meta.env.VITE_FIREBASE_API_KEY': '"AIzaSyC6vt1srBjcFkMzo-foYRkYaxiYo4qI0B8"',
-    'import.meta.env.VITE_FIREBASE_AUTH_DOMAIN': '"meditations-audio.firebaseapp.com"',
-    'import.meta.env.VITE_FIREBASE_PROJECT_ID': '"meditations-audio"',
-    'import.meta.env.VITE_FIREBASE_STORAGE_BUCKET': '"meditations-audio.firebasestorage.app"',
-    'import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID': '"312837067375"',
-    'import.meta.env.VITE_FIREBASE_APP_ID': '"1:312837067375:web:f80339384a77ef47f1f39a"',
     '__GOOGLE_SERVICES_JSON_PRESENT__': fs.existsSync(path.resolve('android/app/google-services.json')),
   },
   plugins: [
@@ -111,7 +104,7 @@ export default defineConfig({
           },
           {
             // Audio files - use CacheFirst but with shorter expiration
-            urlPattern: /.*\.mp3|.*\.ogg|.*\.wav|.*\.m4a/i,
+            urlPattern: /\.(mp3|ogg|wav|m4a)(\?|$)/i,
             handler: 'CacheFirst',
             options: {
               cacheName: 'meditation-audio',
@@ -172,7 +165,7 @@ export default defineConfig({
         ]
       },
       devOptions: {
-        enabled: true
+        enabled: false
       }
     })
   ],
@@ -240,7 +233,7 @@ export default defineConfig({
       }
     },
     // Optimalizace pro produkci
-    target: 'es2015',
+    target: 'es2020',
     cssCodeSplit: true,
     reportCompressedSize: true,
     chunkSizeWarningLimit: 1000
