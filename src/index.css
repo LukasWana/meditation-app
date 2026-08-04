@@ -5,6 +5,71 @@
 @tailwind utilities;
 
 /* ============================================
+   DESIGN TOKENY — jediný zdroj pravdy
+   Barvy, poloměry a font zde NEJSOU: ty vstřikuje
+   ThemeContext za běhu podle zvoleného motivu.
+   ============================================ */
+:root {
+  /* Typografická škála — fluidní, aby seděla na mobil i tablet.
+     clamp(min, preferováno, max) */
+  --font-size-display: clamp(2.5rem, 8vw, 3.75rem);
+  --font-size-h1:      clamp(1.75rem, 5vw, 2.25rem);
+  --font-size-h2:      clamp(1.375rem, 4vw, 1.5rem);
+  --font-size-h3:      1.125rem;
+  --font-size-body:    1rem;
+  --font-size-small:   0.875rem;
+  --font-size-caption: 0.75rem;
+
+  /* Váhy — aplikace používá lehký řez, tučné jen výjimečně */
+  --font-weight-light:   300;
+  --font-weight-regular: 400;
+  --font-weight-medium:  500;
+
+  /* Výška řádku a prostrkání */
+  --line-height-tight:   1.15;
+  --line-height-heading: 1.25;
+  --line-height-body:    1.6;
+  --tracking-display: -0.02em;
+  --tracking-heading: -0.01em;
+  --tracking-caption: 0.04em;
+
+  /* Spacing — 4px základ */
+  --space-1: 0.25rem;
+  --space-2: 0.5rem;
+  --space-3: 0.75rem;
+  --space-4: 1rem;
+  --space-6: 1.5rem;
+  --space-8: 2rem;
+  --space-12: 3rem;
+
+  /* Rytmus nadpisů — mezera pod nadpisem, jednotná */
+  --heading-margin-bottom: var(--space-6);
+  /* Minimální výška nadpisu; drží layout při změně textu.
+     Nahrazuje zkopírovaný inline minHeight: 2.5rem */
+  --heading-min-height: 2.5rem;
+
+  /* Pohyb */
+  --duration-fast:   150ms;
+  --duration-normal: 250ms;
+  --duration-slow:   400ms;
+  --ease-standard: cubic-bezier(0.4, 0, 0.2, 1);
+  --ease-out:      cubic-bezier(0, 0, 0.2, 1);
+
+  /* Šířka obsahu — odpovídá .app-content-container */
+  --content-max-width: 650px;
+}
+
+/* Respektuj systémové nastavení. U meditační aplikace to není
+   volitelné — vestibulární poruchy jsou reálné. */
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --duration-fast: 0ms;
+    --duration-normal: 0ms;
+    --duration-slow: 0ms;
+  }
+}
+
+/* ============================================
    Globální reset a základní styly
    ============================================ */
 
