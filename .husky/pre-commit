@@ -22,18 +22,21 @@ if git diff --cached -U0 | grep -E "(apiKey:|authDomain:|projectId:).*['\"]"; th
   echo "   Zkontrolujte, že používáte import.meta.env místo hardcoded hodnot."
 fi
 
+# Pozn.: husky spouští tento hook přes `sh -e`, takže každý příkaz, který
+# vrátí nenulový kód, hook rovnou ukončí. Kontroly proto musí být uvnitř
+# `if`, kde se errexit neuplatní — jinak se níže uvedené hlášky nikdy
+# nevypíšou a "neblokující" audit commit ve skutečnosti zablokuje.
+
 # ESLint kontrola
 echo "🔍 Spouštím ESLint..."
-npx eslint src/ --ext .js,.jsx --max-warnings 0
-if [ $? -ne 0 ]; then
+if ! npx eslint src/ --ext .js,.jsx --max-warnings 0; then
   echo "❌ ESLint našel chyby. Opravte je před commitem."
   exit 1
 fi
 
 # Security audit (pouze warning, neblokuje commit)
 echo "🔒 Spouštím security audit..."
-npm audit --audit-level=high
-if [ $? -ne 0 ]; then
+if ! npm audit --audit-level=high; then
   echo "⚠️  VAROVÁNÍ: Nalezeny bezpečnostní zranitelnosti ve závislostech."
   echo "   Spusťte 'npm audit fix' pro opravu."
   # Neblokujeme commit, pouze varujeme
