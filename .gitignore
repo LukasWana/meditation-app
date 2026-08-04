@@ -228,6 +228,7 @@ nul
 
 # Secrets / credentials
 android/app/google-services.json
+users.json
 
 # IJFW
 .ijfw/
