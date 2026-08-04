@@ -57,7 +57,7 @@ public class AudioPlugin extends Plugin {
         if (call.hasOption("title")) intent.putExtra("title", call.getString("title"));
         if (call.hasOption("artist")) intent.putExtra("artist", call.getString("artist"));
         if (call.hasOption("artworkUrl")) intent.putExtra("artworkUrl", call.getString("artworkUrl"));
-        if (call.hasOption("duration")) intent.putExtra("duration", (long) call.getDouble("duration", 0.0));
+        if (call.hasOption("duration")) intent.putExtra("duration", call.getDouble("duration", 0.0).longValue());
         getContext().startService(intent);
         call.resolve();
     }
@@ -74,7 +74,7 @@ public class AudioPlugin extends Plugin {
     public void setPosition(PluginCall call) {
         Intent intent = new Intent(getContext(), AudioForegroundService.class);
         intent.setAction("POSITION");
-        intent.putExtra("position", (long) call.getDouble("position", 0.0));
+        intent.putExtra("position", call.getDouble("position", 0.0).longValue());
         getContext().startService(intent);
         call.resolve();
     }

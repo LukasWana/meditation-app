@@ -2,7 +2,7 @@ import React from 'react';
 
 /**
  * FramerPageTransition - zjednodušená verze bez animací
- * Animace se nyní řídí z PageManager pomocí globální konfigurace (@config/animations.js)
+ * Animace se nyní řídí z PageManager pomocí globální konfigurace (@config/motion.js)
  */
 const FramerPageTransition = ({ children, screenKey: _screenKey }) => {
   return (

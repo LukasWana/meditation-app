@@ -172,7 +172,7 @@ public class AudioForegroundService extends android.app.Service {
         if (mediaSession == null) return;
         PlaybackStateCompat.Builder stateBuilder = new PlaybackStateCompat.Builder();
         long state = isPlaying ? PlaybackStateCompat.STATE_PLAYING : PlaybackStateCompat.STATE_PAUSED;
-        stateBuilder.setState(state, position, isPlaying ? 1.0f : 0.0f);
+        stateBuilder.setState((int) state, position, isPlaying ? 1.0f : 0.0f);
         stateBuilder.setActions(
                 PlaybackStateCompat.ACTION_PLAY |
                 PlaybackStateCompat.ACTION_PAUSE |

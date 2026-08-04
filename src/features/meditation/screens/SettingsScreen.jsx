@@ -300,7 +300,7 @@ const SettingsScreen = ({
       >
         <BackButton onClick={() => onNavigateToScreen('home')} />
 
-        <div className="max-w-md w-full" style={{ marginTop: '4rem', paddingTop: 0, paddingBottom: '2rem', position: 'relative', display: 'flex', flexDirection: 'column', alignItems: 'stretch' }}>
+        <div className="max-w-md w-full" style={{ marginTop: '5rem', paddingTop: 0, paddingBottom: '2rem', position: 'relative', display: 'flex', flexDirection: 'column', alignItems: 'stretch' }}>
           <FramerSection
             className="text-center mb-6"
             animationType="fadeIn"
