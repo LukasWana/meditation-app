@@ -26,7 +26,7 @@ const HelpScreen = ({
         <BackButton onClick={() => onNavigateToScreen('home')} />
 
         <div className="flex-1 flex items-center justify-center p-2 sm:p-8">
-          <div className="max-w-md w-full mt-16">
+          <div className="max-w-md w-full screen-content-top">
             <FramerSection
               className="text-center mb-6"
               animationType="fadeIn"

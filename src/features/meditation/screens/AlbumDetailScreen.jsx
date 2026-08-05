@@ -103,7 +103,7 @@ const AlbumDetailScreen = ({
 
       {/* Content overlay */}
       <div
-        className="relative z-10 min-h-screen w-full backdrop-blur-sm flex flex-col"
+        className="relative z-10 min-h-screen w-full backdrop-blur-sm flex flex-col screen-safe-top"
         style={{
           backgroundColor: currentTheme?.colors?.background
             ? `${currentTheme.colors.background}CC`

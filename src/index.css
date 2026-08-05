@@ -48,6 +48,10 @@
      Nahrazuje zkopírovaný inline minHeight: 2.5rem */
   --heading-min-height: 2.5rem;
 
+  /* Odsazení obsahu obrazovky od horní hrany — musí odpovídat pozici
+     BackButtonu, aby nadpis sekce sedl všude stejně. */
+  --screen-top-offset: 5rem;
+
   /* Pohyb */
   --duration-fast:   150ms;
   --duration-normal: 250ms;
@@ -729,6 +733,25 @@ html.low-gpu :is(
     font-size: var(--font-size-caption);
     letter-spacing: var(--tracking-caption);
     opacity: 0.7;
+  }
+
+  /* ------------------------------------------------------------------
+     Horní odsazení obsahu obrazovky.
+
+     BackButton je pozicovaný na calc(1.5rem + env(safe-area-inset-top)),
+     takže se na telefonu posune pod status bar. Obsah s nadpisem musí
+     počítat se stejným insetem, jinak se nadpis a tlačítko na Androidu
+     překryjí. V prohlížeči na desktopu je inset 0 a vykreslení se nemění.
+     ------------------------------------------------------------------ */
+  .screen-content-top {
+    margin-top: calc(var(--screen-top-offset) + env(safe-area-inset-top, 0px));
+  }
+
+  /* Varianta pro obrazovky, které obsah centrují svisle (pickery,
+     detail alba) — inset řeší padding, aby centrování zůstalo
+     vztažené k viditelné ploše, ne k ploše pod status barem. */
+  .screen-safe-top {
+    padding-top: env(safe-area-inset-top, 0px);
   }
 
   .surface-card {

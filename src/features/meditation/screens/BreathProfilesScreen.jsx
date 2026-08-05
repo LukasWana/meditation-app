@@ -336,7 +336,7 @@ const BreathProfilesScreen = ({
           style={{ display: 'none' }}
         />
 
-        <div className="max-w-2xl w-full" style={{ marginTop: '5rem', paddingTop: 0, paddingBottom: '2rem', position: 'relative', display: 'flex', flexDirection: 'column', alignItems: 'stretch' }}>
+        <div className="max-w-2xl w-full screen-content-top" style={{ paddingTop: 0, paddingBottom: '2rem', position: 'relative', display: 'flex', flexDirection: 'column', alignItems: 'stretch' }}>
           {/* Nadpis */}
           <FramerSection
             className="text-center mb-6"

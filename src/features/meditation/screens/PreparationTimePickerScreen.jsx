@@ -64,7 +64,7 @@ const PreparationTimePickerScreen = ({
   return (
     <FramerPageTransition screenKey="preparation-time-picker">
       <div
-        className="min-h-screen w-full max-w-full flex flex-col items-center justify-start p-6 overflow-x-hidden overflow-y-auto relative"
+        className="min-h-screen w-full max-w-full flex flex-col items-center justify-start p-6 overflow-x-hidden overflow-y-auto relative screen-safe-top"
         style={{ backgroundColor }}
         onTouchStart={onTouchStart}
         onTouchMove={onTouchMove}
@@ -72,7 +72,7 @@ const PreparationTimePickerScreen = ({
       >
         <BackButton onClick={() => onNavigateToScreen('breath')} />
 
-        <div className="max-w-md w-full flex flex-col items-center justify-center min-h-[calc(100vh-4rem)] py-8">
+        <div className="max-w-md w-full flex flex-col items-center justify-center min-h-[calc(100dvh-4rem)] py-8">
           {/* Středový blok: nadpis + wheel (vertikálně doprostřed) */}
           <div className="flex flex-col items-center justify-center flex-1 w-full">
             <FramerSection

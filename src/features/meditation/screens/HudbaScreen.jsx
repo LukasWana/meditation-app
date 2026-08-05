@@ -126,7 +126,7 @@ const HudbaScreen = ({
           className={activeAudio ? 'pointer-events-none opacity-50' : ''}
         />
 
-        <div className="max-w-md w-full" style={{ marginTop: '5rem', paddingTop: 0, position: 'relative', display: 'flex', flexDirection: 'column', alignItems: 'stretch' }}>
+        <div className="max-w-md w-full screen-content-top" style={{ paddingTop: 0, position: 'relative', display: 'flex', flexDirection: 'column', alignItems: 'stretch' }}>
           <FramerSection
             className="text-center mb-6"
             animationType="fadeIn"
