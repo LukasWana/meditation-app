@@ -53,7 +53,11 @@ export const AuthProvider = ({ children }) => {
   }, []);
 
   useEffect(() => {
-    const unsubscribe = authService.subscribeToAuth(async ({ user, isAdmin, tokenResult, error }) => {
+    // subscribeToAuth je async — cleanup musí dostat funkci, ne Promise
+    let unsubscribe = null;
+    let cancelled = false;
+
+    const subscription = authService.subscribeToAuth(async ({ user, isAdmin, tokenResult, error }) => {
       const newState = {
         user,
         isAdmin,
@@ -96,10 +100,17 @@ export const AuthProvider = ({ children }) => {
       }
     });
 
-    return () => {
-      if (unsubscribe) {
-        unsubscribe();
+    subscription.then((fn) => {
+      if (cancelled) {
+        fn?.();
+      } else {
+        unsubscribe = fn;
       }
+    });
+
+    return () => {
+      cancelled = true;
+      unsubscribe?.();
     };
   }, [loadUserProfile]);
 

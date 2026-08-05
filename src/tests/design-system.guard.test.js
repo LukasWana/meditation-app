@@ -12,6 +12,10 @@ const files = readdirSync(SRC, { recursive: true })
 
 const HEADING_WITH_SIZE = /<h[1-6][^>]*className="[^"]*\btext-(xs|sm|base|lg|xl|[2-9]xl)\b/;
 const INLINE_FONT_SIZE = /style=\{\{[^}]*fontSize/;
+// Pevné horní odsazení obchází env(safe-area-inset-top) — v prohlížeči se to
+// neprojeví, ale v APK na Androidu nadpis vjede pod status bar.
+// Odsazení patří třídě .screen-content-top.
+const HARDCODED_TOP_OFFSET = /style=\{\{[^}]*marginTop:\s*'5rem'/;
 
 describe('guard designoveho systemu', () => {
   it('zadny nadpis nenese velikostni utility tridu', () => {
@@ -21,6 +25,11 @@ describe('guard designoveho systemu', () => {
 
   it('zadny komponent nenastavuje fontSize inline', () => {
     const porusuje = files.filter((f) => INLINE_FONT_SIZE.test(readFileSync(f, 'utf8')));
+    expect(porusuje.map((f) => path.relative(SRC, f))).toEqual([]);
+  });
+
+  it('zadna obrazovka nema pevne horni odsazeni misto .screen-content-top', () => {
+    const porusuje = files.filter((f) => HARDCODED_TOP_OFFSET.test(readFileSync(f, 'utf8')));
     expect(porusuje.map((f) => path.relative(SRC, f))).toEqual([]);
   });
 });

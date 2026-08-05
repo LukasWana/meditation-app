@@ -100,8 +100,22 @@ function MeditationApp() {
 
   // Uspávání RTDB WebSocketu když je aplikace na pozadí
   useEffect(() => {
-    const stop = initRtdbConnectionManager();
-    return stop;
+    // initRtdbConnectionManager je async — cleanup musí dostat funkci, ne Promise
+    let stop = null;
+    let cancelled = false;
+
+    initRtdbConnectionManager().then((fn) => {
+      if (cancelled) {
+        fn?.();
+      } else {
+        stop = fn;
+      }
+    });
+
+    return () => {
+      cancelled = true;
+      stop?.();
+    };
   }, []);
 
 
