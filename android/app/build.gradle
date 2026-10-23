@@ -16,12 +16,16 @@ android {
             ignoreAssetsPattern = '!.svn:!.git:!.ds_store:!*.scc:.*:!CVS:!thumbs.db:!picasa.ini:!*~'
         }
     }
+    // Release se podepisuje jen vlastním klíčem z ~/.gradle/gradle.properties
+    // (MEDITATION_STORE_FILE, _STORE_PASSWORD, _KEY_ALIAS, _KEY_PASSWORD). Bez nich release build selže.
     signingConfigs {
         release {
-            storeFile file(project.findProperty('MEDITATION_STORE_FILE') ?: '../debug.keystore')
-            storePassword project.findProperty('MEDITATION_STORE_PASSWORD') ?: 'android'
-            keyAlias project.findProperty('MEDITATION_KEY_ALIAS') ?: 'androiddebugkey'
-            keyPassword project.findProperty('MEDITATION_KEY_PASSWORD') ?: 'android'
+            if (project.hasProperty('MEDITATION_STORE_FILE')) {
+                storeFile file(project.property('MEDITATION_STORE_FILE'))
+                storePassword project.property('MEDITATION_STORE_PASSWORD')
+                keyAlias project.property('MEDITATION_KEY_ALIAS')
+                keyPassword project.property('MEDITATION_KEY_PASSWORD')
+            }
         }
     }
     buildTypes {

@@ -1,50 +1,26 @@
-import { doc, getDoc } from 'firebase/firestore';
-import { db, ensureFirebase } from '@config/secure-firebase';
-import log from './logger';
-
 /**
  * Služba pro správu subscription (příprava na budoucí platby)
  */
 class SubscriptionService {
   /**
-   * Získá subscription informace z Firestore nebo custom claims
+   * Získá subscription informace z custom claims
    */
-  async getSubscription(userId, tokenResult = null) {
+  getSubscription(userId, tokenResult = null) {
     if (!userId) {
       return this.getDefaultSubscription();
     }
 
-    try {
-      await ensureFirebase();
-      // 1. Zkus z custom claims (rychlejší)
-      if (tokenResult?.claims?.subscription) {
-        return {
-          plan: tokenResult.claims.subscription,
-          status: 'active',
-          source: 'claims'
-        };
-      }
-
-      // 2. Zkus z Firestore
-      const userRef = doc(db, 'users', userId);
-      const userSnap = await getDoc(userRef);
-
-      if (userSnap.exists()) {
-        const data = userSnap.data();
-        if (data.subscription) {
-          return {
-            ...data.subscription,
-            source: 'firestore'
-          };
-        }
-      }
-
-      // 3. Default: free
-      return this.getDefaultSubscription();
-    } catch (error) {
-      log.error('Failed to get subscription:', error);
-      return this.getDefaultSubscription();
+    // Jen z custom claims — nastavuje je server. Pole subscription v users/{uid}
+    // si uživatel může zapsat sám, proto se z Firestore nečte.
+    if (tokenResult?.claims?.subscription) {
+      return {
+        plan: tokenResult.claims.subscription,
+        status: 'active',
+        source: 'claims'
+      };
     }
+
+    return this.getDefaultSubscription();
   }
 
   /**

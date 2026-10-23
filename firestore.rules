@@ -28,8 +28,11 @@ service cloud.firestore {
     match /users/{userId} {
       // Uživatel může číst a upravovat pouze svá vlastní data
       allow read: if request.auth != null && request.auth.uid == userId;
-      allow create: if request.auth != null && request.auth.uid == userId;
-      allow update: if request.auth != null && request.auth.uid == userId;
+      // Pole subscription smí měnit jen server (Admin SDK), ne uživatel
+      allow create: if request.auth != null && request.auth.uid == userId &&
+                       !('subscription' in request.resource.data);
+      allow update: if request.auth != null && request.auth.uid == userId &&
+                       !request.resource.data.diff(resource.data).affectedKeys().hasAny(['subscription']);
       allow delete: if request.auth != null && request.auth.uid == userId;
 
       // Pravidla pro historii aktivity uživatele
