@@ -12,6 +12,14 @@ export default defineConfig({
     '__GOOGLE_SERVICES_JSON_PRESENT__': fs.existsSync(path.resolve('android/app/google-services.json')),
   },
   plugins: [
+    // CSP meta z index.html platí jen pro build (APK + web). Dev server vkládá inline preamble
+    // @vitejs/plugin-react, který by CSP bez 'unsafe-inline' zablokovala.
+    {
+      name: 'strip-csp-meta-in-dev',
+      apply: 'serve',
+      transformIndexHtml: (html) =>
+        html.replace(/\s*<meta http-equiv="Content-Security-Policy"[^>]*>/, ''),
+    },
     react(),
     svgr({
       svgrOptions: {
