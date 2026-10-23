@@ -2,6 +2,7 @@ import {
   GoogleAuthProvider,
   signInWithPopup,
   signInWithRedirect,
+  getRedirectResult,
   signInWithCredential,
   signOut,
   onAuthStateChanged,
@@ -17,6 +18,48 @@ provider.setCustomParameters({ prompt: 'select_account' });
 // Přidat scopes pro získání profilu a fotky
 provider.addScope('profile');
 provider.addScope('email');
+
+/**
+ * Chybové kódy popupu, při kterých má smysl zkusit redirect.
+ * Jen zablokovaný popup — zavření popupu uživatelem (auth/popup-closed-by-user)
+ * nebo souběžný požadavek (auth/cancelled-popup-request) je vědomá akce / šum,
+ * redirect by uživatele přesměroval proti jeho vůli.
+ * auth/operation-not-supported-in-this-environment sem nepatří: znamená nepodporovaný
+ * protokol nebo vypnuté web storage a redirect v takovém prostředí selže stejně.
+ */
+export const REDIRECT_FALLBACK_CODES = Object.freeze(['auth/popup-blocked']);
+
+export function shouldFallbackToRedirect(error, isNative) {
+  if (isNative) return false;
+  return REDIRECT_FALLBACK_CODES.includes(error?.code);
+}
+
+/**
+ * Klíče localStorage vázané na přihlášeného uživatele.
+ * Historie aktivity: `meditation-app-activity-history-<uid>` (activityHistoryService.getLocalStorageKey);
+ * anonymní historie (`...-anonymous`) patří zařízení, ta zůstává.
+ * Dechové profily: uživatelský obsah, při dalším přihlášení by se přes syncSettings
+ * nahrál do cizího účtu, který v cloudu žádné profily nemá.
+ * Nastavení zařízení (téma, barva, jazyk, hlas, pozadí, …) se nemažou.
+ */
+export const USER_HISTORY_KEY_PREFIX = 'meditation-app-activity-history-';
+export const BREATH_PROFILES_KEY = 'meditation-app-breath-profiles';
+
+export function clearUserLocalData(storage, { includeBreathProfiles = true } = {}) {
+  if (!storage) return [];
+  const toRemove = [];
+  for (let i = 0; i < storage.length; i++) {
+    const key = storage.key(i);
+    if (!key) continue;
+    if (key.startsWith(USER_HISTORY_KEY_PREFIX) && key !== `${USER_HISTORY_KEY_PREFIX}anonymous`) {
+      toRemove.push(key);
+    } else if (includeBreathProfiles && key === BREATH_PROFILES_KEY) {
+      toRemove.push(key);
+    }
+  }
+  toRemove.forEach((key) => storage.removeItem(key));
+  return toRemove;
+}
 
 export async function signInWithGoogle() {
   try {
@@ -35,7 +78,6 @@ export async function signInWithGoogle() {
       try {
         await GoogleAuth.initialize({
           scopes: ['profile', 'email'],
-          grantOfflineAccess: true,
         });
       } catch (initError) {
         log.warn('GoogleAuth.initialize() warning (může být již inicializován):', initError);
@@ -60,20 +102,38 @@ export async function signInWithGoogle() {
       return await signInWithPopup(auth, provider);
     }
   } catch (error) {
-    if (!Capacitor.isNativePlatform()) {
-      // Fallback na redirect (např. mobilní prohlížeče blokující popup)
-      if (error?.code === 'auth/popup-blocked' || error?.code === 'auth/popup-closed-by-user') {
-        log.warn('Popup login blokován, zkouším redirect');
-        return signInWithRedirect(auth, provider);
-      }
+    // Fallback na redirect jen při zablokovaném popupu (např. mobilní prohlížeče);
+    // výsledek redirectu načítá completeRedirectSignIn() při startu aplikace.
+    if (shouldFallbackToRedirect(error, Capacitor.isNativePlatform())) {
+      log.warn('Popup login blokován, zkouším redirect');
+      return signInWithRedirect(auth, provider);
     }
     log.error('Chyba při přihlašování přes Google:', error);
     throw error;
   }
 }
 
+/**
+ * Dokončí přihlášení po návratu z signInWithRedirect (jen web).
+ * Bez čekajícího redirectu vrací null; chybu redirectu vyhodí volajícímu.
+ */
+export async function completeRedirectSignIn() {
+  if (Capacitor.isNativePlatform()) return null;
+  await ensureFirebase();
+  return getRedirectResult(auth);
+}
+
 export async function signOutUser() {
   await ensureFirebase();
+  // Na Androidu odhlásit i Google účet v pluginu, jinak další přihlášení
+  // vrátí tentýž účet bez nabídky výběru
+  if (Capacitor.isNativePlatform()) {
+    try {
+      await GoogleAuth.signOut();
+    } catch (googleSignOutError) {
+      log.warn('GoogleAuth.signOut() selhalo:', googleSignOutError);
+    }
+  }
   return signOut(auth);
 }
 
@@ -105,7 +165,9 @@ export const authService = {
   signInWithGoogle,
   signOutUser,
   subscribeToAuth,
-  fetchTokenResult
+  fetchTokenResult,
+  completeRedirectSignIn,
+  clearUserLocalData
 };
 
 export default authService;
