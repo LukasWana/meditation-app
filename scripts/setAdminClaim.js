@@ -35,7 +35,8 @@ async function main() {
   const auth = getAuth();
   const user = await auth.getUserByEmail(email);
 
-  await auth.setCustomUserClaims(user.uid, { admin: true });
+  // setCustomUserClaims přepíše všechny claimy — ostatní (např. subscription) zachovat
+  await auth.setCustomUserClaims(user.uid, { ...(user.customClaims || {}), admin: true });
   await auth.revokeRefreshTokens(user.uid);
 
   console.log(`✅ Admin claim nastaven pro ${email}. Uživatel se musí znovu přihlásit.`);
