@@ -33,8 +33,12 @@ Pravidlo OR v Security Rules (proč `allow write` rušil limity): ✓1 — Fireb
    start + pozadí podle režimu; Google přihlášení/odhlášení + profilová fotka; přepnutí účtu A→B (nabídne výběr
    účtu, profily A se nenahrají do B); audio online/offline (blob) + waveform; obrázky pozadí + vlastní ořez;
    grafy; offline režim a návrat RTDB; sdílení nastavení (Functions).
-2. **Hosting nenasazen** — nová CSP hlavička ve `firebase.json` platí až po `vite build` + `firebase deploy --only hosting`.
-   Po nasazení na webu ověřit App Check (žádné 403), popup přihlášení, service worker.
+2. ~~Hosting nenasazen~~ **Nasazeno 2026-10-23** (`vite build` + `firebase deploy --only hosting`, release complete).
+   Ověřeno na https://meditations-audio.web.app v Chrome (přihlášený uživatel): CSP hlavička i meta živě, ReportingObserver
+   0 porušení CSP, service worker aktivní, identitytoolkit/securetoken/Storage/Firestore 200, profilová fotka načtena,
+   App Check token z cache (IndexedDB `firebase-app-check-database`, výměna v tomto načtení neproběhla → 403 nelze
+   vyloučit při jeho obnově, ∅). Pozorováno: některé GET na Firestore `Listen/channel` vracejí 503 — CSP to není
+   (blokovaný požadavek by status neměl), příčina neověřena (∅). Popup přihlášení na webu nezkoušen.
 3. App Check pro Android (bod 4) + kontrola enforcementu a restrikcí API klíče v konzoli.
 4. Release klíč: vlastní keystore mimo repo, `MEDITATION_*` do `~/.gradle/gradle.properties`, jeho SHA1 do
    Firebase / OAuth klienta. Uživatel rozhodl: výměna debug SHA v konzoli není nutná (APK jen na 2 vlastních zařízeních).
@@ -42,11 +46,11 @@ Pravidlo OR v Security Rules (proč `allow write` rušil limity): ✓1 — Fireb
    RTDB long-polling fallback není v CSP `script-src` (jen websocket); `public/show-db-data.html` (debug stránka jde
    na hosting), `public/offline.html`, `public/theme-init.js` vypadají mrtvě; zmínka o AuthGate v
    `docs/systems/IMPLEMENTATION_SUMMARY.md:45`.
-6. Přepis historie: záloha `C:/work/archive/meditation-app-pred-prepisem-2026-10-23.bundle` **obsahuje klíč** —
-   smazat, až bude jisté, že nic nechybí. Jiné klony repa (jiné PC/server) mají starou historii → `git fetch` +
-   `git reset --hard origin/main` (nebo nový klon), jinak push klíč vrátí. Staré commity může GitHub ještě dočasně
-   držet podle SHA (repo je soukromé).
+6. ~~Přepis historie: záloha s klíčem, jiné klony~~ záloha `meditation-app-pred-prepisem-2026-10-23.bundle` smazána
+   (rozhodnutí uživatele 2026-10-23); jiné klony repa podle uživatele neexistují. Staré commity může GitHub ještě
+   dočasně držet podle SHA (repo je soukromé).
 7. Pracovní strom: necommitnuté změny uživatele `AGENTS.md`, smazání `CLAUDE.md` a `ijfw/` — nesahat, rozhodne uživatel.
+   Body 5 a 6 výše (drobnosti, App Check) uživatel 2026-10-23 vzal na vědomí — zůstávají otevřené.
 
 ## Předávka
 
@@ -57,6 +61,6 @@ Skill: superpowers:verification-before-completion (každý bod má ověřovací 
 Hotovo a nasazeno (pravidla, smazaná funkce, historie bez klíče, push). Pokračuj sekcí „Otevřené":
 1. Až uživatel otestuje APK (bod 1), zapiš výsledek; při CSP chybě v konzoli WebView doplň zdroj do
    index.html i firebase.json (strážní test src/tests/csp.guard.test.js hlídá hash inline skriptu).
-2. Hosting nasazovat jen se souhlasem uživatele (bod 2).
+2. Hosting je nasazen; otevřené jen 503 na Firestore Listen/channel a popup přihlášení na webu (bod 2).
 3. App Check Android (bod 3) — nejdřív zjistit stav v konzoli, zdroje dle pravidla ověřování.
 ```
