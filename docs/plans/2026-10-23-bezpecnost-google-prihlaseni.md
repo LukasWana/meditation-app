@@ -18,8 +18,7 @@ Zdroj nálezů: revize jen čtením (session PreludeCRM, 2026-10-23), paměť pr
 | 6 NÍZ | redirect po zavření popupu, chybí `getRedirectResult`, offline access, závod v AuthContext, odhlášení nemaže data | ~~otevřeno~~ opraveno; Android odhlásí i GoogleAuth plugin | `ea1f17b` |
 | 7 | mrtvý `AuthGate.jsx`, `security-headers.js`; 0 testů | ~~otevřeno~~ smazány; +19 testů (subscription 5, authService 11, CSP guard 3) | `9bbbc2b`, `ea1f17b`, `447c7d7` |
 
-Ověřeno v session 2: eslint `src/` exit 0; vitest 26 souborů / 279 testů zelených (před CSP guard testem;
-CSP guard 3/3 samostatně); `vite build` exit 0; hash inline skriptu v `dist/index.html` sedí s CSP.
+Ověřeno v session 2: eslint `src/` exit 0; vitest 27 souborů / 282 testů zelených (po všech commitech); `vite build` exit 0; hash inline skriptu v `dist/index.html` sedí s CSP.
 Nasazeno 2026-10-23: `firestore.rules`, `storage.rules` (Deploy complete), `functions:delete downloadProxy`.
 
 Pravidlo OR v Security Rules (proč `allow write` rušil limity): ✓1 — Firebase docs (dva texty téhož autora):
